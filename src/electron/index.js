@@ -678,10 +678,10 @@ class Electron {
     this._apiProcess = fork(path.join(__dirname, '..', 'api', 'index.js'))
     this._registerShortcut('F11', () => this._window.webContents.openDevTools())
 
-    // Disable auto-updater for all environments
-    // if (!isDevelopment) {
-    //   this._initAutoUpdater()
-    // }
+    // Enable auto-updater for production builds
+    if (!isDevelopment) {
+      this._initAutoUpdater()
+    }
 
     // --- Auto-resume Leak Check (Moved to 'renderer-ready' listener) ---
   }

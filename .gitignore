@@ -4,9 +4,10 @@ dev-app-update.yml
 plugin_packages/
 .DS_Store
 
-# Ignore ASAR source directories (dev and public)
+# Ignore ASAR source directories (dev, public, and old)
 assets/extracted-winapp-dev/
 assets/extracted-winapp-public/
+assets/extracted-winapp/
 
 # Ignore built ASAR files and backups
 assets/winapp.asar

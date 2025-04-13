@@ -53,45 +53,7 @@ module.exports = class Patcher {
       // Launch the game process using spawn for robust process tracking
       this._animalJamProcess = spawn(exePath, [], { detached: false, stdio: 'ignore' })
 
-      // On game process exit, restore the original ASAR
-      this._animalJamProcess.on('exit', async (code, signal) => {
-        try {
-          await this.restoreOriginalAsar()
-          console.log('Original app.asar restored after game process exit.')
-        } catch (err) {
-          console.error(`Failed to restore original app.asar after game exit: ${err.message}`)
-        }
-      })
-
-      // Handle Jam process exit (SIGINT, etc.) to ensure cleanup
-      const cleanup = async () => {
-        if (this._animalJamProcess && this._animalJamProcess.pid) {
-          // Use tree-kill to terminate the entire process tree
-          treeKill(this._animalJamProcess.pid, 'SIGKILL', async (err) => {
-            if (err) {
-              console.error(`Failed to kill game process tree: ${err.message}`)
-            }
-            try {
-              await this.restoreOriginalAsar()
-              console.log('Original app.asar restored on Jam exit.')
-            } catch (restoreErr) {
-              console.error(`Failed to restore original app.asar on Jam exit: ${restoreErr.message}`)
-            }
-            process.exit()
-          })
-        } else {
-          try {
-            await this.restoreOriginalAsar()
-          } catch (err) {
-            console.error(`Failed to restore original app.asar on Jam exit: ${err.message}`)
-          }
-          process.exit()
-        }
-      }
-
-      process.on('SIGINT', cleanup)
-      process.on('SIGTERM', cleanup)
-      process.on('exit', cleanup)
+      // Removed ASAR restoration logic on game/Jam exit
     } catch (error) {
       console.error(`Failed to start Animal Jam Classic process: ${error.message}`)
     }
@@ -103,7 +65,7 @@ module.exports = class Patcher {
    */
   async patchApplication () {
     const asarPath = path.join(ANIMAL_JAM_CLASSIC_BASE_PATH, 'resources', 'app.asar')
-    const backupAsarPath = `${asarPath}.unpatched`
+    // Removed backupAsarPath definition
     const customAsarPath = process.platform === 'win32'
       ? path.join('assets', 'winapp.asar')
       : process.platform === 'darwin'
@@ -113,11 +75,10 @@ module.exports = class Patcher {
     try {
       process.noAsar = true
 
-      if (!existsSync(backupAsarPath) && existsSync(asarPath)) {
-        await rename(asarPath, backupAsarPath)
-      }
-
+      // Removed backup logic (rename)
+      // Directly copy the custom ASAR over the original
       await copyFile(customAsarPath, asarPath)
+      console.log('Custom ASAR copied directly over original app.asar.');
 
       if (existsSync(ANIMAL_JAM_CLASSIC_CACHE_PATH)) {
         await rm(ANIMAL_JAM_CLASSIC_CACHE_PATH, { recursive: true })
@@ -131,19 +92,7 @@ module.exports = class Patcher {
   }
 
   /**
-   * Restores the original app.asar file.
-   * @returns {Promise<void>}
+   * Removed restoreOriginalAsar method as backup is no longer created.
    */
-  async restoreOriginalAsar () {
-    const asarPath = path.join(ANIMAL_JAM_CLASSIC_BASE_PATH, 'resources', 'app.asar')
-    const backupAsarPath = `${asarPath}.unpatched`
-
-    try {
-      if (existsSync(backupAsarPath)) {
-        await rename(backupAsarPath, asarPath)
-      }
-    } catch (error) {
-      console.error(`Failed to restore original app.asar: ${error.message}`)
-    }
-  }
+  // async restoreOriginalAsar () { ... } // Method removed
 }

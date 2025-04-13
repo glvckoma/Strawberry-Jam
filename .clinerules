@@ -53,3 +53,30 @@
 -   **Root Cause:** Code merged into `assets/extracted-winapp` (specifically `index.js`) requires Node.js modules. These modules are not inherently available in the game client's runtime environment. Packing the ASAR requires a `node_modules` folder containing these dependencies to be present *within* `assets/extracted-winapp` at pack time.
 -   **Incompatibility Issue:** Running `npm install` directly within `assets/extracted-winapp` can install versions of dependencies (or sub-dependencies) built for modern Node.js environments. These versions may use incompatible syntax (e.g., `require('fs/promises')`) that crashes the game client's older bundled Node.js version.
 -   **Solution:** Before packing (`npx asar pack assets/extracted-winapp assets/winapp.asar`), ensure the `assets/extracted-winapp/node_modules` directory exists and contains dependency versions compatible with the game client's runtime. The most reliable method is often to copy the `node_modules` directory from a known-good, previously extracted working `winapp.asar`. Avoid running `npm install` directly in `assets/extracted-winapp` unless the compatibility of all installed packages with the target environment is verified.
+
+## Building & Publishing Releases
+
+-   **Version Management:** Use npm scripts for consistent versioning:
+    -   `npm run version:patch` - Small fixes (1.0.0 -> 1.0.1)
+    -   `npm run version:minor` - New features (1.0.0 -> 1.1.0)
+    -   `npm run version:major` - Breaking changes (1.0.0 -> 2.0.0)
+
+-   **Build Commands:**
+    -   `npm run build:win` - Windows build only
+    -   `npm run build:mac` - macOS build only (requires Mac or Docker)
+    -   `npm run build:all` - Build for both platforms
+    -   `npm run build:mac-win` - Build macOS version on Windows using Docker
+    -   `npm run publish:win` - Version bump + Windows build + GitHub release
+    -   `npm run publish:all` - Version bump + all platforms + GitHub release
+
+-   **Prerequisites:**
+    -   GitHub token with `repo` access set as `GH_TOKEN` environment variable
+    -   Docker Desktop (if building macOS version on Windows)
+    -   electronuserland/builder:wine Docker image pulled
+
+-   **Auto-Updates:** Configured through three files:
+    -   `electron-builder.json` - Publishing configuration
+    -   `package.json` - Repository URL
+    -   `src/electron/index.js` - Update checking logic
+
+-   **Documentation:** See `memory-bank/build-and-release.md` for detailed build and release procedures, common issues, and troubleshooting steps.
