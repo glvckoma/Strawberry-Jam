@@ -86,11 +86,19 @@ exports.render = function (app) {
     app.modals.close()
   })
 
-  $modal.find('#refreshPluginsBtn').on('click', function () {
+  // Prevent multiple simultaneous refreshes
+  let refreshInProgress = false;
+  $modal.find('#refreshPluginsBtn').on('click', async function () {
+    if (refreshInProgress) return;
+    refreshInProgress = true;
+    const $btn = $(this);
+    $btn.prop('disabled', true).addClass('opacity-50');
     localStorage.removeItem(CACHE_KEY)
     localStorage.removeItem(CACHE_TIME_KEY)
     localStorage.removeItem(CACHE_METADATA_KEY)
-    fetchPlugins(true)
+    await fetchPlugins(true)
+    $btn.prop('disabled', false).removeClass('opacity-50');
+    refreshInProgress = false;
   })
 
   /**
@@ -174,8 +182,14 @@ exports.render = function (app) {
    * Uninstall a plugin by removing its directory
    * @param {string} pluginName - Name of the plugin to uninstall
    */
+  // Prevent multiple simultaneous uninstalls
+  let uninstallInProgress = false;
   const uninstallPlugin = async (pluginName) => {
+    if (uninstallInProgress) return;
+    uninstallInProgress = true;
     try {
+      // Disable all uninstall buttons during operation
+      $modal.find('.uninstall-plugin-btn').prop('disabled', true).addClass('opacity-50');
       app.consoleMessage({
         message: `Uninstalling plugin: ${pluginName}...`,
         type: 'wait'
@@ -212,12 +226,15 @@ exports.render = function (app) {
         app.dispatch.loadPlugins()
       }
 
-      fetchPlugins(true)
+      await fetchPlugins(true)
     } catch (error) {
       app.consoleMessage({
         message: `Failed to uninstall plugin "${pluginName}": ${error.message}`,
         type: 'error'
       })
+    } finally {
+      $modal.find('.uninstall-plugin-btn').prop('disabled', false).removeClass('opacity-50');
+      uninstallInProgress = false;
     }
   }
 
@@ -225,8 +242,14 @@ exports.render = function (app) {
    * Install a plugin from GitHub
    * @param {Object} plugin - Plugin object from GitHub API
    */
+  // Prevent multiple simultaneous installs
+  let installInProgress = false;
   const installPlugin = async (plugin) => {
+    if (installInProgress) return;
+    installInProgress = true;
     try {
+      // Disable all install buttons during operation
+      $modal.find('.install-plugin-btn').prop('disabled', true).addClass('opacity-50');
       app.consoleMessage({
         message: `Installing plugin: ${plugin.name}...`,
         type: 'wait'
@@ -277,6 +300,9 @@ exports.render = function (app) {
         message: `Failed to install plugin "${plugin.name}": ${error.message}`,
         type: 'error'
       })
+    } finally {
+      $modal.find('.install-plugin-btn').prop('disabled', false).removeClass('opacity-50');
+      installInProgress = false;
     }
   }
 

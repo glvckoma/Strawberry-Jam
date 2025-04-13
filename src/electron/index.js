@@ -676,7 +676,11 @@ class Electron {
 
     // Redundant protocol handler removed from here. The correct one is in create().
     this._apiProcess = fork(path.join(__dirname, '..', 'api', 'index.js'))
-    this._registerShortcut('F11', () => this._window.webContents.openDevTools())
+
+    // Register F11 shortcut for devtools ONLY in development
+    if (isDevelopment) {
+      this._registerShortcut('F11', () => this._window.webContents.openDevTools())
+    }
 
     // Enable auto-updater for production builds
     if (!isDevelopment) {
@@ -703,19 +707,25 @@ ipcMain.on('packet-event', (event, packetData) => {
   });
 });
 
-// Handle plugin window creation
+/**
+ * Handle plugin window creation.
+ * - In development: plugin windows never open devtools automatically.
+ * - In production: plugin windows cannot open devtools at all.
+ */
 ipcMain.on('open-plugin-window', (event, { url, name, pluginPath }) => {
   console.log(`[IPC Main] Creating plugin window for ${name}`);
-  
+
+  const isDev = process.env.NODE_ENV === 'development';
+
   const pluginWindow = new BrowserWindow({
     ...defaultWindowOptions,
     title: name,
     width: 800,
     height: 600,
-    frame: false, // Make plugin window frameless
+    frame: false,
     webPreferences: {
       ...defaultWindowOptions.webPreferences,
-      devTools: true,
+      devTools: isDev, // Only allow devtools in dev, never in production
       nodeIntegration: true,
       contextIsolation: false
     }
@@ -723,11 +733,8 @@ ipcMain.on('open-plugin-window', (event, { url, name, pluginPath }) => {
 
   // Load the plugin URL
   pluginWindow.loadURL(url);
-  
-  // Open DevTools by default for debugging
-  if (process.env.NODE_ENV === 'development') {
-    pluginWindow.webContents.openDevTools();
-  }
+
+  // Do NOT open devtools automatically in any environment
 
   // When window is ready, inject the jam object
   pluginWindow.webContents.on('did-finish-load', () => {
