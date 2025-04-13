@@ -1,108 +1,75 @@
-# Strawberry Jam
+<div align="center">
+  <img src="assets/strawberry-jam.png" alt="Strawberry Jam Logo" width="200"/>
+  <h1>Strawberry Jam</h1>
+  <a href='https://discord.gg/HzFe7XpuPs'>
+    <img src="https://discord.com/api/guilds/1355727306177380392/widget.png?style=shield" alt="Discord" />
+  </a>
+</div>
 
-**A modular MITM proxy and plugin platform for Animal Jam Classic**  
-_Forked from [Jam by sxip](https://github.com/Sxip/jam)_
+<br />
 
----
+<div align="center">
+A tool for exploring and extending <a href="https://classic.animaljam.com">Animal Jam Classic</a>!
+<br /><br />
+<em>Strawberry Jam is a fork of the original <a href="https://github.com/Sxip/jam">Jam</a> project by sxip.</em>
+</div>
 
-## What is Strawberry Jam?
+## 🚀 Quick Start
 
-Strawberry Jam is a powerful, extensible Man-in-the-Middle (MITM) proxy and plugin system for Animal Jam Classic. It allows you to intercept, analyze, and modify network traffic between the AJC client and servers, develop custom plugins, and automate or enhance gameplay in ways not possible with the official client.
+### 🪟 Windows
+1.  Download `Strawberry-Jam-Setup.exe` from our [latest release](https://github.com/glvckoma/strawberry-jam/releases/latest)
+2.  Run the installer
+3.  Launch Strawberry Jam from your Start menu
 
-> **This project is a fork of the original [Jam](https://github.com/Sxip/jam) by sxip. All new work, documentation, and branding is under the name "Strawberry Jam".**
+### 🍎 MacOS
+1.  Download `Strawberry-Jam.dmg` from our [latest release](https://github.com/glvckoma/strawberry-jam/releases/latest)
+2.  Open and drag to Applications
+3.  Open Terminal and run: `sudo /Applications/Strawberry\ Jam.app/Contents/MacOS/Jam`
+    *   You'll need to type your password (it stays hidden as you type)
 
----
+## ✨ Features
 
-## Features
+*   **🔍 Network Analysis:** Watch messages between your game and AJ's servers
+*   **🔌 Plugin System:** Add cool new features with plugins
+*   **🖥️ Easy to Use:** Simple desktop app with everything you need
 
-- **MITM Proxy:** Intercept and forward all AJC network traffic (port 443).
-- **Packet Analysis & Manipulation:** View, log, and modify XML/XT packets in real time.
-- **Plugin System:** Write and load custom plugins (JavaScript) to automate actions, log data, or change game behavior.
-- **Electron UI:** Desktop app for managing the proxy, viewing traffic, and interacting with plugins.
-- **Dynamic Plugin UI:** Plugins can provide their own UI windows for advanced features.
-- **Extensive Documentation:** All context, planning, and technical details are tracked in the `memory-bank/` directory.
+## ⚠️ Important Warning!
 
----
+Using tools like Strawberry Jam might break the game's rules and result in account termination. Please be careful and use it responsibly. Neither I nor Sxip are responsible for any loss of accounts.
 
-## Installation
+## 📚 Learning More
 
-1. **Clone the Repository:**
-   ```sh
-   git clone https://github.com/YOUR_USERNAME/strawberry-jam.git
-   cd strawberry-jam
-   ```
+New to Strawberry Jam? Check out our guides:
 
-2. **Install Dependencies:**
-   ```sh
-   npm install
-   ```
+*   [Understanding the Strawberry Jam Window](community-guide/understanding-ui.md)
+*   [Introduction to Packet Viewing](community-guide/packet-viewing.md)
+*   [Using and Developing Plugins](community-guide/plugins.md)
 
-3. **Run in Development Mode:**
-   ```sh
-   npm run dev
-   ```
+## 💡 Have an Idea?
 
-4. **Configure Your System:**
-   - Update your system `hosts` file to redirect AJC traffic to `127.0.0.1`.
-   - Place your API keys and settings in `settings.json` as needed.
+Got a cool idea for Strawberry Jam? We'd love to hear it!
 
-5. **Load Plugins:**
-   - Place plugin folders in the `plugins/` directory.
-   - UI plugins (like Login Packet Manipulator) require core modifications (see below).
+*   **📝 Create an Issue:**
+    *   Visit our [Issues page](https://github.com/glvckoma/strawberry-jam/issues)
+    *   Click "New Issue"
+    *   Tell us:
+        *   What your idea does
+        *   Why it would be fun/useful
+    *   Don't worry about making it perfect!
 
----
+*   **💬 Message on Discord:**
+    *   Rather chat? Message me (**_glockoma**) on Discord!
+    *   I'm always happy to hear your ideas
 
-## Upgrading from Jam
+## 👩‍💻 For Developers
 
-Strawberry Jam is a direct fork of Jam, but with:
-- Improved documentation and planning (see `memory-bank/`)
-- Updated branding and nomenclature throughout the codebase and UI
-- New plugins and plugin UI support
-- Bug fixes, stability improvements, and new features
+Want to run from source or create plugins? Here's how to get started:
 
-**All references to "Jam" in documentation, UI, and code have been updated to "Strawberry Jam" except where historical attribution is required.**
-
----
-
-## Required Core Modifications for UI Plugins
-
-> **To use advanced UI plugins (like Login Packet Manipulator), you must patch the following files:**
-
-- `src/electron/preload.js`: Expose `window.jam.onPacket` for plugin windows.
-- `src/electron/index.js`: Broadcast `packet-event` to all renderer/plugin windows.
-- `src/electron/renderer/application/index.js`: Send `packet-event` to main process when packets are processed.
-
-See the plugin's `readme.md` for code snippets and detailed instructions.
-
----
-
-## Documentation & Planning
-
-All project context, planning, and technical documentation is tracked in the `memory-bank/` directory:
-- `projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`, `activeContext.md`, `progress.md`
-
-**Please read these files for a deep understanding of the project's goals, architecture, and current status.**
-
----
-
-## Attribution
-
-Strawberry Jam is a fork of [Jam by sxip](https://github.com/Sxip/jam).  
-All original authors and contributors are acknowledged.  
-All new work is under the "Strawberry Jam" name.
-
----
-
-## License
-
-MIT
-
----
-
-## Security & Disclaimer
-
-- **Security:** Strawberry Jam is for research and educational use only. It disables many Electron security features and should not be used on untrusted systems.
-- **Account Safety:** Use at your own risk. Manipulating packets can result in bans or data loss.
-- **Distribution:** If you distribute this project or plugins, make it clear that it is a fork and requires a patched core.
-
----
+1.  Install [Node.js](https://nodejs.org)
+2.  Clone the repo:
+    ```bash
+    git clone https://github.com/glvckoma/strawberry-jam.git
+    cd strawberry-jam
+    npm install
+    npm run dev
+    ```
