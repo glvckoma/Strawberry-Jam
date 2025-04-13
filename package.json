@@ -1,15 +1,15 @@
 {
-  "name": "jam",
-  "description": "Jam is a modular man-in-the-middle proxy for Animal Jam classic.",
+  "name": "strawberry-jam",
+  "description": "strawberry jam is my personal fork of the project jam created and developed by sxip.",
   "main": "src/index.js",
-  "version": "4.0.7",
+  "version": "1.0.0",
   "scripts": {
     "dev": "npx cross-env NODE_ENV=development nodemon",
-    "build:all": "npx electron-builder build -mw"
+    "build:all": "npx electron-builder build -w"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sxip/jam.git"
+    "url": "https://github.com/glvckoma/strawberry-jam"
   },
   "devDependencies": {
     "electron": "^32.0.1",
@@ -23,17 +23,21 @@
   },
   "dependencies": {
     "ajv": "^8.6.2",
+    "axios": "^1.8.4",
     "cheerio": "^1.0.0",
     "cross-env": "^7.0.3",
     "electron-store": "^7.0.1",
     "electron-updater": "^4.3.9",
     "express": "^4.17.1",
+    "inquirer": "^12.5.2",
     "jquery": "^3.6.0",
     "live-plugin-manager": "^0.17.1",
     "node-gyp": "^8.4.1",
     "npm": "^10.8.2",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
-    "tailwindcss": "^3.4.10"
+    "tailwindcss": "^3.4.10",
+    "tree-kill": "^1.2.2",
+    "yargs": "^17.7.2"
   }
 }

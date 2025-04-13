@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Packet Manipulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS (assume available in main app context) -->
+  <link href="../../assets/css/style.css" rel="stylesheet">
+  <!-- jQuery -->
+  <script>
+    window.jQuery = window.$ = require('jquery');
+  </script>
+  <script src="../../assets/javascript/jquery-ui.js"></script>
+  <style>
+    /* Extra styling for modal overlay */
+    .modal-bg { background: rgba(0,0,0,0.5); }
+    /* Make specific elements non-draggable if needed inside a draggable region */
+    .no-drag { -webkit-app-region: no-drag; }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans h-screen flex flex-col"> <!-- Use h-screen and flex-col -->
+  <!-- Draggable Header -->
+  <div style="-webkit-app-region: drag" class="w-full h-8 bg-gray-700 flex items-center justify-between px-2 cursor-move text-sm text-gray-300 flex-shrink-0">
+    <span>Login Packet Manipulator</span>
+    <!-- Add a non-draggable area for potential buttons -->
+    <div class="no-drag">
+      <button onclick="window.close()" class="text-gray-400 hover:text-error-red text-xl font-bold focus:outline-none px-2" title="Close">&times;</button>
+    </div>
+  </div>
+
+  <!-- Warning Banner -->
+  <div class="bg-red-700 text-white px-4 py-2 text-center font-bold flex-shrink-0">
+    WARNING: Manipulating login packets can result in account bans, instability, or data loss. Use at your own risk. See README for details.
+  </div>
+
+  <!-- Main Container (Scrollable) -->
+  <div class="container mx-auto py-6 flex-grow overflow-y-auto">
+    <!-- <h1 class="text-2xl font-bold mb-4">Login Packet Manipulator</h1> --> <!-- Title moved to header -->
+    <!-- Controls -->
+    <div class="mb-4 flex flex-wrap gap-4 items-center no-drag"> <!-- Make controls non-draggable -->
+      <label>
+        <input type="checkbox" id="intercept-in" class="mr-2" checked>
+        Intercept Incoming Login Packet
+      </label>
+      <!-- Removed old filter, clear button, and outgoing intercept checkbox -->
+    </div>
+
+    <!-- Container for the dynamic login packet editor -->
+    <div id="login-packet-editor" class="flex-grow overflow-y-auto p-4 space-y-3 bg-gray-800 rounded shadow mb-4">
+      <p class="text-gray-400 italic">Waiting for incoming login packet (`_cmd: "login"`)...</p>
+      <!-- Input fields will be generated here by JS -->
+    </div>
+
+    <!-- Sectioned Params Editor (hidden by default, shown by JS when params are present) -->
+    <div id="params-section" class="hidden bg-gray-900 rounded-lg shadow p-4 mb-4 border-l-4 border-blue-700">
+      <h2 class="text-lg font-bold text-blue-300 mb-2">Login Packet Parameters</h2>
+      <div id="params-fields" class="space-y-4">
+        <!-- Sectioned param fields will be generated here by JS -->
+      </div>
+    </div>
+
+    <!-- Button to send the modified packet -->
+    <div class="mt-4">
+       <button id="send-modified-login" class="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded w-full disabled:opacity-50 disabled:cursor-not-allowed" disabled>Send Modified Login Packet to Client</button>
+    </div>
+
+  </div> <!-- End of Main Container -->
+
+  <!-- Packet Inspector/Editor Modal -->
+  <div id="packet-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+    <div class="modal-bg absolute inset-0"></div>
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6 z-10 w-full max-w-2xl relative">
+      <button id="close-modal" class="absolute top-2 right-2 text-gray-400 hover:text-white">&times;</button>
+      <h2 class="text-xl font-bold mb-2" id="modal-title">Packet Inspector</h2>
+      <div class="mb-2">
+        <label class="block font-semibold mb-1">Raw Packet Data:</label>
+        <textarea id="modal-raw" class="w-full h-32 bg-gray-900 border border-gray-700 rounded p-2 font-mono text-sm"></textarea>
+      </div>
+      <div class="mb-2">
+        <label class="block font-semibold mb-1">Parsed Summary:</label>
+        <pre id="modal-summary" class="bg-gray-900 border border-gray-700 rounded p-2 text-sm"></pre>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button id="send-modified" class="bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded">Send as Modified</button>
+        <button id="block-packet" class="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded">Block Packet</button>
+        <button id="replay-packet" class="bg-blue-700 hover:bg-blue-600 text-white px-3 py-1 rounded">Replay Packet</button>
+      </div>
+    </div>
+  </div>
+  -->
+
+  <!-- Status/Warning Panel -->
+  <div class="fixed bottom-0 left-0 w-full bg-gray-800 text-gray-300 px-4 py-2 text-xs" id="status-panel">
+    Plugin loaded. All actions are logged here.
+  </div>
+
+  <!-- Plugin Logic -->
+  <script src="index.js"></script>
+</body>
+</html>

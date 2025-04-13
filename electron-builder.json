@@ -1,21 +1,8 @@
 {
-  "productName": "jam",
+  "productName": "strawberry-jam",
   "electronVersion": "32.0.1",
   "directories": {
     "output": "build"
-  },
-  "mac": {
-    "files": [
-      "src/**/*"
-    ],
-    "asar": "true",
-    "target": {
-      "target": "dmg",
-      "arch": [
-        "x64"
-      ]
-    },
-    "icon": "./assets/icon.png"
   },
   "win": {
     "files": [
@@ -30,14 +17,60 @@
       ]
     }
   },
+  "mac": {
+    "files": [
+      "src/**/*"
+    ],
+    "icon": "./assets/icon.png",
+    "asar": "true",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      }
+    ]
+  },
   "extraFiles": [
-    "plugins/**/*",
-    "assets/**/*",
+    "plugins/advertising/**/*",
+    "plugins/chat/**/*",
+    "plugins/invisibleToggle/**/*",
+    "plugins/login/**/*",
+    "plugins/loginPacketManipulator/**/*",
+    "plugins/membership/**/*",
+    "plugins/room/**/*",
+    "plugins/spammer/**/*",
+    {
+      "from": "assets",
+      "to": "assets",
+      "filter": [
+        "**/*",
+        "!extracted-winapp/**/*",
+        "!memory-bank/**/*"
+      ]
+    },
     "public/**/*",
     "settings.json"
   ],
   "extraResources": [
-    "assets/",
+    {
+      "from": "assets",
+      "to": "assets",
+      "filter": [
+        "**/*",
+        "!extracted-winapp/**/*",
+        "!memory-bank/**/*"
+      ]
+    },
     "public/"
   ],
   "publish": {

@@ -1,47 +1,108 @@
-<div align="center">
-  <a href='https://discord.gg/HzFe7XpuPs'>
-    <img src="https://discord.com/api/guilds/1355727306177380392/widget.png?style=shield" alt="Discord" />
-  </a>
-</div>
+# Strawberry Jam
 
-<br />
+**A modular MITM proxy and plugin platform for Animal Jam Classic**  
+_Forked from [Jam by sxip](https://github.com/Sxip/jam)_
 
-Jam is a modular man-in-the-middle proxy designed for [Animal Jam Classic](https://classic.animaljam.com). Built with [Node.js](https://nodejs.org) and [Electron](https://www.electronjs.org), Jam provides powerful tools and flexibility for your Animal Jam experience.
+---
+
+## What is Strawberry Jam?
+
+Strawberry Jam is a powerful, extensible Man-in-the-Middle (MITM) proxy and plugin system for Animal Jam Classic. It allows you to intercept, analyze, and modify network traffic between the AJC client and servers, develop custom plugins, and automate or enhance gameplay in ways not possible with the official client.
+
+> **This project is a fork of the original [Jam](https://github.com/Sxip/jam) by sxip. All new work, documentation, and branding is under the name "Strawberry Jam".**
+
+---
 
 ## Features
 
-- **Modular Architecture:** Extend and customize your proxy setup with various plugins.
-- **User-Friendly Interface:** Developed with Electron for a seamless desktop experience.
-- **Active Development:** Regular updates and community support.
+- **MITM Proxy:** Intercept and forward all AJC network traffic (port 443).
+- **Packet Analysis & Manipulation:** View, log, and modify XML/XT packets in real time.
+- **Plugin System:** Write and load custom plugins (JavaScript) to automate actions, log data, or change game behavior.
+- **Electron UI:** Desktop app for managing the proxy, viewing traffic, and interacting with plugins.
+- **Dynamic Plugin UI:** Plugins can provide their own UI windows for advanced features.
+- **Extensive Documentation:** All context, planning, and technical details are tracked in the `memory-bank/` directory.
 
-## Table of Contents
-- [Installation](#installation)
-  - [Windows](#windows)
-  - [MacOS](#macos)
-  - [Run from source](#run-from-source)
-- [Guides](#guides)
-  - [Playing Animal Jam Play Wild with Jam](docs/play-wild.md)
-  - [Running and Troubleshooting Jam on macOS](docs/macos-guide.md)
-  - [Community Guide](community-guide/guide.md)
-
+---
 
 ## Installation
 
-### Windows
+1. **Clone the Repository:**
+   ```sh
+   git clone https://github.com/YOUR_USERNAME/strawberry-jam.git
+   cd strawberry-jam
+   ```
 
-1. Download the latest version of [Jam-Setup.exe](https://github.com/sxip/jam/releases/latest).
-2. Extract the downloaded file.
-3. Run `jam.exe` to start the application.
+2. **Install Dependencies:**
+   ```sh
+   npm install
+   ```
 
-### MacOS
+3. **Run in Development Mode:**
+   ```sh
+   npm run dev
+   ```
 
-1. Download the latest version of [Jam.dmg](https://github.com/sxip/jam/releases/latest).
-2. Mount the downloaded file.
-3. Install `Jam` by moving it to the Applications folder
-4. Run `sudo /Applications/Jam.app/Contents/MacOS/Jam` to start the application.
+4. **Configure Your System:**
+   - Update your system `hosts` file to redirect AJC traffic to `127.0.0.1`.
+   - Place your API keys and settings in `settings.json` as needed.
 
-## Run from source
+5. **Load Plugins:**
+   - Place plugin folders in the `plugins/` directory.
+   - UI plugins (like Login Packet Manipulator) require core modifications (see below).
 
-1. Clone the repository.
-2. Install dependencies with `npm install`.
-3. Run `npm run dev` to start the application.
+---
+
+## Upgrading from Jam
+
+Strawberry Jam is a direct fork of Jam, but with:
+- Improved documentation and planning (see `memory-bank/`)
+- Updated branding and nomenclature throughout the codebase and UI
+- New plugins and plugin UI support
+- Bug fixes, stability improvements, and new features
+
+**All references to "Jam" in documentation, UI, and code have been updated to "Strawberry Jam" except where historical attribution is required.**
+
+---
+
+## Required Core Modifications for UI Plugins
+
+> **To use advanced UI plugins (like Login Packet Manipulator), you must patch the following files:**
+
+- `src/electron/preload.js`: Expose `window.jam.onPacket` for plugin windows.
+- `src/electron/index.js`: Broadcast `packet-event` to all renderer/plugin windows.
+- `src/electron/renderer/application/index.js`: Send `packet-event` to main process when packets are processed.
+
+See the plugin's `readme.md` for code snippets and detailed instructions.
+
+---
+
+## Documentation & Planning
+
+All project context, planning, and technical documentation is tracked in the `memory-bank/` directory:
+- `projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`, `activeContext.md`, `progress.md`
+
+**Please read these files for a deep understanding of the project's goals, architecture, and current status.**
+
+---
+
+## Attribution
+
+Strawberry Jam is a fork of [Jam by sxip](https://github.com/Sxip/jam).  
+All original authors and contributors are acknowledged.  
+All new work is under the "Strawberry Jam" name.
+
+---
+
+## License
+
+MIT
+
+---
+
+## Security & Disclaimer
+
+- **Security:** Strawberry Jam is for research and educational use only. It disables many Electron security features and should not be used on untrusted systems.
+- **Account Safety:** Use at your own risk. Manipulating packets can result in bans or data loss.
+- **Distribution:** If you distribute this project or plugins, make it clear that it is a fork and requires a patched core.
+
+---

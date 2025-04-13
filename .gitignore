@@ -3,5 +3,9 @@ build/
 dev-app-update.yml
 plugin_packages/
 .DS_Store
-assets/winapp/
-assets/osxapp/
+assets/extracted-winapp/
+memory-bank/
+plugins/UsernameLogger/
+data/
+assets/memory-bank/
+settings.json

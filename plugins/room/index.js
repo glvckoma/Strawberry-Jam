@@ -8,7 +8,7 @@ module.exports = function ({ application, dispatch }) {
   }
 
   /**
-   * Hooks the room join message.
+   * Hooks the room join packet.
    */
   dispatch.onMessage({
     type: 'aj',

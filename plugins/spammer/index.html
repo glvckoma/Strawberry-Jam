@@ -1,4 +1,11 @@
 <body class="bg-primary-bg text-text-primary p-6 h-screen flex flex-col">
+  <!-- Draggable Header with Close Button -->
+  <div style="-webkit-app-region: drag;" class="flex items-center justify-between bg-secondary-bg rounded-t-md px-4 py-2 mb-2 select-none">
+    <span class="font-bold text-lg">Packet Spammer</span>
+    <button onclick="window.close()" style="-webkit-app-region: no-drag;" class="text-gray-400 hover:text-error-red text-xl font-bold focus:outline-none px-2">
+      &times;
+    </button>
+  </div>
   <!-- Main Content -->
   <div class="flex-1 flex flex-col space-y-4">
     <!-- Table -->

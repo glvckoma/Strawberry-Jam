@@ -2,10 +2,9 @@ const path = require('path')
 const os = require('os')
 const { rename, copyFile, rm, mkdir } = require('fs/promises')
 const { existsSync } = require('fs')
-const { execFile } = require('child_process')
+const { spawn } = require('child_process')
+const treeKill = require('tree-kill')
 const { promisify } = require('util')
-
-const execFileAsync = promisify(execFile)
 
 /**
  * Animal Jam Classic base path.
@@ -51,11 +50,50 @@ module.exports = class Patcher {
           ? path.join(ANIMAL_JAM_CLASSIC_BASE_PATH, 'MacOS', 'AJ Classic')
           : undefined
 
-      this._animalJamProcess = await execFileAsync(exePath)
+      // Launch the game process using spawn for robust process tracking
+      this._animalJamProcess = spawn(exePath, [], { detached: false, stdio: 'ignore' })
+
+      // On game process exit, restore the original ASAR
+      this._animalJamProcess.on('exit', async (code, signal) => {
+        try {
+          await this.restoreOriginalAsar()
+          console.log('Original app.asar restored after game process exit.')
+        } catch (err) {
+          console.error(`Failed to restore original app.asar after game exit: ${err.message}`)
+        }
+      })
+
+      // Handle Jam process exit (SIGINT, etc.) to ensure cleanup
+      const cleanup = async () => {
+        if (this._animalJamProcess && this._animalJamProcess.pid) {
+          // Use tree-kill to terminate the entire process tree
+          treeKill(this._animalJamProcess.pid, 'SIGKILL', async (err) => {
+            if (err) {
+              console.error(`Failed to kill game process tree: ${err.message}`)
+            }
+            try {
+              await this.restoreOriginalAsar()
+              console.log('Original app.asar restored on Jam exit.')
+            } catch (restoreErr) {
+              console.error(`Failed to restore original app.asar on Jam exit: ${restoreErr.message}`)
+            }
+            process.exit()
+          })
+        } else {
+          try {
+            await this.restoreOriginalAsar()
+          } catch (err) {
+            console.error(`Failed to restore original app.asar on Jam exit: ${err.message}`)
+          }
+          process.exit()
+        }
+      }
+
+      process.on('SIGINT', cleanup)
+      process.on('SIGTERM', cleanup)
+      process.on('exit', cleanup)
     } catch (error) {
       console.error(`Failed to start Animal Jam Classic process: ${error.message}`)
-    } finally {
-      await this.restoreOriginalAsar()
     }
   }
 

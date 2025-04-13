@@ -8,6 +8,41 @@ const Dispatch = require('./dispatch')
 const HttpClient = require('../../../services/HttpClient')
 const ModalSystem = require('./modals')
 
+/**
+ * Message status icons.
+ * @type {Object}
+ * @constant
+ */
+const messageStatus = Object.freeze({
+  success: {
+    icon: 'success.png'
+  },
+  logger: {
+    icon: 'logger.png'
+  },
+  action: {
+    icon: 'action.png'
+  },
+  wait: {
+    icon: 'wait.png'
+  },
+  celebrate: {
+    icon: 'celebrate.png'
+  },
+  warn: {
+    icon: 'warn.png'
+  },
+  notify: {
+    icon: 'notify.png'
+  },
+  speech: {
+    icon: 'speech.png'
+  },
+  error: {
+    icon: 'error.png'
+  }
+})
+
 module.exports = class Application extends EventEmitter {
   /**
    * Constructor.
@@ -84,6 +119,41 @@ module.exports = class Application extends EventEmitter {
         this.$input.val('')
       }
     })
+
+    /**
+     * Maximum number of log entries to keep before cleaning.
+     * @type {number}
+     * @private
+     */
+    this._maxLogEntries = 600;
+
+    /**
+     * Percentage of logs to remove when cleaning.
+     * @type {number}
+     * @private
+     */
+    this._cleanPercentage = 0.4; // Remove 40%
+
+    /**
+     * Current count of packet log entries.
+     * @type {number}
+     * @private
+     */
+    this._packetLogCount = 0;
+
+    /**
+     * Current count of application message entries.
+     * @type {number}
+     * @private
+     */
+    this._appMessageCount = 0;
+
+    /**
+     * The reference to the play button element.
+     * @type {HTMLElement | null}
+     * @private
+     */
+    this.$playButton = document.getElementById('playButton'); // Use vanilla JS as jQuery might not be ready
   }
 
   /**
@@ -108,7 +178,46 @@ module.exports = class Application extends EventEmitter {
         })
       }
     } catch (error) {
-      console.error(`Unexpected error occurred while trying to check for host changes: ${error.message}`)
+      this.consoleMessage({ type: 'error', message: `Error loading settings: ${error.message}` })
+    }
+  }
+
+  /**
+   * Sets up IPC listeners for messages forwarded from plugin windows.
+   * @private
+   */
+  _setupPluginIPC () {
+    if (typeof require === "function") {
+      try {
+        const { ipcRenderer } = require('electron');
+        console.log("[Main Renderer] Setting up plugin IPC listeners...");
+
+        ipcRenderer.on('plugin-remote-message', (event, msg) => {
+          console.log("[Main Renderer] Received plugin-remote-message:", msg);
+          if (this.dispatch && typeof this.dispatch.sendRemoteMessage === 'function') {
+            this.dispatch.sendRemoteMessage(msg).catch(err => {
+              this.consoleMessage({ type: 'error', message: `Error sending remote message from plugin: ${err.message}` });
+            });
+          } else {
+            this.consoleMessage({ type: 'error', message: 'Cannot send remote message: Dispatch not ready.' });
+          }
+        });
+
+        ipcRenderer.on('plugin-connection-message', (event, msg) => {
+          console.log("[Main Renderer] Received plugin-connection-message:", msg);
+          if (this.dispatch && typeof this.dispatch.sendConnectionMessage === 'function') {
+            this.dispatch.sendConnectionMessage(msg).catch(err => {
+              this.consoleMessage({ type: 'error', message: `Error sending connection message from plugin: ${err.message}` });
+            });
+          } else {
+            this.consoleMessage({ type: 'error', message: 'Cannot send connection message: Dispatch not ready.' });
+          }
+        });
+
+        console.log("[Main Renderer] Plugin IPC listeners setup complete.");
+      } catch (e) {
+        console.error("[Main Renderer] Error setting up plugin IPC listeners:", e);
+      }
     }
   }
 
@@ -178,6 +287,19 @@ module.exports = class Application extends EventEmitter {
     this.dispatch.onMessage({
       type: '*',
       callback: ({ message, type }) => {
+        // Broadcast packet event to main process for UI plugins
+        if (typeof require === "function") {
+          try {
+            const { ipcRenderer } = require('electron');
+            ipcRenderer.send('packet-event', {
+              raw: message.toMessage(),
+              direction: type === 'aj' ? 'in' : 'out',
+              timestamp: Date.now()
+            });
+          } catch (e) {
+            // Ignore if not available
+          }
+        }
         this.consoleMessage({
           type: 'speech',
           isPacket: true,
@@ -347,20 +469,11 @@ module.exports = class Application extends EventEmitter {
   }
 
   /**
-   * Displays a new console message with optimized rendering.
-   * @param {Object} options - The message configuration object
-   * @param {string} options.message - The message content to display
-   * @param {string} [options.type='success'] - The message type (success, error, etc.)
-   * @param {boolean} [options.withStatus=true] - Whether to show status icon
-   * @param {boolean} [options.time=true] - Whether to show timestamp
-   * @param {boolean} [options.isPacket=false] - Whether this is a packet message
-   * @param {boolean} [options.isIncoming=false] - For packets, whether it's incoming or outgoing
-   * @param {Object} [options.details=null] - Additional details for expandable content
+   * Displays a new console message.
+   * @param message
    * @public
    */
   consoleMessage ({ message, type = 'success', withStatus = true, time = true, isPacket = false, isIncoming = false, details = null } = {}) {
-    if (!message) return
-
     const baseTypeClasses = {
       success: 'bg-highlight-green/10 border-l-4 border-highlight-green text-highlight-green',
       error: 'bg-error-red/10 border-l-4 border-error-red text-error-red',
@@ -379,36 +492,26 @@ module.exports = class Application extends EventEmitter {
     }
 
     const createElement = (tag, classes = '', content = '') => {
-      return $('<' + tag + '>').addClass(classes + ' message-animate-in').html(content)
+      return $('<' + tag + '>').addClass(classes).html(content)
     }
 
     const getTime = () => {
       const now = new Date()
-      const hours = String(now.getHours()).padStart(2, '0')
-      const minutes = String(now.getMinutes()).padStart(2, '0')
-      const seconds = String(now.getSeconds()).padStart(2, '0')
-      return `${hours}:${minutes}:${seconds}`
+      const hour = String(now.getHours()).padStart(2, '0')
+      const minute = String(now.getMinutes()).padStart(2, '0')
+      const second = String(now.getSeconds()).padStart(2, '0')
+      return `${hour}:${minute}:${second}`
     }
 
     const status = (type, message) => {
-      const icons = {
-        success: 'fa-check-circle',
-        error: 'fa-times-circle',
-        wait: 'fa-spinner fa-pulse',
-        celebrate: 'fa-trophy',
-        warn: 'fa-exclamation-triangle',
-        notify: 'fa-info-circle',
-        speech: 'fa-comment-alt',
-        logger: 'fa-file-alt',
-        action: 'fa-bolt'
-      }
-
-      return `<div class="flex items-center space-x-2 w-full">
-        <div class="flex">
-          <i class="fas ${icons[type] || 'fa-circle'} mr-2"></i>
+      const statusInfo = messageStatus[type]
+      if (!statusInfo) throw new Error('Invalid Status Type.')
+      return `
+        <div class="flex items-center space-x-2">
+          <img src="app://assets/icons/${statusInfo.icon}" class="w-4 h-4 opacity-90" />
+          <span class="font-medium">${message || ''}</span>
         </div>
-        <span>${message}</span>
-      </div>`
+      `
     }
 
     const $container = createElement(
@@ -447,7 +550,13 @@ module.exports = class Application extends EventEmitter {
       }
     }
 
-    $messageContainer.addClass('overflow-hidden text-ellipsis whitespace-normal break-words')
+    $messageContainer.css({
+      overflow: 'hidden',
+      'text-overflow': 'ellipsis',
+      'white-space': 'normal',
+      'word-break': 'break-word'
+    })
+
     $container.append($messageContainer)
 
     if (isPacket && details) {
@@ -461,23 +570,22 @@ module.exports = class Application extends EventEmitter {
 
       const $copyButton = createElement(
         'button',
-        'text-xs text-gray-400 hover:text-text-primary transition-colors px-2 py-1 rounded hover:bg-tertiary-bg/20 ml-1',
+        'text-xs text-gray-400 hover:text-text-primary transition-colors ml-1 px-2 py-1 rounded hover:bg-tertiary-bg/20',
         '<i class="fas fa-copy mr-1"></i> Copy'
       )
 
       $copyButton.on('click', (e) => {
         e.stopPropagation()
+        navigator.clipboard.writeText(message)
+
         const originalHtml = $copyButton.html()
+        $copyButton.html('<i class="fas fa-check mr-1"></i> Copied!')
+        $copyButton.addClass('text-highlight-green')
 
-        navigator.clipboard.writeText(message).then(() => {
-          $copyButton.html('<i class="fas fa-check mr-1"></i> Copied!')
-          $copyButton.addClass('text-highlight-green')
-
-          setTimeout(() => {
-            $copyButton.html(originalHtml)
-            $copyButton.removeClass('text-highlight-green')
-          }, 1500)
-        })
+        setTimeout(() => {
+          $copyButton.html(originalHtml)
+          $copyButton.removeClass('text-highlight-green')
+        }, 1500)
       })
 
       $actionsContainer.append($detailsButton, $copyButton)
@@ -510,80 +618,164 @@ module.exports = class Application extends EventEmitter {
       })
     }
 
+    // Determine the target container based on message type
+    const $targetContainer = isPacket ? $('#message-log') : $('#messages');
+    
+    // Update counters for packet logs
     if (isPacket) {
-      const $totalCount = $('#totalCount')
-      const $incomingCount = $('#incomingCount')
-      const $outgoingCount = $('#outgoingCount')
+      const $totalCount = $('#totalCount');
+      const $incomingCount = $('#incomingCount');
+      const $outgoingCount = $('#outgoingCount');
 
-      const totalCount = parseInt($totalCount.text() || '0', 10) + 1
-      $totalCount.text(totalCount)
+      const totalCount = parseInt($totalCount.text() || '0', 10) + 1;
+      $totalCount.text(totalCount);
 
       if (isIncoming) {
-        const incomingCount = parseInt($incomingCount.text() || '0', 10) + 1
-        $incomingCount.text(incomingCount)
+        const incomingCount = parseInt($incomingCount.text() || '0', 10) + 1;
+        $incomingCount.text(incomingCount);
       } else {
-        const outgoingCount = parseInt($outgoingCount.text() || '0', 10) + 1
-        $outgoingCount.text(outgoingCount)
+        const outgoingCount = parseInt($outgoingCount.text() || '0', 10) + 1;
+        $outgoingCount.text(outgoingCount);
       }
-
-      $('#message-log').append($container)
-
-      const $messageLog = $('#message-log')
-      const messageLogEl = $messageLog[0]
-      const isAtBottom = messageLogEl.scrollHeight - messageLogEl.scrollTop - $messageLog.innerHeight() <= 30
-
-      if (isAtBottom) {
-        requestAnimationFrame(() => {
-          messageLogEl.scrollTop = messageLogEl.scrollHeight
-        })
+      
+      // Increment packet log count and check if cleaning is needed
+      this._packetLogCount++;
+      if (this._packetLogCount > this._maxLogEntries) {
+        this._cleanOldLogs($targetContainer, true);
       }
     } else {
-      $('#messages').append($container)
-
-      const $messages = $('#messages')
-      const messagesEl = $messages[0]
-
-      requestAnimationFrame(() => {
-        messagesEl.scrollTop = messagesEl.scrollHeight
-      })
-    }
-
-    if (window.applyFilter) {
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(() => window.applyFilter())
-      } else {
-        setTimeout(() => window.applyFilter(), 0)
+      // Increment app message count and check if cleaning is needed
+      this._appMessageCount++;
+      if (this._appMessageCount > this._maxLogEntries) {
+        this._cleanOldLogs($targetContainer, false);
       }
     }
-  }
+
+    // Append the container to the appropriate target
+    $targetContainer.append($container);
+
+    // Auto-scroll logic
+    const isAtBottom = $targetContainer.scrollTop() + $targetContainer.innerHeight() >= $targetContainer[0].scrollHeight - 30;
+    if (isAtBottom) {
+      $targetContainer.scrollTop($targetContainer[0].scrollHeight);
+    }
+
+
+    if (window.applyFilter) window.applyFilter()
+  } // End of consoleMessage method
 
   /**
-   * Opens Animal Jam Classic
+   * Cleans old log entries from the specified container.
+   * @param {JQuery<HTMLElement>} $logContainer - The jQuery object for the log container.
+   * @param {boolean} isPacketLog - Whether the container is for packet logs.
+   * @private
+   */
+  _cleanOldLogs($logContainer, isPacketLog) {
+    const entriesToRemove = Math.floor(this._maxLogEntries * this._cleanPercentage);
+    const $entries = $logContainer.children('div'); // Assuming logs are direct div children
+    const currentTotal = $entries.length;
+
+    if (currentTotal <= this._maxLogEntries) {
+      return; // No need to clean yet
+    }
+
+    const numberToRemove = Math.min(entriesToRemove, currentTotal - (this._maxLogEntries * (1 - this._cleanPercentage))); // Ensure we don't remove too many
+    const logsToRemove = $entries.slice(0, numberToRemove);
+
+    let removedIncoming = 0;
+    let removedOutgoing = 0;
+
+    if (isPacketLog) {
+      // Count incoming/outgoing packets being removed
+      logsToRemove.each(function() {
+        if ($(this).hasClass('bg-tertiary-bg/20')) { // Incoming class check
+          removedIncoming++;
+        } else if ($(this).hasClass('bg-highlight-green/5')) { // Outgoing class check
+          removedOutgoing++;
+        }
+      });
+    }
+
+    logsToRemove.remove();
+
+    const newCount = $logContainer.children('div').length;
+
+    // Update counters and internal state
+    if (isPacketLog) {
+      this._packetLogCount = newCount;
+
+      const $totalCount = $('#totalCount');
+      const $incomingCount = $('#incomingCount');
+      const $outgoingCount = $('#outgoingCount');
+
+      const currentTotalCount = parseInt($totalCount.text() || '0', 10);
+      const currentIncomingCount = parseInt($incomingCount.text() || '0', 10);
+      const currentOutgoingCount = parseInt($outgoingCount.text() || '0', 10);
+
+      $totalCount.text(Math.max(0, currentTotalCount - numberToRemove));
+      $incomingCount.text(Math.max(0, currentIncomingCount - removedIncoming));
+      $outgoingCount.text(Math.max(0, currentOutgoingCount - removedOutgoing));
+
+    } else {
+      this._appMessageCount = newCount;
+    }
+
+    // Add a notification message about the cleaning
+    this.consoleMessage({
+        message: `Cleaned ${numberToRemove} oldest log entries to maintain performance.`,
+        type: 'notify',
+        isPacket: false // Ensure this notification goes to the app messages log
+    });
+
+    console.log(`Cleaned ${numberToRemove} old log entries from ${isPacketLog ? 'packet log' : 'app messages'}. New count: ${newCount}`);
+  }
+
+
+  /**
+   * Opens Animal Jam Classic, disabling the button during patching.
    * @returns {Promise<void>}
    * @public
    */
-  openAnimalJam () {
+  async openAnimalJam () {
+    if (!this.$playButton) {
+      console.error("Play button element not found!");
+      this.$playButton = document.getElementById('playButton'); // Try to get it again
+      if (!this.$playButton) return; // Still not found, exit
+    }
+
+    // Disable button and apply styles
+    this.$playButton.classList.add('opacity-50', 'pointer-events-none');
+    this.$playButton.onclick = () => false; // Prevent further clicks via onclick
+
     try {
-      return this.patcher.killProcessAndPatch()
+      this.consoleMessage({ message: 'Patching and launching Animal Jam Classic...', type: 'wait' });
+      await this.patcher.killProcessAndPatch(); // Await the patching process
+      this.consoleMessage({ message: 'Animal Jam Classic launched.', type: 'success' });
     } catch (error) {
       this.consoleMessage({
-        message: `Unexpected error occurred while trying to patch Animal Jam Classic. ${error.message}`,
+        message: `Error patching/launching Animal Jam Classic: ${error.message}`,
         type: 'error'
-      })
+      });
+    } finally {
+      // Re-enable button and remove styles regardless of success/failure
+      if (this.$playButton) {
+        this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
+        // Restore original onclick behavior
+        this.$playButton.onclick = () => jam.application.openAnimalJam();
+      }
     }
   }
 
   /**
-   * Renders a plugin item in the sidebar.
-   * @param {Object} plugin - The plugin configuration object
-   * @returns {JQuery<HTMLElement>} - The rendered plugin element
+   * Renders a plugin item
+   * @param {Object} plugin
+   * @returns {JQuery<HTMLElement>}
    */
   renderPluginItems ({ name, type, description, author = 'Sxip' } = {}) {
     const getIconClass = () => {
       switch (type) {
         case 'ui': return 'fa-desktop'
         case 'game': return 'fa-gamepad'
-        default: return 'fa-plug'
       }
     }
 
@@ -591,33 +783,26 @@ module.exports = class Application extends EventEmitter {
       switch (type) {
         case 'ui': return 'text-highlight-green bg-highlight-green/10'
         case 'game': return 'text-highlight-yellow bg-highlight-yellow/10'
-        default: return 'text-blue-400 bg-blue-400/10'
       }
     }
 
     const onClickEvent = type === 'ui' ? () => jam.application.dispatch.open(name) : null
 
-    const $listItem = $('<li>', {
-      class: `plugin-item ${type === 'ui' ? 'group' : ''}`,
-      'data-plugin-name': name.toLowerCase(),
-      'data-plugin-type': type
-    })
-
+    const $listItem = $('<li>', { class: type === 'ui' ? 'group' : '' })
     const $container = $('<div>', {
-      class: `flex items-center px-3 py-3.5 ${type === 'ui' ? 'hover:bg-tertiary-bg/70 cursor-pointer' : ''} rounded-md transition-colors duration-150`,
+      class: `flex items-center px-3 py-3.5 ${type === 'ui' ? 'hover:bg-tertiary-bg cursor-pointer' : ''} rounded-md transition-colors`,
       click: onClickEvent
     })
 
     const $iconContainer = $('<div>', {
-      class: `w-8 h-8 flex items-center justify-center ${getIconColorClass()} rounded-md mr-3 flex-shrink-0 transition-transform group-hover:scale-110`
+      class: `w-8 h-8 flex items-center justify-center ${getIconColorClass()} rounded mr-3 flex-shrink-0`
     }).append($('<i>', { class: `fas ${getIconClass()} text-base` }))
 
     const $contentContainer = $('<div>', { class: 'flex-1 min-w-0' })
-
-    const $titleRow = $('<div>', { class: 'flex items-center justify-between' })
+    const $titleRow = $('<div>', { class: 'flex items-center' })
 
     $titleRow.append($('<span>', {
-      class: 'text-sidebar-text font-medium truncate text-[15px] group-hover:text-text-primary transition-colors',
+      class: 'text-sidebar-text font-medium whitespace-normal break-words text-[15px]', // Removed truncate, added wrapping
       text: name
     }))
 
@@ -641,44 +826,16 @@ module.exports = class Application extends EventEmitter {
     }))
 
     const $description = $('<p>', {
-      class: 'text-xs text-gray-400 truncate mt-1.5',
-      text: description || `${type.charAt(0).toUpperCase() + type.slice(1)} plugin for Animal Jam`,
-      title: description
+      class: 'text-xs text-gray-400 whitespace-normal break-words mt-1.5', // Removed truncate, added wrapping
+      text: description || `${type.charAt(0).toUpperCase() + type.slice(1)} plugin for Animal Jam`
     })
-
-    if (type === 'game') {
-      const $actionButton = $('<button>', {
-        class: 'ml-2 text-gray-400 hover:text-text-primary p-1 rounded-full hover:bg-tertiary-bg/50 transition-colors opacity-0 group-hover:opacity-100',
-        html: '<i class="fas fa-ellipsis-v text-xs"></i>',
-        title: 'Plugin options'
-      })
-
-      $actionButton.on('click', (e) => {
-        e.stopPropagation()
-      })
-
-      $iconContainer.after($actionButton)
-    }
 
     $contentContainer.append($titleRow, $metaRow, $description)
     $container.append($iconContainer, $contentContainer)
     $listItem.append($container)
 
-    $listItem.css({
-      opacity: 0,
-      transform: 'translateX(-10px)'
-    })
-
     if (type === 'ui') this.$pluginList.prepend($listItem)
     else this.$pluginList.append($listItem)
-
-    setTimeout(() => {
-      $listItem.css({
-        transition: 'opacity 0.3s ease-out, transform 0.3s ease-out',
-        opacity: 1,
-        transform: 'translateX(0)'
-      })
-    }, 50)
 
     return $listItem
   }
@@ -694,10 +851,18 @@ module.exports = class Application extends EventEmitter {
       this.dispatch.load()
     ])
 
+    /**
+     * Simple check for the host changes for animal jam classic.
+     */
     const secureConnection = this.settings.get('secureConnection')
     if (secureConnection) await this._checkForHostChanges()
 
     await this.server.serve()
+    this._setupPluginIPC(); // Call the setup function here
     this.emit('ready')
+
+    // Signal to main process that renderer is ready (for auto-resume logic)
+    console.log('[Renderer] Application instantiated, sending renderer-ready signal.');
+    ipcRenderer.send('renderer-ready');
   }
 }

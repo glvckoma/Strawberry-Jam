@@ -1,0 +1,55 @@
+# Strawberry Jam 
+
+## Project Nomenclature & Origin
+
+-   **Project Name:** This project is officially named **Strawberry Jam**. Please use this name consistently in all documentation, code comments, and user-facing text.
+-   **Origin:** Strawberry Jam is a **fork** of the original **Jam** project created by **sxip** ([https://github.com/Sxip/jam](https://github.com/Sxip/jam)). Acknowledge this origin where appropriate.
+-   **Nomenclature Updates:** Gradually update remaining instances of "Jam" to "Strawberry Jam" across the codebase and documentation as files are modified.
+
+## Memory Bank Separation Policy
+
+-   **Core Strawberry Jam proxy, plugin, and Electron app development context, progress, and planning must be tracked exclusively in `memory-bank/` at the project root.**
+-   **Account Tester, ASAR-patched client, and all related UI work (including modularization, IPC, state persistence, and UI/UX for the tester) must be tracked exclusively in `assets/memory-bank/`.**
+-   **No Account Tester/ASAR-specific requirements, enhancements, or progress should appear in the main memory-bank.**
+-   **No core Strawberry Jam proxy/plugin/Electron work should appear in the assets memory-bank.**
+-   This separation must be maintained for all documentation, context, and planning. When new work arises, document it in the appropriate memory-bank according to this policy.
+
+## Core Instability: "Invalid Status Type" Error"
+
+-   **Symptom:** A recurring error message, often "Invalid Status Type" or "Failed executing the command... Invalid Status Type", appears during various operations.
+-   **Affected Areas:**
+    -   Plugin loading (especially involving synchronous file I/O or specific `application.consoleMessage` calls during startup).
+    -   Chat command execution via `dispatch.onCommand` callbacks (seems unable to reliably handle missing parameters, complex/asynchronous logic, or potentially the callback execution itself).
+    -   Sending messages via `dispatch.sendRemoteMessage` from within timer callbacks (`setInterval` or `setTimeout`), affecting both "game" and "ui" type plugins (though failure might manifest differently in UI plugins, e.g., silent failure or promise rejection).
+-   **Root Cause:** Suspected to be an internal bug or instability within Jam's core systems, likely related to:
+    -   **Primary Suspect:** Calls to `application.consoleMessage` with an invalid `type` argument. The method explicitly throws this error for unknown types. This likely occurs indirectly via unstable command callbacks or timed operations that fail and attempt to log an error using an incorrect type.
+    -   Error handling within the command execution logic in `Application` class (when parameters are missing or the callback fails/is async).
+    -   Error handling within `dispatch.sendRemoteMessage` or its promise resolution/completion when called from timers (in any plugin context).
+    -   Synchronous file I/O during plugin initialization (`nearbyUsernames`).
+-   **Workaround:** Avoid relying on features that trigger this error (complex/async chat commands, timed packet sending from plugins of *any* type). Prefer passive plugins (that only hook messages) and external Node.js scripts for complex logic or actions. Use standard `console.error` or known valid types with `application.consoleMessage` for logging critical errors during plugin startup.
+
+## Security Concerns
+
+-   **Electron Configuration:** The project uses insecure defaults (`nodeIntegration: true`, `contextIsolation: false`, `webSecurity: false`). This is a major risk, especially combined with the plugin system. Refactoring to use `contextBridge` and secure defaults is highly recommended but would require significant changes to plugins and potentially the core UI.
+-   **TLS Validation:** `rejectUnauthorized: false` is used when connecting to the game server. This is necessary for basic MITM but prevents validation of the server's certificate, opening risks on untrusted networks.
+-   **Plugin Loading:** Uses `live-plugin-manager` and direct `require()`, allowing plugins and their dependencies arbitrary code execution. This is extremely risky. A safer plugin loading mechanism is needed if the plugin system is to be used securely.
+-   **MITM Dependency:** Relies on manual modification of the system `hosts` file to redirect game traffic to the local proxy.
+
+## Development Patterns & Workarounds
+
+-   **External Scripts:** For reliable processing involving file I/O, external API calls, or complex logic, use separate Node.js scripts (`process_logs.js`) run manually from the terminal instead of relying on potentially unstable in-app commands or timers.
+-   **Passive Logging Plugins:** Plugins that primarily hook incoming/outgoing messages (`dispatch.onMessage`) and perform simple actions like logging to console or appending to files (like `nearbyUsernames`) seem relatively stable, provided they avoid problematic operations during startup.
+-   **API Key Storage:** API keys are stored in `settings.json`. While convenient, be aware this is not secure given the application's other vulnerabilities.
+-   **File Paths:** Use `path.resolve()` for constructing paths relative to the project root, especially in external scripts.
+-   **Error Handling:** Wrap potentially problematic operations (file I/O, API calls) in specific `try...catch` blocks with detailed logging to aid debugging. Use standard `console.error` for critical startup errors in plugins.
+-   **Rate Limiting:** Implement manual delays (`wait` function using `setTimeout`) when interacting with external APIs that have rate limits (as seen in `process_logs.js`).
+-   **ASAR Patching & Credential Passing:** The `Patcher` class modifies the game's `app.asar` file with a custom version (`assets/winapp.asar` or `osxapp.asar`). Credentials received via the internal API are passed to this patched client by setting `process.env.AJC_USERNAME` and `process.env.AJC_PASSWORD` before launch.
+-   **Proxy Rotation (Startup):** The current mechanism involves logic in `src/electron/index.js` selecting the next proxy from `settings.json` at startup, setting `process.env.JAM_SELECTED_PROXY`, and the `Client` class using `https-proxy-agent` based on this environment variable. (Ignore outdated logic in `Patcher.js`).
+-   **Distribution Considerations:** Features intended for general use should be developed with distribution in mind. Avoid hardcoding paths relative to development or installation directories. Provide user configuration options (e.g., via settings or UI) for paths, behaviors, etc., where appropriate, rather than relying on default locations that might not exist or be suitable for all users.
+
+## ASAR Patching: Dependency Management
+
+-   **Symptom:** "Cannot find module" errors (e.g., for `electron-updater`, `electron-store`, `node-machine-id`, `uuid`) occur when launching the game via Strawberry Jam after packing the `assets/extracted-winapp` directory into `assets/winapp.asar`.
+-   **Root Cause:** Code merged into `assets/extracted-winapp` (specifically `index.js`) requires Node.js modules. These modules are not inherently available in the game client's runtime environment. Packing the ASAR requires a `node_modules` folder containing these dependencies to be present *within* `assets/extracted-winapp` at pack time.
+-   **Incompatibility Issue:** Running `npm install` directly within `assets/extracted-winapp` can install versions of dependencies (or sub-dependencies) built for modern Node.js environments. These versions may use incompatible syntax (e.g., `require('fs/promises')`) that crashes the game client's older bundled Node.js version.
+-   **Solution:** Before packing (`npx asar pack assets/extracted-winapp assets/winapp.asar`), ensure the `assets/extracted-winapp/node_modules` directory exists and contains dependency versions compatible with the game client's runtime. The most reliable method is often to copy the `node_modules` directory from a known-good, previously extracted working `winapp.asar`. Avoid running `npm install` directly in `assets/extracted-winapp` unless the compatibility of all installed packages with the target environment is verified.

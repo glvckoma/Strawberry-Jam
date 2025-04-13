@@ -1,0 +1,65 @@
+{
+  "1": {
+    "id": "1",
+    "titleStrId": "2698",
+    "result": "1000",
+    "resultType": "1",
+    "cost": "500",
+    "costType": "0",
+    "mediaRefId": "1660"
+  },
+  "2": {
+    "id": "2",
+    "titleStrId": "2699",
+    "result": "2000",
+    "resultType": "1",
+    "cost": "1000",
+    "costType": "0",
+    "mediaRefId": "1661"
+  },
+  "3": {
+    "id": "3",
+    "titleStrId": "2700",
+    "result": "5000",
+    "resultType": "1",
+    "cost": "2500",
+    "costType": "0",
+    "mediaRefId": "1662"
+  },
+  "4": {
+    "id": "4",
+    "titleStrId": "3496",
+    "result": "1000",
+    "resultType": "0",
+    "cost": "1",
+    "costType": "3",
+    "mediaRefId": "2218"
+  },
+  "5": {
+    "id": "5",
+    "titleStrId": "3497",
+    "result": "5000",
+    "resultType": "0",
+    "cost": "4",
+    "costType": "3",
+    "mediaRefId": "2217"
+  },
+  "6": {
+    "id": "6",
+    "titleStrId": "3498",
+    "result": "10000",
+    "resultType": "0",
+    "cost": "7",
+    "costType": "3",
+    "mediaRefId": "2219"
+  },
+  "7": {
+    "id": "7",
+    "titleStrId": "3499",
+    "result": "15000",
+    "resultType": "0",
+    "cost": "10",
+    "costType": "3",
+    "mediaRefId": "2220"
+  }
+}
