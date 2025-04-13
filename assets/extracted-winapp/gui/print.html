@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Animal Jam Classic</title>
+  </head>
+
+  <body>
+    <style>
+      html body {
+        margin: 0mm;
+      }
+
+      body {
+        background-color: #FFFFFF;
+        overflow: hidden;
+        user-select: none;
+        cursor: default;
+      }
+
+      #image {
+        height: 99.9vh;
+        width: 99.9vw;
+        object-fit: contain;
+        position: fixed;
+        left: 0.05vw;
+        top: 0.05vh;
+      }
+
+      #image.rotated {
+        height: 99.9vw;
+        width: 99.9vh;
+        transform-origin: top left;
+        transform: rotate(90deg);
+        left: 99.9vw;
+      }
+
+      @page {
+        size: letter;
+        margin: 0;
+      }
+    </style>
+    <img id="image"></img>
+    <script>
+      const imageElem = document.getElementById("image");
+
+      const mediaQueryList = window.matchMedia("print");
+      mediaQueryList.addListener(query => {
+        if (!query.matches) {
+          // This fires off the moment the computer collects all the data to print
+          // If the user chooses to save it as a pdf, or muck around with settings they have 2 minutes to do so
+          setTimeout(() => {
+            window.ipc.send("closePrintWindow");
+          }, 120000);
+        }
+      });
+
+
+      window.ipc.on("setImage", (event, data) => {
+        if (data.height < data.width) {
+          imageElem.classList.add("rotated");
+        }
+        else {
+          imageElem.classList.remove("rotated");
+        }
+        imageElem.src = `data:image/png;base64,${data.image}`;
+      });
+
+      window.ipc.send("readyForImage");
+    </script>
+</body>
+</html>

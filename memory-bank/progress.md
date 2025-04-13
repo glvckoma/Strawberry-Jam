@@ -110,6 +110,20 @@ Proceed with the easiest task first, allow user to test, then move to the next. 
     -   **Log Retention:** Reviewed current log limits (`_maxLogEntries = 1000`, `_cleanPercentage = 0.2`); deemed acceptable for now.
     -   **Auto-Scroll:** Verified that existing `consoleMessage` logic should provide auto-scrolling for LeakCheck logs.
     -   **Advertising Plugin UI:** Added draggable header and close button to `plugins/advertising/index.html` for consistency.
+-   **Git Repository Setup (April 2025):**
+    -   Created and switched to `main` branch.
+    -   Confirmed `origin` remote points to `https://github.com/glvckoma/strawberry-jam.git`.
+    -   Updated `.gitignore` to include `settings.json` and verified other exclusions.
+    -   Staged all current project files.
+    -   Created initial commit (`f26fbd7`) representing the local project state, ready for future push.
+-   **ASAR Build Separation (Dev/Public) (April 2025):**
+    -   Renamed ASAR source folder `assets/extracted-winapp` to `assets/extracted-winapp-dev`.
+    -   Created `assets/extracted-winapp-public` by copying the dev version.
+    -   Removed Account Tester code (HTML, JS, CSS references) from `assets/extracted-winapp-public/gui/components/LoginScreen.js`.
+    -   Updated `pack-and-run.js` to interactively prompt (using `inquirer`) for 'dev' or 'public' build type and pack the corresponding source directory into `assets/winapp.asar`.
+    -   Verified `Patcher` logic correctly uses the generated `assets/winapp.asar`.
+    -   Updated `.gitignore` to ignore both `assets/extracted-winapp-dev/` and `assets/extracted-winapp-public/`, as well as built ASAR files (`assets/winapp.asar`, `assets/osxapp.asar`, `*-backup.asar`, `*-dev.asar`).
+-   **Icon Restoration (April 2025):** User manually restored missing custom icons/images by cloning the private `Blackberry-Jam` repository and copying the necessary files into the `strawberry-jam/assets/` directory.
 
 ## Known Issues & Limitations
 

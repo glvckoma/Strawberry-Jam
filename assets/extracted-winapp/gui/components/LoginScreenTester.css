@@ -1,0 +1,181 @@
+/* --- Tester Styles --- */
+#tester-container {
+  grid-area: tester; /* Assign to the new grid area */
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  /* Removed margin-left, positioning handled by grid */
+  /* Removed border-left, separation handled by grid gap or background */
+  max-width: 350px; /* Limit width */
+  overflow-y: auto; /* Allow vertical scrolling */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  font-family: CCDigitalDelivery;
+  color: #6E4B37;
+  box-sizing: border-box; /* Include padding in width */
+  height: 590px; /* Match box height */
+  justify-content: flex-start; /* Align content top */
+  /* padding-top: 20px; */ /* Removed top padding */
+}
+#tester-header { /* Center header and allow settings button to float right if present */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 10px; /* Add some space below header */
+}
+#tester-header h3 {
+  margin: 0; /* Remove default margin */
+  flex: 1 1 100%;
+  text-align: center;
+}
+#tester-settings-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+#tester-settings-btn { /* Style for the settings button */
+  /* background: url('images/frame/buttons/UI_settings_up.svg') no-repeat center center; */ /* Icon not found */
+  background: none; /* Remove background image */
+  border: 1px solid #cea054; /* Add border like other buttons */
+  border-radius: 4px;
+  color: #684A26;
+  font-size: 16px; /* Adjust size */
+  width: 28px; /* Adjust size */
+  height: 28px; /* Adjust size */
+  /* cursor: pointer; */ /* Removed cursor styling */
+  padding: 0;
+  display: flex; /* Center content */
+  align-items: center;
+  justify-content: center;
+  line-height: 1; /* Ensure text is centered vertically */
+}
+#tester-settings-btn::before {
+  content: '⚙️'; /* Placeholder icon */
+}
+#tester-settings-btn:hover {
+   opacity: 0.8; /* Simple hover effect */
+}
+#tester-settings-panel { /* Style for the collapsible panel */
+  border: 1px solid #BFAE92;
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 10px;
+  background-color: #fdfbf4; /* Slightly different background */
+  display: none; /* Hide by default */
+  /* Remove transition properties */
+}
+#tester-settings-panel.visible {
+  display: block; /* Show when visible class is added */
+  /* Remove transition-related properties */
+  padding: 10px; /* Ensure padding is set */
+  margin-top: 10px; /* Restore margin */
+  border-width: 1px; /* Restore border */
+}
+#tester-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 8px;
+  position: relative;
+}
+#tester-actual-login-toggle,
+#tester-controls label[for="tester-actual-login-toggle"] {
+  margin-left: auto;
+  margin-right: 0;
+  align-self: center;
+  display: flex;
+  align-items: center;
+}
+#tester-controls button {
+  margin: 3px; /* Reduced margin */
+  padding: 4px 6px; /* Reduced padding */
+  font-family: CCDigitalDelivery;
+  cursor: pointer;
+  background-color: #f0e6d2;
+  border: 1px solid #cea054;
+  border-radius: 4px;
+  color: #684A26;
+}
+#tester-test-all-btn {
+  min-width: 50px;
+}
+#tester-controls button:disabled {
+  opacity: 0.5;
+}
+#tester-account-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  max-height: 300px; /* Adjusted height as per user feedback */
+  overflow-y: auto;
+  border: 1px solid #BFAE92;
+  background-color: #fffef8; /* Slightly off-white */
+  border-radius: 4px;
+}
+#tester-account-list li {
+  padding: 5px 8px;
+  border-bottom: 1px solid #e0d8c8;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px; /* Slightly smaller */
+}
+#tester-account-list li:last-child {
+   border-bottom: none;
+}
+#tester-account-list li:hover {
+  background-color: #f5efdf;
+}
+#tester-account-list li.selected {
+  background-color: #e0d8c8;
+  font-weight: bold;
+}
+.tester-status {
+  font-size: 0.8em;
+  margin-left: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  min-width: 60px; /* Adjusted width */
+  text-align: center;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.tester-status-pending { background-color: #eee; color: #555; }
+.tester-status-testing { background-color: #f0e68c; color: #333; } /* Khaki */
+.tester-status-works { background-color: #90ee90; color: #006400; } /* LightGreen / DarkGreen */
+.tester-status-logged-in { background-color: #90ee90; color: #006400; } /* Same as works */
+.tester-status-invalid { background-color: #ffcccb; color: #8b0000; } /* LightCoral / DarkRed */
+.tester-status-banned { background-color: #ffa07a; color: #8b0000; } /* LightSalmon / DarkRed */
+.tester-status-suspended { background-color: #ffd700; color: #8b4513; } /* Gold / SaddleBrown */
+.tester-status-error { background-color: #d3d3d3; color: #000; } /* LightGray */
+.tester-status-otp { background-color: #add8e6; color: #00008b; } /* LightBlue / DarkBlue */
+.tester-status-rate-limited { background-color: #f4a460; color: #fff; } /* SandyBrown */
+#tester-status-summary {
+  margin-top: 18px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #684A26;
+  background: #f7f2e7;
+  border: 1.5px solid #e2cfa2;
+  border-radius: 8px;
+  padding: 8px 14px;
+  text-align: center;
+  letter-spacing: 0.03em;
+  box-shadow: 0 1px 4px rgba(180, 150, 100, 0.07);
+  transition: background 0.2s, border 0.2s;
+}
+#tester-message { /* Style for the new message area */
+   color: #cc6c2b;
+   margin-top: 1px;
+   font-weight: bold;
+   min-height: 1em; /* Prevent layout shift */
+   font-size: 12px;
+}
+
+
+/* --- End Tester Styles --- */

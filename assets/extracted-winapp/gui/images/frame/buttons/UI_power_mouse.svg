@@ -1,0 +1,158 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" x="0px" y="0px" width="40px" height="39px" viewBox="0 0 40 39">
+<defs>
+<linearGradient id="Gradient_1" gradientUnits="userSpaceOnUse" x1="4.45" y1="57.4375" x2="4.45" y2="49.462500000000006" spreadMethod="pad">
+<stop  offset="0%" stop-color="#F39795"/>
+
+<stop  offset="49.80392156862745%" stop-color="#EE5C5E"/>
+</linearGradient>
+
+<radialGradient id="Gradient_2" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="7.950000000000003" fx="0" fy="0" gradientTransform="matrix( 0, 0.9999999999999997, 1.4999999999999996, 0, 4.45,49.5) " spreadMethod="pad">
+<stop  offset="0%" stop-color="#FFFFFF" stop-opacity="0.7490196078431373"/>
+
+<stop  offset="54.11764705882353%" stop-color="#FFFFFF" stop-opacity="0.2"/>
+
+<stop  offset="54.90196078431372%" stop-color="#FFFFFF" stop-opacity="0"/>
+</radialGradient>
+
+<linearGradient id="Gradient_3" gradientUnits="userSpaceOnUse" x1="7.0875" y1="53.85" x2="2.0124999999999997" y2="53.85" spreadMethod="pad">
+<stop  offset="0%" stop-color="#D82F30"/>
+
+<stop  offset="100%" stop-color="#B6232A"/>
+</linearGradient>
+
+<linearGradient id="Gradient_4" gradientUnits="userSpaceOnUse" x1="4.6" y1="53" x2="4.6" y2="50.7" spreadMethod="pad">
+<stop  offset="0%" stop-color="#D82F30"/>
+
+<stop  offset="100%" stop-color="#B6232A"/>
+</linearGradient>
+
+<g id="Layer1_0_MEMBER_0_MEMBER_0_FILL">
+<path fill="url(#Gradient_1)" stroke="none" d="
+M 8.45 53.45
+Q 8.45 51.8 7.3 50.65 6.1 49.45 4.45 49.45 2.8 49.45 1.65 50.65 0.45 51.8 0.45 53.45 0.45 55.1 1.65 56.3 2.8 57.45 4.45 57.45 6.1 57.45 7.3 56.3 8.45 55.1 8.45 53.45 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_0_MEMBER_1_MEMBER_0_FILL">
+<path fill="#BE3E4A" stroke="none" d="
+M 8.75 53.45
+Q 8.75 51.7 7.5 50.4 6.25 49.15 4.45 49.15 2.65 49.15 1.4 50.4 0.1 51.7 0.1 53.45 0.1 55.25 1.4 56.55 2.65 57.8 4.45 57.8 6.25 57.8 7.5 56.55 8.75 55.25 8.75 53.45
+M 7.3 50.65
+Q 8.45 51.8 8.45 53.45 8.45 55.1 7.3 56.3 6.1 57.45 4.45 57.45 2.8 57.45 1.65 56.3 0.45 55.1 0.45 53.45 0.45 51.8 1.65 50.65 2.8 49.45 4.45 49.45 6.1 49.45 7.3 50.65 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_0_MEMBER_2_MEMBER_0_FILL">
+<path fill="#EF7183" stroke="none" d="
+M 8.45 53.45
+Q 8.45 51.8 7.3 50.65 6.1 49.45 4.45 49.45 2.8 49.45 1.65 50.65 0.45 51.8 0.45 53.45 0.45 55.1 1.65 56.3 2.8 57.45 4.45 57.45 6.1 57.45 7.3 56.3 8.45 55.1 8.45 53.45
+M 7.15 50.75
+Q 8.25 51.9 8.25 53.45 8.25 55.05 7.15 56.15 6.05 57.25 4.45 57.25 2.9 57.25 1.75 56.15 0.65 55.05 0.65 53.45 0.65 51.9 1.75 50.75 2.9 49.65 4.45 49.65 6.05 49.65 7.15 50.75 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_0_MEMBER_3_FILL">
+<path fill="url(#Gradient_2)" stroke="none" d="
+M 8.45 53.45
+Q 8.45 51.8 7.3 50.65 6.1 49.45 4.45 49.45 2.8 49.45 1.65 50.65 0.45 51.8 0.45 53.45 0.45 55.1 1.65 56.3 2.8 57.45 4.45 57.45 6.1 57.45 7.3 56.3 8.45 55.1 8.45 53.45 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_1_MEMBER_0_MEMBER_0_FILL">
+<path fill="url(#Gradient_3)" stroke="none" d="
+M 5.85 51.5
+L 5.8 52.9
+Q 6.05 53.3 6.05 53.7 6.05 54.3 5.6 54.75 5.15 55.15 4.55 55.15 3.95 55.15 3.55 54.75 3.1 54.3 3.1 53.7 3.1 53.15 3.4 52.75
+L 3.4 51.4
+Q 2 52.15 2 53.7 2 54.75 2.75 55.5 3.5 56.25 4.55 56.25 5.6 56.25 6.35 55.5 7.1 54.75 7.1 53.7 7.1 52.25 5.85 51.5 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_1_MEMBER_0_MEMBER_1_MEMBER_0_FILL">
+<path fill="#F28882" stroke="none" d="
+M 5.85 51.3
+L 5.8 51.3
+Q 5.75 51.35 5.65 51.5
+L 5.6 52.9 5.65 53
+Q 5.85 53.4 5.85 53.7 5.85 54.2 5.45 54.6 5.1 54.95 4.55 54.95 4.05 54.95 3.65 54.6 3.3 54.25 3.3 53.7 3.3 53.15 3.55 52.9
+L 3.6 52.75 3.6 51.4 3.5 51.25 3.4 51.2 3.3 51.25
+Q 1.8 52 1.8 53.7 1.8 54.85 2.6 55.65 3.45 56.45 4.55 56.45 5.7 56.45 6.5 55.65 7.3 54.85 7.3 53.7 7.3 52.15 6 51.35
+L 5.85 51.3
+M 7.1 53.7
+Q 7.1 54.75 6.35 55.5 5.6 56.25 4.55 56.25 3.5 56.25 2.75 55.5 2 54.75 2 53.7 2 52.15 3.4 51.4
+L 3.4 52.75
+Q 3.1 53.15 3.1 53.7 3.1 54.3 3.55 54.75 3.95 55.15 4.55 55.15 5.15 55.15 5.6 54.75 6.05 54.3 6.05 53.7 6.05 53.3 5.8 52.9
+L 5.85 51.5
+Q 7.1 52.25 7.1 53.7 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_1_MEMBER_1_FILL">
+<path fill="#AD272E" stroke="none" d="
+M 2.75 54.7
+Q 2 53.3 3.3 51.45 2 52.25 2 53.7 2 54.75 2.75 55.5 3.5 56.25 4.55 56.25 5.6 56.25 6.3 55.55 5.7 55.85 5 55.9 3.5 56 2.75 54.7 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_1_MEMBER_2_MEMBER_0_FILL">
+<path fill="url(#Gradient_4)" stroke="none" d="
+M 5.1 50.7
+L 4.05 50.7 4.05 53 5.1 53 5.1 50.7 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_1_MEMBER_2_MEMBER_1_MEMBER_0_FILL">
+<path fill="#F28882" stroke="none" d="
+M 5.1 53.2
+Q 5.3 53.2 5.3 53
+L 5.3 50.7
+Q 5.3 50.5 5.1 50.5
+L 4.05 50.5
+Q 3.85 50.5 3.85 50.7
+L 3.85 53
+Q 3.85 53.2 4.05 53.2
+L 5.1 53.2
+M 5.1 50.7
+L 5.1 53 4.05 53 4.05 50.7 5.1 50.7 Z"/>
+</g>
+
+<g id="Layer1_0_MEMBER_1_MEMBER_3_FILL">
+<path fill="#AD272E" stroke="none" d="
+M 4.5 50.7
+L 4.05 50.7 4.05 53 5.1 53 5.1 52.65 4.5 52.65 4.5 50.7 Z"/>
+</g>
+</defs>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_0_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_0_MEMBER_1_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_0_MEMBER_2_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_0_MEMBER_3_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_1_MEMBER_0_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_1_MEMBER_0_MEMBER_1_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_1_MEMBER_1_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_1_MEMBER_2_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_1_MEMBER_2_MEMBER_1_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -0.45,-221.8) ">
+<use xlink:href="#Layer1_0_MEMBER_1_MEMBER_3_FILL"/>
+</g>
+</svg>

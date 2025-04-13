@@ -1,0 +1,20 @@
+"use strict";
+
+module.exports = {
+  gameWebClient: "https://ajelectronweb.dev.wildworks.systems/gameClient/game/index.html",
+  api: "https://ajelectronapi.dev.wildworks.systems",
+  authenticator: "https://authenticator.dev.wildworks.systems",
+  playerSessionData: "https://player-session-data.dev.wildworks.systems",
+  update: "https://dev-classic-download.animaljam.com/win",
+  webApi: "https://dev-api.animaljam.com",
+  web: "https://dev.animaljam.com",
+  webClassic: "https://dev-classic.animaljam.com",
+  noUpdater: false,
+  showTools: true,
+  clearCache: false,
+  clearStorage: false,
+  pluginPath: "../../",
+  pluginName: "pepflashplayer.dll",
+  serverPort: 8088,
+  origin: "*",
+};

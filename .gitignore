@@ -3,7 +3,18 @@ build/
 dev-app-update.yml
 plugin_packages/
 .DS_Store
-assets/extracted-winapp/
+
+# Ignore ASAR source directories (dev and public)
+assets/extracted-winapp-dev/
+assets/extracted-winapp-public/
+
+# Ignore built ASAR files and backups
+assets/winapp.asar
+assets/osxapp.asar
+assets/*-backup.asar
+assets/*-dev.asar
+
+# Ignore user/dev specific files and folders
 memory-bank/
 plugins/UsernameLogger/
 data/

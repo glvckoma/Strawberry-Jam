@@ -1,0 +1,212 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" x="0px" y="0px" width="95px" height="37px" viewBox="0 0 95 37">
+<defs>
+<linearGradient id="Gradient_1" gradientUnits="userSpaceOnUse" x1="21.95" y1="57.1875" x2="21.95" y2="49.8125" spreadMethod="pad">
+<stop  offset="0%" stop-color="#F39795"/>
+
+<stop  offset="49.80392156862745%" stop-color="#EE5C5E"/>
+</linearGradient>
+
+<linearGradient id="Gradient_2" gradientUnits="userSpaceOnUse" x1="18.6" y1="56.5875" x2="18.6" y2="50.4125" spreadMethod="pad">
+<stop  offset="0%" stop-color="#D3534E"/>
+
+<stop  offset="100%" stop-color="#D8292E"/>
+</linearGradient>
+
+<linearGradient id="Gradient_3" gradientUnits="userSpaceOnUse" x1="21.95" y1="52.9625" x2="21.95" y2="49.8375" spreadMethod="pad">
+<stop  offset="0%" stop-color="#FFFFFF" stop-opacity="0.2"/>
+
+<stop  offset="100%" stop-color="#FFFFFF" stop-opacity="0.7490196078431373"/>
+</linearGradient>
+
+<linearGradient id="Gradient_4" gradientUnits="userSpaceOnUse" x1="30.625" y1="53.85" x2="26.075000000000003" y2="53.85" spreadMethod="pad">
+<stop  offset="0%" stop-color="#D3534E"/>
+
+<stop  offset="100%" stop-color="#D8292E"/>
+</linearGradient>
+
+<linearGradient id="Gradient_5" gradientUnits="userSpaceOnUse" x1="28.4" y1="53.0875" x2="28.4" y2="51.012499999999996" spreadMethod="pad">
+<stop  offset="0%" stop-color="#D82F30"/>
+
+<stop  offset="100%" stop-color="#B6232A"/>
+</linearGradient>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_0_FILL">
+<path fill="#BD3D49" stroke="none" d="
+M 31.3 50.7
+Q 30.15 49.5 28.5 49.5
+L 15.4 49.5
+Q 13.75 49.5 12.6 50.7 11.4 51.85 11.4 53.5 11.4 55.15 12.6 56.35 13.75 57.5 15.4 57.5
+L 28.5 57.5
+Q 30.15 57.5 31.3 56.35 32.45 55.15 32.45 53.5 32.45 51.85 31.3 50.7 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_1_MEMBER_0_FILL">
+<path fill="url(#Gradient_1)" stroke="none" d="
+M 31.1 50.9
+Q 30 49.8 28.5 49.8
+L 15.4 49.8
+Q 13.85 49.8 12.8 50.9 11.7 51.95 11.7 53.5 11.7 55.05 12.8 56.1 13.85 57.2 15.4 57.2
+L 28.5 57.2
+Q 30 57.2 31.1 56.1 32.2 55.05 32.2 53.5 32.2 51.95 31.1 50.9 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_1_MEMBER_1_MEMBER_0_FILL">
+<path fill="#EF7183" stroke="none" d="
+M 31.1 50.9
+Q 30 49.8 28.5 49.8
+L 15.4 49.8
+Q 13.85 49.8 12.8 50.9 11.7 51.95 11.7 53.5 11.7 55.05 12.8 56.1 13.85 57.2 15.4 57.2
+L 28.5 57.2
+Q 30 57.2 31.1 56.1 32.2 55.05 32.2 53.5 32.2 51.95 31.1 50.9
+M 28.5 50
+Q 29.95 50 30.95 51.05 32 52.1 32 53.5 32 54.95 30.95 56 29.95 57 28.5 57
+L 15.4 57
+Q 13.95 57 12.95 56 11.9 54.95 11.9 53.5 11.9 52.1 12.95 51.05 14 50 15.4 50
+L 28.5 50 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_2_MEMBER_0_FILL">
+<path fill="url(#Gradient_2)" stroke="none" d="
+M 24.85 56.6
+L 24.85 50.4 15.4 50.4
+Q 14.15 50.4 13.2 51.3 12.3 52.25 12.3 53.5 12.3 54.8 13.2 55.7 14.15 56.6 15.4 56.6
+L 24.85 56.6 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_2_MEMBER_1_MEMBER_0_FILL">
+<path fill="#BE3234" stroke="none" d="
+M 24.85 56.6
+L 24.85 50.4 15.4 50.4
+Q 14.15 50.4 13.2 51.3 12.3 52.25 12.3 53.5 12.3 54.8 13.2 55.7 14.15 56.6 15.4 56.6
+L 24.85 56.6
+M 24.65 50.6
+L 24.65 56.4 15.4 56.4
+Q 14.2 56.4 13.35 55.55 12.5 54.7 12.5 53.5 12.5 52.3 13.35 51.45 14.2 50.6 15.4 50.6
+L 24.65 50.6 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_3_FILL">
+<path fill="url(#Gradient_3)" stroke="none" d="
+M 24.45 52.95
+L 24.45 50.8 15.4 50.8
+Q 14.45 50.8 13.7 51.45 13 52.05 12.8 52.95
+L 24.45 52.95
+M 30.9 50.7
+Q 29.85 49.8 28.5 49.8
+L 15.4 49.8
+Q 14.05 49.8 13 50.7 12 51.6 11.75 52.95
+L 12.35 52.95
+Q 12.6 51.85 13.45 51.15 14.3 50.4 15.4 50.4
+L 24.85 50.4 24.85 52.95 32.15 52.95
+Q 31.9 51.6 30.9 50.7 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_0_MEMBER_0_FILL">
+<path fill="url(#Gradient_4)" stroke="none" d="
+M 27.45 54.65
+Q 27.05 54.25 27.05 53.7 27.05 53.15 27.3 52.9
+L 27.3 51.7
+Q 26.05 52.3 26.05 53.7 26.05 54.65 26.75 55.35 27.4 56.05 28.35 56.05 29.3 56.05 29.95 55.35 30.65 54.65 30.65 53.7 30.65 52.45 29.55 51.75
+L 29.5 53.05
+Q 29.7 53.45 29.7 53.7 29.7 54.25 29.3 54.65 28.9 55.05 28.35 55.05 27.8 55.05 27.45 54.65 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_0_MEMBER_1_MEMBER_0_FILL">
+<path fill="#F29396" stroke="none" d="
+M 29.45 51.55
+L 29.35 51.75 29.3 53.15
+Q 29.5 53.35 29.5 53.7 29.5 54.2 29.15 54.5 28.85 54.85 28.35 54.85 27.9 54.85 27.6 54.5 27.25 54.2 27.25 53.7 27.25 53.25 27.45 53
+L 27.5 52.9 27.5 51.7 27.4 51.5 27.2 51.5
+Q 25.85 52.25 25.85 53.7 25.85 54.75 26.6 55.5 27.35 56.25 28.35 56.25 29.4 56.25 30.15 55.5 30.85 54.75 30.85 53.7 30.85 52.3 29.65 51.6
+L 29.55 51.55 29.45 51.55
+M 26.75 55.35
+Q 26.05 54.65 26.05 53.7 26.05 52.3 27.3 51.7
+L 27.3 52.9
+Q 27.05 53.15 27.05 53.7 27.05 54.25 27.45 54.65 27.8 55.05 28.35 55.05 28.9 55.05 29.3 54.65 29.7 54.25 29.7 53.7 29.7 53.45 29.5 53.05
+L 29.55 51.75
+Q 30.65 52.45 30.65 53.7 30.65 54.65 29.95 55.35 29.3 56.05 28.35 56.05 27.4 56.05 26.75 55.35 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_1_FILL">
+<path fill="#AD272E" stroke="none" d="
+M 26.75 54.6
+Q 26.05 53.35 27.25 51.7 26.05 52.4 26.05 53.7 26.05 54.65 26.75 55.35 27.4 56.05 28.35 56.05 29.25 56.05 29.9 55.4 29.4 55.7 28.7 55.75 27.4 55.8 26.75 54.6 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_2_MEMBER_0_FILL">
+<path fill="url(#Gradient_5)" stroke="none" d="
+M 28.85 51
+L 27.9 51 27.9 53.1 28.85 53.1 28.85 51 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_2_MEMBER_1_MEMBER_0_FILL">
+<path fill="#F28882" stroke="none" d="
+M 29.05 51
+Q 29.05 50.8 28.85 50.8
+L 27.9 50.8
+Q 27.7 50.8 27.7 51
+L 27.7 53.1
+Q 27.7 53.3 27.9 53.3
+L 28.85 53.3
+Q 29.05 53.3 29.05 53.1
+L 29.05 51
+M 27.9 51
+L 28.85 51 28.85 53.1 27.9 53.1 27.9 51 Z"/>
+</g>
+
+<g id="Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_3_FILL">
+<path fill="#AD272E" stroke="none" d="
+M 28.3 51
+L 27.9 51 27.9 53.1 28.85 53.1 28.85 52.75 28.3 52.75 28.3 51 Z"/>
+</g>
+</defs>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_1_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_1_MEMBER_1_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_2_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_2_MEMBER_1_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_3_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_0_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_0_MEMBER_1_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_1_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_2_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_2_MEMBER_1_MEMBER_0_FILL"/>
+</g>
+
+<g transform="matrix( 4.5130615234375, 0, 0, 4.5130615234375, -51.45,-223.4) ">
+<use xlink:href="#Layer7_0_MEMBER_0_MEMBER_0_MEMBER_4_MEMBER_3_FILL"/>
+</g>
+</svg>
