@@ -14,7 +14,16 @@ exports.render = function (app) {
   const CACHE_METADATA_KEY = 'jam-plugins-metadata-cache'
   const CACHE_DURATION = 3600000
 
-  const GITHUB_API_URL = 'https://api.github.com/repos/Sxip/jam/contents/plugins'
+  const GITHUB_API_URLS = [
+    {
+      url: 'https://api.github.com/repos/glvckoma/strawberry-jam/contents/plugins',
+      repo: 'strawberry-jam'
+    },
+    {
+      url: 'https://api.github.com/repos/Sxip/jam/contents/plugins',
+      repo: 'original-jam'
+    }
+  ];
   const LOCAL_PLUGINS_DIR = path.resolve('plugins/')
 
   const $modal = $(`
@@ -126,12 +135,18 @@ exports.render = function (app) {
       const metadataCache = localStorage.getItem(CACHE_METADATA_KEY)
       if (metadataCache) {
         const parsedCache = JSON.parse(metadataCache)
-        if (parsedCache[plugin.name]) {
-          return parsedCache[plugin.name]
+        if (parsedCache[plugin.sourceRepo] && parsedCache[plugin.sourceRepo][plugin.name]) {
+          return parsedCache[plugin.sourceRepo][plugin.name]
         }
       }
 
-      const pluginJsonUrl = `https://api.github.com/repos/Sxip/jam/contents/plugins/${plugin.name}/plugin.json`
+      // Choose correct repo for plugin.json
+      let pluginJsonUrl;
+      if (plugin.sourceRepo === 'strawberry-jam') {
+        pluginJsonUrl = `https://api.github.com/repos/glvckoma/strawberry-jam/contents/plugins/${plugin.name}/plugin.json`;
+      } else {
+        pluginJsonUrl = `https://api.github.com/repos/Sxip/jam/contents/plugins/${plugin.name}/plugin.json`;
+      }
       const response = await fetch(pluginJsonUrl)
 
       if (response.ok) {
@@ -140,38 +155,39 @@ exports.render = function (app) {
         const metadata = JSON.parse(content)
 
         if (!metadata.author) {
-          metadata.author = 'Sxip'
+          metadata.author = plugin.sourceRepo === 'strawberry-jam' ? 'Strawberry Jam' : 'Sxip'
         }
 
-        cachePluginMetadata(plugin.name, metadata)
+        cachePluginMetadata(plugin.sourceRepo, plugin.name, metadata)
         return metadata
       }
 
       return {
         name: plugin.name,
-        description: 'A plugin for Jam',
-        author: 'Sxip'
+        description: plugin.sourceRepo === 'strawberry-jam' ? 'A plugin for Strawberry Jam' : 'A plugin for Jam',
+        author: plugin.sourceRepo === 'strawberry-jam' ? 'Strawberry Jam' : 'Sxip'
       }
     } catch (error) {
       return {
         name: plugin.name,
-        description: 'A plugin for Jam',
-        author: 'Sxip'
+        description: plugin.sourceRepo === 'strawberry-jam' ? 'A plugin for Strawberry Jam' : 'A plugin for Jam',
+        author: plugin.sourceRepo === 'strawberry-jam' ? 'Strawberry Jam' : 'Sxip'
       }
     }
   }
 
   /**
    * Cache a plugin's metadata
+   * @param {string} sourceRepo - Source repo
    * @param {string} pluginName - Name of the plugin
    * @param {Object} metadata - Plugin metadata to cache
    */
-  const cachePluginMetadata = (pluginName, metadata) => {
+  const cachePluginMetadata = (sourceRepo, pluginName, metadata) => {
     try {
       const existingCache = localStorage.getItem(CACHE_METADATA_KEY) || '{}'
       const cacheData = JSON.parse(existingCache)
-
-      cacheData[pluginName] = metadata
+      if (!cacheData[sourceRepo]) cacheData[sourceRepo] = {};
+      cacheData[sourceRepo][pluginName] = metadata
       localStorage.setItem(CACHE_METADATA_KEY, JSON.stringify(cacheData))
     } catch (error) {
       console.error('Error caching plugin metadata:', error)
@@ -333,32 +349,50 @@ exports.render = function (app) {
         </div>
       `)
 
-      const response = await fetch(GITHUB_API_URL)
-
-      if (response.status === 403) {
-        const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
-        if (rateLimitRemaining === '0') {
-          const resetTime = response.headers.get('X-RateLimit-Reset')
-          const resetDate = new Date(resetTime * 1000)
-          $pluginsList.html(`
-            <div class="col-span-full text-center text-error-red p-4">
-              <i class="fas fa-exclamation-circle mr-2"></i>
-              GitHub rate limit exceeded. Try again after ${resetDate.toLocaleTimeString()}.
-            </div>
-          `)
-          return
+      // Fetch from both repos
+      let allPlugins = [];
+      for (const repoInfo of GITHUB_API_URLS) {
+        const response = await fetch(repoInfo.url);
+        if (response.status === 403) {
+          const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
+          if (rateLimitRemaining === '0') {
+            const resetTime = response.headers.get('X-RateLimit-Reset')
+            const resetDate = new Date(resetTime * 1000)
+            $pluginsList.html(`
+              <div class="col-span-full text-center text-error-red p-4">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                GitHub rate limit exceeded. Try again after ${resetDate.toLocaleTimeString()}.
+              </div>
+            `)
+            return
+          }
+        }
+        if (!response.ok) {
+          throw new Error(`GitHub API error: ${response.statusText}`)
+        }
+        const plugins = await response.json();
+        for (const plugin of plugins) {
+          if (plugin.type === 'dir') {
+            allPlugins.push({
+              ...plugin,
+              sourceRepo: repoInfo.repo
+            });
+          }
         }
       }
 
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.statusText}`)
+      // Merge plugins, prioritizing strawberry-jam by name
+      const pluginMap = new Map();
+      for (const plugin of allPlugins) {
+        if (!pluginMap.has(plugin.name) || plugin.sourceRepo === 'strawberry-jam') {
+          pluginMap.set(plugin.name, plugin);
+        }
       }
+      const mergedPlugins = Array.from(pluginMap.values());
 
-      const plugins = await response.json()
-
-      localStorage.setItem(CACHE_KEY, JSON.stringify(plugins))
+      localStorage.setItem(CACHE_KEY, JSON.stringify(mergedPlugins))
       localStorage.setItem(CACHE_TIME_KEY, Date.now().toString())
-      await displayPlugins(plugins)
+      await displayPlugins(mergedPlugins)
     } catch (error) {
       $pluginsList.html(`
         <div class="col-span-full text-center text-error-red p-4">
@@ -399,14 +433,27 @@ exports.render = function (app) {
       const pluginData = await Promise.all(pluginPromises)
 
       pluginData.forEach(({ plugin, installed, metadata }) => {
+        // Icon and badge logic
+        let iconHtml, badgeHtml, warningHtml;
+        if (plugin.sourceRepo === 'strawberry-jam') {
+          iconHtml = `<img src="app://assets/strawberry.png" alt="Strawberry Jam" class="w-6 h-6 mr-2" style="display:inline-block;vertical-align:middle;">`;
+          badgeHtml = `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-highlight-green/20 text-highlight-green">Strawberry Jam</span>`;
+          warningHtml = '';
+        } else {
+          iconHtml = `<img src="app://assets/jam.png" alt="Original Jam" class="w-6 h-6 mr-2" style="display:inline-block;vertical-align:middle;">`;
+          badgeHtml = `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-400">Original Jam <i class="fas fa-exclamation-triangle text-error-red ml-1"></i></span>`;
+          warningHtml = `<div class="mt-2 text-xs text-error-red flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>May not be fully compatible with Strawberry Jam</div>`;
+        }
+
         $pluginsList.append(`
           <div class="bg-tertiary-bg/30 rounded-lg p-4 border border-sidebar-border hover:border-highlight-green transition-colors" data-plugin-name="${plugin.name.toLowerCase()}">
             <div class="flex justify-between items-start mb-3">
               <div>
                 <div class="flex items-center">
-                  <i class="fas fa-puzzle-piece text-highlight-green mr-2 text-lg"></i>
+                  ${iconHtml}
                   <h4 class="text-text-primary font-medium text-base">${metadata.name || plugin.name}</h4>
                   ${metadata.version ? `<span class="ml-2 text-xs text-gray-400">v${metadata.version}</span>` : ''}
+                  ${badgeHtml}
                 </div>
                 <div class="mt-1 text-xs text-gray-400">
                   <i class="fas fa-user mr-1"></i> ${metadata.author}
@@ -421,8 +468,9 @@ exports.render = function (app) {
             
             <div class="mt-3 mb-4">
               <p class="text-gray-400 text-sm">
-                ${metadata.description || 'A plugin for Jam'}
+                ${metadata.description || (plugin.sourceRepo === 'strawberry-jam' ? 'A plugin for Strawberry Jam' : 'A plugin for Jam')}
               </p>
+              ${warningHtml}
             </div>
             
             <div class="flex justify-end items-center mt-4 pt-2 border-t border-sidebar-border/30">
