@@ -673,6 +673,7 @@ class Electron {
    * @private
    */
   _initAutoUpdater () {
+    autoUpdater.autoDownload = true; // Automatically download updates when available
     autoUpdater.allowDowngrade = false
     autoUpdater.allowPrerelease = false
 
