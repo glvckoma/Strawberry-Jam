@@ -7,8 +7,6 @@
   "files": [
     "src/**/*",
     "package.json",
-    "!*.*",
-    "!*.*", 
     "!dev/**/*",
     "!build/**/*",
     "!data/**/*",
@@ -22,7 +20,17 @@
     "!assets/winapp.asar",
     "!assets/osxapp.asar",
     "!assets/*-backup.asar",
-    "!assets/*-dev.asar"
+    "!assets/*-dev.asar",
+    "!.clinerules",
+    "!.eslintignore",
+    "!.eslintrc",
+    "!.gitignore",
+    "!electron-builder.json",
+    "!nodemon.json",
+    "!pack-and-run.js",
+    "!process_logs.js",
+    "!README.md",
+    "!tailwind.config.js"
   ],
   "win": {
     "icon": "./assets/icon.ico",
