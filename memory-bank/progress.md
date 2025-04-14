@@ -19,6 +19,12 @@ Proceed with the easiest task first, allow user to test, then move to the next. 
 
 ## What Works
 
+- **Advertising Plugin Preview Button & IPC Refactor (April 2025):**
+    - The advertising plugin's preview button now sends the message typed in the UI to the game, using the current room ID and the same packet logic as the auto-rotation.
+    - The IPC bridge for plugin state access (`dispatch.getState`) was refactored to use an asynchronous request/reply pattern, ensuring reliable cross-window communication for UI plugins.
+    - Room state is now tracked automatically in the dispatch system via hooks for `j#jr` (join room) and `j#l` (leave room) packets.
+    - The advertising plugin has no extra Node.js dependencies and is confirmed to work in both development and packaged builds.
+
 -   **process_logs.js CLI Refactor & Interactivity (April 2025):** Refactored `process_logs.js` into a standalone CLI script using `yargs`. Accepts configuration (API key, paths, limit, delay) via arguments, removing Electron dependency. Added interactive confirmation prompt (`inquirer`), stop key listener (`readline`), improved API key detection (CLI > AppData > Root Settings), and enhanced user feedback. Includes usage instructions.
 
 -   **Settings Modal Refactor (April 2025):** Refactored the settings modal UI and logic. Renamed title to "Settings", removed LeakCheck start/stop/status controls, created a dedicated "LeakCheck Settings" section containing the API Key input and Output Directory selector.
@@ -84,7 +90,7 @@ Proceed with the easiest task first, allow user to test, then move to the next. 
     -   Refactored plugin to export a class, fixing load errors.
     -   Fixed API key loading by fetching the key via IPC (`ipcRenderer.invoke`) within the `runLeakCheck` method when the command is executed.
     -   Fixed pause/stop commands by adding explicit checks within the `runLeakCheck` loop.
-    -   Fixed `ajcConfirmedPath is not defined` error by correcting variable name (`ajcAccountsPath`) in logging statement.
+    -   Fixed `ajcConfirmedPath is not defined` error by using the correct variable (`ajcAccountsPath`) in logging statement.
     -   Consolidated logging to `collected_usernames.txt`.
     -   Standardized data file names.
     -   Removed unused data migration code.
@@ -117,57 +123,4 @@ Proceed with the easiest task first, allow user to test, then move to the next. 
 -   **Advertising Plugin UI Fix (April 2025):**
     -   Modified `plugins/advertising/index.html` to correctly wait for `window.jam.dispatch` and utilize automatically injected jQuery, fixing unresponsive UI buttons.
     -   Updated `src/electron/index.js` to automatically inject jQuery into UI plugin windows and handle dev tools opening within `did-finish-load`.
--   **Git Repository Setup (April 2025):**
-    -   Created and switched to `main` branch.
-    -   Confirmed `origin` remote points to `https://github.com/glvckoma/strawberry-jam.git`.
-    -   Updated `.gitignore` to include `settings.json` and verified other exclusions.
-    -   Staged all current project files.
-    -   Created initial commit (`f26fbd7`) representing the local project state, ready for future push.
--   **ASAR Build Separation (Dev/Public) (April 2025):**
-    -   Renamed ASAR source folder `assets/extracted-winapp` to `assets/extracted-winapp-dev`.
-    -   Created `assets/extracted-winapp-public` by copying the dev version.
-    -   Removed Account Tester code (HTML, JS, CSS references) from `assets/extracted-winapp-public/gui/components/LoginScreen.js`.
-    -   Updated `pack-and-run.js` to interactively prompt (using `inquirer`) for 'dev' or 'public' build type and pack the corresponding source directory into `assets/winapp.asar`.
-    -   Verified `Patcher` logic correctly uses the generated `assets/winapp.asar`.
-    -   Updated `.gitignore` to ignore both `assets/extracted-winapp-dev/` and `assets/extracted-winapp-public/`, as well as built ASAR files (`assets/winapp.asar`, `assets/osxapp.asar`, `*-backup.asar`, `*-dev.asar`).
--   **Icon Restoration (April 2025):** User manually restored missing custom icons/images by cloning the private `Blackberry-Jam` repository and copying the necessary files into the `strawberry-jam/assets/` directory.
-
-## Known Issues & Limitations
-
--   **Advertising Plugin (Timed Sending):** The core automatic message sending (`setInterval` + `sendRemoteMessage`) remains potentially unstable due to core application limitations ("Invalid Status Type" error). UI functionality is now working.
--   **Invisible Mod Command Plugin Requirement:** Need to create a new plugin that toggles invisibility using the `%xt%fi%-1%` packet (and the correct "off" command, to be determined). Should be a simple console command toggle (on/off) with a clear warning in the README that this is a "mod" command, use at your own risk.
--   **ASAR Merge - SWF Conflicts:** Potential incompatibilities between merged JavaScript code and Jam's original `ajclient.swf` remain untested and are a significant risk. May require ActionScript expertise to resolve.
--   **LoginScreen.js Complexity:** The merged `assets/extracted-winapp-dev/gui/components/LoginScreen.js` is very large (~2k lines) and difficult to maintain/update within the ASAR patching workflow. Needs refactoring.
--   **Leak Check Startup Error:** Fails with `defaultDataDir is not defined` in `src/electron/index.js` due to missing constant definition.
--   **IPC Error in Patched Client:** Runtime errors `Uncaught TypeError: window.ipc.invoke is not a function` occur in `LoginScreen.js` (within `winapp.asar`) when using Account Tester features that rely on `invoke` for state saving/loading. The preload script likely doesn't expose `invoke`.
--   **Account Tester State Management Issues:**
-    -   **File Swap Buttons Not Working:** The "Load All", "Load Works", and "Load Confirmed" buttons don't function properly.
-    -   **Search/Filter Not Working:** The filter input field doesn't filter the account list.
-    -   **State Persistence Not Working:** Account states (works, invalid, etc.) don't persist between application restarts - tested accounts revert to "pending" status.
--   **ASAR Patching Speed Issue:** The process of rewriting and reverting the ajclassic folder with the modified winapp.asar at runtime can take minutes to complete, impacting user experience when restarting the game.
-
-## What's Left / Next Steps (Revised Feature Roadmap)
-
-**Prioritized Tasks:**
-
-1.  **UI/UX & Log Improvements:**
-    -   Implement virtualized rendering for console/network logs to improve performance.
-    -   Review/adjust log retention limits if performance issues persist.
-2.  **SVF Decompiled Analysis:**
-    -   Inspect enums for def id/name fetching methods.
-    -   Search for keep-alive/anti-logout packets.
-3.  **Develop Invisible Mod Command Plugin:** Implement a new plugin to toggle invisibility using the `%xt%fi%-1%` packet (and the correct "off" command, to be determined). Provide a simple console command for toggling, and include a clear warning in the README about the risks of using mod commands.
-4.  **Improve ASAR Patching Speed:**
-    -   Modify `killProcessAndPatch()` to use a timeout for restoration.
-    -   Consider implementing a separate process for restoration.
-    -   Explore file system optimization options.
-5.  **Continue Trade Lock Packet Analysis:**
-    -   Conduct deeper analysis of trade-related packets.
-    -   Monitor for additional packets that might appear only in successful trades.
-    -   Examine server responses to trade packets.
-    -   Investigate user flag packets related to account status.
-6.  **Network Packet Logs Auto-Clearing (Verification):**
-    -   Test and verify the current implementation of network packet log auto-clearing.
-    -   Fix any remaining issues to ensure logs are managed consistently.
-
-*Note: All Account Tester/ASAR-patched client and related UI work is now tracked exclusively in `assets/memory-bank/`. Only core Strawberry Jam proxy, plugin, and Electron app development is tracked here.*
+...

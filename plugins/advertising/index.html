@@ -349,16 +349,31 @@
       }
 
       /**
-       * Shows a preview of a message
-       * @param {string} message - The message to preview
+       * Sends a preview message to the current room
+       * @param {string} message - The message to preview/send
        */
-      function previewMessage(message) {
+      async function previewMessage(message) { // Make async
         if (!message || message.trim() === "") {
-          showToast("No message to preview", "error")
-          return
+          showToast("No message to preview", "error");
+          return;
         }
 
-        showToast(`Preview: "${message}"`, "info")
+        // Get current room
+        const room = await dispatch.getState('room');
+        if (!room) {
+          showToast("You must be in a room to send a preview message", "error");
+          return;
+        }
+
+        try {
+          // Construct and send the packet
+          const packet = `<msg t="sys"><body action="pubMsg" r="${room}"><txt><![CDATA[${message}%0]]></txt></body></msg>`;
+          await dispatch.sendRemoteMessage(packet); // Use await if sendRemoteMessage returns a promise (even if not used)
+          showToast("Preview message sent!", "success");
+        } catch (error) {
+          console.error("Error sending preview message:", error);
+          showToast("Error sending preview message", "error");
+        }
       }
 
       /**
