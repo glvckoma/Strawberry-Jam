@@ -1,5 +1,10 @@
 const path = require('path')
 const { PluginManager: PM } = require('live-plugin-manager')
+
+// Helper: Only log in development
+function devLog(...args) {
+  if (process.env.NODE_ENV === 'development') console.log(...args);
+}
 const fs = require('fs').promises
 const Ajv = new (require('ajv'))({ useDefaults: true })
 const { ConnectionMessageTypes, PluginTypes } = require('../../../../Constants')
@@ -268,7 +273,7 @@ module.exports = class Dispatch {
             if (parts.length >= 5) {
               const roomId = parts[4]; // Index 4 should be the room ID
               this.setState('room', roomId);
-              console.log(`[Dispatch] Room state set to: ${roomId}`);
+              devLog(`[Dispatch] Room state set to: ${roomId}`);
               this._application.consoleMessage({ type: 'logger', message: `Entered room: ${roomId}` });
             } else {
                console.warn('[Dispatch] Could not parse room ID from j#jr packet:', message.raw);
@@ -284,7 +289,7 @@ module.exports = class Dispatch {
         message: 'j#l', // Packet type for leaving a room
         callback: () => {
           this.setState('room', null);
-          console.log('[Dispatch] Room state cleared (left room).');
+          devLog('[Dispatch] Room state cleared (left room).');
           this._application.consoleMessage({ type: 'logger', message: 'Left room.' });
         }
       });

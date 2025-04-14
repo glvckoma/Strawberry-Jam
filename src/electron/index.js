@@ -9,6 +9,14 @@ const { startLeakCheck } = require('./leakChecker'); // Added for leak checker
 // Removed incorrect logger import
 
 const isDevelopment = process.env.NODE_ENV === 'development'
+
+// Helper: Only log in development
+function devLog(...args) {
+  if (isDevelopment) console.log(...args);
+}
+function devWarn(...args) {
+  if (isDevelopment) console.warn(...args);
+}
 const USER_DATA_PATH = app.getPath('userData');
 const STATE_FILE_PATH = path.join(USER_DATA_PATH, 'jam_state.json');
 const defaultDataDir = path.resolve('data'); // Default project data dir (Added from leakChecker.js)
@@ -94,33 +102,33 @@ class Electron {
 
     // --- Settings IPC Handlers ---
     ipcMain.handle('get-setting', (event, key) => {
-      console.log(`[IPC] Handling 'get-setting' for key: ${key}`);
+      devLog(`[IPC] Handling 'get-setting' for key: ${key}`);
       try {
         const value = this._store.get(key);
-        console.log(`[Store] Value retrieved for '${key}':`, value); // Log retrieved value
+        devLog(`[Store] Value retrieved for '${key}':`, value); // Log retrieved value
         return value;
       } catch (error) {
-        console.error(`[Store] Error getting setting '${key}':`, error);
+        if (isDevelopment) console.error(`[Store] Error getting setting '${key}':`, error);
         return undefined; // Or throw an error? Returning undefined might be safer.
       }
     });
 
     ipcMain.handle('set-setting', (event, key, value) => {
-      console.log(`[IPC] Handling 'set-setting' for key: ${key} with value:`, value); // Log value being set
+      devLog(`[IPC] Handling 'set-setting' for key: ${key} with value:`, value); // Log value being set
       try {
         this._store.set(key, value);
-        console.log(`[Store] Successfully set '${key}'.`); // Log success
+        devLog(`[Store] Successfully set '${key}'.`); // Log success
         return { success: true };
       } catch (error) {
-        console.error(`[Store] Error setting setting '${key}':`, error);
+        if (isDevelopment) console.error(`[Store] Error setting setting '${key}':`, error);
         return { success: false, error: error.message };
       }
     });
 
     ipcMain.handle('select-output-directory', async (event) => {
-      console.log(`[IPC] Handling 'select-output-directory'`);
+      devLog(`[IPC] Handling 'select-output-directory'`);
       if (!this._window) {
-        console.error('[Dialog] Cannot show dialog, main window not available.');
+        if (isDevelopment) console.error('[Dialog] Cannot show dialog, main window not available.');
         return { canceled: true, error: 'Main window not available' };
       }
       try {
@@ -130,15 +138,15 @@ class Electron {
         });
 
         if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
-          console.log('[Dialog] Directory selection canceled.');
+          devLog('[Dialog] Directory selection canceled.');
           return { canceled: true };
         } else {
           const selectedPath = result.filePaths[0];
-          console.log(`[Dialog] Directory selected: ${selectedPath}`);
+          devLog(`[Dialog] Directory selected: ${selectedPath}`);
           return { canceled: false, path: selectedPath };
         }
       } catch (error) {
-        console.error('[Dialog] Error showing open dialog:', error);
+        if (isDevelopment) console.error('[Dialog] Error showing open dialog:', error);
         return { canceled: true, error: error.message };
       }
     });
@@ -150,7 +158,7 @@ class Electron {
 
     // Use handle for async operations like reading/writing state
     ipcMain.handle('leak-check-start', async (event, options = {}) => { // Handles Start and Resume
-      console.log('[IPC] Handling leak-check-start/resume request.');
+      devLog('[IPC] Handling leak-check-start/resume request.');
       // Call the refactored method
       return this._initiateOrResumeLeakCheck(options);
     });
@@ -164,7 +172,7 @@ class Electron {
         if (this._isLeakCheckPaused) {
              return { success: true, message: 'Leak check is already paused.' };
         }
-        console.log('[IPC] Received leak-check-pause signal.');
+        devLog('[IPC] Received leak-check-pause signal.');
         this._isLeakCheckPaused = true;
         // The running startLeakCheck loop will detect this via checkPauseStatus()
         // It should then call updateStateCallback({ status: 'paused', ... }) in the control method
@@ -177,19 +185,19 @@ class Electron {
         if (!this._isLeakCheckRunning && !this._isLeakCheckPaused) { // Can stop if paused too
              return { success: false, message: 'Leak check is not running or paused.' };
         }
-        console.log('[IPC] Received leak-check-stop signal.');
+        devLog('[IPC] Received leak-check-stop signal.');
         this._isLeakCheckStopped = true; // Set stop flag
         this._isLeakCheckPaused = false; // Ensure pause is cleared if stopping from paused state
         // The running startLeakCheck loop will detect this via checkStopStatus()
         // It should then perform cleanup and call updateStateCallback({ status: 'stopped', ... })
         // DO NOT clear _isLeakCheckRunning or update state here. Let the callback handle it.
-        console.log('[IPC Stop] Stop flag set. Waiting for checker process to acknowledge.');
+        devLog('[IPC Stop] Stop flag set. Waiting for checker process to acknowledge.');
         return { success: true, message: 'Stop signal sent. Process will stop shortly.' };
     }).bind(this));
 
     // IPC handler to verify the actual runtime status
     ipcMain.handle('verify-leak-check-status', async () => {
-        console.log('[IPC] Handling verify-leak-check-status request.');
+        devLog('[IPC] Handling verify-leak-check-status request.');
         // Return the current runtime flag state
         return { isRunning: this._isLeakCheckRunning };
     });
@@ -201,12 +209,12 @@ class Electron {
     // Note: Direct IPC handlers are kept for potential direct use,
     // but internal calls now use helper methods for consistency.
     ipcMain.handle('get-app-state', (async () => {
-        console.log(`[IPC] Handling direct 'get-app-state' request.`);
+        devLog(`[IPC] Handling direct 'get-app-state' request.`);
         return this.getAppState(); // Use helper
     }).bind(this)); // Bind to the Electron class instance
 
     ipcMain.handle('set-app-state', (async (event, newState) => {
-        console.log(`[IPC] Handling direct 'set-app-state' request.`);
+        devLog(`[IPC] Handling direct 'set-app-state' request.`);
         return this.setAppState(newState); // Use helper
     }).bind(this)); // Bind to the Electron class instance
     // --- End App State IPC Handlers ---
@@ -214,32 +222,32 @@ class Electron {
 
     // --- Plugin State IPC Bridge ---
     ipcMain.handle('dispatch-get-state', async (event, key) => { // Make handler async
-      console.log(`[IPC Main] Received ASYNC 'dispatch-get-state' request from plugin for key: ${key}`);
+      devLog(`[IPC Main] Received ASYNC 'dispatch-get-state' request from plugin for key: ${key}`);
       if (!this._window || !this._window.webContents || this._window.webContents.isDestroyed()) {
-        console.error(`[IPC Main] Cannot get state for key '${key}': Main window not available.`);
+        if (isDevelopment) console.error(`[IPC Main] Cannot get state for key '${key}': Main window not available.`);
         return null; // Return null if main window isn't ready
       }
 
       const replyChannel = `get-state-reply-${crypto.randomUUID()}`;
-      console.log(`[IPC Main] Generated reply channel: ${replyChannel}`);
+      devLog(`[IPC Main] Generated reply channel: ${replyChannel}`);
 
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
           ipcMain.removeListener(replyChannel, listener); // Clean up listener on timeout
-          console.error(`[IPC Main] Timeout waiting for reply on ${replyChannel} for key ${key}`);
+          if (isDevelopment) console.error(`[IPC Main] Timeout waiting for reply on ${replyChannel} for key ${key}`);
           reject(new Error(`Timeout waiting for state response for key: ${key}`));
         }, 2000); // 2 second timeout
 
         const listener = (event, value) => {
           clearTimeout(timeout);
-          console.log(`[IPC Main] Received reply on ${replyChannel} for key ${key}:`, value);
+          devLog(`[IPC Main] Received reply on ${replyChannel} for key ${key}:`, value);
           resolve(value);
         };
 
         ipcMain.once(replyChannel, listener);
 
         // Send async request to main renderer
-        console.log(`[IPC Main] Sending async request 'main-renderer-get-state-async' to main window for key: ${key}`);
+        devLog(`[IPC Main] Sending async request 'main-renderer-get-state-async' to main window for key: ${key}`);
         this._window.webContents.send('main-renderer-get-state-async', { key, replyChannel });
       });
     });
@@ -250,7 +258,7 @@ class Electron {
     // Use a closure to capture 'this'
     const self = this;
     ipcMain.handle('tester-cleanup-processed', async (event, filePath) => {
-      console.log(`[IPC] Handling 'tester-cleanup-processed' for file: ${filePath}`);
+      devLog(`[IPC] Handling 'tester-cleanup-processed' for file: ${filePath}`);
       if (!filePath) {
         return { success: false, error: 'File path is required.' };
       }
@@ -261,7 +269,7 @@ class Electron {
         const fileState = appState?.accountTester?.fileStates?.[filePath];
 
         if (!fileState) {
-          console.log(`[Cleanup] No state found for file ${filePath}. Nothing to clean.`);
+          devLog(`[Cleanup] No state found for file ${filePath}. Nothing to clean.`);
           return { success: true, removedCount: 0, message: 'No state found for this file.' };
         }
 
@@ -271,7 +279,7 @@ class Electron {
           fileContent = await fs.readFile(filePath, 'utf-8');
         } catch (readError) {
           if (readError.code === 'ENOENT') {
-            console.error(`[Cleanup] Account file not found: ${filePath}`);
+            if (isDevelopment) console.error(`[Cleanup] Account file not found: ${filePath}`);
             return { success: false, error: `Account file not found: ${filePath}` };
           }
           throw readError; // Re-throw other read errors
@@ -294,16 +302,16 @@ class Electron {
           if (!status || status === 'pending' || status === 'testing') {
             linesToKeep.push(line); // Keep the original line ending
           } else {
-             console.log(`[Cleanup] Removing tested account: ${accountKey} (Status: ${status})`);
+             devLog(`[Cleanup] Removing tested account: ${accountKey} (Status: ${status})`);
           }
         }
 
         const removedCount = originalCount - linesToKeep.length;
-        console.log(`[Cleanup] Original lines: ${originalCount}, Lines to keep: ${linesToKeep.length}, Removed: ${removedCount}`);
+        devLog(`[Cleanup] Original lines: ${originalCount}, Lines to keep: ${linesToKeep.length}, Removed: ${removedCount}`);
 
         // 4. Write the filtered content back to the file
         await fs.writeFile(filePath, linesToKeep.join('\n'), 'utf-8'); // Use '\n' for consistency
-        console.log(`[Cleanup] Successfully wrote cleaned file: ${filePath}`);
+        devLog(`[Cleanup] Successfully wrote cleaned file: ${filePath}`);
 
         // 5. Optionally: Clean up the state for this file?
         // Decided against modifying state here. Reloading the list will effectively refresh the state view.
@@ -314,7 +322,7 @@ class Electron {
         return { success: true, removedCount: removedCount };
 
       } catch (error) {
-        console.error(`[Cleanup] Error processing file ${filePath}:`, error);
+        if (isDevelopment) console.error(`[Cleanup] Error processing file ${filePath}:`, error);
         return { success: false, error: error.message || 'An unknown error occurred during cleanup.' };
       }
     });
@@ -324,12 +332,12 @@ class Electron {
       ipcMain.handle(channelName, async (event) => { // Changed to ipcMain.handle
         // No sender needed for handle, result is returned
         const fullPath = path.resolve(relativeFilePath);
-        console.log(`[IPC ${channelName}] Handling request. Resolved path: ${fullPath}`);
+        devLog(`[IPC ${channelName}] Handling request. Resolved path: ${fullPath}`);
 
         try {
-          console.log(`[IPC ${channelName}] Attempting to read file: ${fullPath}`);
+          devLog(`[IPC ${channelName}] Attempting to read file: ${fullPath}`);
           const fileContent = await fs.readFile(fullPath, 'utf-8');
-          console.log(`[IPC ${channelName}] Successfully read file: ${fullPath}`);
+          devLog(`[IPC ${channelName}] Successfully read file: ${fullPath}`);
           const lines = fileContent.split(/\r?\n/);
           const accounts = lines
             .map(line => line.trim())
@@ -340,23 +348,23 @@ class Electron {
               return { username, password, status: 'pending' };
             });
 
-          console.log(`[IPC ${channelName}] Successfully parsed ${accounts.length} accounts from ${fullPath}`);
+          devLog(`[IPC ${channelName}] Successfully parsed ${accounts.length} accounts from ${fullPath}`);
           this._store.set('testerLastPath', fullPath);
-          console.log(`[Store] Updated testerLastPath to: ${fullPath}`);
+          devLog(`[Store] Updated testerLastPath to: ${fullPath}`);
 
-          console.log(`[IPC ${channelName}] Returning success response.`);
+          devLog(`[IPC ${channelName}] Returning success response.`);
           return { // Return the result directly
             success: true,
             accounts: accounts,
             filePath: fullPath
           };
         } catch (error) {
-          console.error(`[IPC ${channelName}] Error processing file ${fullPath}:`, error);
+          if (isDevelopment) console.error(`[IPC ${channelName}] Error processing file ${fullPath}:`, error);
           let errorMessage = `Error loading file: ${error.message}`;
           if (error.code === 'ENOENT') {
             errorMessage = `File not found: ${path.basename(fullPath)}`;
           }
-          console.log(`[IPC ${channelName}] Returning error response.`);
+          devLog(`[IPC ${channelName}] Returning error response.`);
           return { // Return the error result directly
             success: false,
             error: errorMessage,
@@ -376,32 +384,32 @@ class Electron {
 
     // --- Renderer Ready Listener (for Auto-Resume) ---
     ipcMain.once('renderer-ready', (async () => {
-      console.log('[IPC] Received renderer-ready signal.');
-      try {
-        console.log('[Startup] Checking for Leak Check auto-resume...');
-        const appState = await this.getAppState();
-        if (appState.leakCheck && (appState.leakCheck.status === 'running' || appState.leakCheck.status === 'paused')) {
-          console.log(`[Startup] Found Leak Check state: ${appState.leakCheck.status}. Auto-resume disabled.`);
-          // No need for setTimeout now, as renderer is confirmed ready
-          // --- AUTO-RESUME DISABLED ---
-          // this._initiateOrResumeLeakCheck()
-          //   .then(result => {
-          //     if (result.success) {
-          //       console.log('[Startup] Leak Check auto-resume initiated successfully.');
-          //     } else {
-          //       console.error(`[Startup] Leak Check auto-resume failed: ${result.message}`);
-          //     }
-          //   })
-          //   .catch(err => {
-          //     console.error(`[Startup] Error during Leak Check auto-resume initiation: ${err.message}`);
-          //   });
-          // --- END AUTO-RESUME DISABLED ---
-        } else {
-          console.log('[Startup] No Leak Check auto-resume needed (State: ' + (appState.leakCheck?.status || 'idle') + ').');
-        }
-      } catch (error) {
-        console.error(`[Startup] Error during Leak Check auto-resume check: ${error.message}`);
+    devLog('[IPC] Received renderer-ready signal.');
+    try {
+      devLog('[Startup] Checking for Leak Check auto-resume...');
+      const appState = await this.getAppState();
+      if (appState.leakCheck && (appState.leakCheck.status === 'running' || appState.leakCheck.status === 'paused')) {
+        devLog(`[Startup] Found Leak Check state: ${appState.leakCheck.status}. Auto-resume disabled.`);
+        // No need for setTimeout now, as renderer is confirmed ready
+        // --- AUTO-RESUME DISABLED ---
+        // this._initiateOrResumeLeakCheck()
+        //   .then(result => {
+        //     if (result.success) {
+        //       devLog('[Startup] Leak Check auto-resume initiated successfully.');
+        //     } else {
+        //       if (isDevelopment) console.error(`[Startup] Leak Check auto-resume failed: ${result.message}`);
+        //     }
+        //   })
+        //   .catch(err => {
+        //     if (isDevelopment) console.error(`[Startup] Error during Leak Check auto-resume initiation: ${err.message}`);
+        //   });
+        // --- END AUTO-RESUME DISABLED ---
+      } else {
+        devLog('[Startup] No Leak Check auto-resume needed (State: ' + (appState.leakCheck?.status || 'idle') + ').');
       }
+    } catch (error) {
+      if (isDevelopment) console.error(`[Startup] Error during Leak Check auto-resume check: ${error.message}`);
+    }
     }).bind(this));
     // --- End Renderer Ready Listener ---
 
@@ -609,8 +617,8 @@ class Electron {
         } else {
           filePath = path.normalize(`${__dirname}/../../${url}`)
         }
-        console.log(`[Protocol Handler] Serving request for ${request.url} from ${filePath}`); // Added logging
-        return net.fetch(`file://${filePath}`)
+    devLog(`[Protocol Handler] Serving request for ${request.url} from ${filePath}`); // Added logging
+    return net.fetch(`file://${filePath}`)
       })
 
       // Now proceed with creating the window and other ready tasks
@@ -755,9 +763,9 @@ ipcMain.on('packet-event', (event, packetData) => {
  * - In production: plugin windows cannot open devtools at all.
  */
 ipcMain.on('open-plugin-window', (event, { url, name, pluginPath }) => {
-  console.log(`[IPC Main] Creating plugin window for ${name}`);
+    devLog(`[IPC Main] Creating plugin window for ${name}`);
 
-  const isDev = process.env.NODE_ENV === 'development';
+    const isDev = process.env.NODE_ENV === 'development';
 
   const pluginWindow = new BrowserWindow({
     ...defaultWindowOptions,
@@ -777,88 +785,88 @@ ipcMain.on('open-plugin-window', (event, { url, name, pluginPath }) => {
   pluginWindow.loadURL(url);
 
   // When window is ready, inject the jam object and jQuery, and open dev tools
-  pluginWindow.webContents.on('did-finish-load', () => {
-    console.log(`[IPC Main] Plugin window ${name} loaded`);
+    pluginWindow.webContents.on('did-finish-load', () => {
+      devLog(`[IPC Main] Plugin window ${name} loaded`);
 
-    // Dev tools do not open automatically for plugin windows.
+      // Dev tools do not open automatically for plugin windows.
 
-    // Inject jQuery from CDN
-    pluginWindow.webContents.executeJavaScript(`
-      (function() {
-        if (!window.jQuery) {
-          var script = document.createElement('script');
-          script.src = "https://code.jquery.com/jquery-3.6.0.min.js";
-          script.onload = function() {
-            console.log("[Plugin Window] jQuery injected:", typeof window.$);
-          };
-          document.head.appendChild(script);
-        }
-      })();
-    `).then(() => {
-      // Inject window.jam object after jQuery injection
+      // Inject jQuery from CDN
       pluginWindow.webContents.executeJavaScript(`
-        try {
-          const { ipcRenderer } = require('electron');
-          console.log("[Plugin Window] Setting up window.jam...");
-          
-          // Ensure window.jam exists (created by preload)
-          window.jam = window.jam || {};
+        (function() {
+          if (!window.jQuery) {
+            var script = document.createElement('script');
+            script.src = "https://code.jquery.com/jquery-3.6.0.min.js";
+            script.onload = function() {
+              if (process.env.NODE_ENV === 'development') console.log("[Plugin Window] jQuery injected:", typeof window.$);
+            };
+            document.head.appendChild(script);
+          }
+        })();
+      `).then(() => {
+        // Inject window.jam object after jQuery injection
+        pluginWindow.webContents.executeJavaScript(`
+          try {
+            const { ipcRenderer } = require('electron');
+            if (process.env.NODE_ENV === 'development') console.log("[Plugin Window] Setting up window.jam...");
+            
+            // Ensure window.jam exists (created by preload)
+            window.jam = window.jam || {};
 
-          // Define dispatch object
-          const dispatchObj = {
-            sendRemoteMessage: function(msg) {
-              console.log("[Plugin Window] Sending remote message via IPC:", msg);
-              ipcRenderer.send('send-remote-message', msg);
-            },
-            sendConnectionMessage: function(msg) {
-              console.log("[Plugin Window] Sending connection message via IPC:", msg);
-              ipcRenderer.send('send-connection-message', msg);
-            },
-            // Add getState method using invoke
-            getState: function(key) {
-              console.log("[Plugin Window] Requesting state via IPC invoke for key:", key);
-              // This returns a Promise! Plugin code needs to handle this (e.g., await).
-              return ipcRenderer.invoke('dispatch-get-state', key);
-            },
-            // Add getStateSync method using sendSync
-            getStateSync: function(key) {
-              console.log("[Plugin Window] Requesting state via IPC sendSync for key:", key);
-              // This returns the value directly.
-              return ipcRenderer.sendSync('dispatch-get-state-sync', key);
-            }
-          };
+            // Define dispatch object
+            const dispatchObj = {
+              sendRemoteMessage: function(msg) {
+                if (process.env.NODE_ENV === 'development') console.log("[Plugin Window] Sending remote message via IPC:", msg);
+                ipcRenderer.send('send-remote-message', msg);
+              },
+              sendConnectionMessage: function(msg) {
+                if (process.env.NODE_ENV === 'development') console.log("[Plugin Window] Sending connection message via IPC:", msg);
+                ipcRenderer.send('send-connection-message', msg);
+              },
+              // Add getState method using invoke
+              getState: function(key) {
+                if (process.env.NODE_ENV === 'development') console.log("[Plugin Window] Requesting state via IPC invoke for key:", key);
+                // This returns a Promise! Plugin code needs to handle this (e.g., await).
+                return ipcRenderer.invoke('dispatch-get-state', key);
+              },
+              // Add getStateSync method using sendSync
+              getStateSync: function(key) {
+                if (process.env.NODE_ENV === 'development') console.log("[Plugin Window] Requesting state via IPC sendSync for key:", key);
+                // This returns the value directly.
+                return ipcRenderer.sendSync('dispatch-get-state-sync', key);
+              }
+            };
 
-          // Define application object
-          const applicationObj = {
-            consoleMessage: function(type, msg) {
-              // Use string concatenation to avoid nested template literals
-              console.log("[Plugin App Console] " + type + ": " + msg); 
-              ipcRenderer.send('console-message', { type, msg });
-            }
-          };
+            // Define application object
+            const applicationObj = {
+              consoleMessage: function(type, msg) {
+                // Use string concatenation to avoid nested template literals
+                if (process.env.NODE_ENV === 'development') console.log("[Plugin App Console] " + type + ": " + msg); 
+                ipcRenderer.send('console-message', { type, msg });
+              }
+            };
 
-          // Assign to window.jam
-          window.jam.dispatch = dispatchObj;
-          window.jam.application = applicationObj;
+            // Assign to window.jam
+            window.jam.dispatch = dispatchObj;
+            window.jam.application = applicationObj;
 
-          // Dispatch a custom event to signal readiness
-          window.dispatchEvent(new CustomEvent('jam-ready'));
-        } catch (err) {
-          console.error("[Plugin Window] Error setting up window.jam:", err);
-        }
-      `);
+            // Dispatch a custom event to signal readiness
+            window.dispatchEvent(new CustomEvent('jam-ready'));
+          } catch (err) {
+            if (process.env.NODE_ENV === 'development') console.error("[Plugin Window] Error setting up window.jam:", err);
+          }
+        `);
+      });
     });
-  });
 
   // Handle window errors
   pluginWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-    console.error(`[IPC Main] Plugin window ${name} failed to load:`, errorDescription);
+    if (isDevelopment) console.error(`[IPC Main] Plugin window ${name} failed to load:`, errorDescription);
   });
 });
 
 // Add handlers for plugin window IPC messages
 ipcMain.on('send-remote-message', (event, msg) => {
-  console.log("[IPC Main] Received send-remote-message:", msg);
+  devLog("[IPC Main] Received send-remote-message:", msg);
   const mainWindow = BrowserWindow.getAllWindows().find(win => 
     win.webContents.getURL().includes('renderer/index.html')
   );
@@ -868,7 +876,7 @@ ipcMain.on('send-remote-message', (event, msg) => {
 });
 
 ipcMain.on('send-connection-message', (event, msg) => {
-  console.log("[IPC Main] Received send-connection-message:", msg);
+  devLog("[IPC Main] Received send-connection-message:", msg);
   const mainWindow = BrowserWindow.getAllWindows().find(win => 
     win.webContents.getURL().includes('renderer/index.html')
   );
@@ -878,7 +886,7 @@ ipcMain.on('send-connection-message', (event, msg) => {
 });
 
 ipcMain.on('console-message', (event, { type, msg }) => {
-  console.log(`[Plugin Console] ${type}: ${msg}`);
+  devLog(`[Plugin Console] ${type}: ${msg}`);
 });
 
 module.exports = Electron

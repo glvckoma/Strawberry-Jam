@@ -1,6 +1,14 @@
 /* eslint-disable camelcase */
 const { ipcRenderer } = require('electron')
 const { EventEmitter } = require('events')
+
+// Helper: Only log in development
+function devLog(...args) {
+  if (process.env.NODE_ENV === 'development') console.log(...args);
+}
+function devError(...args) {
+  if (process.env.NODE_ENV === 'development') console.error(...args);
+}
 const Server = require('../../../networking/server')
 const Settings = require('./settings')
 const Patcher = require('./patcher')
@@ -192,10 +200,10 @@ module.exports = class Application extends EventEmitter {
     if (typeof require === "function") {
       try {
         const { ipcRenderer } = require('electron');
-        console.log("[Main Renderer] Setting up plugin IPC listeners...");
+        devLog("[Main Renderer] Setting up plugin IPC listeners...");
 
         ipcRenderer.on('plugin-remote-message', (event, msg) => {
-          console.log("[Main Renderer] Received plugin-remote-message:", msg);
+          devLog("[Main Renderer] Received plugin-remote-message:", msg);
           if (this.dispatch && typeof this.dispatch.sendRemoteMessage === 'function') {
             this.dispatch.sendRemoteMessage(msg).catch(err => {
               this.consoleMessage({ type: 'error', message: `Error sending remote message from plugin: ${err.message}` });
@@ -206,7 +214,7 @@ module.exports = class Application extends EventEmitter {
         });
 
         ipcRenderer.on('plugin-connection-message', (event, msg) => {
-          console.log("[Main Renderer] Received plugin-connection-message:", msg);
+          devLog("[Main Renderer] Received plugin-connection-message:", msg);
           if (this.dispatch && typeof this.dispatch.sendConnectionMessage === 'function') {
             this.dispatch.sendConnectionMessage(msg).catch(err => {
               this.consoleMessage({ type: 'error', message: `Error sending connection message from plugin: ${err.message}` });
@@ -218,52 +226,52 @@ module.exports = class Application extends EventEmitter {
 
         // Listener for UI plugins requesting state synchronously
         ipcRenderer.on('dispatch-get-state-sync', (event, key) => {
-          console.log(`[Main Renderer] Received dispatch-get-state-sync request for key: ${key}`);
+          devLog(`[Main Renderer] Received dispatch-get-state-sync request for key: ${key}`);
           if (this.dispatch && typeof this.dispatch.getState === 'function') {
             try {
               const value = this.dispatch.getState(key);
-              console.log(`[Main Renderer] Returning sync state value for ${key}:`, value);
+              devLog(`[Main Renderer] Returning sync state value for ${key}:`, value);
               event.returnValue = value; // Set return value for sendSync
             } catch (error) {
               this.consoleMessage({ type: 'error', message: `Error getting sync state for key '${key}': ${error.message}` });
-              console.error(`[Main Renderer] Error getting sync state for key '${key}':`, error);
+              devError(`[Main Renderer] Error getting sync state for key '${key}':`, error);
               event.returnValue = null; // Return null on error
             }
           } else {
             this.consoleMessage({ type: 'error', message: `Cannot get sync state for key '${key}': Dispatch not ready.` });
-            console.error(`[Main Renderer] Cannot get sync state for key '${key}': Dispatch not ready.`);
+            devError(`[Main Renderer] Cannot get sync state for key '${key}': Dispatch not ready.`);
             event.returnValue = null; // Return null if dispatch isn't ready
           }
         });
 
         // Listener for asynchronous state requests from the main process
         ipcRenderer.on('main-renderer-get-state-async', (event, { key, replyChannel }) => {
-          console.log(`[Main Renderer] Received ASYNC request from main process for key: ${key} (Reply Channel: ${replyChannel})`);
+          devLog(`[Main Renderer] Received ASYNC request from main process for key: ${key} (Reply Channel: ${replyChannel})`);
           let value = null;
           // Check if dispatch and getState are available
           if (this.dispatch && typeof this.dispatch.getState === 'function') {
             try {
               value = this.dispatch.getState(key);
-              console.log(`[Main Renderer] Got state value for ${key}:`, value);
+              devLog(`[Main Renderer] Got state value for ${key}:`, value);
             } catch (error) {
               this.consoleMessage({ type: 'error', message: `Error getting ASYNC state for key '${key}' in renderer: ${error.message}` });
-              console.error(`[Main Renderer] Error getting ASYNC state for key '${key}':`, error);
+              devError(`[Main Renderer] Error getting ASYNC state for key '${key}':`, error);
               value = null; // Ensure value is null on error
             }
           } else {
             this.consoleMessage({ type: 'error', message: `Cannot get ASYNC state for key '${key}': Dispatch not ready.` });
-            console.error(`[Main Renderer] Cannot get ASYNC state for key '${key}': Dispatch not ready.`);
+            devError(`[Main Renderer] Cannot get ASYNC state for key '${key}': Dispatch not ready.`);
             value = null; // Ensure value is null if dispatch isn't ready
           }
           // Send the value back on the unique reply channel
-          console.log(`[Main Renderer] Sending reply for ${key} on channel ${replyChannel}:`, value);
+          devLog(`[Main Renderer] Sending reply for ${key} on channel ${replyChannel}:`, value);
           ipcRenderer.send(replyChannel, value);
         });
 
 
-        console.log("[Main Renderer] Plugin IPC listeners setup complete.");
+        devLog("[Main Renderer] Plugin IPC listeners setup complete.");
       } catch (e) {
-        console.error("[Main Renderer] Error setting up plugin IPC listeners:", e);
+        devError("[Main Renderer] Error setting up plugin IPC listeners:", e);
       }
     }
   }
@@ -774,7 +782,7 @@ module.exports = class Application extends EventEmitter {
         isPacket: false // Ensure this notification goes to the app messages log
     });
 
-    console.log(`Cleaned ${numberToRemove} old log entries from ${isPacketLog ? 'packet log' : 'app messages'}. New count: ${newCount}`);
+    devLog(`Cleaned ${numberToRemove} old log entries from ${isPacketLog ? 'packet log' : 'app messages'}. New count: ${newCount}`);
   }
 
 
@@ -909,7 +917,7 @@ module.exports = class Application extends EventEmitter {
     this.emit('ready')
 
     // Signal to main process that renderer is ready (for auto-resume logic)
-    console.log('[Renderer] Application instantiated, sending renderer-ready signal.');
+    devLog('[Renderer] Application instantiated, sending renderer-ready signal.');
     ipcRenderer.send('renderer-ready');
   }
 }
