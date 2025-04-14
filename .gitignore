@@ -17,6 +17,10 @@ assets/*-dev.asar
 # Ignore user/dev specific files and folders
 memory-bank/
 plugins/UsernameLogger/
-data/
+data/* # Ignore contents, but allow empty dir via .gitkeep
+!data/.gitkeep
 assets/memory-bank/
-settings.json
+# settings.json # Keep settings.json in Git
+.clinerules
+process_logs.js
+pack-and-run.js

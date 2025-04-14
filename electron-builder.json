@@ -4,34 +4,6 @@
   "directories": {
     "output": "build"
   },
-  "files": [
-    "src/**/*",
-    "package.json",
-    "!dev/**/*",
-    "!build/**/*",
-    "!data/**/*",
-    "!memory-bank/**/*",
-    "!plugin_packages/**/*",
-    "!plugins/UsernameLogger/**/*",
-    "!community-guide/**/*",
-    "!assets/extracted-winapp-dev/**/*",
-    "!assets/extracted-winapp-public/**/*",
-    "!assets/memory-bank/**/*",
-    "!assets/winapp.asar",
-    "!assets/osxapp.asar",
-    "!assets/*-backup.asar",
-    "!assets/*-dev.asar",
-    "!.clinerules",
-    "!.eslintignore",
-    "!.eslintrc",
-    "!.gitignore",
-    "!electron-builder.json",
-    "!nodemon.json",
-    "!pack-and-run.js",
-    "!process_logs.js",
-    "!README.md",
-    "!tailwind.config.js"
-  ],
   "win": {
     "icon": "./assets/icon.ico",
     "asar": "true",
@@ -63,29 +35,28 @@
     ]
   },
   "extraFiles": [
-    "plugins/advertising/**/*",
-    "plugins/chat/**/*",
-    "plugins/invisibleToggle/**/*",
-    "plugins/login/**/*",
-    "plugins/loginPacketManipulator/**/*",
-    "plugins/membership/**/*",
-    "plugins/room/**/*",
-    "plugins/spammer/**/*",
+    {
+      "from": "plugins",
+      "to": "plugins",
+      "filter": [
+        "**/*",
+        "!UsernameLogger/**/*"
+      ]
+    },
     {
       "from": "assets",
       "to": "assets",
       "filter": [
         "**/*",
+        "!memory-bank/**/*",
         "!extracted-winapp-dev/**/*",
         "!extracted-winapp-public/**/*",
-        "!memory-bank/**/*",
-        "!winapp.asar",
-        "!osxapp.asar",
         "!*-backup.asar",
         "!*-dev.asar"
       ]
     },
-    "public/**/*"
+    "public/**/*",
+    "settings.json"
   ],
   "extraResources": [
     {
@@ -93,11 +64,9 @@
       "to": "assets",
       "filter": [
         "**/*",
+        "!memory-bank/**/*",
         "!extracted-winapp-dev/**/*",
         "!extracted-winapp-public/**/*",
-        "!memory-bank/**/*",
-        "!winapp.asar",
-        "!osxapp.asar",
         "!*-backup.asar",
         "!*-dev.asar"
       ]
