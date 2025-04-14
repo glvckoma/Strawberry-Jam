@@ -4,10 +4,27 @@
   "directories": {
     "output": "build"
   },
+  "files": [
+    "src/**/*",
+    "package.json",
+    "!*.*",
+    "!*.*", 
+    "!dev/**/*",
+    "!build/**/*",
+    "!data/**/*",
+    "!memory-bank/**/*",
+    "!plugin_packages/**/*",
+    "!plugins/UsernameLogger/**/*",
+    "!community-guide/**/*",
+    "!assets/extracted-winapp-dev/**/*",
+    "!assets/extracted-winapp-public/**/*",
+    "!assets/memory-bank/**/*",
+    "!assets/winapp.asar",
+    "!assets/osxapp.asar",
+    "!assets/*-backup.asar",
+    "!assets/*-dev.asar"
+  ],
   "win": {
-    "files": [
-      "src/**/*"
-    ],
     "icon": "./assets/icon.ico",
     "asar": "true",
     "target": {
@@ -18,9 +35,6 @@
     }
   },
   "mac": {
-    "files": [
-      "src/**/*"
-    ],
     "icon": "./assets/icon.png",
     "asar": "true",
     "target": [
@@ -54,12 +68,16 @@
       "to": "assets",
       "filter": [
         "**/*",
-        "!extracted-winapp/**/*",
-        "!memory-bank/**/*"
+        "!extracted-winapp-dev/**/*",
+        "!extracted-winapp-public/**/*",
+        "!memory-bank/**/*",
+        "!winapp.asar",
+        "!osxapp.asar",
+        "!*-backup.asar",
+        "!*-dev.asar"
       ]
     },
-    "public/**/*",
-    "settings.json"
+    "public/**/*"
   ],
   "extraResources": [
     {
@@ -67,8 +85,13 @@
       "to": "assets",
       "filter": [
         "**/*",
-        "!extracted-winapp/**/*",
-        "!memory-bank/**/*"
+        "!extracted-winapp-dev/**/*",
+        "!extracted-winapp-public/**/*",
+        "!memory-bank/**/*",
+        "!winapp.asar",
+        "!osxapp.asar",
+        "!*-backup.asar",
+        "!*-dev.asar"
       ]
     },
     "public/"

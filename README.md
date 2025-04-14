@@ -14,6 +14,11 @@ A tool for exploring and extending <a href="https://classic.animaljam.com">Anima
 <em>Strawberry Jam is a fork of the original <a href="https://github.com/Sxip/jam">Jam</a> project by sxip.</em>
 </div>
 
+## 🍓 What's Different from the Original Jam?
+
+Strawberry Jam is a fork of the original [Jam](https://github.com/Sxip/jam) project, with new features, plugins, and improvements not found in the original.  
+See [Strawberry Jam vs. Jam: What's Different?](community-guide/strawberry-jam-vs-jam.md) for a friendly and technical comparison.
+
 ## 🚀 Quick Start
 
 ### 🪟 Windows
