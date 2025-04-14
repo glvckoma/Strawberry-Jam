@@ -3,24 +3,17 @@ build/
 dev-app-update.yml
 plugin_packages/
 .DS_Store
-
-# Ignore ASAR source directories (dev + public)
 assets/extracted-winapp-dev/
 assets/extracted-winapp-public/
-
-# Ignore built ASAR files and backups
 assets/winapp.asar
 assets/osxapp.asar
 assets/*-backup.asar
 assets/*-dev.asar
-
-# Ignore user/dev specific files and folders
 memory-bank/
 plugins/UsernameLogger/
 data/* # Ignore contents, but allow empty dir via .gitkeep
 !data/.gitkeep
 assets/memory-bank/
-# settings.json # Keep settings.json in Git
 .clinerules
 process_logs.js
 pack-and-run.js
