@@ -67,7 +67,15 @@ Jam follows a typical Electron application structure combined with a network pro
     *   **Dependency Management:** Uses `live-plugin-manager` to install dependencies listed in `plugin.json` at runtime (security risk). Provides `dispatch.require()` to access these dependencies.
     *   **Plugin Loading:**
         *   **Game-type plugins:** Default type. Loaded using `require()` directly in the insecure renderer process (security risk). **Crucially, the plugin's main file (`index.js`) MUST export a class or constructor function.** The `Dispatch` class instantiates the plugin using `new PluginInstance(...)`. Receives `dispatch` and `application` instances in the constructor.
-        *   **UI-type plugins:** Defined by `"type": "ui"` and `"main": "index.html"`. Loaded into separate windows via `dispatch.open()`. Access core functionality via the global `window.jam` object.
+        *   **UI-type plugins:** Defined by `"type": "ui"` and `"main": "index.html"`.
+            *   Loaded into separate `BrowserWindow` instances triggered by `dispatch.open()` in the renderer, which sends an `open-plugin-window` IPC message to the main process.
+            *   The main process (`src/electron/index.js`) handles `open-plugin-window`: creates the new window, loads the plugin's HTML URL.
+            *   **Automatic Injection (Main Process):** Within the `did-finish-load` event for the new plugin window, the main process:
+                1.  Injects jQuery from CDN using `webContents.executeJavaScript`.
+                2.  Injects a simplified global `window.jam` object containing `dispatch` (with `sendRemoteMessage`, `sendConnectionMessage` via IPC) and `application` (with `consoleMessage` via IPC) using `webContents.executeJavaScript`.
+                3.  Dispatches a `jam-ready` custom event within the plugin window.
+                4.  Automatically opens dev tools using `webContents.openDevTools()`.
+            *   **Plugin Initialization:** UI plugins should wrap their initialization logic (attaching event listeners, accessing jQuery `$` or `window.jam`) in a function that waits for `window.jam.dispatch` to be defined or listens for the `jam-ready` event.
     *   **Plugin Settings/Data Access:** Accessing sensitive data stored in the main process (like API keys from `electron-store`) from within a renderer-process plugin can be tricky due to timing/context. The most reliable pattern found so far is for the plugin to use `require('electron').ipcRenderer.invoke('channel-name', ...)` *at the point the data is needed* (e.g., within a command handler like `runLeakCheck`) to request it from the main process. Attempts to load the key during plugin instantiation (either directly in the plugin or via the `Dispatch` loader) have proven unreliable.
     *   **Event Handling:** Provides `dispatch.onMessage` (for network packets), `dispatch.onCommand` (for chat commands), `dispatch.offMessage`, `dispatch.offCommand`.
     *   **Actions:** Provides `dispatch.sendRemoteMessage`, `dispatch.sendConnectionMessage`, `dispatch.setInterval`, `dispatch.clearInterval`, `dispatch.setState`, `dispatch.getState`.
@@ -80,7 +88,7 @@ Jam follows a typical Electron application structure combined with a network pro
         *   Serves local `ajclient.swf` via `FilesController.game`.
         *   Proxies other asset requests to AJ CDN (`ajcontent.akamaized.net`) via `FilesController.index` using `HttpClient.proxy` (which uses the deprecated `request` library).
         *   Includes `/api/send-credentials` (POST) endpoint to receive login details (e.g., from external tools) and send them to the main Electron process via `process.send` (IPC).
-        *   Includes `/api/get-pending-credentials` (GET) as a fallback retrieval method.
+            *   Includes `/api/get-pending-credentials` (GET) as a fallback retrieval method.
 
 6.  **Patcher (`src/electron/renderer/application/patcher/index.js`):**
     *   `Patcher` class handles modifying the AJ Classic client installation.
@@ -88,6 +96,11 @@ Jam follows a typical Electron application structure combined with a network pro
     *   `restoreOriginalAsar()`: Restores the backed-up `app.asar`.
     *   `killProcessAndPatch()`: Orchestrates patching, launching the game executable (`execFileAsync`), and restoring the original ASAR afterwards. Attempts to pass credentials received via IPC by setting `process.env.AJC_USERNAME` and `process.env.AJC_PASSWORD`, relying on the custom ASAR to read them. Contains outdated proxy logic (setting `JAM_PROXY_TARGET`).
     *   **Dependency Requirement:** For the patched ASAR (`winapp.asar` / `osxapp.asar`) to function correctly, the source directory (`assets/extracted-winapp`) *must* contain a `node_modules` folder with versions of dependencies compatible with the game client's Electron/Node.js environment *before* packing with `npx asar pack`. Simply running `npm install` in the source directory may install incompatible versions. Copying `node_modules` from a known-good extracted ASAR is the recommended approach.
+
+## Build & Packaging Patterns
+
+- **Hybrid Root/Resources Packaging:** Due to runtime expectations (observed in original `jam` and confirmed by testing), essential runtime assets (`assets/`, including `winapp.asar`/`osxapp.asar`), plugins (`plugins/`), and configuration (`settings.json`) are placed at the application installation root using `electron-builder.json`'s `extraFiles` option. Redundant copies of some directories (`assets/`, `public/`) are also placed within the standard `resources/` directory using `extraResources`. This deviates from the typical pattern of placing most assets within `resources/` but appears necessary for compatibility with the existing codebase's path assumptions. Filters are used to exclude development files and specific plugins (like `UsernameLogger`) from the final package.
+- **macOS Build via Docker:** Uses `electronuserland/builder:wine` Docker image to build macOS `.zip` archives on Windows. The build script (`package.json#build:mac-win` -> `build:mac-docker`) targets only `zip` (`--mac -c.mac.target=zip`) and allows the builder to download the correct Electron version internally (omitting `-c.electronDist`).
 
 ## Key Design Patterns & Decisions
 

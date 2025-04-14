@@ -120,12 +120,22 @@
   </template>
 
   <script>
-    const { dispatch } = jam
+    // Wait for window.jam and dispatch to be ready
+    function initializePlugin() {
+      if (typeof window.jam === 'undefined' || typeof window.jam.dispatch === 'undefined') {
+        console.log("Advertising Plugin: Waiting for window.jam.dispatch...");
+        setTimeout(initializePlugin, 100); // Check again in 100ms
+        return;
+      }
+      console.log("Advertising Plugin: Dispatch ready, initializing.");
+      const { dispatch } = window.jam; // Use window.jam explicitly
 
-    dispatch.waitForJQuery(window, () => {
-      let isActive = false
-      let currentInterval = null
-      let messageIndex = 0
+      // jQuery is now injected automatically, no need for waitForJQuery
+
+      // --- Start of original plugin logic ---
+      let isActive = false;
+      let messageTimerId = null; // Changed from currentInterval
+      let messageIndex = 0;
 
       const $messagesContainer = $('#messages-container')
       const $addMessageBtn = $('#add-message-btn')
@@ -207,7 +217,6 @@
           return
         }
 
-        // Ensure minimum interval
         const interval = Math.max(10, parseInt($intervalInput.val()) || 60)
         $intervalInput.val(interval)
 
@@ -221,8 +230,8 @@
           .addClass('bg-highlight-green/20 text-highlight-green')
           .html('<i class="fas fa-circle mr-1"></i> Active')
 
-        sendNextMessage()
-        currentInterval = setInterval(sendNextMessage, interval * 1000)
+        // Start the first message send immediately, then schedule subsequent ones
+        sendNextMessage(); 
 
         showToast("Auto advertising started", "success")
       }
@@ -231,11 +240,13 @@
        * Stops the advertising rotation
        */
       function stopAdvertising() {
-        if (!isActive) return
+        if (!isActive) return;
 
-        clearInterval(currentInterval)
-        currentInterval = null
-        isActive = false
+        if (messageTimerId) {
+            clearTimeout(messageTimerId); // Use clearTimeout
+            messageTimerId = null;
+        }
+        isActive = false;
 
         $startBtn.prop('disabled', false)
         $stopBtn.prop('disabled', true)
@@ -248,14 +259,26 @@
       }
 
       /**
-       * Sends the next message in the rotation
+       * Sends the next message in the rotation and schedules the next one
        */
-      function sendNextMessage() {
+      async function sendNextMessage() { // Make function async
+        // Check if still active before sending
+        if (!isActive) return; 
+
         const messages = getAllMessages().filter(msg => msg.trim() !== "")
+        const interval = Math.max(10, parseInt($intervalInput.val()) || 60); // Get interval
+
+        // Define function to schedule next send
+        const scheduleNext = () => {
+          if (isActive) { // Double-check isActive before scheduling
+            messageTimerId = setTimeout(sendNextMessage, interval * 1000);
+          }
+        };
 
         if (messages.length === 0) {
-          stopAdvertising()
-          return
+          showToast("No messages to send. Stopping.", "warning");
+          stopAdvertising();
+          return;
         }
 
         let messageToSend
@@ -270,18 +293,24 @@
           messageIndex++
         }
 
-        const room = dispatch.getState('room')
+        // Use await to get the room state asynchronously
+        const room = await dispatch.getState('room'); 
         if (!room) {
-          showToast("You must be in a room to send messages", "error")
-          return
+          showToast("You must be in a room to send messages", "error");
+          scheduleNext(); // Schedule next attempt even if not in room
+          return;
         }
 
         try {
-          const packet = `<msg t="sys"><body action="pubMsg" r="${room}"><txt><![CDATA[${messageToSend}%9]]></txt></body></msg>`
-          dispatch.sendRemoteMessage(packet)
+          // Changed suffix from %9 to %0 based on working examples
+          const packet = `<msg t="sys"><body action="pubMsg" r="${room}"><txt><![CDATA[${messageToSend}%0]]></txt></body></msg>`
+          dispatch.sendRemoteMessage(packet);
         } catch (error) {
-          console.error("Error sending message:", error)
-          showToast("Error sending message", "error")
+          console.error("Error sending message:", error);
+          showToast("Error sending message. Will retry.", "error");
+        } finally {
+           // Always schedule the next message send in the finally block if still active
+           scheduleNext();
         }
       }
 
@@ -414,8 +443,12 @@
       $saveBtn.on('click', saveConfig)
       $loadBtn.on('click', loadConfig)
 
-      $(window).on('beforeunload', stopAdvertising)
-    })
+      $(window).on('beforeunload', stopAdvertising);
+      // --- End of original plugin logic ---
+    }
+
+    // Start the initialization check
+    initializePlugin();
   </script>
 </body>
 </html>

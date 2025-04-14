@@ -256,6 +256,40 @@ module.exports = class Dispatch {
           }
         }
       }))
+
+      // --- Add Room State Hooks ---
+      this.onMessage({
+        type: ConnectionMessageTypes.aj, // Listen to game server messages
+        message: 'j#jr', // Packet type for joining a room
+        callback: ({ message }) => {
+          try {
+            // Extract room ID (assuming it's the first parameter after %xt%j#jr%)
+            const parts = message.raw.split('%');
+            if (parts.length >= 5) {
+              const roomId = parts[4]; // Index 4 should be the room ID
+              this.setState('room', roomId);
+              console.log(`[Dispatch] Room state set to: ${roomId}`);
+              this._application.consoleMessage({ type: 'logger', message: `Entered room: ${roomId}` });
+            } else {
+               console.warn('[Dispatch] Could not parse room ID from j#jr packet:', message.raw);
+            }
+          } catch (e) {
+            console.error('[Dispatch] Error processing j#jr packet:', e);
+          }
+        }
+      });
+
+      this.onMessage({
+        type: ConnectionMessageTypes.aj, // Listen to game server messages
+        message: 'j#l', // Packet type for leaving a room
+        callback: () => {
+          this.setState('room', null);
+          console.log('[Dispatch] Room state cleared (left room).');
+          this._application.consoleMessage({ type: 'logger', message: 'Left room.' });
+        }
+      });
+      // --- End Room State Hooks ---
+
     } catch (error) {
       this._application.consoleMessage({
         type: 'error',

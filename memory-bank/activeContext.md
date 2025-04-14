@@ -47,12 +47,19 @@
     -   **Log Retention:** Reviewed current log limits (`_maxLogEntries = 1000`, `_cleanPercentage = 0.2`); deemed acceptable for now.
     -   **Auto-Scroll:** Verified that existing `consoleMessage` logic should provide auto-scrolling for LeakCheck logs.
     -   **Advertising Plugin UI:** Added draggable header and close button to `plugins/advertising/index.html` for consistency.
+-   **Advertising Plugin UI Fix (April 2025):**
+    -   Modified `plugins/advertising/index.html` to correctly wait for `window.jam.dispatch` and utilize automatically injected jQuery, fixing unresponsive UI buttons.
+    -   Updated `src/electron/index.js` to automatically inject jQuery into UI plugin windows and handle dev tools opening within `did-finish-load`.
 -   **Git Repository Setup (April 2025):**
     -   Created and switched to `main` branch.
     -   Confirmed `origin` remote points to `https://github.com/glvckoma/strawberry-jam.git`.
     -   Updated `.gitignore` to include `settings.json` and verified other exclusions.
     -   Staged all current project files.
     -   Created initial commit (`f26fbd7`) representing the local project state, ready for future push.
+-   **Build Configuration & Troubleshooting (April 2025):**
+    -   **macOS Build:** Successfully configured `package.json` and Docker (`electronuserland/builder:wine`) to build macOS `.zip` archives on Windows after troubleshooting pathing, module (`dmg-license`), and Electron distribution issues. Final working script uses `:wine` image, targets only `zip` (`--mac -c.mac.target=zip`), and lets the builder handle Electron download internally (removed `-c.electronDist`).
+    -   **.gitignore Review:** Audited `.gitignore`, confirmed rules were correct but previously tracked files might need `git rm --cached`. Added `.clinerules`, `process_logs.js`, `pack-and-run.js` to ignore list. Modified `data/` rule to ignore contents but allow empty directory tracking via `.gitkeep`. Removed `settings.json` from ignore list as requested. Created `data/.gitkeep`.
+    -   **electron-builder.json Packaging:** Refined build packaging to address issues in installed `.exe`. Reverted to structure similar to original `jam` project based on analysis of installed files. Configured `extraFiles` to place filtered `plugins` (excluding `UsernameLogger`), filtered `assets` (including `winapp.asar`/`osxapp.asar`), `settings.json`, and `public` at the application root. Configured `extraResources` to place filtered `assets` and `public` into the `resources` directory. This resolved issues with plugin loading and the Play button functionality in test builds.
 -   **ASAR Build Separation (Dev/Public) (April 2025):**
     -   Renamed ASAR source folder `assets/extracted-winapp` to `assets/extracted-winapp-dev`.
     -   Created `assets/extracted-winapp-public` by copying the dev version.
@@ -156,10 +163,13 @@ Need to develop a comprehensive README for GitHub distribution covering:
 - Troubleshooting section
 - Security considerations
 
-## 5. Next Steps
+## Current Focus (Post-Build Fix)
 
-1.  **Update Memory Bank:** (Complete) Documented Git setup and ASAR build separation.
-2.  **UI/UX & Log Improvements:**
+*(Advertising plugin UI fixed, timed sending still potentially unstable)*
+
+## 5. Next Steps (Revised)
+
+1.  **UI/UX & Log Improvements:**
     -   Implement virtualized rendering for console/network logs to improve performance.
     -   Review/adjust log retention limits if performance issues persist.
 3.  **SVF Decompiled Analysis:**

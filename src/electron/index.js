@@ -1,6 +1,7 @@
- const { app, BrowserWindow, globalShortcut, shell, ipcMain, protocol, net, dialog } = require('electron') // Added dialog
+const { app, BrowserWindow, globalShortcut, shell, ipcMain, protocol, net, dialog } = require('electron') // Added dialog
 const path = require('path')
 const fs = require('fs').promises; // Added for state management
+const crypto = require('crypto'); // Added for unique IDs
 const { fork } = require('child_process')
 const { autoUpdater } = require('electron-updater')
 const Store = require('electron-store'); // Added for leak checker
@@ -209,6 +210,41 @@ class Electron {
         return this.setAppState(newState); // Use helper
     }).bind(this)); // Bind to the Electron class instance
     // --- End App State IPC Handlers ---
+
+
+    // --- Plugin State IPC Bridge ---
+    ipcMain.handle('dispatch-get-state', async (event, key) => { // Make handler async
+      console.log(`[IPC Main] Received ASYNC 'dispatch-get-state' request from plugin for key: ${key}`);
+      if (!this._window || !this._window.webContents || this._window.webContents.isDestroyed()) {
+        console.error(`[IPC Main] Cannot get state for key '${key}': Main window not available.`);
+        return null; // Return null if main window isn't ready
+      }
+
+      const replyChannel = `get-state-reply-${crypto.randomUUID()}`;
+      console.log(`[IPC Main] Generated reply channel: ${replyChannel}`);
+
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          ipcMain.removeListener(replyChannel, listener); // Clean up listener on timeout
+          console.error(`[IPC Main] Timeout waiting for reply on ${replyChannel} for key ${key}`);
+          reject(new Error(`Timeout waiting for state response for key: ${key}`));
+        }, 2000); // 2 second timeout
+
+        const listener = (event, value) => {
+          clearTimeout(timeout);
+          console.log(`[IPC Main] Received reply on ${replyChannel} for key ${key}:`, value);
+          resolve(value);
+        };
+
+        ipcMain.once(replyChannel, listener);
+
+        // Send async request to main renderer
+        console.log(`[IPC Main] Sending async request 'main-renderer-get-state-async' to main window for key: ${key}`);
+        this._window.webContents.send('main-renderer-get-state-async', { key, replyChannel });
+      });
+    });
+    // --- End Plugin State IPC Bridge ---
+
 
     // --- Account Tester IPC Handlers ---
     // Use a closure to capture 'this'
@@ -679,7 +715,13 @@ class Electron {
 
     // Register F11 shortcut for devtools ONLY in development
     if (isDevelopment) {
-      this._registerShortcut('F11', () => this._window.webContents.openDevTools())
+      // Modified F11 to toggle dev tools for the currently focused window
+      this._registerShortcut('F11', () => {
+        const focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusedWindow && focusedWindow.webContents) {
+          focusedWindow.webContents.toggleDevTools();
+        }
+      })
     }
 
     // Enable auto-updater for production builds
@@ -725,7 +767,7 @@ ipcMain.on('open-plugin-window', (event, { url, name, pluginPath }) => {
     frame: false,
     webPreferences: {
       ...defaultWindowOptions.webPreferences,
-      devTools: isDev, // Only allow devtools in dev, never in production
+      devTools: true, // Allow devtools in any environment
       nodeIntegration: true,
       contextIsolation: false
     }
@@ -734,55 +776,78 @@ ipcMain.on('open-plugin-window', (event, { url, name, pluginPath }) => {
   // Load the plugin URL
   pluginWindow.loadURL(url);
 
-  // Do NOT open devtools automatically in any environment
-
-  // When window is ready, inject the jam object
+  // When window is ready, inject the jam object and jQuery, and open dev tools
   pluginWindow.webContents.on('did-finish-load', () => {
     console.log(`[IPC Main] Plugin window ${name} loaded`);
-    
-    // Inject window.jam object
+
+    // Dev tools do not open automatically for plugin windows.
+
+    // Inject jQuery from CDN
     pluginWindow.webContents.executeJavaScript(`
-      try {
-        const { ipcRenderer } = require('electron');
-        console.log("[Plugin Window] Setting up window.jam...");
-        
-        // Ensure window.jam exists (created by preload)
-        window.jam = window.jam || {};
+      (function() {
+        if (!window.jQuery) {
+          var script = document.createElement('script');
+          script.src = "https://code.jquery.com/jquery-3.6.0.min.js";
+          script.onload = function() {
+            console.log("[Plugin Window] jQuery injected:", typeof window.$);
+          };
+          document.head.appendChild(script);
+        }
+      })();
+    `).then(() => {
+      // Inject window.jam object after jQuery injection
+      pluginWindow.webContents.executeJavaScript(`
+        try {
+          const { ipcRenderer } = require('electron');
+          console.log("[Plugin Window] Setting up window.jam...");
+          
+          // Ensure window.jam exists (created by preload)
+          window.jam = window.jam || {};
 
-        // Define dispatch object
-        const dispatchObj = {
-          sendRemoteMessage: function(msg) {
-            console.log("[Plugin Window] Sending remote message via IPC:", msg);
-            ipcRenderer.send('send-remote-message', msg);
-          },
-          sendConnectionMessage: function(msg) {
-            console.log("[Plugin Window] Sending connection message via IPC:", msg);
-            ipcRenderer.send('send-connection-message', msg);
-          }
-        };
+          // Define dispatch object
+          const dispatchObj = {
+            sendRemoteMessage: function(msg) {
+              console.log("[Plugin Window] Sending remote message via IPC:", msg);
+              ipcRenderer.send('send-remote-message', msg);
+            },
+            sendConnectionMessage: function(msg) {
+              console.log("[Plugin Window] Sending connection message via IPC:", msg);
+              ipcRenderer.send('send-connection-message', msg);
+            },
+            // Add getState method using invoke
+            getState: function(key) {
+              console.log("[Plugin Window] Requesting state via IPC invoke for key:", key);
+              // This returns a Promise! Plugin code needs to handle this (e.g., await).
+              return ipcRenderer.invoke('dispatch-get-state', key);
+            },
+            // Add getStateSync method using sendSync
+            getStateSync: function(key) {
+              console.log("[Plugin Window] Requesting state via IPC sendSync for key:", key);
+              // This returns the value directly.
+              return ipcRenderer.sendSync('dispatch-get-state-sync', key);
+            }
+          };
 
-        // Define application object
-        const applicationObj = {
-          consoleMessage: function(type, msg) {
-            // Escape inner backticks and dollar signs for the outer template literal
-            console.log(\`[Plugin App Console] \\\${type}: \\\${msg}\`); 
-            ipcRenderer.send('console-message', { type, msg });
-          }
-        };
+          // Define application object
+          const applicationObj = {
+            consoleMessage: function(type, msg) {
+              // Use string concatenation to avoid nested template literals
+              console.log("[Plugin App Console] " + type + ": " + msg); 
+              ipcRenderer.send('console-message', { type, msg });
+            }
+          };
 
-        // Assign to window.jam
-        window.jam.dispatch = dispatchObj;
-        window.jam.application = applicationObj;
+          // Assign to window.jam
+          window.jam.dispatch = dispatchObj;
+          window.jam.application = applicationObj;
 
-        // console.log("[Plugin Window] window.jam properties setup complete."); // Removed log
-
-        // Dispatch a custom event to signal readiness
-        window.dispatchEvent(new CustomEvent('jam-ready'));
-        // console.log("[Plugin Window] Dispatched jam-ready event."); // Removed log
-      } catch (err) {
-        console.error("[Plugin Window] Error setting up window.jam:", err);
-      }
-    `);
+          // Dispatch a custom event to signal readiness
+          window.dispatchEvent(new CustomEvent('jam-ready'));
+        } catch (err) {
+          console.error("[Plugin Window] Error setting up window.jam:", err);
+        }
+      `);
+    });
   });
 
   // Handle window errors

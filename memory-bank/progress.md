@@ -110,6 +110,13 @@ Proceed with the easiest task first, allow user to test, then move to the next. 
     -   **Log Retention:** Reviewed current log limits (`_maxLogEntries = 1000`, `_cleanPercentage = 0.2`); deemed acceptable for now.
     -   **Auto-Scroll:** Verified that existing `consoleMessage` logic should provide auto-scrolling for LeakCheck logs.
     -   **Advertising Plugin UI:** Added draggable header and close button to `plugins/advertising/index.html` for consistency.
+-   **Build Configuration & Troubleshooting (April 2025):**
+    -   Successfully configured `electron-builder.json` and `package.json` to produce working Windows builds (`.exe`) with correct file placement (plugins, assets, settings at root; assets also in resources).
+    -   Successfully configured `package.json` to allow building macOS `.zip` archives using Docker on Windows.
+    -   Updated `.gitignore` to ignore build/dev files and allow `settings.json` tracking. Created `data/.gitkeep`.
+-   **Advertising Plugin UI Fix (April 2025):**
+    -   Modified `plugins/advertising/index.html` to correctly wait for `window.jam.dispatch` and utilize automatically injected jQuery, fixing unresponsive UI buttons.
+    -   Updated `src/electron/index.js` to automatically inject jQuery into UI plugin windows and handle dev tools opening within `did-finish-load`.
 -   **Git Repository Setup (April 2025):**
     -   Created and switched to `main` branch.
     -   Confirmed `origin` remote points to `https://github.com/glvckoma/strawberry-jam.git`.
@@ -127,9 +134,10 @@ Proceed with the easiest task first, allow user to test, then move to the next. 
 
 ## Known Issues & Limitations
 
+-   **Advertising Plugin (Timed Sending):** The core automatic message sending (`setInterval` + `sendRemoteMessage`) remains potentially unstable due to core application limitations ("Invalid Status Type" error). UI functionality is now working.
 -   **Invisible Mod Command Plugin Requirement:** Need to create a new plugin that toggles invisibility using the `%xt%fi%-1%` packet (and the correct "off" command, to be determined). Should be a simple console command toggle (on/off) with a clear warning in the README that this is a "mod" command, use at your own risk.
 -   **ASAR Merge - SWF Conflicts:** Potential incompatibilities between merged JavaScript code and Jam's original `ajclient.swf` remain untested and are a significant risk. May require ActionScript expertise to resolve.
--   **LoginScreen.js Complexity:** The merged `assets/extracted-winapp/gui/components/LoginScreen.js` is very large (~2k lines) and difficult to maintain/update within the ASAR patching workflow. Needs refactoring.
+-   **LoginScreen.js Complexity:** The merged `assets/extracted-winapp-dev/gui/components/LoginScreen.js` is very large (~2k lines) and difficult to maintain/update within the ASAR patching workflow. Needs refactoring.
 -   **Leak Check Startup Error:** Fails with `defaultDataDir is not defined` in `src/electron/index.js` due to missing constant definition.
 -   **IPC Error in Patched Client:** Runtime errors `Uncaught TypeError: window.ipc.invoke is not a function` occur in `LoginScreen.js` (within `winapp.asar`) when using Account Tester features that rely on `invoke` for state saving/loading. The preload script likely doesn't expose `invoke`.
 -   **Account Tester State Management Issues:**

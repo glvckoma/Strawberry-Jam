@@ -154,6 +154,8 @@ module.exports = class Application extends EventEmitter {
      * @private
      */
     this.$playButton = document.getElementById('playButton'); // Use vanilla JS as jQuery might not be ready
+
+    this._setupPluginIPC(); // Moved from instantiate to ensure handlers are ready early
   }
 
   /**
@@ -213,6 +215,51 @@ module.exports = class Application extends EventEmitter {
             this.consoleMessage({ type: 'error', message: 'Cannot send connection message: Dispatch not ready.' });
           }
         });
+
+        // Listener for UI plugins requesting state synchronously
+        ipcRenderer.on('dispatch-get-state-sync', (event, key) => {
+          console.log(`[Main Renderer] Received dispatch-get-state-sync request for key: ${key}`);
+          if (this.dispatch && typeof this.dispatch.getState === 'function') {
+            try {
+              const value = this.dispatch.getState(key);
+              console.log(`[Main Renderer] Returning sync state value for ${key}:`, value);
+              event.returnValue = value; // Set return value for sendSync
+            } catch (error) {
+              this.consoleMessage({ type: 'error', message: `Error getting sync state for key '${key}': ${error.message}` });
+              console.error(`[Main Renderer] Error getting sync state for key '${key}':`, error);
+              event.returnValue = null; // Return null on error
+            }
+          } else {
+            this.consoleMessage({ type: 'error', message: `Cannot get sync state for key '${key}': Dispatch not ready.` });
+            console.error(`[Main Renderer] Cannot get sync state for key '${key}': Dispatch not ready.`);
+            event.returnValue = null; // Return null if dispatch isn't ready
+          }
+        });
+
+        // Listener for asynchronous state requests from the main process
+        ipcRenderer.on('main-renderer-get-state-async', (event, { key, replyChannel }) => {
+          console.log(`[Main Renderer] Received ASYNC request from main process for key: ${key} (Reply Channel: ${replyChannel})`);
+          let value = null;
+          // Check if dispatch and getState are available
+          if (this.dispatch && typeof this.dispatch.getState === 'function') {
+            try {
+              value = this.dispatch.getState(key);
+              console.log(`[Main Renderer] Got state value for ${key}:`, value);
+            } catch (error) {
+              this.consoleMessage({ type: 'error', message: `Error getting ASYNC state for key '${key}' in renderer: ${error.message}` });
+              console.error(`[Main Renderer] Error getting ASYNC state for key '${key}':`, error);
+              value = null; // Ensure value is null on error
+            }
+          } else {
+            this.consoleMessage({ type: 'error', message: `Cannot get ASYNC state for key '${key}': Dispatch not ready.` });
+            console.error(`[Main Renderer] Cannot get ASYNC state for key '${key}': Dispatch not ready.`);
+            value = null; // Ensure value is null if dispatch isn't ready
+          }
+          // Send the value back on the unique reply channel
+          console.log(`[Main Renderer] Sending reply for ${key} on channel ${replyChannel}:`, value);
+          ipcRenderer.send(replyChannel, value);
+        });
+
 
         console.log("[Main Renderer] Plugin IPC listeners setup complete.");
       } catch (e) {
@@ -858,7 +905,7 @@ module.exports = class Application extends EventEmitter {
     if (secureConnection) await this._checkForHostChanges()
 
     await this.server.serve()
-    this._setupPluginIPC(); // Call the setup function here
+    // this._setupPluginIPC(); // Call moved to constructor
     this.emit('ready')
 
     // Signal to main process that renderer is ready (for auto-resume logic)
