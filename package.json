@@ -2,7 +2,7 @@
   "name": "strawberry-jam",
   "description": "strawberry jam is my personal fork of the project jam created and developed by sxip.",
   "main": "src/index.js",
-  "version": "1.0.5",
+  "version": "1.0.3",
   "author": "glvckoma",
   "scripts": {
     "dev": "npx cross-env NODE_ENV=development nodemon",
@@ -15,7 +15,9 @@
     "version:minor": "npm version minor",
     "version:major": "npm version major",
     "publish:win": "npm run version:patch && npx electron-builder build -w -p always",
-    "publish:all": "npm run version:patch && npx electron-builder build -wm -p always"
+    "publish:all": "npm run version:patch && npx electron-builder build -wm -p always",
+    "publish:win:no-bump": "npx electron-builder build -w -p always",
+    "publish:all:no-bump": "npx electron-builder build -wm -p always"
   },
   "repository": {
     "type": "git",
