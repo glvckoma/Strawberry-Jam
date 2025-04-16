@@ -42,10 +42,30 @@
         <input type="checkbox" id="intercept-in" class="mr-2" checked>
         Intercept Incoming Login Packet
       </label>
+      <label>
+        <input type="checkbox" id="executeOnLogin" class="mr-2">
+        Inject Outgoing Login Packet
+      </label>
       <!-- Removed old filter, clear button, and outgoing intercept checkbox -->
     </div>
 
-    <!-- Container for the dynamic login packet editor -->
+    <!-- Section for Outgoing XML Login Packet Injection -->
+    <div id="outgoing-login-section" class="bg-gray-800 rounded-lg shadow p-4 mb-4 border-l-4 border-yellow-600">
+        <h2 class="text-lg font-bold text-yellow-300 mb-3">Outgoing XML Login Injection</h2>
+        <div class="space-y-3">
+            <div>
+                <label for="xmlUsername" class="block text-sm font-medium text-gray-300 mb-1">Username (with client info):</label>
+                <input type="text" id="xmlUsername" placeholder="e.g., username%%0%1714%electron%1.5.7%WIN%uuid" class="w-full p-1 bg-gray-700 text-gray-200 border border-gray-600 rounded text-xs font-mono">
+            </div>
+            <div>
+                <label for="xmlPassword" class="block text-sm font-medium text-gray-300 mb-1">Password/Token (JWT):</label>
+                <textarea id="xmlPassword" rows="4" placeholder="Paste the long JWT token here" class="w-full p-1 bg-gray-700 text-gray-200 border border-gray-600 rounded text-xs font-mono"></textarea>
+            </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-2 italic">Enable 'Inject Outgoing Login Packet' checkbox to use these values instead of the client's.</p>
+    </div>
+
+    <!-- Container for the dynamic INCOMING login packet editor -->
     <div id="login-packet-editor" class="flex-grow overflow-y-auto p-4 space-y-3 bg-gray-800 rounded shadow mb-4">
       <p class="text-gray-400 italic">Waiting for incoming login packet (`_cmd: "login"`)...</p>
       <!-- Input fields will be generated here by JS -->

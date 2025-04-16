@@ -32,8 +32,16 @@ console.log("[LoginPacketManipulator] index.js loaded at " + new Date().toISOStr
     // --- DOM Elements ---
     const editorContainer = document.getElementById("login-packet-editor");
     const sendButton = document.getElementById("send-modified-login");
-    const interceptInCheckbox = document.getElementById("intercept-in"); // Keep this control
+    const interceptInCheckbox = document.getElementById("intercept-in");
+    const executeOnLoginCheckbox = document.getElementById("executeOnLogin"); // New checkbox
+    const xmlUsernameInput = document.getElementById("xmlUsername"); // New input
+    const xmlPasswordInput = document.getElementById("xmlPassword"); // New input
     const statusPanel = document.getElementById("status-panel");
+
+    // --- localStorage Keys ---
+    const STORAGE_KEY_EXECUTE_ON_LOGIN = 'loginManipulator_executeOnLogin';
+    const STORAGE_KEY_XML_USERNAME = 'loginManipulator_xmlUsername';
+    const STORAGE_KEY_XML_PASSWORD = 'loginManipulator_xmlPassword';
 
     // --- Utility Functions ---
     function nowTime() {
@@ -55,7 +63,34 @@ console.log("[LoginPacketManipulator] index.js loaded at " + new Date().toISOStr
       }
     }
 
-    // --- Editor Display ---
+    // --- State Persistence (Outgoing XML) ---
+    function saveOutgoingState() {
+      try {
+        localStorage.setItem(STORAGE_KEY_EXECUTE_ON_LOGIN, executeOnLoginCheckbox.checked);
+        localStorage.setItem(STORAGE_KEY_XML_USERNAME, xmlUsernameInput.value);
+        localStorage.setItem(STORAGE_KEY_XML_PASSWORD, xmlPasswordInput.value);
+        // logStatus("Outgoing injection settings saved.", "info"); // Optional: Can be noisy
+      } catch (e) {
+        logStatus("Error saving outgoing state: " + e.message, "error");
+      }
+    }
+
+    function loadOutgoingState() {
+      try {
+        const execute = localStorage.getItem(STORAGE_KEY_EXECUTE_ON_LOGIN) === 'true';
+        const username = localStorage.getItem(STORAGE_KEY_XML_USERNAME) || '';
+        const password = localStorage.getItem(STORAGE_KEY_XML_PASSWORD) || '';
+
+        executeOnLoginCheckbox.checked = execute;
+        xmlUsernameInput.value = username;
+        xmlPasswordInput.value = password;
+        logStatus("Loaded saved outgoing injection settings.", "info");
+      } catch (e) {
+        logStatus("Error loading outgoing state: " + e.message, "error");
+      }
+    }
+
+    // --- Editor Display (Incoming JSON) ---
     function displayLoginPacketEditor(packetObj) {
       if (!editorContainer) return;
 
@@ -396,12 +431,64 @@ console.log("[LoginPacketManipulator] index.js loaded at " + new Date().toISOStr
           // Ignore packets that are not valid JSON or don't match
         }
       });
+      logStatus("Subscribed to incoming packets for JSON login display.");
     } catch (err) {
-      console.error("[UI Plugin] Error setting up packet subscription:", err);
-      logStatus("Error setting up packet listener: " + err.message, "error");
+      console.error("[UI Plugin] Error setting up incoming packet subscription:", err);
+      logStatus("Error setting up incoming packet listener: " + err.message, "error");
     }
 
+    // --- Outgoing Packet Hooking ---
+    let unsubscribeOutgoingHook = null;
+    try {
+      unsubscribeOutgoingHook = window.jam.dispatch.hookPacket('outgoing', function(packetData) {
+        if (!packetData || !packetData.raw || typeof packetData.raw !== 'string') {
+          return packetData.raw; // Let non-string packets pass
+        }
+
+        const rawPacket = packetData.raw;
+        const isXmlLogin = rawPacket.startsWith("<msg t='sys'><body action='login'");
+
+        if (isXmlLogin) {
+          const execute = executeOnLoginCheckbox.checked; // Check current state
+          logStatus(`Outgoing XML login packet detected. Injection enabled: ${execute}`, "info");
+
+          if (execute) {
+            const username = xmlUsernameInput.value;
+            const password = xmlPasswordInput.value;
+
+            if (!username || !password) {
+              logStatus("Inject enabled, but username or password field is empty. Blocking original packet.", "warn");
+              return null; // Block original if fields are empty but injection is on
+            }
+
+            // Construct the new XML packet
+            // Basic escaping for CDATA end sequence, though unlikely in JWT/username format
+            const safeUsername = username.replace(']]>', ']]]]><![CDATA[>');
+            const safePassword = password.replace(']]>', ']]]]><![CDATA[>');
+            const newXmlString = `<msg t='sys'><body action='login' r='0'><login z='sbiLogin'><nick><![CDATA[${safeUsername}]]></nick><pword><![CDATA[${safePassword}]]></pword></login></body></msg>`;
+
+            logStatus("Injecting modified XML login packet to server.", "success");
+            window.jam.dispatch.sendRemoteMessage(newXmlString); // Send to server
+
+            return null; // Block the original packet
+          } else {
+            // Injection not enabled, let original packet pass
+            return rawPacket;
+          }
+        } else {
+          // Not the XML login packet, let it pass
+          return rawPacket;
+        }
+      });
+      logStatus("Hooked outgoing packets for XML login injection.");
+    } catch (err) {
+      console.error("[UI Plugin] Error setting up outgoing packet hook:", err);
+      logStatus("Error setting up outgoing packet hook: " + err.message, "error");
+    }
+
+
     // --- UI Event Handlers ---
+    // Incoming Intercept Checkbox
     if (interceptInCheckbox) {
       interceptInCheckbox.checked = interceptEnabled;
       interceptInCheckbox.addEventListener("change", function () {
@@ -415,16 +502,37 @@ console.log("[LoginPacketManipulator] index.js loaded at " + new Date().toISOStr
         }
       });
     } else {
-        logStatus("Intercept checkbox not found.", "warn");
+        logStatus("Incoming intercept checkbox not found.", "warn");
     }
 
+    // Outgoing Inject Checkbox
+    if (executeOnLoginCheckbox) {
+      executeOnLoginCheckbox.addEventListener("change", saveOutgoingState);
+    } else {
+      logStatus("Outgoing inject checkbox not found.", "warn");
+    }
+
+    // Outgoing XML Inputs
+    if (xmlUsernameInput) {
+      xmlUsernameInput.addEventListener("input", saveOutgoingState);
+    } else {
+      logStatus("XML Username input not found.", "warn");
+    }
+    if (xmlPasswordInput) {
+      xmlPasswordInput.addEventListener("input", saveOutgoingState);
+    } else {
+      logStatus("XML Password input not found.", "warn");
+    }
+
+
+    // Send Modified Incoming JSON Button
     if (sendButton) {
       sendButton.addEventListener("click", sendModifiedLoginPacket);
     } else {
-        logStatus("Send button not found.", "warn");
+        logStatus("Send button (for incoming JSON) not found.", "warn");
     }
 
-    // Remove listeners for old elements if they somehow still exist
+    // Remove listeners/hide old elements if they somehow still exist
     const clearLogButton = document.getElementById("clear-log");
     if (clearLogButton) clearLogButton.style.display = 'none'; // Hide old button
     const packetFilterInput = document.getElementById("packet-filter");
@@ -433,6 +541,8 @@ console.log("[LoginPacketManipulator] index.js loaded at " + new Date().toISOStr
     if (interceptOutCheckbox) interceptOutCheckbox.parentElement.style.display = 'none'; // Hide old checkbox
 
 
+    // --- Initial Load ---
+    loadOutgoingState(); // Load saved outgoing settings on startup
     logStatus("Login Packet Editor initialized and ready.");
 
   } // End of initializePlugin function
@@ -446,10 +556,20 @@ console.log("[LoginPacketManipulator] index.js loaded at " + new Date().toISOStr
 
   // Add cleanup listener for window close
   window.addEventListener('beforeunload', () => {
+    // Unsubscribe from incoming listener
     if (typeof unsubscribePacketListener === 'function') {
       try {
         unsubscribePacketListener();
-        console.log("[LoginPacketManipulator] Unsubscribed from packet listener.");
+        console.log("[LoginPacketManipulator] Unsubscribed from incoming packet listener.");
+      } catch (e) {
+        console.error("[LoginPacketManipulator] Error unsubscribing from incoming packet listener:", e);
+      }
+    }
+    // Unsubscribe from outgoing hook
+    if (typeof unsubscribeOutgoingHook === 'function') {
+      try {
+        unsubscribeOutgoingHook();
+        console.log("[LoginPacketManipulator] Unsubscribed from outgoing packet hook.");
       } catch (e) {
         console.error("[LoginPacketManipulator] Error unsubscribing from packet listener:", e);
       }

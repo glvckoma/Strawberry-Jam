@@ -33,14 +33,23 @@ See [Strawberry Jam vs. Jam: What's Different?](community-guide/strawberry-jam-v
 5.  **Important First Run:** You need to open the **Terminal** app (you can find it using Spotlight search - the magnifying glass at the top right).
 6.  Carefully copy and paste this *exact* command into the Terminal and press Enter:
     ```bash
-    sudo xattr -rd com.apple.quarantine /Applications/Strawberry\ Jam.app
+    sudo xattr -rd com.apple.quarantine /Applications/strawberry-jam.app
     ```
+    *   **Note:** Double-check the exact application name in your Applications folder. It might be `strawberry-jam.app` (lowercase, hyphenated) or `Strawberry Jam.app`. Adjust the command above if needed!
     *   **Why do I need to do this?** Your Mac has a security guard called Gatekeeper. When you download apps from the internet (like Strawberry Jam), Gatekeeper gets a little suspicious and puts them in "quarantine" just in case. This command tells Gatekeeper, "Hey, this Strawberry Jam app is safe, you can let it run!"
     *   It will ask for your Mac's login password. Type it in (you won't see anything appear as you type, that's normal!) and press Enter.
     *   You only need to do this command **one time** after installing or updating Strawberry Jam!
-7.  Now you can open **Strawberry Jam** from your Applications folder like any other app!
+7.  Try opening **Strawberry Jam** from your Applications folder like any other app.
+8.  **If it doesn't open (Permissions Error):** Sometimes, even after removing quarantine, macOS might still block the app due to permissions. If double-clicking doesn't work, you might need to run it from the Terminal using `sudo`:
+    *   Open the **Terminal** app again.
+    *   Carefully copy and paste this command and press Enter (adjust the app name if needed):
+        ```bash
+        sudo /Applications/strawberry-jam.app/Contents/MacOS/strawberry-jam
+        ```
+    *   Enter your password when prompted. This should launch the app with the necessary permissions. You might need to do this each time you run the app.
+    *   **Full Disk Access:** You might also need to grant "Full Disk Access" to the **Terminal** app itself. Go to System Settings -> Privacy & Security -> Full Disk Access, and make sure Terminal is enabled.
 
-> **⚠️ Mac Compatibility Note:** Strawberry Jam is mostly built and tested on Windows. While we try to make it work on Mac, you might run into some bugs or things that look a little different. If you find problems, please let us know by [creating an issue](https://github.com/glvckoma/strawberry-jam/issues)!
+> **⚠️ Mac Compatibility Note:** Strawberry Jam is mostly built and tested on Windows. While we try to make it work on Mac, you might run into some bugs or issues like the permissions problem mentioned above. If you find problems, please let us know by [creating an issue](https://github.com/glvckoma/strawberry-jam/issues)!
 
 ## ✨ Features
 
