@@ -7,6 +7,7 @@ const { autoUpdater } = require('electron-updater')
 const Store = require('electron-store'); // Added for leak checker
 const { startLeakCheck } = require('./leakChecker'); // Added for leak checker
 const Patcher = require('./renderer/application/patcher'); // Import the Patcher class
+const { getDataPath } = require('../Constants'); // Import getDataPath
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 
@@ -162,6 +163,24 @@ class Electron {
       }
     });
     // --- End Settings IPC Handlers ---
+
+
+    // --- IPC Handler for saving working accounts ---
+    ipcMain.on('tester-save-works', async (event, accountLine) => {
+      const worksFilePath = path.join(getDataPath(app), 'working_accounts.txt'); // Pass app object
+      devLog(`[IPC tester-save-works] Appending to: ${worksFilePath}`);
+      try {
+        // Ensure directory exists (though _onReady should handle this for packaged)
+        await fs.mkdir(path.dirname(worksFilePath), { recursive: true });
+        // Append the line
+        await fs.appendFile(worksFilePath, accountLine + '\n', 'utf-8');
+        devLog(`[IPC tester-save-works] Successfully appended: ${accountLine}`);
+      } catch (error) {
+        console.error(`[IPC tester-save-works] Error appending to ${worksFilePath}:`, error);
+        // Optionally send an error back to the renderer?
+      }
+    });
+    // --- End IPC Handler for saving working accounts ---
 
 
     // --- Leak Checker IPC ---
@@ -338,12 +357,21 @@ class Electron {
       }
     });
 
+    // --- REMOVED 'tester-select-save-path' handler ---
+
     // --- New Handlers for Specific File Loads (using handle/invoke) ---
-    const createLoadFileHandler = (channelName, relativeFilePath) => {
-      ipcMain.handle(channelName, async (event) => { // Changed to ipcMain.handle
-        // No sender needed for handle, result is returned
-        const fullPath = path.resolve(relativeFilePath);
+    // Modified to use getDataPath()
+    const createLoadFileHandler = (channelName, baseFilename) => {
+      ipcMain.handle(channelName, async (event) => {
+        const dataDir = getDataPath(app); // Pass app object
+        const fullPath = path.join(dataDir, baseFilename); // Construct full path
         devLog(`[IPC ${channelName}] Handling request. Resolved path: ${fullPath}`);
+
+        // --- ADDED LOGGING for working_accounts.txt ---
+        if (baseFilename === 'working_accounts.txt') {
+          console.log(`[Account Tester] Loading 'working_accounts.txt' from: ${fullPath}`);
+        }
+        // --- END ADDED LOGGING ---
 
         try {
           devLog(`[IPC ${channelName}] Attempting to read file: ${fullPath}`);
@@ -386,9 +414,10 @@ class Electron {
       });
     };
 
-    createLoadFileHandler('tester-load-all-accounts', 'data/accounts.txt');
-    createLoadFileHandler('tester-load-confirmed-accounts', 'data/ajc_confirmed_accounts.txt');
-    createLoadFileHandler('tester-load-works-accounts', 'data/working_accounts.txt');
+    // Use base filenames now
+    createLoadFileHandler('tester-load-all-accounts', 'accounts.txt');
+    createLoadFileHandler('tester-load-confirmed-accounts', 'ajc_confirmed_accounts.txt');
+    createLoadFileHandler('tester-load-works-accounts', 'working_accounts.txt');
     // --- End New Handlers ---
 
     // --- End Account Tester IPC Handlers ---
@@ -1075,6 +1104,59 @@ class Electron {
     // Wait for the window to finish loading before trying to resume
     await this._window.loadFile(path.join(__dirname, 'renderer', 'index.html'))
     this._window.webContents.setWindowOpenHandler((details) => this._createWindow(details))
+
+    // --- Ensure Data Directory Exists (Both Dev and Packaged) ---
+    try {
+      const dataPath = getDataPath(app); // Pass app object
+      await fs.mkdir(dataPath, { recursive: true });
+      devLog(`[Startup] Ensured data directory exists: ${dataPath}`);
+    } catch (error) {
+      console.error(`[Startup] Error ensuring base data directory:`, error);
+      // Show error but continue, maybe some features won't work
+      dialog.showErrorBox('Startup Error', `Failed to create base data directory. Some features might not work correctly.\n\nError: ${error.message}`);
+    }
+    // --- End Ensure Data Directory ---
+
+    // --- Create Specific Data Files on Packaged Startup ---
+    if (app.isPackaged) {
+      devLog('[Startup] Packaged app detected. Ensuring specific data files exist...');
+      const dataPath = getDataPath(app); // Pass app object
+      // Updated list of files to ensure existence
+      const filesToEnsure = [
+        'working_accounts.txt',
+        'collected_usernames.txt',
+        'processed_usernames.txt',
+        'potential_accounts.txt',
+        'found_accounts.txt',
+        'ajc_accounts.txt'
+      ];
+
+      try {
+        await fs.mkdir(dataPath, { recursive: true });
+        devLog(`[Startup] Ensured data directory exists: ${dataPath}`);
+
+        for (const filename of filesToEnsure) {
+          const filePath = path.join(dataPath, filename);
+          try {
+            await fs.access(filePath); // Check if file exists
+            devLog(`[Startup] File already exists: ${filePath}`);
+          } catch (accessError) {
+            // File doesn't exist, create it empty
+            if (accessError.code === 'ENOENT') {
+              devLog(`[Startup] Creating empty file: ${filePath}`);
+              await fs.writeFile(filePath, '', 'utf-8');
+            } else {
+              throw accessError; // Re-throw other access errors
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`[Startup] Error ensuring data directory/files at ${dataPath}:`, error);
+        // Optionally show a dialog to the user? For now, just log the error.
+        dialog.showErrorBox('Startup Error', `Failed to create necessary data files in ${dataPath}. Some features might not work correctly.\n\nError: ${error.message}`);
+      }
+    }
+    // --- End Data Directory Creation ---
 
     // Redundant protocol handler removed from here. The correct one is in create().
     this._apiProcess = fork(path.join(__dirname, '..', 'api', 'index.js'))

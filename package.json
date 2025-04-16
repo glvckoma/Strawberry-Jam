@@ -6,18 +6,19 @@
   "author": "glvckoma",
   "scripts": {
     "dev": "npx cross-env NODE_ENV=development nodemon",
-    "build:win": "npx electron-builder build -w",
-    "build:mac": "npx electron-builder build -m",
-    "build:all": "npx electron-builder build -wm",
+    "pack:asar": "npx asar pack assets/extracted-winapp-dev assets/winapp.asar --unpack *.node",
+    "build:win": "npm run pack:asar && npx electron-builder build -w",
+    "build:mac": "npm run pack:asar && npx electron-builder build -m",
+    "build:all": "npm run pack:asar && npx electron-builder build -wm",
     "build:mac-docker": "npx electron-builder build --mac -c.mac.target=zip --x64 --arm64 -p never --config.asar=true --config.npmRebuild=true -c.mac.identity=null --config.electronDownload.mirror=https://npmmirror.com/mirrors/electron/",
-    "build:mac-win": "docker run --rm -v \"%cd%\":/project -v \"%cd%/dist\":/project/dist electronuserland/builder:wine /bin/bash -c \"npm run build:mac-docker\"",
+    "build:mac-win": "docker run --rm -v \"%cd%\":/project -v \"%cd%/dist\":/project/dist electronuserland/builder:wine /bin/bash -c \"npm run pack:asar && npm run build:mac-docker\"",
     "version:patch": "npm version patch",
     "version:minor": "npm version minor",
     "version:major": "npm version major",
-    "publish:win": "npm run version:patch && npx electron-builder build -w -p always",
-    "publish:all": "npm run version:patch && npx electron-builder build -wm -p always",
-    "publish:win:no-bump": "npx electron-builder build -w -p always",
-    "publish:all:no-bump": "npx electron-builder build -wm -p always"
+    "publish:win": "npm run version:patch && npm run build:win && npx electron-builder build -w -p always",
+    "publish:all": "npm run version:patch && npm run build:all && npx electron-builder build -wm -p always",
+    "publish:win:no-bump": "npm run build:win && npx electron-builder build -w -p always",
+    "publish:all:no-bump": "npm run build:all && npx electron-builder build -wm -p always"
   },
   "repository": {
     "type": "git",
