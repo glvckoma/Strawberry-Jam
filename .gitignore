@@ -10,8 +10,7 @@ assets/osxapp.asar
 assets/*-backup.asar
 assets/*-dev.asar
 memory-bank/
-plugins/UsernameLogger/
-data/* 
+data/*
 !data/.gitkeep
 assets/memory-bank/
 .clinerules

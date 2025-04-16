@@ -39,8 +39,7 @@
       "from": "plugins",
       "to": "plugins",
       "filter": [
-        "**/*",
-        "!UsernameLogger/**/*"
+        "**/*"
       ]
     },
     {

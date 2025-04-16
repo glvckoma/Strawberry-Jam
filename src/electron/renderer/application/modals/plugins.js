@@ -445,6 +445,11 @@ exports.render = function (app) {
           warningHtml = `<div class="mt-2 text-xs text-error-red flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>May not be fully compatible with Strawberry Jam</div>`;
         }
 
+        // Add Beta tag if present in metadata
+        const betaTagHtml = metadata.tags && metadata.tags.includes('beta')
+          ? `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400">Beta</span>`
+          : '';
+
         $pluginsList.append(`
           <div class="bg-tertiary-bg/30 rounded-lg p-4 border border-sidebar-border hover:border-highlight-green transition-colors" data-plugin-name="${plugin.name.toLowerCase()}">
             <div class="flex justify-between items-start mb-3">
@@ -454,6 +459,7 @@ exports.render = function (app) {
                   <h4 class="text-text-primary font-medium text-base">${metadata.name || plugin.name}</h4>
                   ${metadata.version ? `<span class="ml-2 text-xs text-gray-400">v${metadata.version}</span>` : ''}
                   ${badgeHtml}
+                  ${betaTagHtml}
                 </div>
                 <div class="mt-1 text-xs text-gray-400">
                   <i class="fas fa-user mr-1"></i> ${metadata.author}

@@ -1,0 +1,45 @@
+{
+  "name": "Username Logger",
+  "version": "2.0.0",
+  "description": "Collects usernames from nearby players and buddies, with integrated leak checking functionality",
+  "author": "glvckoma",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.3.4"
+  },
+  "tags": ["beta"],
+  "commands": [
+    {
+      "name": "userlog",
+      "description": "Toggles username logging. Usage: userlog [on|off|status]"
+    },
+    {
+      "name": "setapikey",
+      "description": "Sets the LeakCheck API key. Usage: setapikey YOUR_API_KEY"
+    },
+    {
+      "name": "debug",
+      "description": "Shows debug information about the plugin state and API key."
+    },
+    {
+      "name": "userlogpath",
+      "description": "Sets a custom directory for log files. Usage: userlogpath /path/to/directory"
+    },
+    {
+      "name": "userlogsettings",
+      "description": "Configure username logging settings. Usage: userlogsettings [setting] [value]"
+    },
+    {
+      "name": "leakcheck",
+      "description": "Run a leak check on collected usernames. Usage: leakcheck [all|latest|resume|limit]"
+    },
+    {
+      "name": "leakcheckstop",
+      "description": "Stops a running leak check."
+    },
+    {
+      "name": "clearleaklogs",
+      "description": "Clear only leak check result files (not username logs)."
+    }
+  ]
+}
