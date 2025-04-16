@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 // Removed: const axios = require('axios');
 const { app } = require('electron'); // Added
-const { getDataPath } = require('../../src/Constants'); // Added
+// Removed: const { getDataPath } = require('../../src/Constants'); // Added
 
 // Constants for leak checking
 const LEAK_CHECK_API_URL = 'https://leakcheck.io/api/v2/query';
@@ -138,8 +138,23 @@ module.exports = class UsernameLogger {
    * @returns {string} The base path for log files, determined by the environment.
    */
   getBasePath() {
-    // Use the centralized getDataPath function
-    return getDataPath();
+    // Use the getDataPath function exposed by dispatch
+    if (typeof this.dispatch.getDataPath !== 'function') {
+      // Fallback or error handling if dispatch doesn't have the function yet
+      // This might happen if the plugin loads before dispatch is fully ready,
+      // though unlikely with current structure.
+      console.error("[Username Logger] Error: this.dispatch.getDataPath is not available!");
+      // Provide a default fallback path (e.g., local data directory)
+      // This is a safety measure, the primary path should come from dispatch.
+      const fallbackPath = path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'aj-classic', 'data');
+      try {
+        if (!fs.existsSync(fallbackPath)) {
+          fs.mkdirSync(fallbackPath, { recursive: true });
+        }
+      } catch (e) { /* ignore fallback creation error */ }
+      return fallbackPath;
+    }
+    return this.dispatch.getDataPath();
   };
   
   /**

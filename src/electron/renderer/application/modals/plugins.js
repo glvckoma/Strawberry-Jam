@@ -437,17 +437,20 @@ exports.render = function (app) {
         let iconHtml, badgeHtml, warningHtml;
         if (plugin.sourceRepo === 'strawberry-jam') {
           iconHtml = `<img src="app://assets/strawberry.png" alt="Strawberry Jam" class="w-6 h-6 mr-2" style="display:inline-block;vertical-align:middle;">`;
-          badgeHtml = `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-highlight-green/20 text-highlight-green">Strawberry Jam</span>`;
+          // Reduced padding px-1.5 py-0.5
+          badgeHtml = `<span class="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-highlight-green/20 text-highlight-green">Strawberry Jam</span>`;
           warningHtml = '';
         } else {
           iconHtml = `<img src="app://assets/jam.png" alt="Original Jam" class="w-6 h-6 mr-2" style="display:inline-block;vertical-align:middle;">`;
-          badgeHtml = `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-400">Original Jam <i class="fas fa-exclamation-triangle text-error-red ml-1"></i></span>`;
+          // Reduced padding px-1.5 py-0.5
+          badgeHtml = `<span class="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400">Original Jam <i class="fas fa-exclamation-triangle text-error-red ml-1"></i></span>`;
           warningHtml = `<div class="mt-2 text-xs text-error-red flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>May not be fully compatible with Strawberry Jam</div>`;
         }
 
         // Add Beta tag if present in metadata
+        // Reduced padding px-1.5 py-0.5
         const betaTagHtml = metadata.tags && metadata.tags.includes('beta')
-          ? `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400">Beta</span>`
+          ? `<span class="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400">Beta</span>`
           : '';
 
         $pluginsList.append(`
@@ -456,7 +459,7 @@ exports.render = function (app) {
               <div>
                 <div class="flex items-center">
                   ${iconHtml}
-                  <h4 class="text-text-primary font-medium text-base">${metadata.name || plugin.name}</h4>
+                  <h4 class="text-text-primary font-medium text-sm">${metadata.name || plugin.name}</h4>
                   ${metadata.version ? `<span class="ml-2 text-xs text-gray-400">v${metadata.version}</span>` : ''}
                   ${badgeHtml}
                   ${betaTagHtml}
@@ -466,7 +469,7 @@ exports.render = function (app) {
                 </div>
               </div>
               <div>
-                <span class="px-2 py-1 text-xs rounded-full ${installed ? 'bg-highlight-green/20 text-highlight-green' : 'bg-error-red/20 text-error-red'}">
+                <span class="px-1.5 py-0.5 text-xs rounded-full ${installed ? 'bg-highlight-green/20 text-highlight-green' : 'bg-error-red/20 text-error-red'}">
                   ${installed ? 'Installed' : 'Not Installed'}
                 </span>
               </div>

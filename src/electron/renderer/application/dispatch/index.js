@@ -7,7 +7,7 @@ function devLog(...args) {
 }
 const fs = require('fs').promises
 const Ajv = new (require('ajv'))({ useDefaults: true })
-const { ConnectionMessageTypes, PluginTypes } = require('../../../../Constants')
+const { ConnectionMessageTypes, PluginTypes, getDataPath } = require('../../../../Constants') // Import getDataPath
 
 /**
  * The path to the plugins folder.
@@ -101,6 +101,9 @@ module.exports = class Dispatch {
       aj: new Map(),
       any: new Map()
     }
+
+    // Expose getDataPath to plugins
+    this.getDataPath = getDataPath;
   }
 
   get connected () {
