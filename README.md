@@ -14,8 +14,7 @@ A tool for exploring and extending <a href="https://classic.animaljam.com">Anima
 
 ## 🍓 What's Different from the Original Jam?
 
-Strawberry Jam is a fork of the original [Jam](https://github.com/Sxip/jam) project, with new features, plugins, and improvements not found in the original.  
-See [Strawberry Jam vs. Jam: What's Different?](community-guide/strawberry-jam-vs-jam.md) for a friendly and technical comparison.
+Strawberry Jam is a fork of the original [Jam](https://github.com/Sxip/jam) project, with new features, plugins, and improvements not found in the original.
 
 ## 🚀 Quick Start
 
@@ -33,14 +32,6 @@ See [Strawberry Jam vs. Jam: What's Different?](community-guide/strawberry-jam-v
 ## ⚠️ Important Warning!
 
 Using tools like Strawberry Jam might break the game's rules and result in account termination. Please be careful and use it responsibly. Neither I nor Sxip are responsible for any loss of accounts.
-
-## 📚 Learning More
-
-New to Strawberry Jam? Check out our guides:
-
-*   [Understanding the Strawberry Jam Window](community-guide/understanding-ui.md)
-*   [Introduction to Packet Viewing](community-guide/packet-viewing.md)
-*   [Using and Developing Plugins](community-guide/plugins.md)
 
 ## 💡 Have an Idea?
 
