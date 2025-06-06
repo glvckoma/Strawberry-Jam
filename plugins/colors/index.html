@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Color Changer</title>
+  <link rel="stylesheet" href="colors.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Base Styles -->
+  <link href="../../assets/css/style.css" rel="stylesheet">
+  <!-- jQuery -->
+</head>
+
+<body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
+
+  <!-- Standardized Draggable Header -->
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Color Changer</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize">
+        <i class="fas fa-minus"></i>
+      </button>
+      <button class="jam-plugin-close" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area (this will be hidden/shown on minimize) -->
+  <div class="jam-plugin-content">
+    <div class="container p-4"> 
+      <button type="button" class="info-button" onclick="sendHelloMessage()"><i class="fas fa-info-circle mr-2"></i></button>
+
+      <!-- Color Selectors Group -->
+      <div class="color-selectors-group mb-4 p-3 border border-gray-700 rounded bg-secondary-bg/30">
+        <h3 class="text-lg font-semibold mb-2 text-text-secondary">Select Colors</h3>
+        <div class="form-group">
+          <button type="button" style="width: 200px; "class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" id="primaryBodyColorBtn" onclick="openColorChart('primaryBodyColor')"><i class="fas fa-external-link mr-2"></i> Primary Color
+          </button>
+          <input type="hidden" id="primaryBodyColor" value="0" />
+          <span id="primaryBodyColorDisplay" class="color-display" style="background-color: #793647;"></span>
+          <span class="eyedropper-btn" onclick="openColorPicker('primaryBodyColor')"><i class="fas fa-eyedropper mr-2"></i></span>
+        </div>
+        <div class="form-group">
+          <button type="button" style="width: 200px; "class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" id="secondaryBodyColorBtn" onclick="openColorChart('secondaryBodyColor')"><i class="fas fa-external-link mr-2"></i> Secondary Color
+          </button>
+          <input type="hidden" id="secondaryBodyColor" value="0" />
+          <span id="secondaryBodyColorDisplay" class="color-display" style="background-color: #793647;"></span>
+          <span class="eyedropper-btn" onclick="openColorPicker('secondaryBodyColor')"><i class="fas fa-eyedropper mr-2"></i></span>
+        </div>
+        <div class="form-group">
+          <button type="button" style="width: 200px; "class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" id="patternColorBtn" onclick="openColorChart('patternColor')"><i class="fas fa-external-link mr-2"></i> Pattern Color
+          </button>
+          <input type="hidden" id="patternColor" value="0" />
+          <span id="patternColorDisplay" class="color-display" style="background-color: #793647;"></span>
+          <span class="eyedropper-btn" onclick="openColorPicker('patternColor')"><i class="fas fa-eyedropper mr-2"></i></span>
+        </div>
+        <div class="form-group">
+          <button type="button" style="width: 200px; "class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" id="eyeColorBtn" onclick="openColorChart('eyeColor')"><i class="fas fa-external-link mr-2"></i> Eye Color
+          </button>
+          <input type="hidden" id="eyeColor" value="0" />
+          <span id="eyeColorDisplay" class="color-display" style="background-color: #793647;"></span>
+          <span class="eyedropper-btn" onclick="openColorPicker('eyeColor')"><i class="fas fa-eyedropper mr-2"></i></span>
+        </div>
+      </div> <!-- End Color Selectors Group -->
+
+      <!-- Action Buttons Group -->
+      <div class="action-buttons-group mb-4 p-3 border border-gray-700 rounded bg-secondary-bg/30 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-text-secondary">Actions</h3>
+        <div class="flex items-center space-x-2">
+          <span id="randomColorIcon" class="random-color-icon relative top-0 right-0 text-xl cursor-pointer transition-colors text-gray-400 hover:text-highlight-green" onclick="randomizeColors()" title="Randomize Colors"><i class="fas fa-random"></i></span>
+          <button type="button" style="width: auto;" class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" id="copyPacketBtn" onclick="copyColorPacket()"><i class="fas fa-clipboard mr-2"></i> Copy Packet</button>
+          <button type="button" style="width: auto;" class="px-4 py-2 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition text-base" id="sendPacketBtn" onclick="sendColorPacket()"><i class="fas fa-paint-brush mr-2"></i> Change Colors!</button>
+        </div>
+      </div>
+
+      <!-- Preset Management Group -->
+      <div class="preset-management-group mb-4 p-3 border border-gray-700 rounded bg-secondary-bg/30 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-text-secondary">Presets</h3>
+        <div class="flex items-center space-x-2">
+          <button type="button" id="loadPresetsBtn" class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" onclick="loadPresets()">
+            <i class="fas fa-folder-open mr-2"></i> Load
+          </button>
+          <button type="button" id="savePresetsBtn" class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" onclick="savePresets()">
+            <i class="fas fa-save mr-2"></i> Save
+          </button>
+          <button type="button" id="addPresetBtn" class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" onclick="addPreset()"><i class="fas fa-plus mr-2"></i> Add Current</button>
+        </div>
+        <input type="file" id="fileInput" accept=".json" style="display: none;" />
+      </div>
+
+      <!-- Preset List Area -->
+      <div id="presetContainer" class="preset-container p-3 border border-gray-700 rounded bg-secondary-bg/30">
+        <!-- Presets will be rendered here by JS -->
+        <p class="text-text-secondary italic">No presets loaded or saved yet.</p>
+      </div>
+
+      <!-- Modal for color chart -->
+      <div id="modal">
+        <div id="modal-content">
+          <span class="close" onclick="closeModal()">&times;</span>
+          <div class="tab-container">
+            <div class="tab-button active px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" onclick="switchTab('full')"><i class="fas fa-paint-brush mr-2"></i> Full AJ Palette
+            </div>
+            <div class="tab-button px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" onclick="switchTab('ajClassic')"><i class="fas fa-paint-brush mr-2"></i> Classic Palette
+            </div>
+            <div class="tab-button px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base" onclick="switchTab('exclusive')"><i class="fas fa-paint-brush mr-2"></i> Exclusive Palette
+            </div>
+          </div>
+          <div id="fullChart" class="color-chart-tab active">
+            <div id="colorChart" class="color-chart"></div>
+          </div>
+          <div id="ajClassicChart" class="color-chart-tab">
+            <div id="ajColorChart" class="color-chart" style="grid-template-columns: repeat(10, 30px);"></div>
+          </div>
+          <div id="exclusiveChart" class="color-chart-tab">
+            <div id="exclusiveColorChart" class="color-chart"></div>
+          </div>
+        </div>
+      </div>
+
+      <input type="color" id="colorPicker" style="display: none;" />
+    </div> <!-- End of container -->
+  </div> <!-- End of jam-plugin-content -->
+  
+  <!-- Import Plugin Utilities -->
+  <script src="../../assets/javascript/plugin-utils.js"></script>
+  <script src="colors.js" defer></script>
+  <!-- Initialize Standardized UI -->
+  <script>
+    // Initialize the standardized UI components when the document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize standard plugin UI behavior (minimize/close)
+      initializePluginUI();
+    });
+  </script>
+</body>
+
+</html>

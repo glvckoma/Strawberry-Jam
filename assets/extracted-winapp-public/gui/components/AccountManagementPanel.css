@@ -1,0 +1,138 @@
+/* Styles for Account Management Panel */
+
+:host {
+  display: block; /* Ensures the custom element behaves like a block-level element */
+  height: 80%; /* Takes 80% height of its grid area in LoginScreen */
+  overflow: hidden; /* Prevents context menu from causing scrollbars on host */
+}
+
+#panel-container {
+  grid-area: panel; /* This ID is internal to the component, grid-area is illustrative here */
+  background-color: var(--theme-box-background, rgba(255, 245, 230, 0.9)); /* Fallback if var not defined */
+  border-right: 1px solid var(--theme-secondary, rgba(232, 61, 82, 0.3));
+  border-radius: 15px 0 0 15px; /* Rounded corners on the left side */
+  padding: 15px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%; /* Fill the height of its host */
+  box-sizing: border-box;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.05); /* Subtle shadow to the left */
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.account-add-button {
+  width: 40px;
+  height: 40px;
+  border: 2px dashed var(--theme-primary, #e83d52);
+  color: var(--theme-primary, #e83d52);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.account-add-button:hover {
+  background-color: var(--theme-settings-hover, rgba(232, 61, 82, 0.05));
+  border-style: solid;
+}
+
+.account-add-button span {
+  position: relative;
+  top: -1px; /* Minor visual adjustment for '+' */
+}
+
+#saved-accounts-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto; /* Allow scrolling if more than 5 accounts (though logic limits to 5) */
+  width: 100%;
+}
+
+.saved-account-slot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--theme-secondary, rgba(232, 61, 82, 0.3));
+  color: var(--theme-primary, #e83d52); /* Default, will be overridden by JS for specific themes */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+  border: 2px solid transparent;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.2s, color 0.2s;
+  overflow: hidden; /* To ensure initials don't overflow */
+  font-family: 'CCDigitalDelivery-Bold', 'Arial', sans-serif; /* Specify a bold font, CCDigitalDelivery may not have bold variant */
+  flex-shrink: 0; /* Prevent shrinking */
+  user-select: none; /* Prevent text selection of initials */
+}
+
+.saved-account-slot:hover {
+  border-color: var(--theme-primary, #e83d52);
+  transform: scale(1.1);
+}
+
+.saved-account-slot.empty {
+  background-color: rgba(0,0,0,0.05);
+  border: 2px dashed rgba(0,0,0,0.2);
+  cursor: default;
+  color: rgba(0,0,0,0.3); /* Make empty slot placeholder text less prominent */
+}
+
+.saved-account-slot.empty:hover {
+  transform: none;
+  border-color: rgba(0,0,0,0.2);
+}
+
+/* Context Menu Styling */
+.custom-context-menu {
+  position: fixed; /* Use fixed to position relative to viewport, JS will set top/left */
+  z-index: 10000; /* Ensure it's on top */
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.15);
+  padding: 5px 0;
+  font-family: 'CCDigitalDelivery', 'Arial', sans-serif;
+  font-size: 13px;
+  min-width: 150px;
+  color: #333; /* Default text color for menu items */
+}
+
+.custom-context-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.custom-context-menu ul li {
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap; /* Prevent menu items from wrapping */
+}
+
+.custom-context-menu ul li:hover {
+  background-color: var(--theme-settings-hover, rgba(232, 61, 82, 0.05));
+  color: var(--theme-primary, #e83d52);
+}
+
+.custom-context-menu ul li.separator {
+  height: 1px;
+  background-color: #eee;
+  padding: 0;
+  margin: 5px 0;
+  cursor: default;
+}
+.custom-context-menu ul li.separator:hover {
+  background-color: #eee; /* Separator shouldn't change color on hover */
+}

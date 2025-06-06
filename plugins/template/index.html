@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plugin Template</title>
+  <!-- Base Styles -->
+  <link href="../../assets/css/style.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- jQuery (required for most plugins) -->
+  <script>window.jQuery = window.$ = require('jquery');</script>
+  <script src="../../assets/javascript/jquery-ui.js"></script>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+  <!-- Standardized Draggable Header -->
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Plugin Name</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize">
+        <i class="fas fa-minus"></i>
+      </button>
+      <button class="jam-plugin-close" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area (this will be hidden/shown on minimize) -->
+  <div class="jam-plugin-content">
+    <!-- Your plugin content goes here -->
+    <div class="p-4">
+      <h3 class="text-lg font-semibold mb-4">Plugin Content</h3>
+      <p class="text-sm text-gray-400 mb-4">
+        This is a template for creating new plugins with standardized styling and functionality.
+      </p>
+      
+      <!-- Example UI Components -->
+      <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border mb-4">
+        <h4 class="text-base font-medium mb-2">Example Section</h4>
+        <div class="flex items-center space-x-2">
+          <input type="text" class="bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none flex-grow" placeholder="Example input">
+          <button class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition-colors">
+            Button
+          </button>
+        </div>
+      </div>
+      
+      <!-- Example Action Button -->
+      <button class="px-4 py-2 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition-colors w-full">
+        <i class="fas fa-check mr-2"></i>Primary Action
+      </button>
+    </div>
+  </div>
+
+  <!-- Import Plugin Utilities -->
+  <script src="../../assets/javascript/plugin-utils.js"></script>
+  <!-- Plugin Specific Script -->
+  <script src="index.js"></script>
+  <!-- Initialize Standardized UI -->
+  <script>
+    // Initialize the standardized UI components when the document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize standard plugin UI behavior (minimize/close)
+      initializePluginUI();
+    });
+  </script>
+</body>
+</html> 

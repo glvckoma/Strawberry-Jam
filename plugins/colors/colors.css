@@ -1,0 +1,240 @@
+body {
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    .container {
+  position: relative;
+  margin: 20px auto;
+  width: 100%;
+  max-width: 90% !important;
+  /* height: 250px !important; */ /* Removed fixed height */
+  height: auto; /* Allow height to adjust to content */
+  background-color: #1c1e26;
+  min-height: 200px; /* Adjusted min-height */
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 5px;
+
+}
+
+    .form-group {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      position: relative;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .btn {
+      width: 250px;
+      border: 2px solid #1A1C28;
+      border-radius: 5px;
+      background-color: #3a3d4d;
+      color: #CECECE;
+      cursor: pointer;
+      position: relative;
+    }
+
+    /* Removed absolute positioning for action buttons as they are now in a flex container */
+    /* #sendPacketBtn { position: absolute; right: 20px; top: 185px; } */
+    /* #copyPacketBtn { position: absolute; right: 20px; top: 135px; } */
+
+    .color-display {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #1A1C28;
+      border-radius: 5px;
+      margin-left: 10px;
+      transition: transform 0.3s;
+    }
+    .color-display:hover { transform: scale(1.2); }
+    .eyedropper-btn {
+      margin-left: 10px;
+      cursor: pointer;
+      font-size: 20px;
+      color: #3a3d4d;
+      transition: color 0.3s;
+    }
+    .eyedropper-btn:hover { color: #38b000; }
+
+    #addPresetBtn,
+    #savePresetsBtn,
+    #loadPresetsBtn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      position: absolute; /* Keep for modal buttons if needed, but removing for main preset buttons */
+    }
+    /* Removed absolute positioning for preset management buttons */
+    /* #savePresetsBtn { top: 305px; left: 5%; } */
+    /* #loadPresetsBtn { top: 305px; left: 19%; } */
+    /* #addPresetBtn { top: 305px; right: 5%; } */
+
+    #modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.4);
+      animation: fadeIn 0.5s;
+    }
+    #modal-content {
+      background-color: #1c1e26;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #3a3d4d;
+      width: 80%;
+      max-width: 800px;
+      text-align: center;
+      border-radius: 10px;
+      animation: slideIn 0.5s;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      transition: color 0.3s;
+      cursor: pointer;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+    }
+
+    .color-chart {
+      display: grid;
+      grid-template-columns: repeat(20, 30px);
+      justify-content: center;
+      gap: 0;
+      margin: 10px auto 0;
+      background-color: #0D0E13;
+      width: fit-content;
+    }
+    .color-cell {
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      border: none;
+      box-sizing: border-box;
+      transition: transform 0.3s;
+    }
+    .color-cell:hover { transform: scale(1.2); }
+
+    .tab-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .tab-button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background-color: #20232F;
+      color: #38b000;
+      border: 1px solid #1A1C28;
+      margin-right: 5px;
+      border-radius: 5px;
+    }
+    .tab-button.active { background-color: #444652; }
+    .color-chart-tab { display: none; }
+    .color-chart-tab.active { display: grid; }
+    #ajClassicChart {
+      grid-template-columns: repeat(10, 30px);
+      grid-template-rows: repeat(5, 30px);
+      justify-content: center;
+      width: fit-content;
+      margin: 0 auto;
+    }
+    #exclusiveColorChart { grid-template-columns: repeat(16, 30px); }
+
+    /* Updated Preset Container styles */
+    .preset-container {
+      /* Removed fixed margin, width, height - relies on parent div now */
+      /* margin: 70px auto; */
+      /* width: 90%; */
+      /* height: 90%; */
+      /* max-width: 90%; */
+      padding: 10px; /* Adjusted padding */
+      border: 1px solid #3a3d4d; /* Use theme border color */
+      border-radius: 5px;
+      background-color: #1c1e26; /* Keep background */
+      overflow-y: auto; /* Add scroll for long lists */
+      max-height: 300px; /* Limit height */
+      min-height: 100px; /* Ensure it has some height even when empty */
+    }
+    /* Updated Preset Item styles */
+    .preset {
+      display: flex;
+      align-items: center;
+      justify-content: space-between; /* Keep space-between */
+      margin-bottom: 8px; /* Adjusted margin */
+      padding: 8px 12px; /* Adjusted padding */
+      border: 1px solid #20232F;
+      border-radius: 5px;
+      background-color: #3a3d4d;
+      transition: background-color 0.2s ease-in-out; /* Add hover transition */
+    }
+    .preset:hover {
+      background-color: #4a4d5d; /* Subtle hover effect */
+    }
+    .preset input[type="text"] {
+      flex-grow: 1; /* Allow input to take available space */
+      background-color: transparent;
+      color: #CECECE;
+      border: none;
+      border-bottom: 1px solid #CECECE;
+      outline: none;
+      /* width: 150px; */ /* Removed fixed width */
+      margin: 0 10px; /* Adjusted margin */
+    }
+    .preset-color-display {
+      width: 25px; /* Slightly smaller */
+      height: 25px; /* Slightly smaller */
+      border-radius: 4px; /* Adjusted radius */
+      margin: 0 3px; /* Adjusted margin */
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+    /* Keep apply/delete button styles, maybe adjust slightly if needed */
+    .apply-btn,
+    .delete-btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 5px;
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    input[type="file"] { display: none; }
+    /* Removed absolute positioning for random icon */
+    /* .random-color-icon {
+      position: absolute;
+      top: 190px;
+      right: 240px;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.3s, color 0.3s;
+      color: #c3c3c3;
+    }
+    .random-color-icon:hover { color: #38b000; } */
+
+    .info-button {
+      position: absolute;
+      top: 10px;
+      right: 30px;
+      width: 10px;
+      height: 10px;
+      color: #3a3d4d;
+      border: none;
+      font-size: 30px;
+      line-height: 30px;
+      text-align: center;
+      cursor: pointer;
+    }

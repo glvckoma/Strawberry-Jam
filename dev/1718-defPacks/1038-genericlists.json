@@ -1,0 +1,4412 @@
+{
+  "1": {
+    "id": "1",
+    "typeId": "1054",
+    "diamondCost": "30",
+    "diamondPurchaseAll": "1"
+  },
+  "3": {
+    "id": "3",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "5": {
+    "id": "5",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "8": {
+    "id": "8",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "9": {
+    "id": "9",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "10": {
+    "id": "10",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "11": {
+    "id": "11",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "12": {
+    "id": "12",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "13": {
+    "id": "13",
+    "typeId": "1040",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "15": {
+    "id": "15",
+    "typeId": "1047",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "16": {
+    "id": "16",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "17": {
+    "id": "17",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "18": {
+    "id": "18",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "19": {
+    "id": "19",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "22": {
+    "id": "22",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "23": {
+    "id": "23",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "33": {
+    "id": "33",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "34": {
+    "id": "34",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "35": {
+    "id": "35",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "36": {
+    "id": "36",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "37": {
+    "id": "37",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "38": {
+    "id": "38",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "41": {
+    "id": "41",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "42": {
+    "id": "42",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "43": {
+    "id": "43",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "44": {
+    "id": "44",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "45": {
+    "id": "45",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "46": {
+    "id": "46",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "47": {
+    "id": "47",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "48": {
+    "id": "48",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "49": {
+    "id": "49",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "50": {
+    "id": "50",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "51": {
+    "id": "51",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "52": {
+    "id": "52",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "53": {
+    "id": "53",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "54": {
+    "id": "54",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "56": {
+    "id": "56",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "58": {
+    "id": "58",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "59": {
+    "id": "59",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "60": {
+    "id": "60",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "61": {
+    "id": "61",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "62": {
+    "id": "62",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "63": {
+    "id": "63",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "64": {
+    "id": "64",
+    "typeId": "1003",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "66": {
+    "id": "66",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "67": {
+    "id": "67",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "68": {
+    "id": "68",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "70": {
+    "id": "70",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "71": {
+    "id": "71",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "72": {
+    "id": "72",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "73": {
+    "id": "73",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "74": {
+    "id": "74",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "75": {
+    "id": "75",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "76": {
+    "id": "76",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "77": {
+    "id": "77",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "78": {
+    "id": "78",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "79": {
+    "id": "79",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "81": {
+    "id": "81",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "82": {
+    "id": "82",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "83": {
+    "id": "83",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "84": {
+    "id": "84",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "85": {
+    "id": "85",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "87": {
+    "id": "87",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "88": {
+    "id": "88",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "90": {
+    "id": "90",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "91": {
+    "id": "91",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "92": {
+    "id": "92",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "93": {
+    "id": "93",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "94": {
+    "id": "94",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "95": {
+    "id": "95",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "96": {
+    "id": "96",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "97": {
+    "id": "97",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "98": {
+    "id": "98",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "99": {
+    "id": "99",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "100": {
+    "id": "100",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "101": {
+    "id": "101",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "102": {
+    "id": "102",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "104": {
+    "id": "104",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "106": {
+    "id": "106",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "107": {
+    "id": "107",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "108": {
+    "id": "108",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "109": {
+    "id": "109",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "110": {
+    "id": "110",
+    "typeId": "1049",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "111": {
+    "id": "111",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "112": {
+    "id": "112",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "113": {
+    "id": "113",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "114": {
+    "id": "114",
+    "typeId": "1051",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "116": {
+    "id": "116",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "117": {
+    "id": "117",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "118": {
+    "id": "118",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "119": {
+    "id": "119",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "120": {
+    "id": "120",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "121": {
+    "id": "121",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "122": {
+    "id": "122",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "123": {
+    "id": "123",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "124": {
+    "id": "124",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "125": {
+    "id": "125",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "126": {
+    "id": "126",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "127": {
+    "id": "127",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "128": {
+    "id": "128",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "129": {
+    "id": "129",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "130": {
+    "id": "130",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "131": {
+    "id": "131",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "132": {
+    "id": "132",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "133": {
+    "id": "133",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "134": {
+    "id": "134",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "135": {
+    "id": "135",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "136": {
+    "id": "136",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "137": {
+    "id": "137",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "138": {
+    "id": "138",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "139": {
+    "id": "139",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "140": {
+    "id": "140",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "141": {
+    "id": "141",
+    "typeId": "1052",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "143": {
+    "id": "143",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "144": {
+    "id": "144",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "145": {
+    "id": "145",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "146": {
+    "id": "146",
+    "typeId": "1052",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "150": {
+    "id": "150",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "151": {
+    "id": "151",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "152": {
+    "id": "152",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "153": {
+    "id": "153",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "154": {
+    "id": "154",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "155": {
+    "id": "155",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "156": {
+    "id": "156",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "158": {
+    "id": "158",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "159": {
+    "id": "159",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "161": {
+    "id": "161",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "162": {
+    "id": "162",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "163": {
+    "id": "163",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "164": {
+    "id": "164",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "165": {
+    "id": "165",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "166": {
+    "id": "166",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "167": {
+    "id": "167",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "168": {
+    "id": "168",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "169": {
+    "id": "169",
+    "typeId": "1051",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "170": {
+    "id": "170",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "171": {
+    "id": "171",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "172": {
+    "id": "172",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "173": {
+    "id": "173",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "174": {
+    "id": "174",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "175": {
+    "id": "175",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "176": {
+    "id": "176",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "177": {
+    "id": "177",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "178": {
+    "id": "178",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "179": {
+    "id": "179",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "180": {
+    "id": "180",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "181": {
+    "id": "181",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "182": {
+    "id": "182",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "183": {
+    "id": "183",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "184": {
+    "id": "184",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "185": {
+    "id": "185",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "186": {
+    "id": "186",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "187": {
+    "id": "187",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "188": {
+    "id": "188",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "189": {
+    "id": "189",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "190": {
+    "id": "190",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "191": {
+    "id": "191",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "192": {
+    "id": "192",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "193": {
+    "id": "193",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "194": {
+    "id": "194",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "195": {
+    "id": "195",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "196": {
+    "id": "196",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "197": {
+    "id": "197",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "198": {
+    "id": "198",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "199": {
+    "id": "199",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "200": {
+    "id": "200",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "201": {
+    "id": "201",
+    "typeId": "1052",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "202": {
+    "id": "202",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "203": {
+    "id": "203",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "204": {
+    "id": "204",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "205": {
+    "id": "205",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "206": {
+    "id": "206",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "207": {
+    "id": "207",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "208": {
+    "id": "208",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "209": {
+    "id": "209",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "210": {
+    "id": "210",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "211": {
+    "id": "211",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "212": {
+    "id": "212",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "213": {
+    "id": "213",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "214": {
+    "id": "214",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "215": {
+    "id": "215",
+    "typeId": "1040",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "216": {
+    "id": "216",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "217": {
+    "id": "217",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "218": {
+    "id": "218",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "219": {
+    "id": "219",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "220": {
+    "id": "220",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "221": {
+    "id": "221",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "222": {
+    "id": "222",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "223": {
+    "id": "223",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "224": {
+    "id": "224",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "225": {
+    "id": "225",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "229": {
+    "id": "229",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "230": {
+    "id": "230",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "231": {
+    "id": "231",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "232": {
+    "id": "232",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "233": {
+    "id": "233",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "234": {
+    "id": "234",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "235": {
+    "id": "235",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "236": {
+    "id": "236",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "237": {
+    "id": "237",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "238": {
+    "id": "238",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "239": {
+    "id": "239",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "240": {
+    "id": "240",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "241": {
+    "id": "241",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "242": {
+    "id": "242",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "243": {
+    "id": "243",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "244": {
+    "id": "244",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "245": {
+    "id": "245",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "246": {
+    "id": "246",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "247": {
+    "id": "247",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "248": {
+    "id": "248",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "249": {
+    "id": "249",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "250": {
+    "id": "250",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "251": {
+    "id": "251",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "252": {
+    "id": "252",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "253": {
+    "id": "253",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "254": {
+    "id": "254",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "255": {
+    "id": "255",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "256": {
+    "id": "256",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "257": {
+    "id": "257",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "258": {
+    "id": "258",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "259": {
+    "id": "259",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "260": {
+    "id": "260",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "261": {
+    "id": "261",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "262": {
+    "id": "262",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "263": {
+    "id": "263",
+    "typeId": "1024",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "264": {
+    "id": "264",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "265": {
+    "id": "265",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "266": {
+    "id": "266",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "267": {
+    "id": "267",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "268": {
+    "id": "268",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "269": {
+    "id": "269",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "270": {
+    "id": "270",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "271": {
+    "id": "271",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "272": {
+    "id": "272",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "273": {
+    "id": "273",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "274": {
+    "id": "274",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "275": {
+    "id": "275",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "276": {
+    "id": "276",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "277": {
+    "id": "277",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "278": {
+    "id": "278",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "279": {
+    "id": "279",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "280": {
+    "id": "280",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "281": {
+    "id": "281",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "282": {
+    "id": "282",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "283": {
+    "id": "283",
+    "typeId": "1052",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "284": {
+    "id": "284",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "285": {
+    "id": "285",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "286": {
+    "id": "286",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "287": {
+    "id": "287",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "288": {
+    "id": "288",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "289": {
+    "id": "289",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "290": {
+    "id": "290",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "291": {
+    "id": "291",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "292": {
+    "id": "292",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "293": {
+    "id": "293",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "294": {
+    "id": "294",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "295": {
+    "id": "295",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "296": {
+    "id": "296",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "297": {
+    "id": "297",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "298": {
+    "id": "298",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "299": {
+    "id": "299",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "300": {
+    "id": "300",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "301": {
+    "id": "301",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "302": {
+    "id": "302",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "303": {
+    "id": "303",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "304": {
+    "id": "304",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "305": {
+    "id": "305",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "306": {
+    "id": "306",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "307": {
+    "id": "307",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "308": {
+    "id": "308",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "309": {
+    "id": "309",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "310": {
+    "id": "310",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "311": {
+    "id": "311",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "312": {
+    "id": "312",
+    "typeId": "1046",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "313": {
+    "id": "313",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "314": {
+    "id": "314",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "315": {
+    "id": "315",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "319": {
+    "id": "319",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "321": {
+    "id": "321",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "322": {
+    "id": "322",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "323": {
+    "id": "323",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "324": {
+    "id": "324",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "325": {
+    "id": "325",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "326": {
+    "id": "326",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "327": {
+    "id": "327",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "328": {
+    "id": "328",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "329": {
+    "id": "329",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "330": {
+    "id": "330",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "331": {
+    "id": "331",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "332": {
+    "id": "332",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "333": {
+    "id": "333",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "334": {
+    "id": "334",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "335": {
+    "id": "335",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "336": {
+    "id": "336",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "337": {
+    "id": "337",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "338": {
+    "id": "338",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "339": {
+    "id": "339",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "340": {
+    "id": "340",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "341": {
+    "id": "341",
+    "typeId": "1024",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "342": {
+    "id": "342",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "343": {
+    "id": "343",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "344": {
+    "id": "344",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "345": {
+    "id": "345",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "346": {
+    "id": "346",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "347": {
+    "id": "347",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "348": {
+    "id": "348",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "349": {
+    "id": "349",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "350": {
+    "id": "350",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "351": {
+    "id": "351",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "352": {
+    "id": "352",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "353": {
+    "id": "353",
+    "typeId": "1058",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "354": {
+    "id": "354",
+    "typeId": "1058",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "355": {
+    "id": "355",
+    "typeId": "1058",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "356": {
+    "id": "356",
+    "typeId": "1058",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "357": {
+    "id": "357",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "358": {
+    "id": "358",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "359": {
+    "id": "359",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "360": {
+    "id": "360",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "361": {
+    "id": "361",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "362": {
+    "id": "362",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "363": {
+    "id": "363",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "364": {
+    "id": "364",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "365": {
+    "id": "365",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "366": {
+    "id": "366",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "367": {
+    "id": "367",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "368": {
+    "id": "368",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "369": {
+    "id": "369",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "370": {
+    "id": "370",
+    "typeId": "1047",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "371": {
+    "id": "371",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "372": {
+    "id": "372",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "373": {
+    "id": "373",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "374": {
+    "id": "374",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "375": {
+    "id": "375",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "376": {
+    "id": "376",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "378": {
+    "id": "378",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "379": {
+    "id": "379",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "380": {
+    "id": "380",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "381": {
+    "id": "381",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "382": {
+    "id": "382",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "383": {
+    "id": "383",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "384": {
+    "id": "384",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "385": {
+    "id": "385",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "386": {
+    "id": "386",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "387": {
+    "id": "387",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "388": {
+    "id": "388",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "389": {
+    "id": "389",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "390": {
+    "id": "390",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "391": {
+    "id": "391",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "392": {
+    "id": "392",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "393": {
+    "id": "393",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "394": {
+    "id": "394",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "395": {
+    "id": "395",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "396": {
+    "id": "396",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "397": {
+    "id": "397",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "398": {
+    "id": "398",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "399": {
+    "id": "399",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "400": {
+    "id": "400",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "401": {
+    "id": "401",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "402": {
+    "id": "402",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "403": {
+    "id": "403",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "404": {
+    "id": "404",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "405": {
+    "id": "405",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "406": {
+    "id": "406",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "407": {
+    "id": "407",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "408": {
+    "id": "408",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "409": {
+    "id": "409",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "410": {
+    "id": "410",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "411": {
+    "id": "411",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "412": {
+    "id": "412",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "413": {
+    "id": "413",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "414": {
+    "id": "414",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "415": {
+    "id": "415",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "416": {
+    "id": "416",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "417": {
+    "id": "417",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "418": {
+    "id": "418",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "419": {
+    "id": "419",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "420": {
+    "id": "420",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "421": {
+    "id": "421",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "422": {
+    "id": "422",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "423": {
+    "id": "423",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "424": {
+    "id": "424",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "425": {
+    "id": "425",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "426": {
+    "id": "426",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "427": {
+    "id": "427",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "428": {
+    "id": "428",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "429": {
+    "id": "429",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "430": {
+    "id": "430",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "431": {
+    "id": "431",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "432": {
+    "id": "432",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "433": {
+    "id": "433",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "434": {
+    "id": "434",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "435": {
+    "id": "435",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "436": {
+    "id": "436",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "437": {
+    "id": "437",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "438": {
+    "id": "438",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "439": {
+    "id": "439",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "440": {
+    "id": "440",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "441": {
+    "id": "441",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "442": {
+    "id": "442",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "443": {
+    "id": "443",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "444": {
+    "id": "444",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "445": {
+    "id": "445",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "446": {
+    "id": "446",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "447": {
+    "id": "447",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "448": {
+    "id": "448",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "449": {
+    "id": "449",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "450": {
+    "id": "450",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "451": {
+    "id": "451",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "452": {
+    "id": "452",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "453": {
+    "id": "453",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "454": {
+    "id": "454",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "455": {
+    "id": "455",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "456": {
+    "id": "456",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "457": {
+    "id": "457",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "458": {
+    "id": "458",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "459": {
+    "id": "459",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "460": {
+    "id": "460",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "461": {
+    "id": "461",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "462": {
+    "id": "462",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "463": {
+    "id": "463",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "464": {
+    "id": "464",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "465": {
+    "id": "465",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "466": {
+    "id": "466",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "467": {
+    "id": "467",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "468": {
+    "id": "468",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "469": {
+    "id": "469",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "470": {
+    "id": "470",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "471": {
+    "id": "471",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "472": {
+    "id": "472",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "473": {
+    "id": "473",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "474": {
+    "id": "474",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "475": {
+    "id": "475",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "476": {
+    "id": "476",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "477": {
+    "id": "477",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "478": {
+    "id": "478",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "479": {
+    "id": "479",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "480": {
+    "id": "480",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "481": {
+    "id": "481",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "482": {
+    "id": "482",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "483": {
+    "id": "483",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "484": {
+    "id": "484",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "485": {
+    "id": "485",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "486": {
+    "id": "486",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "487": {
+    "id": "487",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "488": {
+    "id": "488",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "489": {
+    "id": "489",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "490": {
+    "id": "490",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "491": {
+    "id": "491",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "492": {
+    "id": "492",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "493": {
+    "id": "493",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "502": {
+    "id": "502",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "503": {
+    "id": "503",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "504": {
+    "id": "504",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "505": {
+    "id": "505",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "506": {
+    "id": "506",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "507": {
+    "id": "507",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "508": {
+    "id": "508",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "509": {
+    "id": "509",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "510": {
+    "id": "510",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "511": {
+    "id": "511",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "512": {
+    "id": "512",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "513": {
+    "id": "513",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "514": {
+    "id": "514",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "515": {
+    "id": "515",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "516": {
+    "id": "516",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "517": {
+    "id": "517",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "518": {
+    "id": "518",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "519": {
+    "id": "519",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "520": {
+    "id": "520",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "521": {
+    "id": "521",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "522": {
+    "id": "522",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "523": {
+    "id": "523",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "524": {
+    "id": "524",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "525": {
+    "id": "525",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "526": {
+    "id": "526",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "527": {
+    "id": "527",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "528": {
+    "id": "528",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "529": {
+    "id": "529",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "530": {
+    "id": "530",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "531": {
+    "id": "531",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "532": {
+    "id": "532",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "533": {
+    "id": "533",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "534": {
+    "id": "534",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "535": {
+    "id": "535",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "536": {
+    "id": "536",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "537": {
+    "id": "537",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "538": {
+    "id": "538",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "539": {
+    "id": "539",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "540": {
+    "id": "540",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "541": {
+    "id": "541",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "542": {
+    "id": "542",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "543": {
+    "id": "543",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "544": {
+    "id": "544",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "545": {
+    "id": "545",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "546": {
+    "id": "546",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "547": {
+    "id": "547",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "548": {
+    "id": "548",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "549": {
+    "id": "549",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "550": {
+    "id": "550",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "551": {
+    "id": "551",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "552": {
+    "id": "552",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "553": {
+    "id": "553",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "554": {
+    "id": "554",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "555": {
+    "id": "555",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "556": {
+    "id": "556",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "565": {
+    "id": "565",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "566": {
+    "id": "566",
+    "typeId": "1052",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "567": {
+    "id": "567",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "568": {
+    "id": "568",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "569": {
+    "id": "569",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "570": {
+    "id": "570",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "571": {
+    "id": "571",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "572": {
+    "id": "572",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "573": {
+    "id": "573",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "574": {
+    "id": "574",
+    "typeId": "1046",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "575": {
+    "id": "575",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "576": {
+    "id": "576",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "577": {
+    "id": "577",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "578": {
+    "id": "578",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "579": {
+    "id": "579",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "580": {
+    "id": "580",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "581": {
+    "id": "581",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "583": {
+    "id": "583",
+    "typeId": "1064",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "584": {
+    "id": "584",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "585": {
+    "id": "585",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "586": {
+    "id": "586",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "587": {
+    "id": "587",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "588": {
+    "id": "588",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "589": {
+    "id": "589",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "590": {
+    "id": "590",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "591": {
+    "id": "591",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "592": {
+    "id": "592",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "593": {
+    "id": "593",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "594": {
+    "id": "594",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "595": {
+    "id": "595",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "596": {
+    "id": "596",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "597": {
+    "id": "597",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "598": {
+    "id": "598",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "599": {
+    "id": "599",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "600": {
+    "id": "600",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "601": {
+    "id": "601",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "602": {
+    "id": "602",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "603": {
+    "id": "603",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "604": {
+    "id": "604",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "605": {
+    "id": "605",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "606": {
+    "id": "606",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "607": {
+    "id": "607",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "608": {
+    "id": "608",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "609": {
+    "id": "609",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "610": {
+    "id": "610",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "611": {
+    "id": "611",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "612": {
+    "id": "612",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "613": {
+    "id": "613",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "614": {
+    "id": "614",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "615": {
+    "id": "615",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "616": {
+    "id": "616",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "617": {
+    "id": "617",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "618": {
+    "id": "618",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "619": {
+    "id": "619",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "620": {
+    "id": "620",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "621": {
+    "id": "621",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "622": {
+    "id": "622",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "624": {
+    "id": "624",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "625": {
+    "id": "625",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "626": {
+    "id": "626",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "627": {
+    "id": "627",
+    "typeId": "1065",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "628": {
+    "id": "628",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "629": {
+    "id": "629",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "630": {
+    "id": "630",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "631": {
+    "id": "631",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "632": {
+    "id": "632",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "633": {
+    "id": "633",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "634": {
+    "id": "634",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "635": {
+    "id": "635",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "636": {
+    "id": "636",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "637": {
+    "id": "637",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "638": {
+    "id": "638",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "639": {
+    "id": "639",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "640": {
+    "id": "640",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "641": {
+    "id": "641",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "642": {
+    "id": "642",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "643": {
+    "id": "643",
+    "typeId": "1040",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "644": {
+    "id": "644",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "645": {
+    "id": "645",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "646": {
+    "id": "646",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "647": {
+    "id": "647",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "648": {
+    "id": "648",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "649": {
+    "id": "649",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "650": {
+    "id": "650",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "658": {
+    "id": "658",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "659": {
+    "id": "659",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "660": {
+    "id": "660",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "661": {
+    "id": "661",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "662": {
+    "id": "662",
+    "typeId": "1037",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "663": {
+    "id": "663",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "664": {
+    "id": "664",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "665": {
+    "id": "665",
+    "typeId": "1033",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "666": {
+    "id": "666",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "669": {
+    "id": "669",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "671": {
+    "id": "671",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "672": {
+    "id": "672",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "673": {
+    "id": "673",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "674": {
+    "id": "674",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "675": {
+    "id": "675",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "676": {
+    "id": "676",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "677": {
+    "id": "677",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "678": {
+    "id": "678",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "679": {
+    "id": "679",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "680": {
+    "id": "680",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "681": {
+    "id": "681",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "682": {
+    "id": "682",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "683": {
+    "id": "683",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "684": {
+    "id": "684",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "685": {
+    "id": "685",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "686": {
+    "id": "686",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "687": {
+    "id": "687",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "688": {
+    "id": "688",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "689": {
+    "id": "689",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "690": {
+    "id": "690",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "691": {
+    "id": "691",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "692": {
+    "id": "692",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "693": {
+    "id": "693",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "694": {
+    "id": "694",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "696": {
+    "id": "696",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "697": {
+    "id": "697",
+    "typeId": "1023",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "698": {
+    "id": "698",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "699": {
+    "id": "699",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "700": {
+    "id": "700",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "701": {
+    "id": "701",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "702": {
+    "id": "702",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "703": {
+    "id": "703",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "705": {
+    "id": "705",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "706": {
+    "id": "706",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "707": {
+    "id": "707",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "708": {
+    "id": "708",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "709": {
+    "id": "709",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "710": {
+    "id": "710",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "711": {
+    "id": "711",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "712": {
+    "id": "712",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "713": {
+    "id": "713",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "714": {
+    "id": "714",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "715": {
+    "id": "715",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "716": {
+    "id": "716",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "717": {
+    "id": "717",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "718": {
+    "id": "718",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "719": {
+    "id": "719",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "720": {
+    "id": "720",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "721": {
+    "id": "721",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "722": {
+    "id": "722",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "723": {
+    "id": "723",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "724": {
+    "id": "724",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "725": {
+    "id": "725",
+    "typeId": "1035",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "726": {
+    "id": "726",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "727": {
+    "id": "727",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "728": {
+    "id": "728",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "729": {
+    "id": "729",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "730": {
+    "id": "730",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "731": {
+    "id": "731",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "732": {
+    "id": "732",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "733": {
+    "id": "733",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "734": {
+    "id": "734",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "735": {
+    "id": "735",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "740": {
+    "id": "740",
+    "typeId": "1057",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "741": {
+    "id": "741",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "742": {
+    "id": "742",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "743": {
+    "id": "743",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "744": {
+    "id": "744",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "745": {
+    "id": "745",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "746": {
+    "id": "746",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "747": {
+    "id": "747",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "748": {
+    "id": "748",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "749": {
+    "id": "749",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "750": {
+    "id": "750",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "751": {
+    "id": "751",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "752": {
+    "id": "752",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "753": {
+    "id": "753",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "754": {
+    "id": "754",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "755": {
+    "id": "755",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "756": {
+    "id": "756",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "757": {
+    "id": "757",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "758": {
+    "id": "758",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "759": {
+    "id": "759",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "760": {
+    "id": "760",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "761": {
+    "id": "761",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "762": {
+    "id": "762",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "763": {
+    "id": "763",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "764": {
+    "id": "764",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "765": {
+    "id": "765",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "766": {
+    "id": "766",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "767": {
+    "id": "767",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "768": {
+    "id": "768",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "769": {
+    "id": "769",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "770": {
+    "id": "770",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "771": {
+    "id": "771",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "772": {
+    "id": "772",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "773": {
+    "id": "773",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "774": {
+    "id": "774",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "776": {
+    "id": "776",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "777": {
+    "id": "777",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "778": {
+    "id": "778",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "779": {
+    "id": "779",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "780": {
+    "id": "780",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "781": {
+    "id": "781",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "782": {
+    "id": "782",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "783": {
+    "id": "783",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "784": {
+    "id": "784",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "785": {
+    "id": "785",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "786": {
+    "id": "786",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "787": {
+    "id": "787",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "788": {
+    "id": "788",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "789": {
+    "id": "789",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "790": {
+    "id": "790",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "791": {
+    "id": "791",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "792": {
+    "id": "792",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "793": {
+    "id": "793",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "794": {
+    "id": "794",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "795": {
+    "id": "795",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "796": {
+    "id": "796",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "798": {
+    "id": "798",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "799": {
+    "id": "799",
+    "typeId": "1000",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "800": {
+    "id": "800",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "801": {
+    "id": "801",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "802": {
+    "id": "802",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "803": {
+    "id": "803",
+    "typeId": "1060",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "804": {
+    "id": "804",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "805": {
+    "id": "805",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "806": {
+    "id": "806",
+    "typeId": "1030",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "807": {
+    "id": "807",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "808": {
+    "id": "808",
+    "typeId": "1062",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "809": {
+    "id": "809",
+    "typeId": "1063",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "810": {
+    "id": "810",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "811": {
+    "id": "811",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "812": {
+    "id": "812",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  },
+  "813": {
+    "id": "813",
+    "typeId": "1054",
+    "diamondCost": "0",
+    "diamondPurchaseAll": "0"
+  }
+}

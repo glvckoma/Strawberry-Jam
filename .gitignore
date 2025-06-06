@@ -1,0 +1,15 @@
+settings.json
+node_modules/
+build/*
+temp_*/
+tmp_*/
+dev-app-update.yml
+.clinerules
+.DS_Store
+*.bak
+*.tmp
+*.swp
+.cursor/
+build/*
+src/data
+dev/

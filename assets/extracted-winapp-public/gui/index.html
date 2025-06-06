@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Strawberry Jam Classic</title>
+  </head>
+
+  <body>
+    <style>
+      body {
+        background-color: #F5C86D;
+        opacity: 0;
+        margin: 0;
+        overflow: hidden;
+        user-select: none;
+        cursor: default;
+        background-color: #16171f;
+      }
+
+      body.show {
+        transition: opacity 0.75s;
+        opacity: 1;
+      }
+
+      .no-transition-delays {
+        transition: transform 0s !important;
+      }
+
+      #game-screen {
+        transition: transform 1s;
+        width: 100%;
+        height: 100%;
+        /*TODO: find out why absolute appears to be working like relative*/
+        position: absolute;
+      }
+
+      #game-screen.show {
+        transform: translateY(calc(calc(100vh - 2px) * -1));
+      }
+
+      #modal-layer {
+        display: flex;
+        position: absolute;
+        z-index: 1;
+        background-color: rgba(0, 0, 0, 0.65);
+      }
+
+      @font-face {
+        font-family: 'Tiki-Island';
+        src: url("fonts/tiki-island/Tiki-Island.woff");
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: 'CCDigitalDelivery';
+        src: url("fonts/digital-delivery/CCDigitalDeliveryRegular.woff");
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: 'CCDigitalDelivery-Bold';
+        src: url("fonts/digital-delivery/CCDigitalDeliveryBold.woff");
+        font-weight: bold;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: 'CCDigitalDelivery-BoldItalic';
+        src: url("fonts/digital-delivery/CCDigitalDeliveryBoldItalic.woff");
+        font-weight: bold;
+        font-style: italic;
+      }
+
+      @font-face {
+        font-family: 'CCDigitalDelivery-Italic';
+        src: url("fonts/digital-delivery/CCDigitalDeliveryItalic.woff");
+        font-weight: normal;
+        font-style: italic;
+      }
+    </style>
+    <script>
+      "use strict";
+      (() => {
+        const head = document.querySelector("head");
+        window.addEventListener("preloadAssets", event => {
+          for (const url of event.detail.urls) {
+            head.innerHTML += `<link rel="preload" as="image" type="image/svg+xml" href=${url}>`;
+          }
+        });
+      })();
+      
+      const globals = {
+        config: {},
+        systemData: {
+          version: "0.0.0", // electron client version
+          platform: "unknown", // os
+          platformRelease: "0.0.0", // os release version
+        },
+        authToken: "",
+        currentUser: "",
+        flashVarsOverride: null,
+        language: "en",  // changed later based on preference
+        df: "",
+        rcToken: "",
+        userAbortController: null,
+
+        translate(phrase) {
+          return new Promise(resolve => {
+            const value = cachedTranslations.get(phrase);
+            if (value) {
+              resolve(value);
+            }
+            else {
+              const requestId = nextTranslationRequestId;
+              nextTranslationRequestId++;
+              pendingTranslations.set(requestId, resolve);
+              window.ipc.send("translate", {requestId, phrase});
+            }
+          });
+        },
+
+        setLanguage(language) {
+          if (language && language != globals.language) {
+            globals.language = language;
+            cachedTranslations.clear();
+            globals.localize();
+          }
+        },
+
+        fetch(url, options, validCodes) {
+          return new Promise(async (resolve, reject) => {
+            // track original call stack in an Error for helpful debugging of failures
+            if (!options.error) options.error = new Error();
+            if (!options.startTime) options.startTime = new Date().getTime();
+            options.attempts = options.attempts ? options.attempts + 1 : 1;
+            if (!options.maxAttempts) options.maxAttempts = 5;
+            if (!options.timeout) options.timeout = 10000;
+            const requestAbortController = new AbortController();
+            options.signal = requestAbortController.signal;
+            setTimeout(() => requestAbortController.abort(), options.timeout);
+            if (options.userAbortController !== false && globals.userAbortController) {
+              options.userAbortController = globals.userAbortController;
+              options.userAbortController.signal.addEventListener("abort", () => requestAbortController.abort());
+            }
+            try {
+              const response = await window.fetch(url, options);
+              if ([200].concat(validCodes).includes(response.status)) {
+                resolve(response);
+              }
+              else {
+                options.error.message = `Invalid response code: ${response.code} for URL: ${url}`;
+                reject(options.error);
+              }
+            }
+            catch (err) {
+              if (err instanceof DOMException) {
+                // DOMException is thrown for timeouts and abortions.
+                // Perform handling via timer to allow fetch to cleanup.
+                setTimeout(async () => {
+                  if (options.userAbortController && options.userAbortController.signal.aborted) {
+                    options.error.name = "Aborted";
+                    options.error.message = `Fetch aborted by user after ${new Date().getTime() - options.startTime}ms for URL: ${url}`;
+                    reject(options.error);
+                  }
+                  else if (options.attempts >= options.maxAttempts) {
+                    options.error.name = "TimedOut"
+                    options.error.message = `Fetch timed out (attempts:${options.attempts} timeout:${options.timeout}ms) for URL: ${url}`;
+                    reject(options.error);
+                  }
+                  else {
+                    try {
+                      const response = await globals.fetch(url, options, validCodes);
+                      resolve(response);
+                    }
+                    catch (err) {
+                      reject(err);
+                    }
+                  }
+                }, 100);
+              }
+              else {
+                // Network failure (excluding timeout), bad request options, or server-side CORS issue.
+                // Retrying these situations are unlikely to succeed within any typical retry window.
+                options.error.name = err.name;
+                options.error.message = `${err.message} for URL: ${url}`;
+                reject(options.error);
+              }
+            }
+          });
+        },
+
+        reportError(section, err) {
+          // Ensure config is loaded before trying to report
+          if (!globals.config || !globals.config.api) {
+            console.error("Error reporting disabled: globals.config.api not set.", section, err);
+            return;
+          }
+          const message = err.stack || err.message || err;
+          const body = JSON.stringify({
+            username: globals.currentUser,
+            version: globals.systemData.version,
+            platform: globals.systemData.platform,
+            message: message.slice(0, 1000),
+            section,
+          });
+          globals.fetch(`${globals.config.api}/v1/reportError`, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body,
+            userAbortController: false,  // prevent user from aborting
+          }, [413]).catch(err => {
+            console.log(err);
+          });
+        },
+
+        parseBool(val) {
+          return val ? val !== "false" : false;
+        },
+
+        genericError(err) {
+          globals.reportError("webClient", err);
+          window.alert("Something went wrong :(");
+        },
+
+        getClientData() {
+          return {
+            clientPlatform: "electron",
+            clientPlatformVersion: globals.systemData.version,
+            clientOS: globals.systemData.platform === "darwin"
+            ? "mac"
+            : globals.systemData.platform === "win32"
+            ? "win"
+            : "unknown",
+          };
+        },
+
+        async authenticateWithAuthToken(authToken) {
+          return await getGameData({auth_token: authToken}, true);
+        },
+
+        async authenticateWithRefreshToken(refreshToken) {
+          return await authenticate({refresh_token: refreshToken});
+        },
+
+        async authenticateWithPassword(username, password, otp, customDf) {
+          const request = {username, password};
+          if (otp) {
+            request.otp = otp;
+          }
+          return await authenticate(request, customDf);
+        },
+
+        async getFlashVarsFromWeb() {
+          const response = await globals.fetch(`${globals.config.web}/flashvars`, {
+            method: "GET",
+            mode: "cors",
+            credentials: "include",
+          });
+          return JSON.parse(await response.text());
+        },
+
+        localize() {
+          document.getElementById("login-screen").localize();
+          document.getElementById("game-screen").localize();
+        },
+
+        reloadGame() {
+          document.getElementById("login-screen").logIn();
+        },
+      };
+
+      const pendingTranslations = new Map();
+      const cachedTranslations = new Map();
+      let nextTranslationRequestId = 0;
+
+      window.ipc.on("translate", (event, data) => {
+        cachedTranslations.set(data.phrase, data.value);
+        const resolve = pendingTranslations.get(data.requestId);
+        if (resolve) {
+          pendingTranslations.delete(data.requestId);
+          resolve(data.value);
+        }
+      });
+
+      window.addEventListener("error", err => {
+        globals.reportError("webClient", err.stack || err.error.stack);
+      });
+      window.addEventListener("unhandledrejection", event => {
+        globals.reportError("webClient", event.reason.stack || event.reason.error.stack);
+      });
+
+      const showOtpModal = () => {
+        const modal = document.createElement("otp-modal");
+        modal.addEventListener("close", event => {
+          document.getElementById("modal-layer").removeChild(modal);
+        });
+        modal.addEventListener("submit", event => {
+          document.getElementById("modal-layer").removeChild(modal);
+          const loginScreen = document.getElementById("login-screen");
+          loginScreen.otp = event.detail.otp;
+          loginScreen.logIn();
+        });
+        document.getElementById("modal-layer").appendChild(modal);
+      };
+
+      const showRenameUserModal = (username, renameToken) => {
+        const modal = document.createElement("ajd-rename-user-modal");
+        modal.userData = {
+          username,
+          renameToken,
+        };
+        modal.addEventListener("accountCreated", event => {
+          document.getElementById("login-screen").username = event.detail.username;
+          document.getElementById("modal-layer").removeChild(modal);
+        });
+        modal.addEventListener("close", event => {
+          document.getElementById("modal-layer").removeChild(modal);
+        });
+        document.getElementById("modal-layer").appendChild(modal);
+      };
+
+      const authenticate = async (request, customDf) => {
+        request.domain = "flash";
+        
+        try {
+          // Always get fresh df from main process to ensure we have the current value
+          console.log("[AUTH] Requesting fresh DF from main process");
+          const freshDf = await window.ipc.getDf();
+          
+          if (freshDf) {
+            // Check if UUID spoofing is enabled
+            const uuidSpooferEnabled = await window.ipc.invoke('get-setting', 'uuidSpoofingEnabled');
+            console.log(`[AUTH] Received df: ${freshDf.substr(0, 8)}... (UUID spoofing: ${uuidSpooferEnabled ? 'active' : 'disabled'})`);
+            
+            // Always update globals.df with the latest value from main process
+            globals.df = freshDf;
+          } else {
+            console.warn("[AUTH] Failed to get fresh DF from main process");
+          }
+        } catch (err) {
+          console.warn(`[AUTH] Error getting fresh df: ${err.message}`);
+        }
+        
+        // Ensure we have a valid DF value by this point
+        if (!globals.df) {
+          console.error("[AUTH] No valid DF available, authentication may fail");
+        }
+        
+        // Use custom df if provided, otherwise use the (freshly updated) globals.df
+        const dfToUse = customDf || globals.df;
+        request.df = dfToUse;
+        console.log(`[AUTH] Using df for authentication: ${request.df ? request.df.substr(0, 8) + '...' : 'undefined'}`);
+        
+        const response = await globals.fetch(`${globals.config.authenticator}/authenticate`, {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(request),
+        }, [401, 422, 500]);
+        if (response.status === 200) {
+          const authenticateData = JSON.parse(await response.text());
+          const authenticatedByToken = (request.refresh_token !== undefined);
+          // Pass the dfToUse to getGameData to ensure it's consistently used
+          return await getGameData(authenticateData, authenticatedByToken, dfToUse);
+        }
+        // account suspended/banned
+        if (response.status === 401) {
+          const authError = JSON.parse(await response.text());
+          switch (authError.error_code) {
+            case 100: throw new Error("REFRESH_TOKEN_EXPIRED");
+            case 101: throw new Error("WRONG_CREDENTIALS");
+            case 102: throw new Error("BANNED");
+            case 103: throw new Error("SUSPENDED");
+            default: throw new Error("LOGIN_ERROR");
+          }
+        }
+        // unprocessable request
+        if (response.status === 422) {
+          const authError = JSON.parse(await response.text());
+          if (authError.error == "invalid_otp" || authError.error == "pending_otp_confirmation") {
+            showOtpModal();
+            throw new Error("OTP_NEEDED");
+          }
+          throw new Error("LOGIN_ERROR");
+        }
+        // unexpected response: log details and show generic login error
+        throw new Error("ERROR");
+      };
+
+      // Modify getGameData to accept customDf
+      const getGameData = async (authenticateData, authenticatedByToken, customDf) => {
+        let flashVars = await globals.getFlashVarsFromWeb();
+        const clientVersion = (globals.rcToken
+          && flashVars.smoke_version && flashVars.smoke_version != flashVars.deploy_version
+          ) ? flashVars.smoke_version : flashVars.deploy_version;
+        const playerSessionData = await getPlayerSessionData(
+          authenticateData.auth_token,
+          clientVersion
+        );
+
+        if (playerSessionData.game_server && playerSessionData.game_server != "NONE_AVAIL") {
+          flashVars.smartfoxServer = playerSessionData.game_server;
+          flashVars.blueboxServer = playerSessionData.game_server;
+        }
+
+        const userData = {
+          username: playerSessionData.screen_name,
+          accountType: playerSessionData.game_account_type,
+          language: playerSessionData.language,
+          authToken: authenticateData.auth_token,
+        };
+        if (authenticateData.refresh_token) {
+          userData.refreshToken = authenticateData.refresh_token;
+        }
+
+        globals.authToken = userData.authToken;
+        globals.currentUser = userData.username;
+        globals.setLanguage(userData.language);
+
+        flashVars.content = 'http://localhost:8080/'
+        flashVars.clientURL = `http://localhost:8080/${flashVars.deploy_version}/ajclient.swf`
+
+        // Don't wait for this call, it is purely informational
+        // reportLogin({
+        //   username: userData.username,
+        //   version: globals.systemData.version,
+        //   platform: globals.systemData.platform,
+        //   userId: playerSessionData.id,
+        //   usedToken: authenticatedByToken,
+        // });
+
+        // Pass customDf to appendFlashVars and await the result
+        flashVars = await appendFlashVars(flashVars, customDf || globals.df);
+
+        return {userData, flashVars};
+      };
+
+      // Modify appendFlashVars to prioritize the passed df, falling back to globals.df
+      const appendFlashVars = async (flashVars, dfToUse) => {
+        // If no DF was provided and globals.df is null, get a fresh DF
+        if (!dfToUse && !globals.df) {
+          try {
+            console.log("[DF] No valid DF found, requesting fresh DF from main process");
+            const freshDf = await window.ipc.getDf();
+            if (freshDf) {
+              globals.df = freshDf;
+              console.log(`[DF] Successfully retrieved fresh DF: ${freshDf.substr(0, 8)}...`);
+            } else {
+              console.warn("[DF] Failed to get fresh DF from main process");
+            }
+          } catch (err) {
+            console.error(`[DF] Error getting fresh DF: ${err.message}`);
+          }
+        }
+        
+        // Use the provided dfToUse if valid, otherwise fallback to the globally stored df
+        const finalDf = dfToUse || globals.df; 
+        
+        // Log the df value being used for debugging (handle null values safely)
+        const dfUsedStr = finalDf ? finalDf.substr(0, 8) + '...' : 'undefined';
+        const dfToUseStr = dfToUse ? dfToUse.substr(0, 8) + '...' : 'undefined';
+        const globalsDfStr = globals.df ? globals.df.substr(0, 8) + '...' : 'undefined';
+        console.log(`[DF Debug] appendFlashVars using df: ${dfUsedStr} (received dfToUse: ${dfToUseStr}, globals.df: ${globalsDfStr})`);
+        
+        // Allow for testing different locale values for server swapping
+        // Fetch settings and await their resolution
+        let localeOverride = '';
+        
+        try {
+          // Check for locale override (this is now the server swap value)
+          localeOverride = await window.ipc.invoke('get-setting', 'debug.locale') || '';
+          
+          if (localeOverride) {
+            console.log(`[Server Debug] Using server swap locale: ${localeOverride}`);
+          }
+        } catch (err) {
+          console.log(`[Server Debug] Error fetching locale override:`, err);
+          localeOverride = '';
+        }
+        
+        // DO NOT update globals.df here. Let the login process fetch the correct df each time.
+        
+        Object.assign(
+          flashVars,
+          globals.getClientData(),
+          globals.reloadFlashVars,
+          {
+            auth_token: globals.authToken,
+            // Ensure the final determined df is included
+            df: finalDf, 
+            locale: localeOverride || globals.language,
+            smartfoxServer: "127.0.0.1",
+            username: globals.currentUser,
+            webRefPath: "game/play",
+          },
+        );
+        // Explicitly set the df value AFTER merging to ensure it's the correct one
+        flashVars.df = finalDf; 
+        globals.reloadFlashVars = null;
+        
+        return flashVars;
+      };
+
+      const getPlayerSessionData = async (authToken, clientVersion) => {
+        let params = `domain=flash&client_version=${encodeURIComponent(clientVersion)}`;
+        if (globals.rcToken) {
+          params += "&rc_token=" + encodeURIComponent(globals.rcToken);
+        }
+        
+        // Log the current df value before making the request
+        console.log(`[DF Debug] Current globals.df before playerSessionData request: ${globals.df}`);
+        
+        const response = await globals.fetch(`${globals.config.playerSessionData}/player?${params}`, {
+          method: "GET",
+          mode: "cors",
+          headers: {
+            "Authorization": `Bearer ${authToken}`,
+          },
+        }, [401]);
+        if (response.status !== 200) {
+          throw new Error("AUTH_TOKEN_EXPIRED");
+        }
+        const responseData = JSON.parse(await response.text());
+        
+        // Log server selection related parameters for debugging
+        console.log('[PlayerSession] Full response data for server selection debugging:');
+        console.log('[PlayerSession] Country:', responseData.country);
+        console.log('[PlayerSession] Language:', responseData.language);
+        console.log('[PlayerSession] Game server:', responseData.game_server);
+        console.log('[PlayerSession] Account type:', responseData.game_account_type);
+        
+        if (responseData.rename_required) {
+          showRenameUserModal(responseData.screen_name, responseData.rename_required_key);
+          throw new Error("USER_RENAME_NEEDED");
+        }
+        return responseData;
+      };
+
+      // const reportLogin = (data) => {
+      //   globals.fetch(`${globals.config.api}/v1/login`, {
+      //     method: "POST",
+      //     mode: "cors",
+      //     headers: {
+      //       "Content-Type": "application/json"
+      //     },
+      //     body: JSON.stringify(data),
+      //     userAbortController: false,  // prevent user from aborting
+      //   }).catch(err => {
+      //     globals.reportError("webClient", `Failed to contact Electron API: ${err}`);
+      //   });
+      // };
+    </script>
+
+    <!-- load modules -->
+
+    <!-- Load Bridge Script FIRST (regular script) -->
+    <!-- Tester Bridge script completely removed for public build -->
+    <!-- End Bridge Script -->
+
+    <!-- Load Core Component Scripts (as regular scripts) -->
+    <script src="components/Button.js"></script>
+    <script src="components/AccountManagementPanel.js"></script>
+    <script src="components/LoginScreen.js"></script> <!-- Depends on bridge functions -->
+    <script src="components/GameScreen.js"></script>
+    <script src="components/TextInput.js"></script>
+    <script src="components/ErrorTip.js"></script>
+    <script src="components/BubbleButton.js"></script>
+    <!-- <script src="components/GameButtonTray.js"></script> --> <!-- Old tray script removed -->
+    <script src="components/UserTray.js"></script> <!-- New tray -->
+    <script src="components/ButtonWithText.js"></script>
+    <script src="components/Checkbox.js"></script>
+    <script src="components/RenameUserModal.js"></script>
+    <script src="components/SpriteSheetButton.js"></script>
+    <script src="components/MessageModal.js"></script>
+    <script src="components/ForgotPasswordModal.js"></script>
+    <script src="components/OtpModal.js"></script>
+    <script src="components/ProgressRing.js"></script>
+    <!-- End Core Component Scripts -->
+
+    <!-- Load Actual Tester Modules LAST (as modules, they register with the bridge) -->
+    <!-- Tester modules completely removed for public build -->
+    <!-- End Tester Modules -->
+
+    <div id="modal-layer"></div>
+    <ajd-login-screen id="login-screen"></ajd-login-screen>
+    <ajd-game-screen id="game-screen"></ajd-game-screen>
+
+    <script>
+      "use strict";
+
+      (() => {
+        const loginScreen = document.getElementById("login-screen");
+        const gameScreen = document.getElementById("game-screen");
+
+        loginScreen.addEventListener("loggedIn", event => {
+          gameScreen.loadGame(event.detail.flashVars);
+        });
+        gameScreen.addEventListener("gameLoaded", event => {
+          loginScreen.loginBlocked = false;
+          gameScreen.classList.add("show");
+          // Give time for the transition animation to play
+          setTimeout(() => {
+            document.getElementById("login-screen").localize();
+          }, 1000);
+        });
+        gameScreen.addEventListener("loadFailed", event => {
+          loginScreen.loginBlocked = false;
+        });
+        gameScreen.addEventListener("switchToLogin", event => {
+          gameScreen.classList.remove("show");
+        });
+        gameScreen.addEventListener("accountCreated", event => {
+          loginScreen.username = event.detail.username;
+          loginScreen.password = event.detail.password;
+          loginScreen.rememberMe = true;
+        });
+
+        window.onload = () => {
+          document.querySelector("body").classList.add("show");
+
+          // prevent user from dragging image onto app and redirecting
+          document.addEventListener("dragover", event => {
+            event.preventDefault();
+            return false;
+          }, false);
+          document.addEventListener("drop", event => {
+            event.preventDefault();
+            return false;
+          }, false);
+          
+          // Ensure all elements have localize methods
+          if (!document.getElementById("login-screen").localize) {
+            console.warn("Adding missing localize method to login-screen");
+            document.getElementById("login-screen").localize = function() {
+              console.log("Default localize method called on login-screen");
+              return Promise.resolve();
+            };
+          }
+          
+          if (!document.getElementById("game-screen").localize) {
+            console.warn("Adding missing localize method to game-screen");
+            document.getElementById("game-screen").localize = function() {
+              console.log("Default localize method called on game-screen");
+              return Promise.resolve();
+            };
+          }
+          
+          // Ensure loginScreen has logIn method
+          if (!loginScreen.logIn) {
+            console.warn("Adding missing logIn method to login-screen");
+            loginScreen.logIn = async function() {
+              console.log("Default logIn method called on login-screen");
+              
+              // Simulate successful login with minimal data
+              const flashVars = await globals.getFlashVarsFromWeb();
+              this.dispatchEvent(new CustomEvent("loggedIn", {
+                detail: {
+                  flashVars: flashVars
+                }
+              }));
+              
+              return Promise.resolve();
+            };
+          }
+        };
+
+        window.ipc.on("loginInfoLoaded", (event, data) => {
+          loginScreen.username = data.username;
+          loginScreen.rememberMe = data.rememberMe;
+          loginScreen.authToken = data.authToken || null;
+          loginScreen.refreshToken = data.refreshToken || null;
+          globals.config = data.config;
+          globals.currentUser = data.username;
+          
+          // Log the df value received from main process
+          console.log(`[DF Debug] Received df from main process: ${data.df}`);
+          globals.df = data.df;
+          
+          globals.rcToken = data.rcToken;
+          if (data.rememberMe && data.username && (data.authToken || data.refreshToken)) {
+            loginScreen.isFakePassword = true;
+            loginScreen.logIn();
+          }
+          else {
+            loginScreen.isFakePassword = false;
+            loginScreen.password = "";
+          }
+        });
+
+        window.addEventListener("keydown", event => {
+          window.ipc.send("keyEvent", {
+            metaKey: event.metaKey,
+            altKey: event.altKey,
+            ctrlKey: event.ctrlKey,
+            shiftKey: event.shiftKey,
+            keyCode: event.keyCode,
+            key: event.key,
+          });
+        }, true);
+
+        window.ipc.send("loaded");
+
+        window.ipc.on("obtainedToken", (event, data) => {
+          try {
+            loginScreen.authToken = data.token;
+            loginScreen.logIn();
+          }
+          catch (err) {
+            globals.reportError("webClient", err);
+          }
+        });
+
+        window.ipc.send("ready");
+        // Send winReady signal to main process
+        window.ipc.send("winReady");
+
+        // Initialize tester state after system data is loaded
+        window.ipc.on("postSystemData", (event, data) => {
+            globals.systemData.version = data.version || globals.systemData.version;
+            globals.systemData.platform = data.platform || globals.systemData.platform;
+            globals.systemData.platformRelease = data.platformRelease || globals.systemData.platformRelease;
+            loginScreen.version = globals.systemData.version;
+            globals.affiliateCode = data.affiliateCode;
+            globals.setLanguage(data.language);
+            globals.localize();
+            
+            // Removed tester state initialization call for public build
+            // console.log('[DIAGNOSTIC] Tester initialization removed from public build.');
+            
+        });
+
+        window.ipc.on("log", (event, data) => {
+          if (data.level.toLowerCase() === "error") {
+            globals.reportError("electronClient", data.message);
+          }
+          switch (data.level) {
+            case "debug": console.debug(data.message); break;
+            case "warn": console.warn(data.message); break;
+            case "error": console.error(data.message); break;
+            default: console.log(data.message); break;
+          }
+        });
+      })();
+
+      // Listen for electron IPC messages
+      window.ipc.on('winReady', (event, ...args) => {
+        window.globals.isElectron = true;
+        document.dispatchEvent(new CustomEvent('winReady', { detail: args }));
+      });
+
+      // Add handler for UUID update events
+      window.ipc.on('update-df', (event, newDf) => {
+        if (window.globals) {
+          console.log(`Updating df to: ${newDf.substr(0, 8)}...`);
+          window.globals.df = newDf;
+        } else {
+          console.error('Globals not available for df update');
+        }
+      });
+
+      window.ipc.on("screenChange", (event, state) => {
+        console.log(`[GUI Index.html] Received screenChange event: ${state}`);
+        const gameScreenElement = document.getElementById("game-screen");
+        if (gameScreenElement && typeof gameScreenElement.setScreenState === 'function') {
+          gameScreenElement.setScreenState(state);
+        } else if (gameScreenElement) {
+          console.warn("[GUI Index.html] game-screen element does not have setScreenState method yet.");
+        } else {
+          console.warn("[GUI Index.html] game-screen element not found.");
+        }
+      });
+    </script>
+</body>
+</html>

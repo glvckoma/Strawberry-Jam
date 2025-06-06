@@ -1,0 +1,3 @@
+include "avatarEffect_swf$7f7791ddf789948345cc6e563e0494c7477305404ByteArray.as";
+include "avatarEffect_swf$7f7791ddf789948345cc6e563e0494c7477305404.as";
+

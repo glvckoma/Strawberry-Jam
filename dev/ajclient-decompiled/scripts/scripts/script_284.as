@@ -1,0 +1,3 @@
+include "avatarIdle_Effect2_swf$600f27ea2be532ad44992142568e6ee52071508369ByteArray.as";
+include "avatarIdle_Effect2_swf$600f27ea2be532ad44992142568e6ee52071508369.as";
+

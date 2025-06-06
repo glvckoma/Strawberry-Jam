@@ -1,0 +1,61 @@
+{
+  "name": "strawberry-jam",
+  "description": "strawberry jam is my personal fork of the project jam created and developed by sxip.",
+  "main": "src/index.js",
+  "version": "3.0.0",
+  "author": "glvckoma",
+  "scripts": {
+    "devtools": "electron dev/index.js",
+    "dev": "npx cross-env NODE_ENV=development electron .",
+    "build:css": "npx tailwindcss -i ./src/styles/app.css -o ./assets/css/style.css",
+    "pack:asar:dev": "npx asar pack assets/extracted-winapp-dev assets/winapp.asar --unpack *.node",
+    "pack:asar:public": "cd assets/extracted-winapp-public && npx electron-rebuild -f -w keytar -v 32.0.1 && cd ../.. && npx asar pack assets/extracted-winapp-public assets/winapp.asar --unpack *.node",
+    "build": "npm run pack:asar:public && npx electron-builder build -w",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
+    "verify": "node verify-build.js",
+    "plugin:tag": "node src/utils/manage-plugin-tags.js",
+    "plugin:tag:list": "node src/utils/manage-plugin-tags.js list",
+    "publish:win": "npm run version:patch && npm run build && npm run verify && npx electron-builder build -w -p always",
+    "publish:force": "npm run build && npx electron-builder build -w -p always"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glvckoma/strawberry-jam"
+  },
+  "devDependencies": {
+    "asar": "^3.2.0",
+    "electron": "^32.0.1",
+    "electron-builder": "^24.13.3",
+    "eslint": "^7.18.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "electron-rebuild": "^3.2.9"
+  },
+  "dependencies": {
+    "ajv": "^8.6.2",
+    "axios": "^1.8.4",
+    "chalk": "^5.4.1",
+    "cheerio": "^1.0.0",
+    "cross-env": "^7.0.3",
+    "electron-store": "^7.0.1",
+    "electron-updater": "^4.3.9",
+    "express": "^4.17.1",
+    "inquirer": "^12.5.2",
+    "jquery": "^3.6.0",
+    "live-plugin-manager": "^0.17.1",
+    "lucide": "^0.511.0",
+    "lucide-react": "^0.511.0",
+    "node-gyp": "^8.4.1",
+    "npm": "^10.8.2",
+    "request": "^2.88.2",
+    "request-promise-native": "^1.0.9",
+    "tailwindcss": "^3.4.10",
+    "tree-kill": "^1.2.2",
+    "yargs": "^17.7.2",
+    "keytar": "^7.9.0"
+  }
+}

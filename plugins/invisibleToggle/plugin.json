@@ -1,0 +1,8 @@
+{
+  "name": "InvisibleToggle",
+  "version": "1.0.0",
+  "description": "Toggle invisibility using the AJC mod command. Use at your own risk.",
+  "main": "index.js",
+  "author": "Glockoma",
+  "license": "MIT"
+}

@@ -1,0 +1,750 @@
+const Application = require('./application')
+const { ipcRenderer } = require('electron')
+const ServerStatusChecker = require('../../services/ServerStatusChecker')
+const logManager = require('../../utils/LogManagerPreload')
+
+const application = new Application()
+
+// Track session start time
+let sessionStartTime = null;
+
+// Track server status
+let serverStatus = {
+  isOnline: null, // null = unknown, true = online, false = offline
+  lastChecked: 0,
+  responseTime: 0,
+  server: null,
+  accessStatus: 'unknown',
+  statusCode: null,
+  isChecking: false // New flag to track when a check is in progress
+};
+
+/**
+ * Updates the connection status indicator in the UI.
+ * @param {boolean} connected - Whether the client is connected
+ * @param {boolean} [serverOnline] - Whether the AJ servers are online (optional)
+ */
+const updateConnectionStatus = (connected, serverOnline = null) => {
+  // Get footer-based status element
+  const statusElement = document.getElementById('connection-status')
+  if (!statusElement) return
+  
+  // If server status is provided, update the global state
+  if (serverOnline !== null) {
+    serverStatus.isOnline = serverOnline;
+    serverStatus.isChecking = false; // Check completed
+  }
+  
+  // Update status for footer indicator
+  if (connected) {
+    // Connected state
+    statusElement.querySelector('span:first-child').classList.remove('bg-error-red', 'bg-highlight-yellow', 'bg-tertiary-bg')
+    statusElement.querySelector('span:first-child').classList.add('bg-highlight-green')
+    statusElement.querySelector('span:last-child').textContent = 'Connected'
+    statusElement.querySelector('span:first-child').classList.remove('pulse-animation', 'pulse-yellow', 'pulse-loading')
+    statusElement.querySelector('span:first-child').classList.add('pulse-green')
+    statusElement.classList.remove('text-gray-400', 'text-highlight-yellow', 'text-error-red')
+    statusElement.classList.add('text-highlight-green')
+    
+    // Add tooltip with server info
+    if (serverStatus.server) {
+      const tooltipText = `Connected to ${serverStatus.server} (Response time: ${serverStatus.responseTime}ms)`;
+      statusElement.setAttribute('title', tooltipText);
+    }
+  } else if (serverStatus.isChecking) {
+    // Checking state (new)
+    statusElement.querySelector('span:first-child').classList.remove('bg-error-red', 'bg-highlight-green', 'bg-highlight-yellow')
+    statusElement.querySelector('span:first-child').classList.add('bg-tertiary-bg')
+    statusElement.querySelector('span:last-child').textContent = 'Checking...'
+    statusElement.querySelector('span:first-child').classList.remove('pulse-green', 'pulse-animation')
+    statusElement.querySelector('span:first-child').classList.add('pulse-loading')
+    statusElement.classList.remove('text-highlight-green', 'text-highlight-yellow', 'text-error-red')
+    statusElement.classList.add('text-gray-400')
+    
+    // Add tooltip
+    statusElement.setAttribute('title', 'Checking Animal Jam server status...');
+  } else {
+    // Disconnected state with server status
+    
+    // First remove all classes to ensure clean state
+    const dotElement = statusElement.querySelector('span:first-child');
+    dotElement.classList.remove('bg-highlight-green', 'bg-error-red', 'bg-highlight-yellow', 'bg-tertiary-bg');
+    dotElement.classList.remove('pulse-green', 'pulse-animation', 'pulse-loading', 'pulse-yellow');
+    statusElement.classList.remove('text-highlight-green', 'text-gray-400', 'text-highlight-yellow', 'text-error-red');
+    
+    // Show server status when not connected if we know it
+    if (serverStatus.isOnline === true) {
+      // Determine specific status based on accessStatus
+      if (serverStatus.accessStatus === 'blocked') {
+        // Access blocked
+        statusElement.querySelector('span:last-child').textContent = 'AJ Servers: Access Blocked';
+        statusElement.classList.add('text-highlight-yellow');
+        dotElement.classList.add('bg-highlight-yellow');
+        dotElement.classList.add('pulse-yellow');
+        
+        // Add tooltip
+        statusElement.setAttribute('title', `Server ${serverStatus.server} is blocking your connection (Status code: ${serverStatus.statusCode})`);
+      } 
+      else if (serverStatus.accessStatus === 'limited') {
+        // Rate limited
+        statusElement.querySelector('span:last-child').textContent = 'AJ Servers: Rate Limited';
+        statusElement.classList.add('text-highlight-yellow');
+        dotElement.classList.add('bg-highlight-yellow');
+        dotElement.classList.add('pulse-yellow');
+        
+        // Add tooltip
+        statusElement.setAttribute('title', `Server ${serverStatus.server} is rate limiting your requests (Status code: ${serverStatus.statusCode})`);
+      }
+      else {
+        // Servers online but not connected (normal case)
+        statusElement.querySelector('span:last-child').textContent = 'AJ Servers are online!';
+        statusElement.classList.add('text-highlight-green'); 
+        dotElement.classList.add('bg-highlight-green');
+        dotElement.classList.add('pulse-green');
+        
+        // Add tooltip with server info
+        if (serverStatus.server) {
+          const tooltipText = `Server ${serverStatus.server} is online (Response time: ${serverStatus.responseTime}ms)`;
+          statusElement.setAttribute('title', tooltipText);
+        }
+      }
+    } else if (serverStatus.isOnline === false) {
+      // Determine specific offline message based on accessStatus
+      if (serverStatus.accessStatus === 'error') {
+        statusElement.querySelector('span:last-child').textContent = 'AJ Servers: Error';
+      } else if (serverStatus.accessStatus === 'network-error') {
+        statusElement.querySelector('span:last-child').textContent = 'Cannot Connect to AJ Servers';
+      } else {
+        statusElement.querySelector('span:last-child').textContent = 'AJ Servers are offline :(';
+      }
+      
+      statusElement.classList.add('text-error-red');
+      dotElement.classList.add('bg-error-red');
+      dotElement.classList.add('pulse-animation');
+      
+      // Add tooltip with details
+      const lastCheckedTime = new Date(serverStatus.lastChecked).toLocaleTimeString();
+      let errorDetail = '';
+      if (serverStatus.statusCode) {
+        errorDetail = `Status code: ${serverStatus.statusCode}`;
+      } else if (serverStatus.error) {
+        errorDetail = `Error: ${serverStatus.error}`;
+      }
+      
+      const tooltipText = `Unable to connect to ${serverStatus.server || 'Animal Jam servers'} (${errorDetail}). Last checked: ${lastCheckedTime}`;
+      statusElement.setAttribute('title', tooltipText);
+    } else {
+      // Unknown status
+      statusElement.querySelector('span:last-child').textContent = 'Status Unknown';
+      statusElement.classList.add('text-gray-400');
+      dotElement.classList.add('bg-tertiary-bg');
+      dotElement.classList.add('pulse-animation');
+      
+      // Add tooltip suggesting to use servers command
+      statusElement.setAttribute('title', 'Server status unknown. Type !servers to check status.');
+    }
+  }
+}
+
+/**
+ * Checks the Animal Jam server status and updates the UI.
+ * @returns {Promise<boolean>} Whether the server is online
+ */
+const checkServerStatus = async () => {
+  try {
+    // Update UI to show we're checking
+    serverStatus.isChecking = true;
+    updateConnectionStatus(false);
+    
+    // Get server host from settings if available
+    const serverHost = application.settings ? 
+      application.settings.get('smartfoxServer') : 
+      'lb-iss04-classic-prod.animaljam.com';
+    
+    // Check server status
+    const result = await ServerStatusChecker.checkServerStatus(serverHost);
+    
+    // Update global state
+    serverStatus = {
+      isOnline: result.isOnline,
+      lastChecked: Date.now(),
+      responseTime: result.responseTime,
+      server: result.server || serverHost,
+      accessStatus: result.accessStatus || 'unknown',
+      statusCode: result.statusCode,
+      isChecking: false
+    };
+    
+    // Always update UI to reflect new server status
+    // We pass the current connection state as null to preserve it
+    const isConnected = application.server && 
+                        application.server.clients && 
+                        application.server.clients.size > 0;
+    
+    updateConnectionStatus(isConnected, result.isOnline);
+    
+    // Log the result if console is available
+    if (application && application.consoleMessage) {
+      // Format server name to be more user-friendly
+      let displayServer = result.server || serverHost;
+      if (displayServer.includes('.internal')) {
+        // Convert internal server name format to external
+        displayServer = displayServer.replace(/\.internal$/, '');
+        displayServer = 'lb-' + displayServer.replace(/\.(prod|stage)/, '-$1') + '.animaljam.com';
+      }
+      
+      // Create appropriate message based on status
+      let message = '';
+      let messageType = '';
+      
+      if (result.isOnline) {
+        if (result.accessStatus === 'ok') {
+          message = `AJ Servers are online! ${displayServer} (${result.responseTime}ms)`;
+          messageType = 'success';
+        } else if (result.accessStatus === 'blocked') {
+          message = `AJ Servers are online but your access appears to be blocked. ${displayServer} (${result.statusCode})`;
+          messageType = 'warn';
+        } else if (result.accessStatus === 'limited') {
+          message = `AJ Servers are online but you appear to be rate limited. ${displayServer} (${result.statusCode})`;
+          messageType = 'warn';
+        } else {
+          message = `AJ Servers are responding but with an unusual status. ${displayServer} (${result.statusCode})`;
+          messageType = 'notify';
+        }
+      } else {
+        if (result.accessStatus === 'error') {
+          message = `AJ Servers are experiencing errors. ${displayServer} (Status ${result.statusCode})`;
+        } else if (result.accessStatus === 'network-error') {
+          message = `Cannot connect to AJ Servers. ${displayServer} (Network error: ${result.error || 'unknown'})`;
+        } else {
+          message = `AJ Servers appear to be offline. ${displayServer}`;
+        }
+        messageType = 'error';
+      }
+      
+      application.consoleMessage({
+        message,
+        type: messageType
+      });
+    }
+    
+    return result.isOnline;
+  } catch (error) {
+    console.error('Error checking server status:', error);
+    
+    // Update to unknown state
+    serverStatus.isOnline = null;
+    serverStatus.lastChecked = Date.now();
+    serverStatus.isChecking = false;
+    serverStatus.accessStatus = 'error';
+    
+    // Log the error if console is available
+    if (application && application.consoleMessage) {
+      application.consoleMessage({
+        message: `Error checking server status: ${error.message}`,
+        type: 'error'
+      });
+    }
+    
+    return false;
+  }
+}
+
+// Set initial connection status to checking
+document.addEventListener('DOMContentLoaded', () => {
+  serverStatus.isChecking = true;
+  updateConnectionStatus(false);
+})
+
+const initializeApp = async () => {
+  // Start session timer
+  sessionStartTime = new Date();
+  
+  // Removed the initial "Starting Strawberry Jam..." message from here.
+  // It's now logged within application.instantiate()
+
+  // No need for startup delay - our messages are stored with IDs for later removal
+  
+  // Setup window control buttons
+  setupWindowControls();
+
+  try {
+    await application.instantiate()
+    
+    application.attachNetworkingEvents()
+    
+    // Setup connection status monitoring
+    setupConnectionMonitoring()
+    
+    // Register app-specific commands
+    registerAppCommands(application)
+    
+    // Refresh autocomplete after core commands are registered
+    if (application && typeof application.refreshAutoComplete === 'function') {
+      application.refreshAutoComplete();
+    }
+
+    // Check server status on startup
+    setTimeout(async () => {
+      if (application && application.settings && application.settings._isLoaded) {
+        const performCheck = application.settings.get('ui.performServerCheckOnLaunch', true);
+        if (performCheck) {
+          await checkServerStatus();
+        } else {
+          if (application && application.consoleMessage) {
+            application.consoleMessage({
+              message: 'Server status check on startup skipped due to settings.',
+              type: 'notify'
+            });
+          }
+          // Update UI to reflect that the check was skipped
+          serverStatus.isOnline = null; // Explicitly set to unknown
+          serverStatus.isChecking = false; // No check is in progress
+          serverStatus.lastChecked = Date.now();
+          serverStatus.accessStatus = 'disabled_by_setting'; // Custom status for clarity
+          // Update UI assuming not connected to game server at this early stage
+          updateConnectionStatus(false, null);
+        }
+      } else {
+        // Fallback: if settings somehow aren't loaded, perform the check
+        if (application && application.consoleMessage) {
+            application.consoleMessage({
+              message: '[Startup] Settings not loaded, proceeding with server status check by default.',
+              type: 'warn'
+            });
+        } else {
+            console.warn('[Startup] Settings not loaded, proceeding with server status check by default.');
+        }
+        await checkServerStatus();
+      }
+    }, 2000); // Delay to allow UI to initialize
+  } catch (error) {
+    application.consoleMessage({
+      message: `Error during initialization: ${error.message}`,
+      type: 'error'
+    })
+    
+    console.error('Initialization error details:', error)
+  }
+}
+
+/**
+ * Setup window control buttons (minimize, fullscreen, close).
+ */
+const setupWindowControls = () => {
+  // Minimize button
+  const minimizeButton = document.getElementById('minimizeButton');
+  if (minimizeButton) {
+    minimizeButton.addEventListener('click', () => {
+      application.minimize();
+    });
+  }
+  
+  // Fullscreen button
+  const fullscreenButton = document.getElementById('fullscreenButton');
+  if (fullscreenButton) {
+    fullscreenButton.addEventListener('click', () => {
+      application.toggleMaximize();
+    });
+    
+    // Use more appropriate maximize/restore icons
+    const icon = fullscreenButton.querySelector('i');
+    if (icon) {
+      icon.classList.remove('fa-expand');
+      icon.classList.remove('fas');
+      icon.classList.add('fa-regular');
+      icon.classList.add('fa-window-maximize');
+    }
+    
+    // Update button icon based on maximize state
+    ipcRenderer.on('maximize-changed', (event, isMaximized) => {
+      const icon = fullscreenButton.querySelector('i');
+      if (icon) {
+        if (isMaximized) {
+          icon.classList.remove('fa-window-maximize');
+          icon.classList.add('fa-window-restore');
+        } else {
+          icon.classList.remove('fa-window-restore');
+          icon.classList.add('fa-window-maximize');
+        }
+      }
+    });
+  }
+  
+  // Close button
+  const closeButton = document.getElementById('mainCloseButton');
+  if (closeButton) {
+    closeButton.addEventListener('click', () => {
+      application.close();
+    });
+  }
+
+  // Clear console button
+  const clearConsoleButton = document.getElementById('clearConsoleButton');
+  if (clearConsoleButton) {
+    clearConsoleButton.addEventListener('click', () => {
+      clearConsole();
+    });
+  }
+  
+  // Clear packet log button
+  const clearPacketLogButton = document.getElementById('clearPacketLogButton');
+  if (clearPacketLogButton) {
+    clearPacketLogButton.addEventListener('click', () => {
+      clearPacketLog();
+    });
+  }
+};
+
+/**
+ * Clears the console logs.
+ */
+const clearConsole = () => {
+  // Find and clear the message containers
+  const $mainLogContainer = $('#messages');
+  const $packetLogContainer = $('#packetMessages');
+  
+  // Clear both message containers
+  if ($mainLogContainer.length) {
+    $mainLogContainer.empty();
+  }
+  
+  if ($packetLogContainer.length) {
+    $packetLogContainer.empty();
+  }
+  
+  // Reset message counters (if application is available)
+  if (application) {
+    application._packetLogCount = 0;
+    application._appMessageCount = 0;
+    
+    // Display confirmation
+    application.consoleMessage({
+      type: 'notify',
+      message: 'Console logs cleared'
+    });
+  }
+};
+
+/**
+ * Clears the packet logs.
+ */
+const clearPacketLog = () => {
+  // Clear the message log
+  const $messageLog = $('#message-log');
+  if ($messageLog.length) {
+    $messageLog.empty();
+  }
+  
+  // Reset counters
+  $('#incomingCount, #outgoingCount, #totalCount').text('0');
+  
+  // Display confirmation
+  if (application) {
+    application.consoleMessage({
+      type: 'notify',
+      message: 'Packet logs cleared'
+    });
+  }
+};
+
+/**
+ * Setup monitoring for connection status changes.
+ */
+const setupConnectionMonitoring = () => {
+  // Check for connection changes periodically
+  setInterval(() => {
+    const isConnected = application.server && 
+                        application.server.clients && 
+                        application.server.clients.size > 0
+    updateConnectionStatus(isConnected)
+    updateTimestamp()
+    checkEmptyPluginList()
+  }, 1000) // Check every second
+  
+  // Listen for client connect events
+  if (application.server) {
+    const originalOnConnection = application.server._onConnection
+    application.server._onConnection = async function(connection) {
+      await originalOnConnection.call(this, connection)
+      updateConnectionStatus(true)
+      application.consoleMessage({
+        message: 'Connected to Animal Jam servers.',
+        type: 'success'
+      })
+    }
+  }
+}
+
+/**
+ * Update the timestamp display in the footer to show session time.
+ */
+const updateTimestamp = () => {
+  const timestampDisplay = document.getElementById('timestamp-display')
+  if (timestampDisplay && sessionStartTime) {
+    const now = new Date()
+    const sessionDuration = now - sessionStartTime
+    
+    // Convert milliseconds to hours, minutes, seconds
+    const hours = Math.floor(sessionDuration / (1000 * 60 * 60))
+    const minutes = Math.floor((sessionDuration % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((sessionDuration % (1000 * 60)) / 1000)
+    
+    // Format the time with leading zeros
+    const formattedHours = String(hours).padStart(2, '0')
+    const formattedMinutes = String(minutes).padStart(2, '0')
+    const formattedSeconds = String(seconds).padStart(2, '0')
+    
+    timestampDisplay.textContent = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`
+  }
+}
+
+/**
+ * Check if the plugin list is empty and toggle the empty state message.
+ */
+const checkEmptyPluginList = () => {
+  const pluginList = document.getElementById('pluginList')
+  const emptyPluginMessage = document.getElementById('emptyPluginMessage')
+  
+  if (pluginList && emptyPluginMessage) {
+    // Get plugin items while ignoring empty text nodes
+    const hasPlugins = Array.from(pluginList.children)
+      .some(child => child.nodeType !== 3 && child.textContent.trim() !== '')
+    
+    emptyPluginMessage.classList.toggle('hidden', hasPlugins)
+  }
+}
+
+const setupIpcEvents = () => {
+  ipcRenderer
+    .on('message', (sender, args) => application.consoleMessage({ ...args }))
+}
+
+const setupAppEvents = () => {
+  application
+    .on('ready', () => application.activateAutoComplete())
+    .on('refresh:plugins', () => {
+      application.refreshAutoComplete()
+      application.attachNetworkingEvents()
+    })
+}
+
+// Set context for renderer logs
+logManager.setContext('renderer-main');
+
+// Store original console methods
+const originalConsole = {
+  log: console.log,
+  error: console.error,
+  warn: console.warn
+};
+
+// Override console methods with LogManager
+console.log = (message) => {
+  const formattedMessage = typeof message === 'object'
+    ? JSON.stringify(message)
+    : message
+
+  // Send to application console UI
+  application.consoleMessage({
+    type: 'logger',
+    message: formattedMessage
+  })
+  
+  // Also log to LogManager
+  logManager.info(formattedMessage);
+}
+
+console.error = (message) => {
+  const formattedMessage = typeof message === 'object'
+    ? JSON.stringify(message)
+    : message
+
+  // Send to application console UI
+  application.consoleMessage({
+    type: 'error',
+    message: formattedMessage
+  })
+  
+  // Also log to LogManager
+  logManager.error(formattedMessage);
+}
+
+console.warn = (message) => {
+  const formattedMessage = typeof message === 'object'
+    ? JSON.stringify(message)
+    : message
+
+  // Send to application console UI
+  application.consoleMessage({
+    type: 'warn',
+    message: formattedMessage
+  })
+  
+  // Also log to LogManager
+  logManager.warn(formattedMessage);
+}
+
+initializeApp()
+setupIpcEvents()
+setupAppEvents()
+
+// --- Fetch and Display App Version ---
+const displayAppVersion = async () => {
+  try {
+    const version = await ipcRenderer.invoke('get-app-version');
+    const versionDisplayElement = document.getElementById('appVersionDisplay');
+    if (versionDisplayElement) {
+      // Prepend "Strawberry Jam v" to the version number
+      versionDisplayElement.textContent = `Strawberry Jam v${version}`;
+    } else {
+      console.error('Could not find element with ID appVersionDisplay');
+    }
+  } catch (error) {
+    console.error('Error fetching app version:', error);
+    // Optionally display an error or default text
+    const versionDisplayElement = document.getElementById('appVersionDisplay');
+    if (versionDisplayElement) {
+      versionDisplayElement.textContent = 'Strawberry Jam v?.?.?'; // Default/error text
+    }
+  }
+};
+displayAppVersion(); // Call the function to display the version on load
+// --- End Fetch and Display App Version ---
+
+window.jam = {
+  application,
+  dispatch: application.dispatch,
+  settings: application.settings,
+  server: application.server,
+  ipcRenderer
+}
+
+function openTab(tabId) {
+  if (tabId === 'packet-logging') {
+    $('#commandContainer').fadeOut(150, function() {
+      $('#searchContainer').fadeIn(150);
+      setTimeout(applyFilter, 0);
+    });
+  } else {
+    $('#searchContainer').fadeOut(150, function() {
+      $('#commandContainer').fadeIn(150);
+    });
+  }
+
+  // Get the current active tab content
+  const $currentActive = $('.tab-content.active');
+  const $newActive = $(`#${tabId}`);
+  
+  // Don't animate if it's already active
+  if ($currentActive.attr('id') === $newActive.attr('id')) {
+    return;
+  }
+  
+  // Update tab buttons immediately
+  $('.tab-button').removeClass('active');
+  const $activeTab = $(`.tab-button[data-tab="${tabId}"]`).addClass('active');
+  
+  // Reset all indicators, then style the active one with theme color
+  $('.active-indicator').css({
+    'transform': 'scaleX(0)',
+    'background-color': '',
+    'box-shadow': '',
+    'transition': 'transform 0.3s ease-out, background-color 0.3s ease, box-shadow 0.3s ease'
+  });
+  
+  // Get current theme color and apply to the active tab indicator
+  const themeColor = $('body').css('--theme-primary') || '#e83d52';
+  $activeTab.find('.active-indicator').css({
+    'transform': 'scaleX(1)',
+    'background-color': themeColor,
+    'box-shadow': `0 0 6px 0 ${themeColor}`,
+    'transition': 'transform 0.3s ease-out, background-color 0.3s ease, box-shadow 0.3s ease'
+  });
+  
+  // Animate tab content transition
+  $currentActive.css({
+    'opacity': '1',
+    'transform': 'translateY(0)',
+    'transition': 'opacity 0.25s ease-out, transform 0.25s ease-out'
+  });
+  
+  setTimeout(() => {
+    $currentActive.css({
+      'opacity': '0',
+      'transform': 'translateY(10px)'
+    });
+    
+    // Hide current content after fade out and prep new content for fade in
+    setTimeout(() => {
+      $currentActive.removeClass('active').addClass('hidden');
+      
+      // Show and fade in new content
+      $newActive.removeClass('hidden').addClass('active').css({
+        'opacity': '0',
+        'transform': 'translateY(-10px)',
+        'transition': 'opacity 0.25s ease-out, transform 0.25s ease-out'
+      });
+      
+      // Start animation after a tiny delay to ensure CSS is applied
+      setTimeout(() => {
+        $newActive.css({
+          'opacity': '1',
+          'transform': 'translateY(0)'
+        });
+        
+        // Reapply tooltips after tab change to ensure they work properly
+        if (application && typeof application._applyTooltips === 'function') {
+          setTimeout(() => application._applyTooltips(), 300);
+        }
+      }, 10);
+    }, 200);
+  }, 10);
+}
+
+/**
+ * Register application-specific commands.
+ * @param {Application} app - The application instance
+ */
+const registerAppCommands = (app) => {
+  // ... existing commands ...
+  
+  // Add server status check command
+  if (app.dispatch && typeof app.dispatch.onCommand === 'function') {
+    app.dispatch.onCommand({
+      name: 'servers',
+      callback: async (commandData) => { // Assuming callback receives an object like { parameters: args }
+        const args = commandData.parameters || (Array.isArray(commandData) ? commandData : []);
+        app.consoleMessage({
+          type: 'notify',
+          message: 'Checking Animal Jam server status...'
+        });
+        
+        const isOnline = await checkServerStatus();
+        return true; // Command handled
+      },
+      description: 'Check if Animal Jam servers are online and display status information'
+      // Add other properties like 'permission' if your onCommand handler supports them
+    });
+  } else if (typeof app.registerConsoleCommand === 'function') {
+    // Fallback to old method if app.dispatch.onCommand is not found (for safety, though we expect it)
+    app.registerConsoleCommand(
+      'servers',
+      async (args) => {
+        app.consoleMessage({
+          type: 'notify',
+          message: 'Checking Animal Jam server status...'
+        });
+        
+        const isOnline = await checkServerStatus();
+        return true; // Command handled
+      },
+      'Check if Animal Jam servers are online and display status information'
+    );
+    app.consoleMessage({ type: 'warn', message: '[Core Commands] Using fallback registerConsoleCommand for "servers". Consider migrating fully to app.dispatch.onCommand.' });
+  } else {
+    app.consoleMessage({ type: 'error', message: '[Core Commands] Could not register "servers" command. No suitable registration method found on app object.' });
+  }
+  
+  // ... existing commands ...
+}

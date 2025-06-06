@@ -1,0 +1,126 @@
+{
+  "productName": "strawberry-jam",
+  "electronVersion": "32.0.1",
+  "directories": {
+    "output": "build"
+  },
+  "win": {
+    "icon": "./assets/images/icon.ico",
+    "asar": "true",
+    "target": {
+      "target": "nsis",
+      "arch": [
+        "x64"
+      ]
+    }
+  },
+  "files": [
+    "package.json",
+    "src/**/*",
+    "node_modules/**/*",
+    "!**/node_modules/**/{CHANGELOG.md,README.md,README,readme.md,readme}",
+    "!**/node_modules/**/{test,__tests__,tests,powered-test,example,examples}",
+    "!**/node_modules/**/*.d.ts",
+    "!**/node_modules/**/*.ts",
+    "!**/node_modules/.bin",
+    "!src/data/**/*",
+    "!dev/**/*",
+    "!assets/extracted-winapp-dev/**/*",
+    "!assets/extracted-winapp-public/**/*",
+    "!assets/memory-bank/**/*",
+    "!memory-bank/**/*",
+    "!build/**/*",
+    "!community-guide/**/*",
+    "!plugin_packages/**/*",
+    "!temp-verify-extract/**/*",
+    "!data/**/*",
+    "!*.{eslintignore,eslintrc,gitignore,gitattributes,editorconfig}",
+    "!nodemon.json",
+    "!tailwind.config.js",
+    "!clean-public-build.js",
+    "!verify-build.js",
+    "!temp_copy_script.js",
+    "!tag-plugin.js",
+    "!process_logs.js",
+    "!pack-and-run.js",
+    "!*.{md,txt,pdf,docx}",
+    "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+    "!**/._*",
+    "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS}",
+    "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+    "!**/{appveyor.yml,.travis.yml,circle.yml}",
+    "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+    "!**/*.{bak,swp,tmp}",
+    "!**/temp-*/**",
+    "!**/temp_*/**",
+    "!**/tmp-*/**",
+    "!**/tmp_*/**",
+    "!**/*-backup*/**",
+    "!**/*-copy*/**",
+    "!**/tester-*.js"
+  ],
+  "extraFiles": [
+    {
+      "from": "plugins",
+      "to": "plugins",
+      "filter": [
+        "**/*",
+        "!**/*.bak",
+        "!**/*-backup*",
+        "!**/*.tmp",
+        "!**/*-copy*",
+        "!**/temp_*",
+        "!**/tmp_*"
+      ]
+    },
+    {
+      "from": "assets",
+      "to": "assets",
+      "filter": [
+        "**/*",
+        "!memory-bank/**/*",
+        "!extracted-winapp-dev/**/*",
+        "!extracted-winapp-public/**/*",
+        "!*-backup.asar",
+        "!*-dev.asar",
+        "!**/*.bak",
+        "!**/*-backup*",
+        "!**/*.tmp",
+        "!**/*-copy*",
+        "!**/temp_*",
+        "!**/tmp_*"
+      ]
+    },
+    "public/**/*",
+    "settings.json"
+  ],
+  "extraResources": [
+    {
+      "from": "assets",
+      "to": "assets",
+      "filter": [
+        "**/*",
+        "!memory-bank/**/*",
+        "!extracted-winapp-dev/**/*",
+        "!extracted-winapp-public/**/*",
+        "!*-backup.asar",
+        "!*-dev.asar",
+        "!**/*.bak",
+        "!**/*-backup*",
+        "!**/*.tmp",
+        "!**/*-copy*",
+        "!**/temp_*",
+        "!**/tmp_*"
+      ]
+    },
+    "public/",
+    {
+      "from": "src/electron/clear-cache-helper.js",
+      "to": "clear-cache-helper.js"
+    }
+  ],
+  "publish": {
+    "provider": "github",
+    "releaseType": "release"
+  }
+}

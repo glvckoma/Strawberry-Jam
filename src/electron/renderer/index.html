@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strawberry Jam</title>
+  <link rel="stylesheet" href="app://assets/css/style.css">
+
+  <!-- jQuery -->
+  <script>
+    window.jQuery = window.$ = require('jquery')
+  </script>
+</head>
+
+<body class="bg-primary-bg text-sidebar-text h-screen flex font-sans">
+  <!-- Sidebar -->
+  <div id="sidebar"
+    class="w-64 h-full bg-sidebar-bg p-4 fixed top-0 left-0 transform -translate-x-full transition-transform duration-300 border-r border-sidebar-border z-30 flex flex-col shadow-lg">
+
+    <!-- Main Navigation -->
+    <div class="px-2 py-2">
+      <div class="flex items-center px-2 mb-1">
+        <h2 class="sidebar-section-title flex items-center flex-grow">
+          <span>Navigation</span>
+        </h2>
+        <button id="toggleNavSection" class="ml-2 text-sidebar-text hover:text-theme-primary p-1.5 rounded transition-all sidebar-chevron" aria-label="Toggle Navigation">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+      </div>
+      <div id="navSectionContent" class="collapsible-section" style="max-height: 1000px; opacity: 1; overflow: hidden; transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s cubic-bezier(0.4,0,0.2,1);">
+      <ul class="space-y-1">
+        <li>
+          <a href="#" id="playButton"
+            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
+            onclick="jam.application.openAnimalJam()">
+            <i class="fas fa-gamepad theme-icon text-xl"></i>
+            <span class="font-medium">Launch</span>
+            <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+              <i class="fas fa-external-link-alt text-xs" style="color: var(--theme-primary);"></i>
+            </div>
+          </a>
+        </li>
+        <!-- Settings -->
+        <li>
+          <a href="#"
+            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
+            onclick="jam.application.openSettings()">
+            <i class="fas fa-wrench text-gray-400 text-xl transition-colors"></i>
+            <span class="font-medium">Settings</span>
+          </a>
+        </li>
+        <!-- ADDED Links -->
+        <li class="relative">
+          <a href="#" id="openLinksSection"
+            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
+            onclick="jam.application.openLinksModal()">
+            <i class="fas fa-link text-sidebar-text/80 text-xl transition-colors"></i>
+            <span class="font-medium">Links</span>
+          </a>
+        </li>
+        <!-- ADDED Plugin Library -->
+        <li>
+          <a href="#"
+            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
+            onclick="jam.application.openPluginHub()">
+            <i class="fas fa-puzzle-piece text-sidebar-text/80 text-xl transition-colors"></i>
+            <span class="font-medium">Plugin Library</span>
+          </a>
+        </li>
+      </ul>
+      </div>
+    </div>
+
+    <!-- Plugins Section -->
+    <div class="flex-1 overflow-hidden flex flex-col min-h-0 px-3 pt-4 mt-2">
+      <div class="flex items-center px-2 mb-1">
+        <h2 class="sidebar-section-title flex items-center flex-grow">
+          <span>Installed Plugins</span>
+        </h2>
+        <button id="refreshPluginsSection" class="ml-2 text-sidebar-text hover:text-blue-400 p-1.5 rounded transition-all" aria-label="Refresh Plugins">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+        <button id="togglePluginsSection" class="ml-2 text-sidebar-text hover:text-theme-primary p-1.5 rounded transition-all sidebar-chevron" aria-label="Toggle Plugins">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+      </div>
+      <div id="pluginsSectionContent" class="collapsible-section" style="flex:1; min-height:0; display:flex; flex-direction:column; max-height: 1000px; opacity: 1; overflow: hidden; transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s cubic-bezier(0.4,0,0.2,1);">
+        <!-- Enhanced Plugin List -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar pr-1" style="min-height:0;">
+          <ul id="pluginList" class="space-y-2.5">
+            <!-- Plugin items will be added dynamically -->
+          </ul>
+          
+          <!-- Empty plugin message -->
+          <div id="emptyPluginMessage" class="hidden text-center py-4 text-gray-400">
+            <i class="fas fa-puzzle-piece mb-2 text-lg opacity-50"></i>
+            <p class="text-xs">No plugins installed</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 pt-3 border-t border-sidebar-border/30 text-xs text-gray-500 text-center">
+      Forked with 🤎 by Glockoma<br>
+      <span id="appVersionDisplay" class="text-xs text-highlight-green font-bold">Strawberry Jam</span><br>
+      <!-- Donate Link -->
+      <a href="#" onclick="jam.application.open('https://ko-fi.com/glockoma')" class="text-xs text-yellow-700 hover:text-yellow-500 transition-colors underline">
+         Support the Project!
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="mainContent" class="flex-1 ml-0 transition-margin duration-300 flex flex-col bg-primary-bg">
+
+    <!-- Header -->
+    <header id="header" class="flex items-center p-4 bg-secondary-bg border-b border-sidebar-border shadow relative">
+      <div class="z-10">
+        <button id="menuButton" class="text-lg text-sidebar-text focus:outline-none p-2 rounded hover:bg-tertiary-bg transition-colors">
+          <i id="menuIcon" class="fas fa-bars"></i>
+        </button>
+      </div>
+      
+      <!-- Fruit Icon (Moved from Sidebar) - Using absolute positioning for perfect centering -->
+      <div class="absolute left-0 right-0 top-0 bottom-0 flex justify-center items-center pointer-events-none">
+         <img id="fruitIcon" src="app://assets/images/strawberry.png" alt="Fruit Icon" class="h-11 w-11 cursor-pointer pointer-events-auto transition-transform" style="z-index: 10; -webkit-app-region: no-drag;">
+      </div>
+
+      <!-- Window Control Buttons -->
+      <div class="ml-auto z-10 flex items-center" style="-webkit-app-region: no-drag;">
+        <button id="minimizeButton"
+          class="p-2 rounded hover:bg-tertiary-bg hover:text-white transition-colors text-sidebar-text focus:outline-none mr-1"
+          data-tooltip="Minimize">
+          <i class="fas fa-minus"></i>
+        </button>
+        <button id="fullscreenButton"
+          class="p-2 rounded hover:bg-tertiary-bg hover:text-white transition-colors text-sidebar-text focus:outline-none mr-1"
+          data-tooltip="Toggle Fullscreen">
+          <i class="fa-regular fa-window-maximize"></i>
+        </button>
+        <button id="mainCloseButton"
+          class="p-2 rounded hover:bg-error-red hover:text-white transition-colors text-sidebar-text focus:outline-none"
+          data-tooltip="Close">
+        <i class="fas fa-times"></i>
+      </button>
+      </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <div class="tabs w-full grid grid-cols-2 border-b border-sidebar-border bg-tertiary-bg">
+      <button id="consoleTab"
+        class="tab-button active text-sidebar-text hover:bg-sidebar-hover py-2 text-sm font-semibold transition-all relative overflow-hidden"
+        data-tab="console">
+        <i class="fas fa-terminal mr-2 text-xs"></i>Console
+        <span class="active-indicator absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 transition-transform duration-300 ease-out"></span>
+      </button>
+      <button id="packetLoggingTab"
+        class="tab-button text-sidebar-text hover:bg-sidebar-hover py-2 text-sm font-medium transition-all relative overflow-hidden"
+        data-tab="packet-logging">
+        <i class="fas fa-network-wired mr-2 text-xs"></i>Network
+        <span class="active-indicator absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 transition-transform duration-300 ease-out"></span>
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="console" class="tab-content flex-1 p-4 overflow-auto">
+      <div id="messages" class="flex flex-col overflow-x-auto">
+        <!-- This is where the game client <webview> might be injected by JavaScript -->
+        <!-- Or it might be part of a different view that's shown/hidden -->
+      </div>
+    </div>
+
+    <div id="modalContainer" class="fixed inset-0 z-50 hidden overflow-y-auto">
+      <!-- Modal content will be dynamically inserted here -->
+    </div>
+
+    <div id="packet-logging" class="tab-content flex-1 hidden w-full flex flex-col">
+      <div class="bg-secondary-bg p-2 border-b border-sidebar-border">
+        <!-- Counter Row -->
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex items-center space-x-3">
+            <!-- Filter Controls -->
+            <button id="filterAllButton"
+              class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition active min-w-[40px]">
+              All
+            </button>
+            <button id="filterIncomingButton"
+              class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px]">
+              Incoming
+            </button>
+            <button id="filterOutgoingButton"
+              class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px]">
+              Outgoing
+            </button>
+          </div>
+
+          <div class="flex items-center space-x-3">
+            <span class="text-text-primary text-xs">
+              <i class="fas fa-arrow-down text-highlight-green mr-1"></i>
+              <span id="incomingCount">0</span> In
+            </span>
+            <span class="text-text-primary text-xs">
+              <i class="fas fa-arrow-up text-highlight-yellow mr-1"></i>
+              <span id="outgoingCount">0</span> Out
+            </span>
+            <span class="text-text-primary text-xs">
+              <i class="fas fa-list mr-1"></i>
+              <span id="totalCount">0</span> Total
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable Message Log -->
+      <div id="message-log" class="flex flex-col p-4 overflow-y-auto flex-grow"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-secondary-bg border-t border-sidebar-border p-4 mt-auto">
+      <!-- Status Bar with Connection Status and Time -->
+      <div class="flex items-center justify-between mb-2">
+        <div id="connection-status" class="flex items-center text-xs text-gray-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-error-red mr-1.5 pulse-animation"></span>
+          <span>Disconnected</span>
+        </div>
+        <div class="text-xs text-gray-400 flex items-center" id="timestamp-display-container">
+          <i class="fas fa-clock mr-1.5 text-xs"></i>
+          <span id="timestamp-display"></span>
+        </div>
+      </div>
+      
+      <div id="commandContainer" class="relative flex items-center gap-2">
+        <div class="relative flex-grow">
+          <i class="fas fa-terminal absolute left-3 top-1/2 transform -translate-y-1/2 text-sidebar-text/70"></i>
+          <input id="input" type="text"
+            class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none w-full pl-10 pr-3 py-2 rounded"
+            placeholder="Type a command...">
+        </div>
+        <button id="reportProblemButton" 
+          class="py-2 px-3 rounded flex items-center justify-center mr-2"
+          data-tooltip="Report a Problem"
+          style="background-color: var(--tertiary-bg); border: 1px solid rgba(255, 165, 0, 0.5); color: rgba(255, 165, 0, 0.9);">
+          <i class="fas fa-bug"></i>
+        </button>
+        <button id="clearConsoleButton" 
+          class="py-2 px-3 rounded flex items-center justify-center" 
+          title="Clear console"
+          style="background-color: var(--tertiary-bg); border: 1px solid rgba(232, 61, 82, 0.5); color: rgba(232, 61, 82, 0.9);">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+
+      <div id="searchContainer" class="relative hidden flex-container items-center gap-2">
+        <div class="relative flex-grow">
+          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-sidebar-text/70"></i>
+          <input id="packetSearch" type="text"
+            class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none w-full pl-10 pr-3 py-2 rounded"
+            placeholder="Search packets...">
+        </div>
+        <button id="reportProblemButton2" 
+          class="py-2 px-3 rounded flex items-center justify-center mr-2"
+          data-tooltip="Report a Problem"
+          style="background-color: var(--tertiary-bg); border: 1px solid rgba(255, 165, 0, 0.5); color: rgba(255, 165, 0, 0.9);">
+          <i class="fas fa-bug"></i>
+        </button>
+        <button id="clearPacketLogButton" 
+          class="py-2 px-3 rounded flex items-center justify-center" 
+          title="Clear packet logs"
+          style="background-color: var(--tertiary-bg); border: 1px solid rgba(232, 61, 82, 0.5); color: rgba(232, 61, 82, 0.9);">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+
+  <!-- Auto complete -->
+  <script src="app://assets/javascript/jquery-ui.js"></script>
+  <script src="app://assets/javascript/popper.min.js"></script>
+
+  <!-- Jam -->
+  <script src="index.js"></script>
+  <style>
+    /* Fruit pop animation */
+    .fruit-animate {
+      animation: fruit-pop 0.3s ease-out;
+      transform-style: preserve-3d;
+    }
+    @keyframes fruit-pop {
+      0%,100% { transform: scale(1); }
+      50%  { transform: scale(1.25); }
+    }
+    /* Sidebar section title and chevron consistency */
+    .sidebar-section-title {
+      font-size: 0.75rem; /* text-xs */
+      font-weight: 600;   /* font-semibold */
+      color: #9ca3af;     /* text-gray-400 */
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      line-height: 1.25rem;
+      margin-bottom: 0;
+    }
+    .sidebar-chevron i {
+      font-size: 1rem !important;
+      vertical-align: middle;
+    }
+    .collapsible-section.collapsed {
+      max-height: 0 !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    /* Clear Button Styles */
+    #clearConsoleButton, #clearPacketLogButton {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    #clearConsoleButton:hover, #clearPacketLogButton:hover {
+      background-color: #e83d52 !important;
+      color: white !important;
+      border-color: #e83d52 !important;
+    }
+    
+    /* Report Problem Button Styles */
+    #reportProblemButton, #reportProblemButton2 {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    #reportProblemButton:hover, #reportProblemButton2:hover {
+      background-color: #FFA500 !important;
+      color: white !important;
+      border-color: #FFA500 !important;
+    }
+    
+    /* Connection Status Styles - Footer based */
+    #connection-status {
+      transition: all 0.3s ease;
+    }
+    
+    #connection-status.text-highlight-green span:first-child {
+      background-color: #10b981; /* green-500 */
+    }
+    
+    #connection-status.text-error-red span:first-child {
+      background-color: #ef4444; /* red-500 */
+    }
+    
+    /* Pulse animations for status indicator */
+    .pulse-animation {
+      animation: pulse-red 2s infinite;
+    }
+    
+    .pulse-green {
+      animation: pulse-green 2s infinite;
+    }
+    
+    .pulse-yellow {
+      animation: pulse-yellow 2s infinite;
+    }
+    
+    .pulse-loading {
+      animation: pulse-loading 1.5s infinite;
+    }
+    
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    
+    @keyframes pulse-yellow {
+      0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(234, 179, 8, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+    }
+    
+    @keyframes pulse-loading {
+      0% { opacity: 0.4; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.4; transform: scale(0.8); }
+    }
+    
+    /* Message Animation Styles */
+    .message-animate-in {
+      animation: messageIn 0.3s ease-out forwards;
+    }
+    
+    @keyframes messageIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Enhanced Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(18, 18, 18, 0.5);
+      border-radius: 8px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(58, 61, 77, 0.8);
+      border-radius: 8px;
+      transition: background 0.2s ease;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(90, 95, 109, 0.9);
+    }
+    
+    /* Container that toggles between hidden and flex */
+    .flex-container.hidden {
+      display: none !important;
+    }
+    
+    .flex-container:not(.hidden) {
+      display: flex !important;
+    }
+
+    /* Plugin Focus Animation */
+    @keyframes focus-blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.5); }
+    }
+    
+    .plugin-focus-blink {
+      animation: focus-blink 0.5s ease-in-out 2;
+    }
+  </style>
+  <script>
+    // REMOVED Vanilla JS fruit icon handler
+    document.addEventListener("DOMContentLoaded", function () {
+      // Collapsible Navigation Section
+      const navToggle = document.getElementById("toggleNavSection");
+      const navContent = document.getElementById("navSectionContent");
+      if (navToggle && navContent) {
+        navToggle.addEventListener("click", function () {
+          navContent.classList.toggle("collapsed");
+          const icon = navToggle.querySelector("i");
+          if (navContent.classList.contains("collapsed")) {
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+          } else {
+            icon.classList.remove("fa-chevron-down");
+            icon.classList.add("fa-chevron-up");
+          }
+        });
+      }
+
+      // Collapsible Plugins Section
+      const pluginsToggle = document.getElementById("togglePluginsSection");
+      const pluginsContent = document.getElementById("pluginsSectionContent");
+      if (pluginsToggle && pluginsContent) {
+        pluginsToggle.addEventListener("click", function () {
+          pluginsContent.classList.toggle("collapsed");
+          const icon = pluginsToggle.querySelector("i");
+          if (pluginsContent.classList.contains("collapsed")) {
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+          } else {
+            icon.classList.remove("fa-chevron-down");
+            icon.classList.add("fa-chevron-up");
+          }
+        });
+      }
+      // Plugins refresh button
+      const pluginsRefresh = document.getElementById("refreshPluginsSection");
+      if (pluginsRefresh) {
+        pluginsRefresh.addEventListener("click", function () {
+          if (window.jam && window.jam.application && window.jam.application.dispatch && typeof window.jam.application.dispatch.refresh === "function") {
+            window.jam.application.dispatch.refresh();
+          } else if (typeof jam !== "undefined" && jam.application && jam.application.dispatch && typeof jam.application.dispatch.refresh === "function") {
+            jam.application.dispatch.refresh();
+          }
+        });
+      }
+    });
+  </script>
+
+  <!-- Todo: clean this up, it's rather messy -->
+  <script>
+    $(document).ready(function () {
+      // Update CSS variables with theme color
+      const updateThemeColors = (primaryColor) => {
+        document.documentElement.style.setProperty('--theme-primary', primaryColor);
+        
+        // For compatibility with direct CSS usage of the variable
+        $('body').css('--theme-primary', primaryColor);
+        
+        // Extract RGB values for rgba usage
+        const colorMatch = primaryColor.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+        if (colorMatch) {
+          const r = parseInt(colorMatch[1], 16);
+          const g = parseInt(colorMatch[2], 16);
+          const b = parseInt(colorMatch[3], 16);
+          document.documentElement.style.setProperty('--theme-primary-rgb', `${r}, ${g}, ${b}`);
+        }
+      };
+      
+      // Initialize with default strawberry jam color
+      updateThemeColors('#e83d52');
+      
+      // Initialize active tab indicator on page load
+      const $activeTab = $('.tab-button.active');
+      const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim() || '#e83d52';
+      if ($activeTab.length) {
+        $activeTab.find('.active-indicator').css({
+          'transform': 'scaleX(1)',
+          'background-color': themeColor,
+          'box-shadow': `0 0 6px 0 ${themeColor}`
+        });
+      }
+      
+      // Function to apply theme to all synchronized elements
+      const applySynchronizedElements = (color) => {
+        // Update hover styles by dynamically adding/updating stylesheet rules
+        let styleEl = document.getElementById('dynamic-theme-styles');
+        
+        // Create the style element if it doesn't exist
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'dynamic-theme-styles';
+          document.head.appendChild(styleEl);
+        }
+        
+        // Create CSS rules for all themed elements
+        styleEl.textContent = `
+          /* Chevron and header link button hover colors */
+          .sidebar-chevron:hover {
+            color: ${color} !important;
+          }
+          
+          /* Launch button theme styling */
+          #playButton .fa-external-link-alt {
+            color: ${color} !important;
+          }
+          
+          /* Theme icons */
+          .theme-icon {
+            color: ${color} !important;
+          }
+          
+          /* Menu button hover */
+          #menuButton:hover {
+            color: ${color} !important;
+          }
+          
+          /* Tab indicators */
+          .tab-button.active .active-indicator {
+            background-color: ${color} !important;
+            box-shadow: 0 0 6px 0 ${color} !important;
+          }
+          
+          /* Any element with hover:text-theme-primary class */
+          .hover\\:text-theme-primary:hover {
+            color: ${color} !important;
+          }
+          #saveSettingsBtn {
+            background-color: ${color} !important;
+            border-color: ${color} !important;
+          }
+          #saveSettingsBtn:hover {
+            filter: brightness(1.1);
+          }
+          #saveSettingsBtn:focus {
+            --tw-ring-color: ${color};
+          }
+        `;
+        
+        // Directly set colors on existing elements
+        $('.tab-button.active .active-indicator').css({
+          'background-color': color,
+          'box-shadow': `0 0 6px 0 ${color}`
+        });
+        
+        // Update Launch button external link icon color
+        $('#playButton .fa-external-link-alt').css('color', color);
+      };
+      
+      // jQuery fruit icon click handler
+      const $fruitIcon = $('#fruitIcon');
+      if ($fruitIcon.length) {
+        const fruitImages = [
+          "app://assets/images/banana.png",
+          "app://assets/images/blueberries.png",
+          "app://assets/images/cantaloupe.png",
+          "app://assets/images/coconut.png",
+          "app://assets/images/pineapple.png",
+          "app://assets/images/strawberry.png"
+        ];
+        
+        // Define fruit themes here for easy access
+        const fruitThemes = {
+          'banana.png': { primary: '#FFDA03' },
+          'blueberries.png': { primary: '#4682B4' },
+          'cantaloupe.png': { primary: '#FFA07A' },
+          'coconut.png': { primary: '#A0522D' },
+          'pineapple.png': { primary: '#FFEC8B' },
+          'strawberry.png': { primary: '#e83d52' }
+        };
+        
+        // Load saved fruit theme from settings (after jam is initialized)
+        const loadSavedTheme = () => {
+          if (window.jam && window.jam.ipcRenderer) {
+            window.jam.ipcRenderer.invoke('get-setting', 'ui.fruitTheme')
+              .then(savedTheme => {
+            if (savedTheme) {
+              // Handle both old and new path formats
+              let correctedTheme = savedTheme;
+              
+              // If it's an old format (app://assets/fruit.png), convert to new format
+              if (savedTheme.includes('app://assets/') && !savedTheme.includes('app://assets/images/')) {
+                const fruitName = savedTheme.split('/').pop();
+                correctedTheme = `app://assets/images/${fruitName}`;
+              }
+              
+              // Set the fruit icon to the corrected theme
+              $fruitIcon.attr('src', correctedTheme);
+              
+              // Update current index based on corrected theme
+              const newIndex = fruitImages.findIndex(src => correctedTheme === src);
+              if (newIndex !== -1) {
+                currentFruitIndex = newIndex;
+              }
+              
+              // Apply the corrected theme
+              applyGlobalTheme(correctedTheme);
+              
+              // Save the corrected path back to settings if it was changed
+              if (correctedTheme !== savedTheme) {
+                window.jam.ipcRenderer.invoke('set-setting', 'ui.fruitTheme', correctedTheme)
+                  .catch(err => console.warn('Failed to update theme path:', err));
+              }
+            }
+              })
+              .catch(error => {
+            console.error('Error loading saved fruit theme:', error);
+                currentFruitIndex = fruitImages.length - 1; // Default to strawberry
+              });
+          }
+        };
+        
+        // Find current index or default to last (strawberry)
+        let currentFruitIndex = fruitImages.findIndex(src => $fruitIcon.attr('src').endsWith(src));
+        if (currentFruitIndex === -1) currentFruitIndex = fruitImages.length - 1;
+        
+        // Function to apply theme globally
+        const applyGlobalTheme = (fruitSrc) => {
+          const fruitKey = fruitSrc.split('/').pop(); // Get 'strawberry.png' etc.
+          const theme = fruitThemes[fruitKey];
+          
+          if (theme && theme.primary) {
+            // Update theme colors using our helper function
+            updateThemeColors(theme.primary);
+            
+            // Apply to all synchronized elements
+            applySynchronizedElements(theme.primary);
+          } else {
+            // Default fallback to strawberry color
+            updateThemeColors('#e83d52');
+            
+            // Apply to all synchronized elements
+            applySynchronizedElements('#e83d52');
+          }
+        };
+        
+        // Save fruit theme to settings
+        const saveFruitTheme = async (fruitSrc) => {
+          try {
+            // Access ipcRenderer through window.jam if available, otherwise skip
+            if (window.jam && window.jam.ipcRenderer) {
+              await window.jam.ipcRenderer.invoke('set-setting', 'ui.fruitTheme', fruitSrc);
+            } else {
+              console.warn('Cannot save fruit theme: ipcRenderer not available');
+            }
+          } catch (error) {
+            console.error('Error saving fruit theme:', error);
+          }
+        };
+        
+        // Defer theme loading until jam is initialized
+        const checkJamReady = () => {
+          if (window.jam && window.jam.ipcRenderer) {
+            loadSavedTheme();
+          } else {
+            setTimeout(checkJamReady, 100);
+          }
+        };
+        
+        // Start checking for jam to be ready
+        checkJamReady();
+        
+        // Force pointer cursor with inline style as a backup
+        $fruitIcon.css('cursor', 'pointer');
+        
+        // Attach click handler with jQuery
+        $fruitIcon.on('click', function() {
+          currentFruitIndex = (currentFruitIndex + 1) % fruitImages.length;
+          const nextFruitSrc = fruitImages[currentFruitIndex];
+          $fruitIcon.attr('src', nextFruitSrc);
+          
+          // Apply the global theme variable
+          applyGlobalTheme(nextFruitSrc);
+          
+          // Save the selected theme
+          saveFruitTheme(nextFruitSrc);
+          
+          $fruitIcon.removeClass("fruit-animate");
+          void $fruitIcon[0].offsetWidth; // Force reflow
+          $fruitIcon.addClass("fruit-animate");
+          setTimeout(() => {
+            $fruitIcon.removeClass("fruit-animate");
+          }, 300);
+        });
+      }
+      
+      const $menuButton = $('#menuButton')
+      const $sidebar = $('#sidebar')
+      const $mainContent = $('#mainContent')
+      const $menuIcon = $('#menuIcon')
+      const $commandInput = $('#input')
+      const $packetSearch = $('#packetSearch')
+      const $messageLog = $('#message-log')
+      const $commandContainer = $('#commandContainer')
+      const $searchContainer = $('#searchContainer')
+
+      let currentFilter = 'all'
+
+      // Ensure initial container states
+      $commandContainer.removeClass('hidden')
+      $searchContainer.addClass('hidden')
+
+      function toggleSidebar() {
+        const isOpen = !$sidebar.hasClass('-translate-x-full')
+        $sidebar.toggleClass('-translate-x-full', isOpen)
+        $mainContent.toggleClass('ml-64', !isOpen)
+        $menuIcon.toggleClass('fa-bars-staggered', !isOpen).toggleClass('fa-bars', isOpen)
+      }
+
+      $menuButton.on('click', toggleSidebar)
+      
+      // Handle active state for sidebar navigation items
+      $('#sidebar a.flex').on('click', function() {
+        // Remove active class from all sidebar navigation items
+        $('#sidebar a.flex').removeClass('active');
+        // Add active class to the clicked item
+        $(this).addClass('active');
+        
+        // Apply theme color to the active indicator
+        const themeColor = $('body').css('--theme-primary') || '#e83d52';
+        // This will activate the ::after pseudo-element via CSS
+      });
+
+      function applyFilter() {
+        const $packets = $messageLog.children('div')
+        $packets.each(function () {
+          const $this = $(this)
+          const isIncoming = $this.find('.fa-arrow-down').length > 0
+          const isOutgoing = $this.find('.fa-arrow-up').length > 0
+          $this.toggle(
+            currentFilter === 'all' ||
+            (currentFilter === 'incoming' && isIncoming) ||
+            (currentFilter === 'outgoing' && isOutgoing)
+          )
+        })
+      }
+
+      function openTab(tabId) {
+        if (tabId === 'packet-logging') {
+          $('#commandContainer').addClass('hidden')
+          $('#searchContainer').removeClass('hidden')
+          setTimeout(applyFilter, 0)
+        } else {
+          $('#commandContainer').removeClass('hidden')
+          $('#searchContainer').addClass('hidden')
+        }
+
+        $('.tab-content').removeClass('active').addClass('hidden')
+        $(`#${tabId}`).removeClass('hidden').addClass('active')
+        
+        // Update tab buttons
+        $('.tab-button').removeClass('active')
+        const $activeTab = $(`.tab-button[data-tab="${tabId}"]`).addClass('active')
+        
+        // Reset all indicators, then style the active one with theme color
+        $('.active-indicator').css({
+          'transform': 'scaleX(0)',
+          'background-color': '',
+          'box-shadow': ''
+        })
+        
+        // Get current theme color and apply to the active tab indicator
+        const themeColor = $('body').css('--theme-primary') || '#e83d52'
+        $activeTab.find('.active-indicator').css({
+          'transform': 'scaleX(1)',
+          'background-color': themeColor,
+          'box-shadow': `0 0 6px 0 ${themeColor}`
+        })
+      }
+
+      $('.tab-button').on('click', function () {
+        openTab($(this).data('tab'))
+      })
+
+      $packetSearch.on('input', function () {
+        const query = $(this).val().toLowerCase()
+        $messageLog.children('div').each(function () {
+          $(this).toggle($(this).text().toLowerCase().includes(query))
+        })
+      })
+
+      $('#filterAllButton, #filterIncomingButton, #filterOutgoingButton').on('click', function () {
+        $('#filterAllButton, #filterIncomingButton, #filterOutgoingButton').removeClass('active')
+        $(this).addClass('active')
+
+        if (this.id === 'filterAllButton') {
+          currentFilter = 'all'
+        } else if (this.id === 'filterIncomingButton') {
+          currentFilter = 'incoming'
+        } else if (this.id === 'filterOutgoingButton') {
+          currentFilter = 'outgoing'
+        }
+
+        applyFilter()
+      })
+
+    window.applyFilter = applyFilter
+    window.openTab = openTab
+    })
+  </script>
+
+  <!-- Add the JavaScript to handle the button click near the end of the file -->
+  <script>
+    // Set up Report Problem buttons - Wait for DOM and jam object to be ready
+    document.addEventListener('DOMContentLoaded', () => {
+      // Get both report buttons
+      const reportButton = document.getElementById('reportProblemButton');
+      const reportButton2 = document.getElementById('reportProblemButton2');
+      
+      // Wait for jam object to be ready using polling
+      const checkJamReady = () => {
+        if (window.jam && window.jam.application) {
+          // Function to handle click for both buttons
+          const handleReportClick = () => {
+            window.jam.application.openReportProblemModal();
+          };
+          
+          // Add click handlers to both buttons
+          if (reportButton) {
+            reportButton.addEventListener('click', handleReportClick);
+          }
+          
+          if (reportButton2) {
+            reportButton2.addEventListener('click', handleReportClick);
+          }
+        } else {
+          // If jam object not ready yet, check again in a moment
+          setTimeout(checkJamReady, 100);
+        }
+      };
+      
+      // Start checking
+      checkJamReady();
+    });
+  </script>
+</body>
+
+</html>

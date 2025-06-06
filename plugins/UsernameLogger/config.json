@@ -1,0 +1,10 @@
+{
+  "isLoggingEnabled": true,
+  "collectNearbyPlayers": true,
+  "collectBuddies": true,
+  "autoLeakCheck": false,
+  "autoLeakCheckThreshold": 50,
+  "customBasePath": null,
+  "leakCheckLastProcessedIndex": 23,
+  "migrationCompleted": true
+}

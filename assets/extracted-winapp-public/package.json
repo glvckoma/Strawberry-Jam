@@ -1,0 +1,16 @@
+{
+    "name": "aj-classic",
+    "productName": "AJ Classic",
+    "version": "1.5.7",
+    "author": "WildWorks",
+    "repository": "https://gitlab.wildworks.systems/ajdesktop/ajElectron.git",
+    "license": "UNLICENSED",
+    "description": "AJ Classic for Desktop",
+    "dependencies": {
+      "electron-store": "^7.0.1",
+      "electron-updater": "^4.3.5",
+      "node-machine-id": "^1.1.12",
+      "tean": "^5.0.5",
+      "uuid": "^8.3.2"
+    }
+  }
