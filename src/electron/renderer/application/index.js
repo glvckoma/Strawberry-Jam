@@ -372,6 +372,17 @@ module.exports = class Application extends EventEmitter {
       } catch (e) {
         devError("[Main Renderer] Error setting up plugin IPC listeners:", e);
       }
+
+      try {
+        ipcRenderer.on('broadcast-plugin-settings-updated', () => {
+          if (this.dispatch) {
+            devLog('[Renderer IPC] Received settings update broadcast, notifying dispatch.');
+            this.dispatch.notifyPluginsOfSettingsUpdate();
+          }
+        });
+      } catch (e) {
+        devError("[Main Renderer] Error setting up settings broadcast listener:", e);
+      }
     }
   }
 

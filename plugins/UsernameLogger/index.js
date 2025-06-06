@@ -35,6 +35,7 @@ class UsernameLogger {
     
     // Set up configuration path within the user data directory
     this.configFilePath = path.join(this.dataPath, 'UsernameLogger', 'config.json');
+    this.isLoggingCurrentlyEnabled = null; // Track the current state to avoid log spam
     
     // Initialize components
     this._initializeComponents();
@@ -121,7 +122,7 @@ class UsernameLogger {
    */
   async _initialize() {
     try {
-      // Load configuration
+      // Load plugin-specific configuration (like last processed index)
       await this.configModel.loadConfig();
       
       // Run data migration if needed
@@ -130,23 +131,16 @@ class UsernameLogger {
       // Load ignore list
       await this.migrationService.loadIgnoreList(this.stateModel);
       
-      // Register message handlers
-      this.messageHandlers.registerHandlers(this.dispatch);
-      
-      // Register command handlers
+      // Register command handlers, which should always be active
       this.commandHandlers.registerHandlers(this.dispatch);
+      
+      // Perform initial configuration based on saved settings
+      await this.onSettingsUpdated();
       
       // Refresh autocomplete to include our commands
       if (this.application && typeof this.application.refreshAutoComplete === 'function') {
         this.application.refreshAutoComplete();
       }
-      
-      // Log status
-      const currentConfig = await this.configModel.getConfig(); // getConfig is now async
-      this.application.consoleMessage({
-        type: 'success',
-        message: `Username logging is ${currentConfig.isLoggingEnabled ? 'enabled' : 'disabled'}`
-      });
 
       // Expose a function on the window object for the main process to call
       if (typeof window !== 'undefined') {
@@ -168,6 +162,52 @@ class UsernameLogger {
       this.application.consoleMessage({
         type: 'error',
         message: `[Username Logger] Initialization error: ${error.message}`
+      });
+    }
+  }
+  
+  /**
+   * Fetches the latest settings and reconfigures the plugin's message handlers.
+   * This method is called by the dispatch system when settings are updated.
+   * @public
+   */
+  async onSettingsUpdated() {
+    try {
+      // Get the latest UI settings from the main process store
+      const enableLogging = await this.dispatch.getState('plugins.usernameLogger.collection.enabled');
+      const collectNearby = await this.dispatch.getState('plugins.usernameLogger.collection.collectNearby');
+      const collectBuddies = await this.dispatch.getState('plugins.usernameLogger.collection.collectBuddies');
+      const autoCheckEnabled = await this.dispatch.getState('plugins.usernameLogger.autoCheck.enabled');
+      const autoCheckThreshold = await this.dispatch.getState('plugins.usernameLogger.autoCheck.threshold');
+
+      // Only log if the state has changed or on the initial check
+      if (this.isLoggingCurrentlyEnabled === null || this.isLoggingCurrentlyEnabled !== enableLogging) {
+        this.application.consoleMessage({
+          type: enableLogging ? 'success' : 'warn',
+          message: `Username Logging is ${enableLogging ? 'enabled' : 'disabled'}.`
+        });
+      }
+      this.isLoggingCurrentlyEnabled = enableLogging;
+
+      // Always unregister handlers first to ensure a clean state
+      this.messageHandlers.unregisterHandlers(this.dispatch);
+
+      // Conditionally register message handlers based on the new settings
+      if (enableLogging) {
+        // Pass the latest settings to the message handler instance
+        this.messageHandlers.updateSettings({
+          collectNearby,
+          collectBuddies,
+          autoCheckEnabled,
+          autoCheckThreshold
+        });
+        // Register the handlers to start listening to game messages
+        this.messageHandlers.registerHandlers(this.dispatch);
+      }
+    } catch (error) {
+      this.application.consoleMessage({
+        type: 'error',
+        message: `[Username Logger] Error during re-configuration: ${error.message}`
       });
     }
   }

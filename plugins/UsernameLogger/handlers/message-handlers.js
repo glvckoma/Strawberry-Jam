@@ -27,6 +27,12 @@ class MessageHandlers {
     this.fileService = fileService;
     this.batchLogger = batchLogger;
     this.dataPath = dataPath;
+
+    // Default collection settings
+    this.collectNearby = false;
+    this.collectBuddies = false;
+    this.autoCheckEnabled = false;
+    this.autoCheckThreshold = 100;
     
     // Bind methods to ensure 'this' context is correct
     this.handlePlayerAdd = this.handlePlayerAdd.bind(this);
@@ -42,13 +48,11 @@ class MessageHandlers {
    * @param {string} source - The source of the username ('nearby' or 'buddy').
    */
   async logUsername(username, source) {
-    const config = await this.configModel.getConfig(); // Made async
-    if (!config.isLoggingEnabled) return;
     if (!username) return;
-    
-    // Skip collection based on source and settings
-    if (source === 'nearby' && !config.collectNearbyPlayers) return;
-    if (source === 'buddy' && !config.collectBuddies) return;
+
+    // Skip collection based on source and the settings updated via `updateCollectionSettings`
+    if (source === 'nearby' && !this.collectNearby) return;
+    if (source === 'buddy' && !this.collectBuddies) return;
     
     // Skip if username should be ignored
     if (shouldIgnoreUsername(
@@ -72,8 +76,8 @@ class MessageHandlers {
     await this.fileService.appendUsernameToLog(collectedUsernamesPath, username);
       
     // Check if we should auto-run leak check
-    if (config.autoLeakCheck && 
-        this.stateModel.getLoggedUsernamesCount() >= config.autoLeakCheckThreshold) {
+    if (this.autoCheckEnabled &&
+        this.stateModel.getLoggedUsernamesCount() >= this.autoCheckThreshold) {
       this.application.consoleMessage({
         type: 'notify',
         message: `[Username Logger] Auto-running leak check after collecting ${this.stateModel.getLoggedUsernamesCount()} usernames`
@@ -93,10 +97,8 @@ class MessageHandlers {
    * Handles the 'ac' message to extract and log added player usernames.
    * @param {Object} params - The message parameters.
    */
-  async handlePlayerAdd({ type, message }) { // Made async
-    const config = await this.configModel.getConfig(); // Made async
-    if (!config.isLoggingEnabled || !config.collectNearbyPlayers) return;
-    if (message.constructor.name !== 'XtMessage') return;
+  async handlePlayerAdd({ type, message }) {
+    if (!this.collectNearby || message.constructor.name !== 'XtMessage') return;
 
     const rawContent = message.toMessage();
     const parts = rawContent.split('%');
@@ -113,10 +115,8 @@ class MessageHandlers {
    * Handles the 'bl' message to extract and log buddy usernames.
    * @param {Object} params - The message parameters.
    */
-  async handleBuddyList({ type, message }) { // Made async
-    const config = await this.configModel.getConfig(); // Made async
-    if (!config.isLoggingEnabled || !config.collectBuddies) return;
-    if (message.constructor.name !== 'XtMessage') return;
+  async handleBuddyList({ type, message }) {
+    if (!this.collectBuddies || message.constructor.name !== 'XtMessage') return;
 
     const rawContent = message.toMessage();
     const parts = rawContent.split('%');
@@ -162,10 +162,8 @@ class MessageHandlers {
    * Handles the 'ba' message (buddy added) to log newly added buddies.
    * @param {Object} params - The message parameters.
    */
-  async handleBuddyAdded({ type, message }) { // Made async
-    const config = await this.configModel.getConfig(); // Made async
-    if (!config.isLoggingEnabled || !config.collectBuddies) return;
-    if (message.constructor.name !== 'XtMessage') return;
+  async handleBuddyAdded({ type, message }) {
+    if (!this.collectBuddies || message.constructor.name !== 'XtMessage') return;
 
     const rawContent = message.toMessage();
     const parts = rawContent.split('%');
@@ -184,10 +182,8 @@ class MessageHandlers {
    * Handles the 'bon' message (buddy online) to log buddies coming online.
    * @param {Object} params - The message parameters.
    */
-  async handleBuddyOnline({ type, message }) { // Made async
-    const config = await this.configModel.getConfig(); // Made async
-    if (!config.isLoggingEnabled || !config.collectBuddies) return;
-    if (message.constructor.name !== 'XtMessage') return;
+  async handleBuddyOnline({ type, message }) {
+    if (!this.collectBuddies || message.constructor.name !== 'XtMessage') return;
 
     const rawContent = message.toMessage();
     const parts = rawContent.split('%');
@@ -208,6 +204,29 @@ class MessageHandlers {
    */
   setAutoLeakCheckCallback(callback) {
     this.onAutoLeakCheckTriggered = callback;
+  }
+
+  /**
+   * Updates the settings for the handler instance.
+   * @param {Object} settings - The settings object.
+   * @param {boolean} settings.collectNearby - Whether to collect nearby players.
+   * @param {boolean} settings.collectBuddies - Whether to collect buddies.
+   * @param {boolean} settings.autoCheckEnabled - Whether to enable auto-check.
+   * @param {number} settings.autoCheckThreshold - The threshold for auto-check.
+   */
+  updateSettings({ collectNearby, collectBuddies, autoCheckEnabled, autoCheckThreshold }) {
+    this.collectNearby = collectNearby;
+    this.collectBuddies = collectBuddies;
+    this.autoCheckEnabled = autoCheckEnabled;
+    this.autoCheckThreshold = autoCheckThreshold;
+
+    // Only log detailed handler updates in development mode to avoid spam
+    if (process.env.NODE_ENV === 'development') {
+      this.application.consoleMessage({
+        type: 'logger',
+        message: `Handler settings updated: Nearby=${this.collectNearby}, Buddies=${this.collectBuddies}, AutoCheck=${this.autoCheckEnabled} (@${this.autoCheckThreshold})`
+      });
+    }
   }
 
   /**
@@ -238,6 +257,19 @@ class MessageHandlers {
       message: 'bon',
       callback: this.handleBuddyOnline
     });
+  }
+
+  /**
+   * Unregisters all message handlers from the dispatch system
+   * @param {Object} dispatch - The dispatch system
+   */
+  unregisterHandlers(dispatch) {
+    if (dispatch && typeof dispatch.offMessage === 'function') {
+      dispatch.offMessage({ type: 'aj', message: 'ac', callback: this.handlePlayerAdd });
+      dispatch.offMessage({ type: 'aj', message: 'bl', callback: this.handleBuddyList });
+      dispatch.offMessage({ type: 'aj', message: 'ba', callback: this.handleBuddyAdded });
+      dispatch.offMessage({ type: 'aj', message: 'bon', callback: this.handleBuddyOnline });
+    }
   }
 }
 

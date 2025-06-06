@@ -17,8 +17,22 @@ class LogManager {
       warn: console.warn
     };
     
-    this.logs = [];
-    this.maxMemoryLogs = 1000; // Default maximum logs to keep in memory
+    this.logStreams = {
+      main: [],
+      renderer: [],
+      console: [],
+      network: [],
+      system: [],
+      default: []
+    };
+    this.logLimits = {
+      main: 1000,
+      renderer: 1000,
+      console: 1000,
+      network: 1000,
+      system: 100,
+      default: 1000
+    };
     this.initialized = false;
     this.logPath = '';
     this.sessionLogPath = ''; // Will not be used to create files automatically
@@ -38,7 +52,8 @@ class LogManager {
    * Initialize the log manager
    * @param {Object} options Configuration options
    * @param {String} options.appDataPath Path to app data
-   * @param {Number} options.maxMemoryLogs Maximum logs to keep in memory
+   * @param {Number} [options.consoleLimit=1000] Maximum console logs to keep in memory
+   * @param {Number} [options.networkLimit=1000] Maximum network logs to keep in memory
    */
   initialize(options = {}) {
     if (this.initialized) return;
@@ -54,7 +69,8 @@ class LogManager {
     
     // this.sessionLogPath remains empty; automatic session file creation is disabled.
     
-    this.maxMemoryLogs = options.maxMemoryLogs || this.maxMemoryLogs;
+    this.logLimits.console = options.consoleLimit || this.logLimits.console;
+    this.logLimits.network = options.networkLimit || this.logLimits.network;
     
     if (ipcMain) {
       this.setupIpcHandlers();
@@ -333,11 +349,15 @@ class LogManager {
       level,
       levelName: this.getLevelName(level)
     };
+
+    const streamName = this.logStreams[context] ? context : 'default';
+    const stream = this.logStreams[streamName];
+    const limit = this.logLimits[streamName] || 1000;
     
-    this.logs.push(entry);
+    stream.push(entry);
     
-    if (this.logs.length > this.maxMemoryLogs) {
-      this.logs = this.logs.slice(-Math.floor(this.maxMemoryLogs * 0.8));
+    if (stream.length > limit) {
+      this.logStreams[streamName] = stream.slice(-Math.floor(limit * 0.8));
     }
     
     this.appendToLogFile(entry);
@@ -389,7 +409,10 @@ class LogManager {
    * @returns {Array} Filtered logs
    */
   getLogs(options = {}) {
-    let filtered = [...this.logs];
+    let allLogs = Object.values(this.logStreams).flat();
+    allLogs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    let filtered = allLogs;
     
     if (options.context) {
       filtered = filtered.filter(log => log.context === options.context);
@@ -452,9 +475,10 @@ class LogManager {
       let content = '';
       
       if (format === 'json') {
+        const allLogs = Object.values(this.logStreams).flat().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
         const exportData = {
           systemInfo: this.systemInfo,
-          logs: this.logs,
+          logs: allLogs,
           devToolsLogs: includeDevToolsLogs ? this.devToolsLogs : [],
           gameClientLogs: this.gameClientLogs || []
         };
@@ -473,8 +497,9 @@ class LogManager {
         }
         
         if (options.includeMemoryLogs) {
-          content += '## Memory Logs (Main Process)\n';
-          this.logs.forEach(entry => {
+          content += '## Memory Logs (All Streams)\n';
+          const allLogs = Object.values(this.logStreams).flat().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          allLogs.forEach(entry => {
             content += `[${entry.timestamp}] [${entry.levelName}] [${entry.context}] ${entry.message}\n`;
           });
           content += '\n\n';

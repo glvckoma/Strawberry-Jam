@@ -17,21 +17,6 @@ let KEYTAR_SERVICE_LEAK_CHECK_API_KEY;
 const KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY = 'leak_checker_api_key';
 const MIGRATION_FLAG_LEAK_CHECK_API_KEY_V1 = 'leakCheckApiKeyMigratedToKeytar_v1';
 
-// Try to require leakChecker, but handle the case when it's not available
-let startLeakCheck;
-try {
-  const leakChecker = require('./leakChecker');
-  startLeakCheck = leakChecker.startLeakCheck;
-} catch (error) {
-  console.log('[Startup] LeakChecker module not available, leak checking will be disabled');
-  startLeakCheck = (options) => {
-    console.log('[LeakCheck] Leak checking is disabled in this build');
-    if (options && options.updateStateCallback) {
-      options.updateStateCallback({ status: 'error', message: 'Leak checking is disabled in this build' });
-    }
-    return Promise.resolve();
-  };
-}
 const Patcher = require('./renderer/application/patcher');
 const { getDataPath } = require('../Constants');
 const logManager = require('../utils/LogManager');
@@ -83,42 +68,47 @@ const schema = {
     },
     default: {}
   },
-  leakCheck: {
-     type: 'object',
-     properties: {
-       apiKey: { // Stored in Keytar, but schema might be for initial structure
-         type: 'string',
-         default: ''
-       },
-       outputDir: { // For custom output directory
-         type: 'string',
-         default: ''
-       },
-       autoLeakCheck: { // Moved from plugin config
-         type: 'boolean',
-         default: false
-       },
-       autoLeakCheckThreshold: { // Moved from plugin config
-         type: 'number',
-         default: 100
-       },
-       enableLogging: { // Master toggle for UsernameLogger, moved from plugin config
-         type: 'boolean',
-         default: true
-       }
-     },
-     default: {}
-  },
-  usernameLogger: { // New section for other UsernameLogger settings moved to main store
+  logs: {
     type: 'object',
     properties: {
-      collectNearbyPlayers: { // Moved from plugin config
-        type: 'boolean',
-        default: true
+      consoleLimit: {
+        type: 'number',
+        default: 1000
       },
-      collectBuddies: { // Moved from plugin config
-        type: 'boolean',
-        default: true
+      networkLimit: {
+        type: 'number',
+        default: 1000
+      }
+    },
+    default: {}
+  },
+  plugins: {
+    type: 'object',
+    properties: {
+      usernameLogger: {
+        type: 'object',
+        properties: {
+          apiKey: { type: 'string', default: '' },
+          outputDir: { type: 'string', default: '' },
+          autoCheck: {
+            type: 'object',
+            properties: {
+              enabled: { type: 'boolean', default: false },
+              threshold: { type: 'number', default: 100 }
+            },
+            default: {}
+          },
+          collection: {
+            type: 'object',
+            properties: {
+              enabled: { type: 'boolean', default: true },
+              collectNearby: { type: 'boolean', default: true },
+              collectBuddies: { type: 'boolean', default: true }
+            },
+            default: {}
+          }
+        },
+        default: {}
       }
     },
     default: {}
@@ -180,9 +170,6 @@ class Electron {
     });
 
     this._patcher = new Patcher(null);
-    this._isLeakCheckRunning = false;
-    this._isLeakCheckPaused = false;
-    this._isLeakCheckStopped = false;
     this._isQuitting = false;
     this._isClearingCacheAndQuitting = false;
     this._savedWindowState = null;
@@ -302,8 +289,8 @@ class Electron {
 
     ipcMain.handle('get-setting', async (event, key) => {
       try {
-        if (key === 'leakCheck.apiKey') {
-          devLog('[IPC get-setting] Attempting to get leakCheck.apiKey from Keytar.');
+        if (key === 'plugins.usernameLogger.apiKey') {
+          devLog('[IPC get-setting] Attempting to get plugins.usernameLogger.apiKey from Keytar.');
           const apiKey = await keytar.getPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY);
           return apiKey || '';
         }
@@ -317,8 +304,8 @@ class Electron {
 
     ipcMain.handle('set-setting', async (event, key, value) => {
       try {
-        if (key === 'leakCheck.apiKey') {
-          devLog('[IPC set-setting] Attempting to set leakCheck.apiKey in Keytar.');
+        if (key === 'plugins.usernameLogger.apiKey') {
+          devLog('[IPC set-setting] Attempting to set plugins.usernameLogger.apiKey in Keytar.');
           if (typeof value === 'string' && value.trim() !== '') {
             await keytar.setPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY, value);
           } else {
@@ -401,42 +388,7 @@ class Electron {
     });
 
 
-    // --- Leak Checker IPC ---
-
-    ipcMain.handle('leak-check-start', async (event, options = {}) => {
-      devLog('[IPC] Handling leak-check-start/resume request.');
-      return this._initiateOrResumeLeakCheck(options);
-    });
-
-    ipcMain.handle('leak-check-pause', async () => {
-        if (!this._isLeakCheckRunning) {
-            return { success: false, message: 'Leak check is not running.' };
-        }
-        if (this._isLeakCheckPaused) {
-             return { success: true, message: 'Leak check is already paused.' };
-        }
-        devLog('[IPC] Received leak-check-pause signal.');
-        this._isLeakCheckPaused = true;
-        return { success: true, message: 'Pause signal sent.' };
-    });
-
-    ipcMain.handle('leak-check-stop', (async () => {
-        if (!this._isLeakCheckRunning && !this._isLeakCheckPaused) { 
-             return { success: false, message: 'Leak check is not running or paused.' };
-        }
-        devLog('[IPC] Received leak-check-stop signal.');
-        this._isLeakCheckStopped = true; 
-        this._isLeakCheckPaused = false; 
-        devLog('[IPC Stop] Stop flag set. Waiting for checker process to acknowledge.');
-        return { success: true, message: 'Stop signal sent. Process will stop shortly.' };
-    }).bind(this));
-
-    ipcMain.handle('verify-leak-check-status', async () => {
-        devLog('[IPC] Handling verify-leak-check-status request.');
-        return { isRunning: this._isLeakCheckRunning };
-    });
-
-    // --- End Leak Checker IPC ---
+    // --- Leak Checker IPC (REMOVED) ---
 
 
     // --- App State IPC Handlers ---
@@ -492,18 +444,7 @@ class Electron {
 
     // --- Renderer Ready Listener (for Auto-Resume) ---
     ipcMain.once('renderer-ready', (async () => {
-    devLog('[IPC] Received renderer-ready signal.');
-    try {
-      devLog('[Startup] Checking for Leak Check auto-resume...');
-      const appState = await this.getAppState();
-      if (appState.leakCheck && (appState.leakCheck.status === 'running' || appState.leakCheck.status === 'paused')) {
-        devLog(`[Startup] Found Leak Check state: ${appState.leakCheck.status}. Auto-resume disabled.`);
-      } else {
-        devLog('[Startup] No Leak Check auto-resume needed (State: ' + (appState.leakCheck?.status || 'idle') + ').');
-      }
-    } catch (error) {
-      if (isDevelopment) console.error(`[Startup] Error during Leak Check auto-resume check: ${error.message}`);
-    }
+      devLog('[IPC] Received renderer-ready signal.');
     }).bind(this));
 
     // --- Danger Zone IPC Handlers ---
@@ -779,6 +720,13 @@ class Electron {
 
     // The 'get-main-log-path' handler was moved to the constructor.
     // The diagnostic global.console.log that was here is also effectively moved.
+
+    ipcMain.on('plugin-settings-updated', (event) => {
+      devLog('[IPC] Received plugin-settings-updated signal. Broadcasting to renderer.');
+      if (this._window && this._window.webContents && !this._window.webContents.isDestroyed()) {
+        this._window.webContents.send('broadcast-plugin-settings-updated');
+      }
+    });
   }
 
   async _migrateLeakCheckApiKeyToKeytar() {
@@ -1086,121 +1034,15 @@ class Electron {
     }
   }
 
-  async _initiateOrResumeLeakCheck(options = {}) {
-    console.log('[LeakCheck Control] Initiating or resuming leak check...');
-
-    if (this._isLeakCheckRunning) {
-      if (this._isLeakCheckPaused) {
-         console.log('[LeakCheck Control] Resuming paused check...');
-         this._isLeakCheckPaused = false; 
-      } else {
-        console.warn('[LeakCheck Control] Attempted to start while already running.');
-        return { success: false, message: 'Leak check is already in progress.' };
-      }
-    }
-
-    this._isLeakCheckPaused = false;
-    this._isLeakCheckStopped = false;
-    this._isLeakCheckRunning = true; 
-
-    if (!this._window || !this._window.webContents || this._window.webContents.isDestroyed()) {
-      console.error('[LeakCheck Control] Cannot start check, main window/webContents not available.');
-      this._isLeakCheckRunning = false; 
-      return { success: false, message: 'Main window not available.' };
-    }
-
-    try {
-      const currentAppState = await this.getAppState();
-      let leakCheckState = currentAppState.leakCheck || DEFAULT_APP_STATE.leakCheck;
-
-      if (['completed', 'error', 'stopped'].includes(leakCheckState.status)) {
-          console.log(`[LeakCheck Control] Status is ${leakCheckState.status}, resetting index for a new run.`);
-          leakCheckState.lastProcessedIndex = -1;
-      }
-
-      const startIndex = leakCheckState.lastProcessedIndex + 1;
-      const inputFilePath = leakCheckState.inputFilePath || path.join(defaultDataDir, LOGGED_USERNAMES_FILE);
-
-      leakCheckState.status = 'running';
-      leakCheckState.inputFilePath = inputFilePath;
-      currentAppState.leakCheck = leakCheckState;
-      await this.setAppState(currentAppState);
-
-
-      const leakCheckLogger = (level, message) => {
-        const prefix = `[LeakCheck/${level.toUpperCase()}]`;
-        if (level === 'error' || level === 'warn') console.error(prefix, message);
-        else console.log(prefix, message);
-      };
-
-      const updateStateCallback = async (newStateUpdate) => {
-        try {
-          const currentState = await this.getAppState();
-          if (this._isLeakCheckRunning) {
-              currentState.leakCheck = { ...currentState.leakCheck, ...newStateUpdate };
-              await this.setAppState(currentState);
-              console.log(`[State Callback] Updated state: Status=${newStateUpdate.status}, Index=${newStateUpdate.lastProcessedIndex}`);
-
-              if (this._window && this._window.webContents && !this._window.webContents.isDestroyed()) {
-                  this._window.webContents.send('leak-check-progress', newStateUpdate);
-                  console.log(`[State Callback] Sent leak-check-progress event to renderer: Status=${newStateUpdate.status}`);
-              }
-
-              if (['completed', 'error', 'stopped'].includes(newStateUpdate.status)) {
-                  this._isLeakCheckRunning = false;
-                  this._isLeakCheckPaused = false; 
-                  this._isLeakCheckStopped = false; 
-              }
-          } else {
-               console.log(`[State Callback] Ignored state update (${newStateUpdate.status}) because process is not marked as running.`);
-          }
-        } catch (error) {
-          console.error('[State Callback] Error updating state:', error);
-        }
-      };
-
-      const checkPauseStatus = () => this._isLeakCheckPaused;
-      const checkStopStatus = () => this._isLeakCheckStopped;
-
-
-      console.log(`[LeakCheck Control] Calling startLeakCheck with startIndex: ${startIndex}`);
-      startLeakCheck({
-        webContents: this._window.webContents,
-        log: leakCheckLogger,
-        store: this._store,
-        appDataPath: getDataPath(app),
-        limit: options.limit, 
-        startIndex: startIndex,
-        updateStateCallback: updateStateCallback,
-        checkPauseStatus: checkPauseStatus,
-        checkStopStatus: checkStopStatus
-      }).catch(async (err) => {
-          console.error(`[LeakCheck Control] Unhandled error during startLeakCheck execution: ${err.message}`);
-          this._isLeakCheckRunning = false; 
-          this._isLeakCheckPaused = false;
-          this._isLeakCheckStopped = false;
-          await updateStateCallback({ status: 'error', lastProcessedIndex: leakCheckState.lastProcessedIndex }); 
-          if (this._window && this._window.webContents && !this._window.webContents.isDestroyed()) {
-              this._window.webContents.send('leak-check-result', { success: false, message: `Internal error: ${err.message}` });
-          }
-      });
-
-      return { success: true, message: 'Leak check process initiated or resumed.' };
-
-    } catch (error) {
-      console.error(`[LeakCheck Control] Error setting up leak check: ${error.message}`);
-      this._isLeakCheckRunning = false; 
-      this._isLeakCheckPaused = false;
-      this._isLeakCheckStopped = false;
-      try { await this.setAppState({ ...await this.getAppState(), leakCheck: { status: 'error', lastProcessedIndex: -1 } }); } catch (e) {}
-      return { success: false, message: `Error starting leak check: ${error.message}` };
-    }
-  }
 
   create () {
+    const consoleLimit = this._store.get('logs.consoleLimit', 1000);
+    const networkLimit = this._store.get('logs.networkLimit', 1000);
+
     logManager.initialize({
       appDataPath: app.getPath('userData'),
-      maxMemoryLogs: 2000
+      consoleLimit: consoleLimit,
+      networkLimit: networkLimit
     });
 
     const originalConsole = {
@@ -1347,11 +1189,6 @@ class Electron {
         }
 
         console.log('[App Quit] Performing other general cleanup...');
-        if (this._isLeakCheckRunning) {
-          devLog('[App Quit] Signaling running Leak Checker to stop...');
-          this._isLeakCheckStopped = true;
-          this._isLeakCheckPaused = false;
-        }
 
         if (this._apiProcess && !this._apiProcess.killed) {
           console.log('[App Quit] Terminating API process...');

@@ -698,13 +698,13 @@ async function loadSettings ($modal, app) { // Made async
     const hideGamePlugins = await ipcRenderer.invoke('get-setting', 'ui.hideGamePlugins');
 
     // LeakCheck settings
-    const leakCheckApiKey = await ipcRenderer.invoke('get-setting', 'leakCheck.apiKey');
-    const leakCheckAutoCheck = await ipcRenderer.invoke('get-setting', 'leakCheck.autoLeakCheck');
-    const leakCheckThreshold = await ipcRenderer.invoke('get-setting', 'leakCheck.autoLeakCheckThreshold');
-    const leakCheckEnableLogging = await ipcRenderer.invoke('get-setting', 'leakCheck.enableLogging');
-    const leakCheckOutputDir = await ipcRenderer.invoke('get-setting', 'leakCheck.outputDir'); // Load this setting
-    const usernameLoggerCollectNearby = await ipcRenderer.invoke('get-setting', 'usernameLogger.collectNearbyPlayers');
-    const usernameLoggerCollectBuddies = await ipcRenderer.invoke('get-setting', 'usernameLogger.collectBuddies');
+    const leakCheckApiKey = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.apiKey');
+    const leakCheckAutoCheck = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.autoCheck.enabled');
+    const leakCheckThreshold = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.autoCheck.threshold');
+    const leakCheckEnableLogging = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.enabled');
+    const leakCheckOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir');
+    const usernameLoggerCollectNearby = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.collectNearby');
+    const usernameLoggerCollectBuddies = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.collectBuddies');
     // REMOVED: const autoClearResults = await ipcRenderer.invoke('get-setting', 'leakCheck.autoClearResults');
 
     // Log limiting settings
@@ -837,13 +837,13 @@ async function saveSettings ($modal, app) { // Made async
       { key: 'network.smartfoxServer', value: $modal.find('#advancedSmartfoxServer').val() },
       { key: 'network.secureConnection', value: $modal.find('#advancedSecureConnection').is(':checked') },
       { key: 'ui.hideGamePlugins', value: $modal.find('#hideGamePlugins').is(':checked') },
-      { key: 'leakCheck.apiKey', value: $modal.find('#leakCheckApiKey').val() },
-      { key: 'leakCheck.autoLeakCheck', value: $modal.find('#leakCheckAutoCheck').is(':checked') },
-      { key: 'leakCheck.autoLeakCheckThreshold', value: parseInt($modal.find('#leakCheckThreshold').val()) || 100 },
-      { key: 'leakCheck.enableLogging', value: $modal.find('#leakCheckEnableLogging').is(':checked') },
-      { key: 'usernameLogger.collectNearbyPlayers', value: $modal.find('#leakCheckCollectNearby').is(':checked') },
-      { key: 'usernameLogger.collectBuddies', value: $modal.find('#leakCheckCollectBuddies').is(':checked') },
-      { key: 'leakCheck.outputDir', value: $modal.find('#leakCheckOutputDirInput').val().trim() },
+      { key: 'plugins.usernameLogger.apiKey', value: $modal.find('#leakCheckApiKey').val() },
+      { key: 'plugins.usernameLogger.autoCheck.enabled', value: $modal.find('#leakCheckAutoCheck').is(':checked') },
+      { key: 'plugins.usernameLogger.autoCheck.threshold', value: parseInt($modal.find('#leakCheckThreshold').val()) || 100 },
+      { key: 'plugins.usernameLogger.collection.enabled', value: $modal.find('#leakCheckEnableLogging').is(':checked') },
+      { key: 'plugins.usernameLogger.collection.collectNearby', value: $modal.find('#leakCheckCollectNearby').is(':checked') },
+      { key: 'plugins.usernameLogger.collection.collectBuddies', value: $modal.find('#leakCheckCollectBuddies').is(':checked') },
+      { key: 'plugins.usernameLogger.outputDir', value: $modal.find('#leakCheckOutputDirInput').val().trim() },
       // REMOVED: { key: 'leakCheck.autoClearResults', value: $modal.find('#autoClearResults').is(':checked') }
       
       // Log limiting settings
@@ -868,6 +868,11 @@ async function saveSettings ($modal, app) { // Made async
 
     if (allSavedSuccessfully) {
       showToast('Settings saved successfully!', 'success');
+      // Notify the main process that settings affecting plugins have been updated
+      const pluginRelatedKeys = settingsToSave.filter(s => s.key.startsWith('plugins.')).map(s => s.key);
+      if (pluginRelatedKeys.length > 0) {
+        ipcRenderer.send('plugin-settings-updated');
+      }
       app.modals.close();
     } else {
       showToast('Some settings failed to save. Check console for details.', 'error');

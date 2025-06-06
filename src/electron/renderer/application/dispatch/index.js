@@ -712,14 +712,28 @@ module.exports = class Dispatch {
    * @returns {any}
    * @public
    */
-  getState (key, defaultValue = null) {
-    const value = this.state[key] !== undefined ? this.state[key] : defaultValue;
-    if (key === 'room') {
-      devLog(`[ROOMLOGIC_DEBUG] Dispatch getState: Requesting 'room'. Current this.state.room: ${this.state.key}. Returning: ${value}`);
-    } else if (key === 'player') {
-      devLog(`[ROOMLOGIC_DEBUG] Dispatch getState: Requesting 'player'. Returning:`, value);
+  async getState (key, defaultValue = null) {
+    // First, check local state for things like 'room' or 'player' which are set dynamically.
+    if (this.state[key] !== undefined) {
+      return this.state[key];
     }
-    return value;
+
+    // If not in local state, assume it's a persisted setting and fetch from the main process.
+    if (typeof require === "function") {
+      try {
+        const { ipcRenderer } = require('electron');
+        const value = await ipcRenderer.invoke('get-setting', key);
+        // Return the retrieved value, or the provided default if the value is null/undefined.
+        return value !== null && value !== undefined ? value : defaultValue;
+      } catch (e) {
+        devError(`[Dispatch] Error invoking 'get-setting' for key '${key}':`, e);
+        // In case of an IPC error, return the default value.
+        return defaultValue;
+      }
+    }
+    
+    // Fallback for non-electron environments or if require fails.
+    return defaultValue;
   }
 
   /**
@@ -846,7 +860,7 @@ module.exports = class Dispatch {
    * @param options
    * @public
    */
-  offMessage ({ type, callback } = {}) {
+  offMessage ({ type, message, callback } = {}) {
     const hooksMap = {
       [ConnectionMessageTypes.aj]: this.hooks.aj,
       [ConnectionMessageTypes.connection]: this.hooks.connection,
@@ -856,11 +870,13 @@ module.exports = class Dispatch {
     const hooks = hooksMap[type]
 
     if (hooks) {
-      const hookList = hooks.get(type)
+      // Correctly use the 'message' as the key to get the list of callbacks
+      const hookList = hooks.get(message)
       if (hookList) {
         const index = hookList.indexOf(callback)
         if (index !== -1) {
           hookList.splice(index, 1)
+          devLog(`[Dispatch] Successfully unregistered hook for type '${type}', message '${message}'.`);
         }
       }
     }
@@ -935,6 +951,29 @@ module.exports = class Dispatch {
     aj.clear()
     any.clear()
   }
+
+ /**
+  * Notifies all loaded game plugins that settings have been updated.
+  * Iterates through plugins and calls `onSettingsUpdated` if the method exists.
+  * @public
+  */
+ notifyPluginsOfSettingsUpdate() {
+   devLog('[Dispatch] Notifying plugins of settings update...');
+   for (const [name, pluginData] of this.plugins.entries()) {
+     // Only notify game plugins that have an instantiated object
+     if (pluginData.plugin && typeof pluginData.plugin.onSettingsUpdated === 'function') {
+       try {
+         devLog(`[Dispatch] Calling onSettingsUpdated for plugin: ${name}`);
+         pluginData.plugin.onSettingsUpdated();
+       } catch (error) {
+         this._consoleMessage({
+           type: 'error',
+           message: `Error calling onSettingsUpdated for plugin ${name}: ${error.message}`
+         });
+       }
+     }
+   }
+ }
 
   /**
    * Validates configuration and installs dependencies. Does not instantiate or render.

@@ -73,7 +73,13 @@ const updateConnectionStatus = (connected, serverOnline = null) => {
     statusElement.classList.remove('text-highlight-green', 'text-gray-400', 'text-highlight-yellow', 'text-error-red');
     
     // Show server status when not connected if we know it
-    if (serverStatus.isOnline === true) {
+    if (serverStatus.accessStatus === 'disabled_by_setting') {
+      // Handle the specific case where the check is disabled by user settings
+      statusElement.querySelector('span:last-child').textContent = 'Disabled in Settings';
+      statusElement.classList.add('text-gray-400');
+      dotElement.classList.add('bg-tertiary-bg');
+      statusElement.setAttribute('title', 'Server status check is disabled in settings.');
+    } else if (serverStatus.isOnline === true) {
       // Determine specific status based on accessStatus
       if (serverStatus.accessStatus === 'blocked') {
         // Access blocked
@@ -84,7 +90,7 @@ const updateConnectionStatus = (connected, serverOnline = null) => {
         
         // Add tooltip
         statusElement.setAttribute('title', `Server ${serverStatus.server} is blocking your connection (Status code: ${serverStatus.statusCode})`);
-      } 
+      }
       else if (serverStatus.accessStatus === 'limited') {
         // Rate limited
         statusElement.querySelector('span:last-child').textContent = 'AJ Servers: Rate Limited';
@@ -98,7 +104,7 @@ const updateConnectionStatus = (connected, serverOnline = null) => {
       else {
         // Servers online but not connected (normal case)
         statusElement.querySelector('span:last-child').textContent = 'AJ Servers are online!';
-        statusElement.classList.add('text-highlight-green'); 
+        statusElement.classList.add('text-highlight-green');
         dotElement.classList.add('bg-highlight-green');
         dotElement.classList.add('pulse-green');
         
@@ -291,13 +297,7 @@ const initializeApp = async () => {
         if (performCheck) {
           await checkServerStatus();
         } else {
-          if (application && application.consoleMessage) {
-            application.consoleMessage({
-              message: 'Server status check on startup skipped due to settings.',
-              type: 'notify'
-            });
-          }
-          // Update UI to reflect that the check was skipped
+          // Update internal state to reflect that the check was skipped
           serverStatus.isOnline = null; // Explicitly set to unknown
           serverStatus.isChecking = false; // No check is in progress
           serverStatus.lastChecked = Date.now();
