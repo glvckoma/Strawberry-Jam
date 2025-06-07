@@ -615,15 +615,25 @@
           </div>
           <div class="settings-group">
             <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 10px; margin-bottom: 5px; text-align: left;">Shortcuts</h4>
-            <div class="settings-item" style="font-size: 11px;">Cmd/Ctrl + Shift + I: Toggle Developer Tools</div>
-            <div class="settings-item" style="font-size: 11px;">Cmd/Ctrl + R: Reload</div>
-            <div class="settings-item" style="font-size: 11px;">Alt + Enter / F11 (Win): Toggle Fullscreen</div>
-            <div class="settings-item" style="font-size: 11px;">Ctrl+Cmd+F (Mac): Toggle Fullscreen</div>
-            <div class="settings-item" style="font-size: 11px;">Ctrl + Q / Alt + F4 (Win): Quit Application</div>
-            <div class="settings-item" style="font-size: 11px;">Cmd + Q (Mac): Quit Application</div>
+            
+            <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">General:</h5>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Cmd/Ctrl + Shift + I: Toggle Developer Tools</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Cmd/Ctrl + R: Reload / Logout (Return to Login Screen)</div>
+ 
+            <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">In-Game:</h5>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Equals / Numpad Add: Zoom In</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Minus / Numpad Subtract: Zoom Out</div>
+
+            <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">Windows/Linux:</h5>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Alt + Enter / F11: Toggle Fullscreen</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Q / Alt + F4: Quit Application</div>
+ 
+            <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">macOS:</h5>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Cmd + F: Toggle Fullscreen</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Cmd + Q: Quit Application</div>
           </div>
         </div>
-
+ 
         <div id="version">
           <a id="version-link">0.0.0</a>
           <ajd-progress-ring id="version-status-icon" stroke-color="#64cc4d" stroke-width="3" radius="11"></ajd-progress-ring>

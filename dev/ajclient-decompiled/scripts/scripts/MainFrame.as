@@ -19,6 +19,7 @@ package
    import flash.events.KeyboardEvent;
    import flash.events.MouseEvent;
    import flash.external.ExternalInterface;
+   import flash.ui.Keyboard;
    import flash.net.URLLoader;
    import flash.net.URLRequest;
    import game.MinigameManager;
@@ -85,6 +86,8 @@ package
       
       private static var _currStageQuality:String;
       
+      private static var _electronManagedZoomLevel:Number = 100;
+      
       public var userInfo:UserInfoCache;
       
       public var clientInfo:Object;
@@ -118,13 +121,13 @@ package
             _loc8_ = ExternalInterface.available;
             if(_loc8_)
             {
-               DebugUtility.debugTrace("extIntAvail is true");
-               DebugUtility.debugTrace("mrc dm init starting up call returned:" + ExternalInterface.call("mrc",["dm","init:starting up"]));
+               ExternalInterface.call("console.log", "extIntAvail is true");
+               ExternalInterface.call("console.log", "mrc dm init starting up call returned:" + ExternalInterface.call("mrc",["dm","init:starting up"]));
                ExternalInterface.addCallback("handleResize",handleResize);
             }
             else
             {
-               DebugUtility.debugTrace("extIntAvail is false");
+               ExternalInterface.call("console.log", "extIntAvail is false");
             }
             _loc5_ = new Shape();
             _loc5_.graphics.clear();
@@ -146,23 +149,23 @@ package
             {
                try
                {
-                  DebugUtility.debugTrace("init:adding mec callback");
+                  ExternalInterface.call("console.log", "init:adding mec callback");
                   ExternalInterface.addCallback("mec",handleLocalExternalCall);
-                  DebugUtility.debugTrace("init:mec added, calling lc...");
+                  ExternalInterface.call("console.log", "init:mec added, calling lc...");
                   ExternalInterface.call("mrc",["lc"]);
-                  DebugUtility.debugTrace("init:... lc called, waiting for ixm...");
+                  ExternalInterface.call("console.log", "init:... lc called, waiting for ixm...");
                }
                catch(e:Error)
                {
-                  DebugUtility.debugTrace("init:ERROR hit during AJC ext mod setup! msg:" + e.message + " stack:" + e.getStackTrace());
+                  ExternalInterface.call("console.log", "init:ERROR hit during AJC ext mod setup! msg:" + e.message + " stack:" + e.getStackTrace());
                }
             }
-            DebugUtility.debugTrace("init: setting extCallsActive to false");
+            ExternalInterface.call("console.log", "init: setting extCallsActive to false");
             gMainFrame.clientInfo.extCallsActive = false;
-            DebugUtility.debugTrace("init: set extCallsActive to false");
+            ExternalInterface.call("console.log", "init: set extCallsActive to false");
             _configLoadedCallback = param2;
             _loc9_ = param1 && param1.smartfoxServer;
-            DebugUtility.debugTrace("MainFrame.getInstance - haveFlashVars:" + _loc9_);
+            ExternalInterface.call("console.log", "MainFrame.getInstance - haveFlashVars:" + _loc9_);
             gMainFrame.clientInfo.devMode = !_loc9_;
             if(_loc9_)
             {
@@ -174,10 +177,10 @@ package
                {
                   _flashVarUserName = "";
                }
-               DebugUtility.debugTrace("MainFrame.getInstance - flashVars.ingressXt:" + param1.ingressXt + " flashVars.ingressHProxy:" + param1.ingressHProxy + " flashVars.smartfoxServer:" + param1.smartfoxServer + " flashVars.smartfoxPort:" + param1.smartfoxPort + " flashVars.blueboxPort:" + param1.blueboxPort + " flashVars.content:" + param1.content + " flashVars.website:" + param1.website);
+               ExternalInterface.call("console.log", "MainFrame.getInstance - flashVars.ingressXt:" + param1.ingressXt + " flashVars.ingressHProxy:" + param1.ingressHProxy + " flashVars.smartfoxServer:" + param1.smartfoxServer + " flashVars.smartfoxPort:" + param1.smartfoxPort + " flashVars.blueboxPort:" + param1.blueboxPort + " flashVars.content:" + param1.content + " flashVars.website:" + param1.website);
                if(!(param1.smartfoxServer && param1.smartfoxPort && param1.blueboxServer && param1.blueboxPort && param1.content && param1.website))
                {
-                  DebugUtility.debugTrace("MainFrame.getInstance - Invalid FlashVars! Throwing error...");
+                  ExternalInterface.call("console.log", "MainFrame.getInstance - Invalid FlashVars! Throwing error...");
                   throw new Error("Invalid FlashVars!");
                }
                if(!param1.hasOwnProperty("startupRoom"))
@@ -253,6 +256,54 @@ package
       
       private static function keyDownListener(param1:KeyboardEvent) : void
       {
+         ExternalInterface.call("console.log", "[keyDownListener] Fired. KeyCode: " + param1.keyCode + ", Shift: " + param1.shiftKey + ", Ctrl: " + param1.ctrlKey + ", Alt: " + param1.altKey + ", Focus: " + _stage.focus);
+         var isTextFieldFocused:Boolean = (_stage.focus is flash.text.TextField);
+         var zoomActionTaken:Boolean = false;
+ 
+         if ( (param1.shiftKey && (param1.keyCode == 187 || param1.keyCode == Keyboard.EQUALS)) || param1.keyCode == Keyboard.NUMPAD_ADD )
+         {
+            ExternalInterface.call("console.log", "Attempting Zoom In. Current Level: " + _electronManagedZoomLevel + ", Shift: " + param1.shiftKey + ", KeyCode: " + param1.keyCode);
+            _electronManagedZoomLevel += 10;
+            _electronManagedZoomLevel = Math.min(_electronManagedZoomLevel, 500); 
+            ExternalInterface.call("console.log", "Zoom In New Level Before Update: " + _electronManagedZoomLevel);
+            if (RoomManagerWorld.instance != null) {
+               RoomManagerWorld.instance.updateRoomZoom(_electronManagedZoomLevel);
+               ExternalInterface.call("console.log", "Called updateRoomZoom for Zoom In. Level: " + _electronManagedZoomLevel);
+               ExternalInterface.call("console.log", "Zoom In: _electronManagedZoomLevel AFTER updateRoomZoom: " + _electronManagedZoomLevel);
+            } else {
+               ExternalInterface.call("console.log", "RoomManagerWorld.instance is null for Zoom In.");
+            }
+            zoomActionTaken = true;
+         }
+         else if ((param1.shiftKey && param1.keyCode == Keyboard.MINUS) || param1.keyCode == Keyboard.NUMPAD_SUBTRACT)
+         {
+            ExternalInterface.call("console.log", "Attempting Zoom Out. Current Level: " + _electronManagedZoomLevel + ", Shift: " + param1.shiftKey + ", KeyCode: " + param1.keyCode);
+            _electronManagedZoomLevel -= 10;
+            _electronManagedZoomLevel = Math.max(_electronManagedZoomLevel, 10); 
+            ExternalInterface.call("console.log", "Zoom Out New Level Before Update: " + _electronManagedZoomLevel);
+            if (RoomManagerWorld.instance != null) {
+               RoomManagerWorld.instance.updateRoomZoom(_electronManagedZoomLevel);
+               ExternalInterface.call("console.log", "Called updateRoomZoom for Zoom Out. Level: " + _electronManagedZoomLevel);
+               ExternalInterface.call("console.log", "Zoom Out: _electronManagedZoomLevel AFTER updateRoomZoom: " + _electronManagedZoomLevel);
+            } else {
+               ExternalInterface.call("console.log", "RoomManagerWorld.instance is null for Zoom Out.");
+            }
+            zoomActionTaken = true;
+         }
+ 
+         if (zoomActionTaken)
+         {
+            param1.preventDefault();
+            param1.stopPropagation();
+            ExternalInterface.call("console.log", "Zoom action taken, event propagation stopped.");
+            return;
+         }
+ 
+         if (isTextFieldFocused) {
+            ExternalInterface.call("console.log", "TextField focused, not a zoom key, allowing default behavior. KeyCode: " + param1.keyCode);
+            return;
+         }
+
          if(ExternalInterface.available && (param1.keyCode < 37 || param1.keyCode > 40))
          {
             ExternalInterface.call("handleKey",{
@@ -361,30 +412,30 @@ package
          gMainFrame.clientInfo.refererUuid = "referer_uuid" in param1 ? param1.referer_uuid : "";
          gMainFrame.clientInfo.selectedAvatarId = "selectedAvatarId" in param1 ? param1.selectedAvatarId : null;
          gMainFrame.clientInfo.df = "df" in param1 ? param1.df : "";
-         DebugUtility.debugTrace("-configXml/flashVars info-");
-         DebugUtility.debugTrace("ingressXt:" + param1.ingressXt);
-         DebugUtility.debugTrace("ingressHProxy:" + param1.ingressHProxy);
-         DebugUtility.debugTrace("smartfoxServer:" + param1.smartfoxServer);
-         DebugUtility.debugTrace("smartfoxPort:" + param1.smartfoxPort);
-         DebugUtility.debugTrace("blueboxPort:" + param1.blueboxPort);
-         DebugUtility.debugTrace("gameSessionIdStr:" + _loc5_);
-         DebugUtility.debugTrace("buildVersionStr:" + _loc12_);
-         DebugUtility.debugTrace("deployVersionStr:" + _loc9_);
-         DebugUtility.debugTrace("localeStr:" + _loc4_);
-         DebugUtility.debugTrace("contentURL:" + gMainFrame.clientInfo.contentURL);
-         DebugUtility.debugTrace("websiteURL:" + gMainFrame.clientInfo.websiteURL);
-         DebugUtility.debugTrace("isCreateAccount:" + _loc14_ + " webRefPath:" + param1.webRefPath);
-         DebugUtility.debugTrace("isWaitingMode:" + _loc2_ + " cfgVars.waitingMode:" + param1.waitingMode);
-         DebugUtility.debugTrace("startUpRoom:" + gMainFrame.clientInfo.startUpRoom);
-         DebugUtility.debugTrace("worldMapRoom:" + gMainFrame.clientInfo.worldMapRoom);
-         DebugUtility.debugTrace("dangerMapRoom:" + gMainFrame.clientInfo.dangerMapRoom);
-         DebugUtility.debugTrace("clientDebug:" + param1.clientDebug);
-         DebugUtility.debugTrace("forceHttpProxy:" + param1.forceHttpProxy);
-         DebugUtility.debugTrace("sgParams:" + gMainFrame.clientInfo.sgParams);
-         DebugUtility.debugTrace("buddyRoomTimerInterval:" + gMainFrame.clientInfo.buddyRoomTimerInterval);
-         DebugUtility.debugTrace("countryCode:" + gMainFrame.clientInfo.countryCode);
-         DebugUtility.debugTrace("clientPlatform:" + gMainFrame.clientInfo.clientPlatform);
-         DebugUtility.debugTrace("clientPlatformVersion:" + gMainFrame.clientInfo.clientPlatformVersion);
+         ExternalInterface.call("console.log", "-configXml/flashVars info-");
+         ExternalInterface.call("console.log", "ingressXt:" + param1.ingressXt);
+         ExternalInterface.call("console.log", "ingressHProxy:" + param1.ingressHProxy);
+         ExternalInterface.call("console.log", "smartfoxServer:" + param1.smartfoxServer);
+         ExternalInterface.call("console.log", "smartfoxPort:" + param1.smartfoxPort);
+         ExternalInterface.call("console.log", "blueboxPort:" + param1.blueboxPort);
+         ExternalInterface.call("console.log", "gameSessionIdStr:" + _loc5_);
+         ExternalInterface.call("console.log", "buildVersionStr:" + _loc12_);
+         ExternalInterface.call("console.log", "deployVersionStr:" + _loc9_);
+         ExternalInterface.call("console.log", "localeStr:" + _loc4_);
+         ExternalInterface.call("console.log", "contentURL:" + gMainFrame.clientInfo.contentURL);
+         ExternalInterface.call("console.log", "websiteURL:" + gMainFrame.clientInfo.websiteURL);
+         ExternalInterface.call("console.log", "isCreateAccount:" + _loc14_ + " webRefPath:" + param1.webRefPath);
+         ExternalInterface.call("console.log", "isWaitingMode:" + _loc2_ + " cfgVars.waitingMode:" + param1.waitingMode);
+         ExternalInterface.call("console.log", "startUpRoom:" + gMainFrame.clientInfo.startUpRoom);
+         ExternalInterface.call("console.log", "worldMapRoom:" + gMainFrame.clientInfo.worldMapRoom);
+         ExternalInterface.call("console.log", "dangerMapRoom:" + gMainFrame.clientInfo.dangerMapRoom);
+         ExternalInterface.call("console.log", "clientDebug:" + param1.clientDebug);
+         ExternalInterface.call("console.log", "forceHttpProxy:" + param1.forceHttpProxy);
+         ExternalInterface.call("console.log", "sgParams:" + gMainFrame.clientInfo.sgParams);
+         ExternalInterface.call("console.log", "buddyRoomTimerInterval:" + gMainFrame.clientInfo.buddyRoomTimerInterval);
+         ExternalInterface.call("console.log", "countryCode:" + gMainFrame.clientInfo.countryCode);
+         ExternalInterface.call("console.log", "clientPlatform:" + gMainFrame.clientInfo.clientPlatform);
+         ExternalInterface.call("console.log", "clientPlatformVersion:" + gMainFrame.clientInfo.clientPlatformVersion);
          _loaderCache = new LoaderCache();
          if(!gMainFrame.clientInfo.devMode && !gMainFrame.clientInfo.isCreateAccount && (_flashVarUserName == "" || !("auth_token" in param1) || param1.auth_token == null || param1.auth_token == undefined || param1.auth_token == ""))
          {
@@ -430,7 +481,7 @@ package
             _loc3_ = _loc4_.envName.text();
             if(_loc4_.environments.hasOwnProperty(_loc3_))
             {
-               DebugUtility.debugTrace("configDebugLoadCompleteHandler: using environment:" + _loc3_);
+               ExternalInterface.call("console.log", "configDebugLoadCompleteHandler: using environment:" + _loc3_);
                parseConfigXml(_loc2_,_loc4_.environments[_loc3_][0]);
             }
          }
@@ -543,7 +594,20 @@ package
       
       private static function handleResize(param1:int, param2:int) : void
       {
-         var _loc3_:Number = 100 - Math.min(Math.min(30,(param1 / 900 - 1) * 30),Math.min(30,(param2 / 550 - 1) * 30));
+         var autoCalculatedZoom:Number = 100 - Math.min(Math.min(30,(param1 / 900 - 1) * 30),Math.min(30,(param2 / 550 - 1) * 30));
+         var zoomToApply:Number;
+
+         if (_electronManagedZoomLevel != 100)
+         {
+            zoomToApply = _electronManagedZoomLevel;
+            ExternalInterface.call("console.log", "handleResize: Manual zoom active. Applying: " + zoomToApply);
+         }
+         else
+         {
+            zoomToApply = autoCalculatedZoom;
+            ExternalInterface.call("console.log", "handleResize: Auto zoom. Calculated: " + zoomToApply + " from dimensions " + param1 + "x" + param2);
+         }
+
          if(_stage.contentsScaleFactor > 1)
          {
             gMainFrame.currStageQuality = "low";
@@ -553,7 +617,13 @@ package
             gMainFrame.currStageQuality = "medium";
          }
          gMainFrame.stage.quality = gMainFrame.currStageQuality;
-         RoomManagerWorld.instance.updateRoomZoom(_loc3_);
+         
+         if (RoomManagerWorld.instance != null) {
+             RoomManagerWorld.instance.updateRoomZoom(zoomToApply);
+             ExternalInterface.call("console.log", "handleResize: Called updateRoomZoom with: " + zoomToApply);
+         } else {
+             ExternalInterface.call("console.log", "handleResize: RoomManagerWorld.instance is null.");
+         }
       }
       
       public function init(param1:Singleton, param2:String, param3:Stage) : void
@@ -661,9 +731,9 @@ package
       
       public function switchServersIfNeeded(param1:String) : Boolean
       {
-         DebugUtility.debugTrace("switchServersIfNeeded called with newNode:" + param1);
+         ExternalInterface.call("console.log", "switchServersIfNeeded called with newNode:" + param1);
          var _loc2_:* = param1;
-         DebugUtility.debugTrace("checking new node:" + _loc2_ + " vs old node:" + _client.serverIp);
+         ExternalInterface.call("console.log", "checking new node:" + _loc2_ + " vs old node:" + _client.serverIp);
          if(_client.serverIp == _loc2_)
          {
             return false;

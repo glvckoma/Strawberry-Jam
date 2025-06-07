@@ -393,7 +393,6 @@
       </div>
       <div id="flash-game-container">
         <webview id="flash-game-webview" plugins preload="gamePreload.js" style="height: 100%; width: 100%;"></webview>
-        <ajd-user-tray id="user-tray-element" class="hidden"></ajd-user-tray> <!-- New Tray Added -->
       </div>
     </div>
       `;
@@ -426,45 +425,24 @@
         window.ipc.send("openExternal", {url: event.url});
       });
 
-      // Listener for the new specific request from main process
-      window.ipc.on("request-toggle-game-client-devtools", () => {
-        console.log('[GameScreen] Received request-toggle-game-client-devtools');
-        if (this.webViewElem && this.webViewElem.getWebContents && this.webViewElem.getWebContents() && !this.webViewElem.getWebContents().isDestroyed()) {
-          // The main process already confirmed game client is active.
-          // We just need to ensure the webview element and its webContents are available.
-          if (this.webViewElem.isDevToolsOpened()) {
-            this.webViewElem.closeDevTools();
-            console.log('[GameScreen] Closed game client DevTools via request.');
-          } else {
-            this.webViewElem.openDevTools();
-            console.log('[GameScreen] Opened game client DevTools via request.');
-          }
-        } else {
-          console.warn('[GameScreen] Game webview or its webContents not available for DevTools toggle via request.');
-        }
-      });
-
-      // Existing listener (might be for a different purpose or an old mechanism)
+      // Listener for the "toggleDevTools" IPC message from the main process (via LoginScreen environment)
       window.ipc.on("toggleDevTools", () => {
         console.log('[GameScreen] Received "toggleDevTools" IPC message.');
-        // Simplified condition: Main process already checks if user is logged in.
-        // Here, we primarily ensure the webview and its webContents are available.
-        if (this.webViewElem && 
-            this.webViewElem.getWebContents &&
-            this.webViewElem.getWebContents() &&
-            !this.webViewElem.getWebContents().isDestroyed()) {
-
+        if (this.webViewElem) { // Check if the webViewElem itself exists
           if (this.webViewElem.isDevToolsOpened()) {
             this.webViewElem.closeDevTools();
-            console.log('[GameScreen] Closed game webview DevTools.');
+            console.log('[GameScreen] Closed game webview DevTools via IPC.');
           } else {
-            this.webViewElem.openDevTools();
-            console.log('[GameScreen] Opened game webview DevTools.');
+            this.webViewElem.openDevTools({ mode: 'detach' });
+            console.log('[GameScreen] Opened game webview DevTools via IPC.');
           }
         } else {
-          console.warn('[GameScreen] Game webview or its webContents not available for DevTools toggle.');
+          console.warn('[GameScreen] Game webview not available or destroyed when trying to toggle DevTools via IPC.');
         }
       });
+
+      // Remove the specific "request-toggle-game-client-devtools" listener as the generic one above handles it.
+      // window.ipc.on("request-toggle-game-client-devtools", () => { ... });
 
       this.webViewElem.addEventListener("ipc-message", async event => {
         switch (event.channel) {
@@ -532,24 +510,6 @@
       // Removed dockedContainerElem and floatingContainerElem references for old tray
       // Removed IntersectionObserver logic
 
-      this.userTray = this.shadowRoot.getElementById("user-tray-element");
-      if (this.userTray) {
-        this.userTray.addEventListener("logout-requested", () => {
-          this.closeGame();
-        });
-      } else {
-        console.error("[GameScreen] ajd-user-tray element not found!");
-      }
-    }
-
-    // Renamed from setScreenState to align with new tray's method name for clarity
-    updateTrayAppearance(windowState) {
-      // console.log(`[GameScreen] updateTrayAppearance called with: ${windowState}`);
-      if (this.userTray && typeof this.userTray.setAppearance === 'function') {
-        this.userTray.setAppearance(windowState);
-      } else {
-        console.warn("[GameScreen] User tray or its setAppearance method not available.");
-      }
     }
 
     loadGame(flashVars) {
@@ -564,27 +524,20 @@
       this.webViewElem.classList.remove("hidden");
       this.webViewElem.src = globals.config.gameWebClient;
       this.webViewElem.addEventListener("dom-ready", () => {
-        if (globals.config.showTools) {
-          this.webViewElem.openDevTools();
-        }
-        // Use the flashVars as-is without forcing locale to 'en'
-        console.log('[GameScreen] Using original flashVars with locale:', flashVars.locale); // Log the selected locale
-        this.webViewElem.send("flashVarsReady", flashVars);
-
-        // Notify main process that game screen is ready for devtools shortcut
-        window.ipc.send('game-screen-ready-for-devtools');
-        console.log('[GameScreen] Sent game-screen-ready-for-devtools to main process.');
-        
-        if (this.userTray) {
-          if (flashVars.webRefPath !== "create_account") {
-            this.userTray.show(); // Make tray visible
-            // Determine initial appearance based on current window state (main process will send screenChange)
-            // For now, default to windowed appearance, screenChange event will correct it.
-            this.userTray.setAppearance('windowed'); 
-          } else {
-            this.userTray.hide(); // Hide tray on account creation screen
+        if (globals.config && globals.config.showTools) {
+          if (this.webViewElem && !this.webViewElem.isDestroyed() && !this.webViewElem.isDevToolsOpened()) {
+            this.webViewElem.openDevTools({ mode: 'detach' });
+            console.log('[GameScreen] Automatically opened game webview DevTools due to globals.config.showTools.');
           }
         }
+        // Use the flashVars as-is without forcing locale to 'en'
+        console.log('[GameScreen] Using original flashVars with locale:', flashVars.locale);
+        this.webViewElem.send("flashVarsReady", flashVars);
+
+        // No longer sending 'game-webview-ready' for DevTools purposes, GameScreen handles its own.
+        // const gameWebContentsId = this.webViewElem.getWebContentsId();
+        // window.ipc.send('game-webview-ready', gameWebContentsId);
+        // console.log('[GameScreen] Sent game-webview-ready to main process with ID:', gameWebContentsId);
       }, {once: true});
 
       // Sometimes loading the URL just fails, retry once then display an oops
@@ -614,9 +567,6 @@
       this.webViewElem.classList.add("hidden");
       this.retrying = false;
       this.closeGameTimeout = setTimeout(this.resetWebView.bind(this), 1000);
-      if (this.userTray) {
-        this.userTray.hide(); // Hide tray when game closes
-      }
       this.classList.remove("no-transition-delays");
       this.classList.remove("show");
     }
@@ -628,17 +578,11 @@
       if (this.gameFrameElem) {
         this.gameFrameElem.classList.add("logged-out");
       }
-      if (this.userTray) {
-         this.userTray.hide(); // Ensure tray is hidden
-      }
       this.closeGameTimeout = null;
     }
 
     localize() {
       // this.floatingContainerElem.localize(); // Old tray
-      if (this.userTray && typeof this.userTray.localize === 'function') {
-        this.userTray.localize();
-      }
     }
   });
 })();

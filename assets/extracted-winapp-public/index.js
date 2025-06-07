@@ -26,6 +26,7 @@ const AUTO_UPDATE_STARTUP_DELAY_MS = 2000;
 const AUTO_UPDATE_PERIODIC_DELAY_MS = 1 * 60 * 60 * 1000; 
 
 let win = null;
+// let gameWebviewContentsId = null; // Main process will not directly manage game webview DevTools via ID.
 
 let printWindow = null;
 
@@ -211,8 +212,13 @@ const setApplicationMenu = () => {
       accelerator: "CmdOrCtrl+Shift+I",
       click: () => {
         if (win && win.webContents && !win.isDestroyed()) {
-          win.webContents.toggleDevTools();
-          win.webContents.send("toggleDevTools"); // Send to renderer unconditionally
+          if (win.webContents.isDevToolsOpened()) {
+            win.webContents.closeDevTools();
+          } else {
+            win.webContents.openDevTools({ mode: 'detach' });
+          }
+          log('info', '[DevTools] Toggled for main window.');
+          win.webContents.send("toggleDevTools");
         }
       },
     }],
@@ -512,6 +518,8 @@ ipcMain.on("winReady", () => {
     win.webContents.send("postSystemData", getSystemData());
   }
 });
+
+// ipcMain.on('game-webview-ready', ... ) // This listener is removed.
 
 ipcMain.on('user-now-logged-in', () => {
   isUserLoggedIn = true;
@@ -944,7 +952,12 @@ app.whenReady().then(async () => {
     }
   }
   loadClient();
-  log('info', '[DevTools] Developer Console on start is disabled by default. Use shortcut to open.');
+
+  if (config.showTools && win && win.webContents && !win.isDestroyed()) {
+      win.webContents.openDevTools({ mode: 'detach' }); // Opens DevTools for the main window
+      log('info', '[DevTools] Main window DevTools opened on startup due to config.showTools. GameScreen will handle its own if present.');
+  }
+
   setApplicationMenu();
   win.on("closed", () => {
     win = null;
