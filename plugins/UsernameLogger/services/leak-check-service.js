@@ -142,7 +142,7 @@ class LeakCheckService {
 
         // Get file paths using the utility and stored dataPath
         const mainAppSettings = this.application.settings || { get: () => undefined }; // Graceful fallback
-        const customOutputDir = mainAppSettings.get('leakCheckOutputDir');
+        const customOutputDir = mainAppSettings.get('plugins.usernameLogger.outputDir'); // Corrected key
         const paths = getFilePaths(this.dataPath, customOutputDir);
 
         // Read logged usernames from the collected usernames file

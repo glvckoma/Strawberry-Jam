@@ -24,23 +24,25 @@ class ConfigModel {
     // DEFAULT_CONFIG is now empty.
     this.config = { ...DEFAULT_CONFIG };
     this.leakCheckLastProcessedIndex = -1;
+    this.migrationCompleted = false; // Initialize migration status
   }
 
   /**
-   * Loads only the leakCheckLastProcessedIndex from the plugin's specific config file.
+   * Loads leakCheckLastProcessedIndex and migrationCompleted from the plugin's specific config file.
    * Other settings are now fetched from the main application settings.
-   * @returns {Promise<boolean>} True if index was loaded successfully or file not found (defaults to -1).
+   * @returns {Promise<boolean>} True if state was loaded successfully or file not found (defaults applied).
    */
   async loadConfig() {
     try {
       const configData = await fs.readFile(this.configFilePath, 'utf8');
       const savedState = JSON.parse(configData);
       this.leakCheckLastProcessedIndex = savedState.leakCheckLastProcessedIndex ?? -1;
+      this.migrationCompleted = savedState.migrationCompleted ?? false; // Load migration status
       
       if (process.env.NODE_ENV === 'development') {
         this.application.consoleMessage({
           type: 'logger',
-          message: `[Username Logger] Loaded plugin state from ${this.configFilePath}. Index: ${this.leakCheckLastProcessedIndex}`
+          message: `[Username Logger] Loaded plugin state from ${this.configFilePath}. Index: ${this.leakCheckLastProcessedIndex}, Migration Completed: ${this.migrationCompleted}`
         });
       }
       return true;
@@ -49,7 +51,7 @@ class ConfigModel {
         if (process.env.NODE_ENV === 'development') {
           this.application.consoleMessage({
             type: 'warn',
-            message: `[Username Logger] Plugin state file not found (${this.configFilePath}). Index defaults to -1.`
+            message: `[Username Logger] Plugin state file not found (${this.configFilePath}). Index defaults to -1, Migration defaults to false.`
           });
         }
       } else {
@@ -61,18 +63,20 @@ class ConfigModel {
         }
       }
       this.leakCheckLastProcessedIndex = -1; // Default on any error
+      this.migrationCompleted = false; // Default on any error
       return false; // Indicate defaults were used or loading failed
     }
   }
   
   /**
-   * Saves only the leakCheckLastProcessedIndex to the plugin's specific config file.
+   * Saves leakCheckLastProcessedIndex and migrationCompleted to the plugin's specific config file.
    * @returns {Promise<boolean>} True if saved successfully.
    */
   async saveConfig() {
     try {
       const stateToSave = {
-        leakCheckLastProcessedIndex: this.leakCheckLastProcessedIndex
+        leakCheckLastProcessedIndex: this.leakCheckLastProcessedIndex,
+        migrationCompleted: this.migrationCompleted // Save migration status
       };
 
       const configDir = path.dirname(this.configFilePath);
@@ -82,7 +86,7 @@ class ConfigModel {
       if (process.env.NODE_ENV === 'development') {
         this.application.consoleMessage({
           type: 'logger',
-          message: `[Username Logger] Saved plugin state (index: ${this.leakCheckLastProcessedIndex}) to ${this.configFilePath}`
+          message: `[Username Logger] Saved plugin state (index: ${this.leakCheckLastProcessedIndex}, migration: ${this.migrationCompleted}) to ${this.configFilePath}`
         });
       }
       return true;
@@ -172,14 +176,42 @@ class ConfigModel {
   }
 
   /**
+   * Gets the migration completed status.
+   * @returns {boolean} True if migration has been completed.
+   */
+  getMigrationStatus() {
+    return this.migrationCompleted;
+  }
+
+  /**
+   * Sets the migration completed status.
+   * @param {boolean} status - The new migration status.
+   */
+  setMigrationStatus(status) {
+    if (typeof status === 'boolean') {
+      this.migrationCompleted = status;
+      return true;
+    }
+    this.application.consoleMessage({
+      type: 'warn',
+      message: `[Username Logger] Invalid status for setMigrationStatus: ${status}`
+    });
+    return false;
+  }
+
+  /**
    * Resets configuration to defaults
    * @param {boolean} preserveApiKey - Whether to preserve the API key
    */
   resetConfig(preserveApiKey = true) {
     const apiKey = preserveApiKey ? this.config.leakCheckApiKey : undefined;
     this.config = { ...DEFAULT_CONFIG };
+    // Reset internal state too
+    this.leakCheckLastProcessedIndex = -1;
+    this.migrationCompleted = false; // Should be reset if config is fully reset
+
     if (preserveApiKey && apiKey) {
-      this.config.leakCheckApiKey = apiKey;
+      this.config.leakCheckApiKey = apiKey; // This key is deprecated from this.config
     }
   }
 }

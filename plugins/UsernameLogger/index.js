@@ -35,7 +35,10 @@ class UsernameLogger {
     
     // Set up configuration path within the user data directory
     this.configFilePath = path.join(this.dataPath, 'UsernameLogger', 'config.json');
-    this.isLoggingCurrentlyEnabled = null; // Track the current state to avoid log spam
+    this.isLoggingCurrentlyEnabled = null;
+    // this.wasCollectingNearby = null; // No longer needed
+    // this.wasCollectingBuddies = null; // No longer needed
+    // this.isInitialPluginLoad = true; // No longer needed with simplified logic
     
     // Initialize components
     this._initializeComponents();
@@ -173,31 +176,40 @@ class UsernameLogger {
    */
   async onSettingsUpdated() {
     try {
-      // Get the latest UI settings from the main process store
-      const enableLogging = await this.dispatch.getState('plugins.usernameLogger.collection.enabled');
-      const collectNearby = await this.dispatch.getState('plugins.usernameLogger.collection.collectNearby');
-      const collectBuddies = await this.dispatch.getState('plugins.usernameLogger.collection.collectBuddies');
-      const autoCheckEnabled = await this.dispatch.getState('plugins.usernameLogger.autoCheck.enabled');
-      const autoCheckThreshold = await this.dispatch.getState('plugins.usernameLogger.autoCheck.threshold');
+      // Get the latest UI settings from the main application settings store
+      const currentEnableLogging = await this.application.settings.get('plugins.usernameLogger.collection.enabled');
+      const currentCollectNearby = await this.application.settings.get('plugins.usernameLogger.collection.collectNearby');
+      const currentCollectBuddies = await this.application.settings.get('plugins.usernameLogger.collection.collectBuddies');
+      
+      // For other features, not part of this specific logging request but needed for handler config
+      const autoCheckEnabled = await this.application.settings.get('plugins.usernameLogger.autoCheck.enabled');
+      const autoCheckThreshold = await this.application.settings.get('plugins.usernameLogger.autoCheck.threshold');
 
-      // Only log if the state has changed or on the initial check
-      if (this.isLoggingCurrentlyEnabled === null || this.isLoggingCurrentlyEnabled !== enableLogging) {
+      // Log master toggle status if it's the initial call or if the state changed
+      if (this.isLoggingCurrentlyEnabled === null || this.isLoggingCurrentlyEnabled !== currentEnableLogging) {
         this.application.consoleMessage({
-          type: enableLogging ? 'success' : 'warn',
-          message: `Username Logging is ${enableLogging ? 'enabled' : 'disabled'}.`
+          type: currentEnableLogging ? 'success' : 'warn',
+          // Differentiate initial log from subsequent change logs slightly for clarity
+          message: (this.isLoggingCurrentlyEnabled === null)
+            ? `Username Logging is ${currentEnableLogging ? 'enabled' : 'disabled'}.`
+            : `Username Logging is now ${currentEnableLogging ? 'enabled' : 'disabled'}.`
         });
       }
-      this.isLoggingCurrentlyEnabled = enableLogging;
+
+      // Update stored state for the master toggle
+      this.isLoggingCurrentlyEnabled = currentEnableLogging;
+      // this.wasCollectingNearby and this.wasCollectingBuddies are no longer used for logging here.
 
       // Always unregister handlers first to ensure a clean state
       this.messageHandlers.unregisterHandlers(this.dispatch);
 
       // Conditionally register message handlers based on the new settings
-      if (enableLogging) {
-        // Pass the latest settings to the message handler instance
+      if (currentEnableLogging) {
+        // Pass the latest settings to the message handler instance, including enableLogging
         this.messageHandlers.updateSettings({
-          collectNearby,
-          collectBuddies,
+          enableLogging: currentEnableLogging, // Add this
+          collectNearby: currentCollectNearby,
+          collectBuddies: currentCollectBuddies,
           autoCheckEnabled,
           autoCheckThreshold
         });

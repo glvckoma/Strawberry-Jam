@@ -712,28 +712,14 @@ module.exports = class Dispatch {
    * @returns {any}
    * @public
    */
-  async getState (key, defaultValue = null) {
-    // First, check local state for things like 'room' or 'player' which are set dynamically.
-    if (this.state[key] !== undefined) {
-      return this.state[key];
+  getState (key, defaultValue = null) {
+    const value = this.state[key] !== undefined ? this.state[key] : defaultValue;
+    if (key === 'room') {
+      devLog(`[ROOMLOGIC_DEBUG] Dispatch getState: Requesting 'room'. Current this.state.room: ${this.state.key}. Returning: ${value}`);
+    } else if (key === 'player') {
+      devLog(`[ROOMLOGIC_DEBUG] Dispatch getState: Requesting 'player'. Returning:`, value);
     }
-
-    // If not in local state, assume it's a persisted setting and fetch from the main process.
-    if (typeof require === "function") {
-      try {
-        const { ipcRenderer } = require('electron');
-        const value = await ipcRenderer.invoke('get-setting', key);
-        // Return the retrieved value, or the provided default if the value is null/undefined.
-        return value !== null && value !== undefined ? value : defaultValue;
-      } catch (e) {
-        devError(`[Dispatch] Error invoking 'get-setting' for key '${key}':`, e);
-        // In case of an IPC error, return the default value.
-        return defaultValue;
-      }
-    }
-    
-    // Fallback for non-electron environments or if require fails.
-    return defaultValue;
+    return value;
   }
 
   /**
@@ -860,24 +846,45 @@ module.exports = class Dispatch {
    * @param options
    * @public
    */
-  offMessage ({ type, message, callback } = {}) {
+  offMessage ({ type, message, callback } = {}) { // Added 'message' parameter
     const hooksMap = {
       [ConnectionMessageTypes.aj]: this.hooks.aj,
       [ConnectionMessageTypes.connection]: this.hooks.connection,
       [ConnectionMessageTypes.any]: this.hooks.any
     }
 
-    const hooks = hooksMap[type]
+    const specificHooksMap = hooksMap[type]; // e.g., this.hooks.aj
 
-    if (hooks) {
-      // Correctly use the 'message' as the key to get the list of callbacks
-      const hookList = hooks.get(message)
+    if (specificHooksMap) {
+      // Use the 'message' parameter to get the correct list of callbacks
+      const hookList = specificHooksMap.get(message);
       if (hookList) {
-        const index = hookList.indexOf(callback)
+        const index = hookList.indexOf(callback);
         if (index !== -1) {
-          hookList.splice(index, 1)
-          devLog(`[Dispatch] Successfully unregistered hook for type '${type}', message '${message}'.`);
+          hookList.splice(index, 1);
+          if (isDevelopment) {
+            devLog(`[Dispatch] Successfully removed hook for type='${type}', message='${message}'. Remaining: ${hookList.length}`);
+          }
+          // If the list becomes empty, optionally delete the key from the map
+          if (hookList.length === 0) {
+            specificHooksMap.delete(message);
+            if (isDevelopment) {
+              devLog(`[Dispatch] Hook list for type='${type}', message='${message}' is now empty. Key deleted.`);
+            }
+          }
+        } else {
+          if (isDevelopment) {
+            devLog(`[Dispatch] Callback not found for type='${type}', message='${message}'. No action taken.`);
+          }
         }
+      } else {
+        if (isDevelopment) {
+          devLog(`[Dispatch] No hook list found for type='${type}', message='${message}'. No action taken.`);
+        }
+      }
+    } else {
+      if (isDevelopment) {
+        devLog(`[Dispatch] Invalid hook type '${type}' for offMessage. No action taken.`);
       }
     }
   }
@@ -952,28 +959,6 @@ module.exports = class Dispatch {
     any.clear()
   }
 
- /**
-  * Notifies all loaded game plugins that settings have been updated.
-  * Iterates through plugins and calls `onSettingsUpdated` if the method exists.
-  * @public
-  */
- notifyPluginsOfSettingsUpdate() {
-   devLog('[Dispatch] Notifying plugins of settings update...');
-   for (const [name, pluginData] of this.plugins.entries()) {
-     // Only notify game plugins that have an instantiated object
-     if (pluginData.plugin && typeof pluginData.plugin.onSettingsUpdated === 'function') {
-       try {
-         devLog(`[Dispatch] Calling onSettingsUpdated for plugin: ${name}`);
-         pluginData.plugin.onSettingsUpdated();
-       } catch (error) {
-         this._consoleMessage({
-           type: 'error',
-           message: `Error calling onSettingsUpdated for plugin ${name}: ${error.message}`
-         });
-       }
-     }
-   }
- }
 
   /**
    * Validates configuration and installs dependencies. Does not instantiate or render.
@@ -1061,6 +1046,51 @@ module.exports = class Dispatch {
         type: 'error',
         message: `Error processing/rendering plugin ${configuration.name}: ${error.message}`
       });
+    }
+  }
+
+  /**
+   * Notifies all loaded plugins that have an onSettingsUpdated method.
+   * This should be called after settings have been saved.
+   * @public
+   */
+  async notifyPluginsOfSettingsUpdate() {
+    devLog('[Dispatch] Attempting to flush settings before notifying plugins...');
+    try {
+      if (this._application && this._application.settings && typeof this._application.settings.flush === 'function') {
+        await this._application.settings.flush();
+        devLog('[Dispatch] Settings flushed successfully.');
+      } else {
+        devLog('[Dispatch] Could not flush settings: application or settings object or flush method not available.');
+      }
+    } catch (flushError) {
+      devError('[Dispatch] Error flushing settings:', flushError);
+      this._consoleMessage({
+        type: 'error',
+        message: `[Dispatch] Error flushing settings before update: ${flushError.message}`
+      });
+      // Decide if we should proceed or not. For now, let's proceed but log the error.
+    }
+
+    devLog('[Dispatch] Notifying plugins of settings update...');
+    for (const [name, pluginData] of this.plugins) {
+      // pluginData.plugin holds the instance for game plugins
+      // UI plugins don't have an instance stored directly in this.plugins in the current structure
+      // This notification is primarily for game plugins that might react to settings changes.
+      // UI plugins typically re-fetch settings when they are opened or interacted with.
+      const pluginInstance = pluginData.plugin;
+      if (pluginInstance && typeof pluginInstance.onSettingsUpdated === 'function') {
+        try {
+          devLog(`[Dispatch] Calling onSettingsUpdated for plugin: ${name}`);
+          await pluginInstance.onSettingsUpdated();
+        } catch (error) {
+          this._consoleMessage({
+            type: 'error',
+            message: `Error calling onSettingsUpdated for plugin ${name}: ${error.message}`
+          });
+          devError(`[Dispatch] Error in onSettingsUpdated for ${name}:`, error);
+        }
+      }
     }
   }
 

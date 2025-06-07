@@ -42,6 +42,34 @@ const messageIcons = Object.freeze({
   welcome: 'fa-heart'
 })
 
+// Global Toast Function
+function showGlobalToast (message, type = 'success', duration = 7000) { // Increased default duration further
+  const colors = {
+    success: 'bg-highlight-green text-white',
+    error: 'bg-error-red text-white',
+    warning: 'bg-highlight-yellow text-black', // Changed warning to have black text for better contrast
+    notify: 'bg-custom-blue text-white',
+    checking: 'bg-gray-600 text-white', // For 'checking' status
+    available: 'bg-blue-500 text-white', // For 'available' status
+    downloaded: 'bg-purple-500 text-white' // For 'downloaded' status
+  }
+  const toastId = `global-toast-${Date.now()}`;
+  const toast = $(`
+    <div id="${toastId}" class="fixed bottom-32 right-4 px-4 py-3 rounded-lg shadow-xl z-[99999] text-sm font-medium ${colors[type] || colors.notify}" style="opacity: 0; transform: translateY(20px);">
+      ${message}
+    </div>
+  `);
+  $('body').append(toast);
+
+  // Animate in
+  toast.animate({ opacity: 1, transform: 'translateY(0)' }, 300);
+
+  setTimeout(() => {
+    toast.animate({ opacity: 0, transform: 'translateY(20px)' }, 300, function () { $(this).remove() });
+  }, duration);
+}
+
+
 module.exports = class Application extends EventEmitter {
   /**
    * Constructor.
@@ -191,6 +219,7 @@ module.exports = class Application extends EventEmitter {
 
     this._setupPluginIPC(); // Moved from instantiate to ensure handlers are ready early
     this._setupStatusIndicatorIPC(); // Add call to setup new listeners
+    // this._setupAppUpdateIPC(); // Call is already commented out, ensuring it remains so.
   }
 
   /**
@@ -285,17 +314,17 @@ module.exports = class Application extends EventEmitter {
         }
 
         ipcRenderer.on('plugin-remote-message', async (event, msg) => { // Make handler async
-          console.log('[AppIndex IPC] Received plugin-remote-message in renderer:', msg);
+          devLog('[AppIndex IPC] Received plugin-remote-message in renderer:', msg);
           let processedMsg = msg;
           
           // Check if dispatch is ready and message needs processing
           if (this.dispatch && typeof msg === 'string' && msg.includes('{room}')) {
-            console.log('[AppIndex IPC] Message contains {room}, attempting to replace.');
+            devLog('[AppIndex IPC] Message contains {room}, attempting to replace.');
             try {
               const currentRoom = await this.dispatch.getState('room'); // Await the async call
               if (currentRoom) {
                 processedMsg = msg.replaceAll('{room}', currentRoom);
-                console.log('[AppIndex IPC] Replaced {room}. ProcessedMsg:', processedMsg);
+                devLog('[AppIndex IPC] Replaced {room}. ProcessedMsg:', processedMsg);
               } else {
                 devWarn('[Application._setupPluginIPC] {room} placeholder found, but current room is null or undefined after await. Message will be sent with placeholder unreplaced.');
               }
@@ -305,21 +334,21 @@ module.exports = class Application extends EventEmitter {
             }
           }
           
-          console.log(`[AppIndex IPC] this.dispatch is: ${typeof this.dispatch}`);
+          devLog(`[AppIndex IPC] this.dispatch is: ${typeof this.dispatch}`);
           if (this.dispatch) {
-            console.log(`[AppIndex IPC] this.dispatch.sendRemoteMessage is: ${typeof this.dispatch.sendRemoteMessage}`);
+            devLog(`[AppIndex IPC] this.dispatch.sendRemoteMessage is: ${typeof this.dispatch.sendRemoteMessage}`);
           }
 
           // Send the (potentially processed) message
           if (this.dispatch && typeof this.dispatch.sendRemoteMessage === 'function') {
-            console.log('[AppIndex IPC] Calling this.dispatch.sendRemoteMessage with:', processedMsg);
+            devLog('[AppIndex IPC] Calling this.dispatch.sendRemoteMessage with:', processedMsg);
             this.dispatch.sendRemoteMessage(processedMsg).catch(err => {
               this.consoleMessage({ type: 'error', message: `Error sending remote message from plugin: ${err.message}` });
-              console.error('[AppIndex IPC] Error in this.dispatch.sendRemoteMessage:', err);
+              devError('[AppIndex IPC] Error in this.dispatch.sendRemoteMessage:', err); // Changed to devError
             });
           } else {
             this.consoleMessage({ type: 'error', message: 'Cannot send remote message: Dispatch not ready.' });
-            console.error('[AppIndex IPC] Dispatch not ready or sendRemoteMessage is not a function.');
+            devError('[AppIndex IPC] Dispatch not ready or sendRemoteMessage is not a function.'); // Changed to devError
           }
         });
 
@@ -373,16 +402,6 @@ module.exports = class Application extends EventEmitter {
         devError("[Main Renderer] Error setting up plugin IPC listeners:", e);
       }
 
-      try {
-        ipcRenderer.on('broadcast-plugin-settings-updated', () => {
-          if (this.dispatch) {
-            devLog('[Renderer IPC] Received settings update broadcast, notifying dispatch.');
-            this.dispatch.notifyPluginsOfSettingsUpdate();
-          }
-        });
-      } catch (e) {
-        devError("[Main Renderer] Error setting up settings broadcast listener:", e);
-      }
     }
   }
 
@@ -424,6 +443,51 @@ module.exports = class Application extends EventEmitter {
       }
     }
   }
+
+  // /**
+  //  * Sets up IPC listeners for application update status. (REMOVED - Global toasts for updates are disabled)
+  //  * @private
+  //  */
+  // _setupAppUpdateIPC() {
+  //   if (typeof require === "function") {
+  //     try {
+  //       const { ipcRenderer } = require('electron');
+  //       ipcRenderer.on('app-update-status', (event, { status, message, version }) => {
+  //         devLog(`[Renderer IPC] Received app-update-status: ${status}, Message: ${message}, Version: ${version}`);
+  //         let toastType = 'notify';
+  //         let toastMessage = message;
+  //         let duration = 7000; // Default duration from previous adjustment
+  //
+  //         switch (status) {
+  //           case 'checking':
+  //             toastType = 'checking'; // Use a specific type for styling if needed, or 'notify'
+  //             break;
+  //           case 'no-update':
+  //             toastType = 'success';
+  //             break;
+  //           case 'available':
+  //             toastType = 'available';
+  //             toastMessage = version ? `${message} (v${version})` : message;
+  //             duration = 5000; // Keep available message longer (reverted from 7000 for this specific case if desired)
+  //             break;
+  //           case 'downloaded':
+  //             toastType = 'downloaded'; // Or 'celebrate' from settings.js
+  //             duration = 7000; // Keep downloaded message longer
+  //             break;
+  //           case 'error':
+  //             toastType = 'error';
+  //             duration = 5000; // Reverted from 7000 for this specific case if desired
+  //             break;
+  //           default:
+  //             toastType = 'notify';
+  //         }
+  //         showGlobalToast(toastMessage, toastType, duration);
+  //       });
+  //     } catch (e) {
+  //       devError("[Renderer IPC] Error setting up app update status listeners:", e);
+  //     }
+  //   }
+  // }
 
   /**
    * Updates the status indicator for a specific plugin.
@@ -497,12 +561,12 @@ module.exports = class Application extends EventEmitter {
     
     // Set up a one-time event listener for settings modal close
     // to reload log limits in case they changed
-    const onModalClosed = () => {
-      this.reloadLogLimitSettings();
-      this.removeListener('modal:closed:settings', onModalClosed);
-    };
-    
-    this.once('modal:closed:settings', onModalClosed);
+    // const onModalClosed = () => {
+    //   this.reloadLogLimitSettings(); // This call is likely redundant and contributing to the loop.
+    //   this.removeListener('modal:closed:settings', onModalClosed);
+    // };
+    // this.once('modal:closed:settings', onModalClosed);
+    // The settings are now flushed upon save, so log limits should be up-to-date.
   }
 
   /**

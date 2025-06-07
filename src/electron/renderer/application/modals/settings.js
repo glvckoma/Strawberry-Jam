@@ -101,8 +101,36 @@ exports.render = function (app, data = {}) {
 
           <!-- General Tab Content -->
           <div id="generalTabContent" class="settings-tab-content space-y-4">
-            <!-- Startup Behavior Section -->
+            <!-- Update Section -->
             <div class="space-y-4">
+              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
+                <i class="fas fa-sync-alt mr-2 text-highlight-yellow"></i>Application Updates
+              </h4>
+              <div>
+                <button type="button" id="checkForUpdatesBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
+                  <i class="fas fa-search mr-2"></i>Check for Updates
+                </button>
+                <p class="mt-1 text-xs text-gray-400">Manually check for new versions of Strawberry Jam.</p>
+                <p id="manualUpdateStatusText" class="mt-2 text-xs text-gray-400"></p>
+              </div>
+              <!-- Auto Update Toggle -->
+              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded mt-4">
+                <label for="enableAutoUpdatesToggle" class="text-sm text-text-primary">Enable Automatic Updates</label>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="enableAutoUpdatesToggle" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
+                    <span class="toggle-text-off">OFF</span>
+                    <span class="toggle-text-on">ON</span>
+                  </div>
+                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                </label>
+              </div>
+              <p class="mt-1 text-xs text-gray-400 -mt-3">If enabled, the application will automatically download and prompt to install updates when available.</p>
+            </div>
+            <!-- End Update Section -->
+
+            <!-- Startup Behavior Section -->
+            <div class="space-y-4 pt-4">
               <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
                 <i class="fas fa-rocket mr-2 text-highlight-yellow"></i>Startup Behavior
               </h4>
@@ -379,10 +407,15 @@ exports.render = function (app, data = {}) {
  * @param {Application} app - The application instance
  */
 exports.close = function (app) {
-  // Cleanup IPC listeners when modal closes (REMOVED leak-check listeners)
-  // Check if ipcRenderer exists before using it
+  // Cleanup IPC listeners when modal closes
   if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
-    // No leak-check specific listeners to remove anymore
+    // Remove the specific listener for manual update checks when the modal is closed
+    // to prevent multiple listeners if the modal is reopened.
+    // Note: This is a simplified cleanup. A more robust solution might involve
+    // storing the listener function and using ipcRenderer.removeListener().
+    // For now, we rely on the fact that this modal's JS is re-evaluated on each open.
+    // However, to be safe, explicitly remove all listeners for this channel.
+    ipcRenderer.removeAllListeners('manual-update-check-status');
   } else {
     console.warn('[Settings Close] ipcRenderer not available for cleanup.');
   }
@@ -478,6 +511,11 @@ function setActiveTab(tabDataId, $modalContext) {
  * @param {Application} app - The application instance
  */
 function setupEventHandlers ($modal, app) {
+  // Ensure any existing listeners for manual update status are removed before adding a new one.
+  // This is a safeguard, as `exports.close` also handles this.
+  if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
+    ipcRenderer.removeAllListeners('manual-update-check-status');
+  }
 
   // --- Define Helper Functions First ---
   // REMOVED const $leakCheckStatus = $modal.find('#leakCheckStatus');
@@ -585,8 +623,8 @@ function setupEventHandlers ($modal, app) {
   // --- Attach Button Click Handlers ---
   $openOutputDirButton.on('click', async () => {
     try {
-      const customOutputDir = await ipcRenderer.invoke('get-setting', 'leakCheck.outputDir');
-      const dirToOpen = (customOutputDir && customOutputDir.trim() !== '') ? customOutputDir : app.dataPath;
+      const customOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir'); // Corrected key
+      const dirToOpen = (customOutputDir && customOutputDir.trim() !== '') ? customOutputDir : app.dataPath; // Behavior for empty custom path might need review later
       
       if (dirToOpen) {
         if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
@@ -664,6 +702,56 @@ function setupEventHandlers ($modal, app) {
 
   // --- End Danger Zone Handlers ---
 
+  const $checkForUpdatesBtn = $modal.find('#checkForUpdatesBtn');
+  const $manualUpdateStatusText = $modal.find('#manualUpdateStatusText');
+
+  $checkForUpdatesBtn.on('click', () => {
+    ipcRenderer.send('check-for-updates');
+    // Initial state when button is clicked
+    $manualUpdateStatusText.text('Checking for updates...').removeClass('text-green-400 text-red-400').addClass('text-yellow-400');
+    $checkForUpdatesBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Checking...').prop('disabled', true);
+  });
+
+  ipcRenderer.on('manual-update-check-status', (event, { status, message, version }) => {
+    switch (status) {
+      case 'checking':
+        $manualUpdateStatusText.text(message || 'Checking for updates...').removeClass('text-green-400 text-red-400').addClass('text-yellow-400');
+        $checkForUpdatesBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Checking...').prop('disabled', true);
+        break;
+      case 'no-update':
+        $manualUpdateStatusText.text(message || 'No new updates available.').removeClass('text-yellow-400 text-red-400').addClass('text-green-400');
+        $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false);
+        break;
+      case 'available':
+        const availableMessage = version ? `${message} (v${version})` : message;
+        $manualUpdateStatusText.text(availableMessage).removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
+        // Potentially change button to "Download Update" or similar if auto-download is off
+        // For now, just re-enable the check button. If auto-download is on, main process handles it.
+        // If auto-download is off, user might need to click again or we add a download button.
+        // For this iteration, we'll just re-enable the check button.
+        // A more advanced flow would involve an "Update Now" button appearing.
+        $checkForUpdatesBtn.html('<i class="fas fa-cloud-download-alt mr-2"></i>Update Available').prop('disabled', false);
+        break;
+      case 'downloaded':
+        $manualUpdateStatusText.text(message || 'Update downloaded. Restart to install.').removeClass('text-yellow-400 text-red-400').addClass('text-purple-400');
+        // Change button to prompt restart
+        $checkForUpdatesBtn.html('<i class="fas fa-power-off mr-2"></i>Restart to Install')
+          .prop('disabled', false)
+          .off('click') // Remove previous click listener
+          .on('click', () => { // Add new listener to restart
+            ipcRenderer.send('app-restart');
+          });
+        break;
+      case 'error':
+        $manualUpdateStatusText.text(message || 'Error checking for updates.').removeClass('text-yellow-400 text-green-400').addClass('text-red-400');
+        $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false);
+        break;
+      default:
+        $manualUpdateStatusText.text('').removeClass('text-yellow-400 text-green-400 text-red-400');
+        $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false);
+    }
+  });
+
   // --- End Button Click Handlers ---
 
 
@@ -698,13 +786,14 @@ async function loadSettings ($modal, app) { // Made async
     const hideGamePlugins = await ipcRenderer.invoke('get-setting', 'ui.hideGamePlugins');
 
     // LeakCheck settings
+    // Using 'plugins.usernameLogger.apiKey' to align with main process Keytar storage
     const leakCheckApiKey = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.apiKey');
-    const leakCheckAutoCheck = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.autoCheck.enabled');
-    const leakCheckThreshold = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.autoCheck.threshold');
-    const leakCheckEnableLogging = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.enabled');
-    const leakCheckOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir');
-    const usernameLoggerCollectNearby = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.collectNearby');
-    const usernameLoggerCollectBuddies = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.collectBuddies');
+    const leakCheckAutoCheck = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.autoCheck.enabled'); // Corrected key
+    const leakCheckThreshold = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.autoCheck.threshold'); // Corrected key
+    const leakCheckEnableLogging = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.enabled'); // Corrected key
+    const leakCheckOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir'); // Corrected key
+    const usernameLoggerCollectNearby = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.collectNearby'); // Corrected key
+    const usernameLoggerCollectBuddies = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.collectBuddies'); // Corrected key
     // REMOVED: const autoClearResults = await ipcRenderer.invoke('get-setting', 'leakCheck.autoClearResults');
 
     // Log limiting settings
@@ -713,6 +802,9 @@ async function loadSettings ($modal, app) { // Made async
 
     // Startup Behavior settings
     const performServerCheckOnLaunch = await ipcRenderer.invoke('get-setting', 'ui.performServerCheckOnLaunch');
+
+    // Auto Update setting
+    const enableAutoUpdates = await ipcRenderer.invoke('get-setting', 'updates.enableAutoUpdates');
 
     // Populate form fields (moved server settings to advanced tab)
     $modal.find('#advancedSmartfoxServer').val(smartfoxServer || '');
@@ -737,6 +829,9 @@ async function loadSettings ($modal, app) { // Made async
 
     // Populate Startup Behavior settings
     $modal.find('#performServerCheckOnLaunchToggle').prop('checked', performServerCheckOnLaunch === true);
+
+    // Populate Auto Update setting
+    $modal.find('#enableAutoUpdatesToggle').prop('checked', enableAutoUpdates === true);
 
     // Set initial state for LeakCheck threshold
     if ($leakCheckAutoCheck.length) {
@@ -837,13 +932,14 @@ async function saveSettings ($modal, app) { // Made async
       { key: 'network.smartfoxServer', value: $modal.find('#advancedSmartfoxServer').val() },
       { key: 'network.secureConnection', value: $modal.find('#advancedSecureConnection').is(':checked') },
       { key: 'ui.hideGamePlugins', value: $modal.find('#hideGamePlugins').is(':checked') },
+      // Using 'plugins.usernameLogger.apiKey' to align with main process Keytar storage
       { key: 'plugins.usernameLogger.apiKey', value: $modal.find('#leakCheckApiKey').val() },
-      { key: 'plugins.usernameLogger.autoCheck.enabled', value: $modal.find('#leakCheckAutoCheck').is(':checked') },
-      { key: 'plugins.usernameLogger.autoCheck.threshold', value: parseInt($modal.find('#leakCheckThreshold').val()) || 100 },
-      { key: 'plugins.usernameLogger.collection.enabled', value: $modal.find('#leakCheckEnableLogging').is(':checked') },
-      { key: 'plugins.usernameLogger.collection.collectNearby', value: $modal.find('#leakCheckCollectNearby').is(':checked') },
-      { key: 'plugins.usernameLogger.collection.collectBuddies', value: $modal.find('#leakCheckCollectBuddies').is(':checked') },
-      { key: 'plugins.usernameLogger.outputDir', value: $modal.find('#leakCheckOutputDirInput').val().trim() },
+      { key: 'plugins.usernameLogger.autoCheck.enabled', value: $modal.find('#leakCheckAutoCheck').is(':checked') }, // Corrected key
+      { key: 'plugins.usernameLogger.autoCheck.threshold', value: parseInt($modal.find('#leakCheckThreshold').val()) || 100 }, // Corrected key
+      { key: 'plugins.usernameLogger.collection.enabled', value: $modal.find('#leakCheckEnableLogging').is(':checked') }, // Corrected key
+      { key: 'plugins.usernameLogger.collection.collectNearby', value: $modal.find('#leakCheckCollectNearby').is(':checked') }, // Corrected key
+      { key: 'plugins.usernameLogger.collection.collectBuddies', value: $modal.find('#leakCheckCollectBuddies').is(':checked') }, // Corrected key
+      { key: 'plugins.usernameLogger.outputDir', value: $modal.find('#leakCheckOutputDirInput').val().trim() }, // Corrected key
       // REMOVED: { key: 'leakCheck.autoClearResults', value: $modal.find('#autoClearResults').is(':checked') }
       
       // Log limiting settings
@@ -851,31 +947,37 @@ async function saveSettings ($modal, app) { // Made async
       { key: 'logs.networkLimit', value: networkLogLimit },
 
       // Startup Behavior settings
-      { key: 'ui.performServerCheckOnLaunch', value: $modal.find('#performServerCheckOnLaunchToggle').is(':checked') }
+      { key: 'ui.performServerCheckOnLaunch', value: $modal.find('#performServerCheckOnLaunchToggle').is(':checked') },
+      { key: 'dev-log.performServerCheckOnLaunch', value: $modal.find('#performServerCheckOnLaunchToggle').is(':checked') },
+
+      // Auto Update setting
+      { key: 'updates.enableAutoUpdates', value: $modal.find('#enableAutoUpdatesToggle').is(':checked') }
     ];
 
-    let allSavedSuccessfully = true;
-
+    // Step 1: Update the app.settings renderer cache for each setting.
+    // This ensures the cache is current before flushing.
     for (const setting of settingsToSave) {
-      // console.log(`Saving setting: ${setting.key} = ${setting.value}`); // Log removed
-      const result = await ipcRenderer.invoke('set-setting', setting.key, setting.value);
-      if (!result || !result.success) {
-        allSavedSuccessfully = false;
-        console.error(`Failed to save setting ${setting.key}:`, result ? result.error : 'No response');
-        // Don't toast for each error, just one at the end if any failed.
+      if (app && app.settings && typeof app.settings.update === 'function') {
+        await app.settings.update(setting.key, setting.value);
+      } else {
+        console.error(`[Settings Save] app.settings.update is not available. Cannot update renderer cache for ${setting.key}.`);
+        showToast('Critical error: Settings cache cannot be updated.', 'error');
+        return; // Abort save if cache update isn't possible
       }
     }
 
-    if (allSavedSuccessfully) {
+    // Step 2: Notify plugins. This will trigger app.settings.flush()
+    // which saves the now up-to-date renderer cache to the main store.
+    if (app && app.dispatch && typeof app.dispatch.notifyPluginsOfSettingsUpdate === 'function') {
+      await app.dispatch.notifyPluginsOfSettingsUpdate(); // Ensure this is awaited
       showToast('Settings saved successfully!', 'success');
-      // Notify the main process that settings affecting plugins have been updated
-      const pluginRelatedKeys = settingsToSave.filter(s => s.key.startsWith('plugins.')).map(s => s.key);
-      if (pluginRelatedKeys.length > 0) {
-        ipcRenderer.send('plugin-settings-updated');
-      }
       app.modals.close();
     } else {
-      showToast('Some settings failed to save. Check console for details.', 'error');
+      console.warn('[Settings Save] Could not notify plugins of settings update: app.dispatch.notifyPluginsOfSettingsUpdate is not a function. Settings are cached locally and will attempt to save via debounce.');
+      // If dispatch is not available, the settings are in the renderer cache and will be saved by the debouncer from app.settings.update.
+      // This might not be ideal for immediate plugin reaction but prevents data loss.
+      showToast('Settings cached. Plugin updates may be delayed.', 'warning');
+      app.modals.close(); // Still close the modal
     }
 
   } catch (error) {

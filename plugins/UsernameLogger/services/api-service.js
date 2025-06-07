@@ -30,7 +30,7 @@ class ApiService {
       // Get the key via IPC - wrapped in try/catch to prevent any issues
       let apiKeyResponse;
       try {
-        apiKeyResponse = await ipcRenderer.invoke('get-setting', 'leakCheck.apiKey');
+        apiKeyResponse = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.apiKey'); // Corrected key
       } catch (ipcError) {
         // Log the error in dev mode, but still return null silently
         if (process.env.NODE_ENV === 'development') {
@@ -102,7 +102,7 @@ class ApiService {
       }
       
       // Use IPC to save the API key (consistent with how we retrieve it)
-      await ipcRenderer.invoke('set-setting', 'leakCheck.apiKey', apiKey);
+      await ipcRenderer.invoke('set-setting', 'plugins.usernameLogger.apiKey', apiKey); // Corrected key
       
       this.application.consoleMessage({
         type: 'success',

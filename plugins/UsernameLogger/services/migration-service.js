@@ -34,7 +34,10 @@ class MigrationService {
    */
   async migrateFromOldPath() {
     // Only run migration if it hasn't been done before
-    if (this.configModel.getConfig().migrationCompleted) {
+    if (this.configModel.getMigrationStatus()) {
+      if (process.env.NODE_ENV === 'development') {
+        this.application.consoleMessage({ type: 'logger', message: '[Username Logger] Migration already completed, skipping.' });
+      }
       return true;
     }
     
@@ -45,7 +48,8 @@ class MigrationService {
       // Check if old path exists
       if (!fsSync.existsSync(oldBasePath)) {
         // No old data to migrate
-        this.configModel.updateConfig('migrationCompleted', true);
+        this.application.consoleMessage({ type: 'logger', message: '[Username Logger] No old data path found, marking migration as complete.' });
+        this.configModel.setMigrationStatus(true);
         await this.configModel.saveConfig();
         return true;
       }
@@ -96,7 +100,7 @@ class MigrationService {
       }
       
       // Mark migration as completed
-      this.configModel.updateConfig('migrationCompleted', true);
+      this.configModel.setMigrationStatus(true);
       await this.configModel.saveConfig();
       
       return true;

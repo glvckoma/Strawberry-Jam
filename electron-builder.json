@@ -9,6 +9,7 @@
     "asar": "true",
     "target": {
       "target": "nsis",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
       "arch": [
         "x64"
       ]
@@ -121,6 +122,8 @@
   ],
   "publish": {
     "provider": "github",
+    "owner": "glvckoma",
+    "repo": "Strawberry-Jam",
     "releaseType": "release"
   }
 }

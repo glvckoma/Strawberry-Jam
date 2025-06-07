@@ -9,20 +9,21 @@ const DEFAULT_SETTINGS = {
   leakCheckOutputDir: '',
   autoReconnect: true,
   preventAutoLogin: false,
-  // Old flat keys:
-  // hideGamePlugins: false,
-  // performServerCheckOnLaunch: true // New setting
 
   // New keys matching electron-store structure for UI settings
   'ui.hideGamePlugins': false,
   'ui.performServerCheckOnLaunch': true,
+
+  // Update settings
+  'updates.enableAutoUpdates': true,
 
   // UsernameLogger and LeakCheck specific settings
   'leakCheck.enableLogging': true,
   'leakCheck.autoLeakCheck': false,
   'leakCheck.autoLeakCheckThreshold': 100,
   'usernameLogger.collectNearbyPlayers': true,
-  'usernameLogger.collectBuddies': true
+  'usernameLogger.collectBuddies': true,
+  'plugins.usernameLogger.collection.enabled': true // Added default for this key
 }
 
 // Development mode check (safer than process.env which may be undefined in packaged app)
@@ -58,12 +59,14 @@ module.exports = class Settings {
         { key: 'preventAutoLogin', defaultValue: DEFAULT_SETTINGS.preventAutoLogin },
         { key: 'ui.hideGamePlugins', defaultValue: DEFAULT_SETTINGS['ui.hideGamePlugins'] },
         { key: 'ui.performServerCheckOnLaunch', defaultValue: DEFAULT_SETTINGS['ui.performServerCheckOnLaunch'] },
+        { key: 'updates.enableAutoUpdates', defaultValue: DEFAULT_SETTINGS['updates.enableAutoUpdates'] },
         // Added UsernameLogger and LeakCheck settings
         { key: 'leakCheck.enableLogging', defaultValue: DEFAULT_SETTINGS['leakCheck.enableLogging'] },
         { key: 'leakCheck.autoLeakCheck', defaultValue: DEFAULT_SETTINGS['leakCheck.autoLeakCheck'] },
         { key: 'leakCheck.autoLeakCheckThreshold', defaultValue: DEFAULT_SETTINGS['leakCheck.autoLeakCheckThreshold'] },
         { key: 'usernameLogger.collectNearbyPlayers', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectNearbyPlayers'] },
-        { key: 'usernameLogger.collectBuddies', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectBuddies'] }
+        { key: 'usernameLogger.collectBuddies', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectBuddies'] },
+        { key: 'plugins.usernameLogger.collection.enabled', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.collection.enabled'] } // Added to load list
       ]
 
       for (const {key, defaultValue} of settingsToLoad) {
@@ -180,6 +183,35 @@ module.exports = class Settings {
       if (isDevelopment) {
         console.error('[Settings] Failed saving settings:', error)
       }
+    }
+  }
+
+  /**
+   * Flushes any pending debounced save operations to the main process.
+   * This ensures that the latest settings are persisted immediately.
+   * @public
+   * @returns {Promise<void>}
+   */
+  async flush () {
+    if (!this._isLoaded) {
+      // It might be too early to throw an error here if flush is called during early init
+      // For now, let's log if in development and simply return.
+      if (isDevelopment) {
+        console.warn('[Settings] flush() called before settings loaded. Aborting flush.');
+      }
+      return;
+    }
+
+    // Cancel any scheduled debounced save
+    if (this._saveSettingsDebounced && typeof this._saveSettingsDebounced.cancel === 'function') {
+      this._saveSettingsDebounced.cancel()
+    }
+
+    // Immediately save the current settings
+    await this._saveSettings()
+
+    if (isDevelopment) {
+      console.log('[Settings] Settings flushed successfully.')
     }
   }
 }

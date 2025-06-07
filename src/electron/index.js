@@ -7,7 +7,7 @@ const { fork, spawn } = require('child_process');
 const { autoUpdater } = require('electron-updater');
 const Store = require('electron-store');
 const os = require('os');
-const keytar = require('keytar');
+// const keytar = require('keytar'); // Will be required in constructor
 
 // Suppress Electron security warnings
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
@@ -112,6 +112,16 @@ const schema = {
       }
     },
     default: {}
+  },
+  updates: {
+    type: 'object',
+    properties: {
+      enableAutoUpdates: {
+        type: 'boolean',
+        default: true
+      }
+    },
+    default: {}
   }
 };
 
@@ -157,8 +167,12 @@ class Electron {
     this._window = null
     this._apiProcess = null
     this._store = new Store({ schema });
+    this.keytar = require('keytar'); // Initialize keytar as an instance property
 
-    KEYTAR_SERVICE_LEAK_CHECK_API_KEY = `${app.getName()}-leak-check-api-key`;
+    const appNameForKeytar = app.getName();
+    KEYTAR_SERVICE_LEAK_CHECK_API_KEY = `${appNameForKeytar}-leak-check-api-key`;
+    console.log(`[Keytar Init] app.getName() resolved to: "${appNameForKeytar}"`);
+    console.log(`[Keytar Init] KEYTAR_SERVICE_LEAK_CHECK_API_KEY set to: "${KEYTAR_SERVICE_LEAK_CHECK_API_KEY}"`);
 
     // Handler registration moved to _onReady for later initialization.
     // global.console.log('[IPC Main CONSTRUCTOR Setup] DIAGNOSTIC: "get-main-log-path" handler registration REMOVED from constructor start.');
@@ -176,6 +190,7 @@ class Electron {
     this._setupIPC() // Original call to setup other IPC handlers
     this.pluginWindows = new Map();
     this._backgroundPlugins = new Set();
+    this.manualCheckInProgress = false; // Flag for manual update checks
   }
 
   _setupIPC () {
@@ -291,14 +306,18 @@ class Electron {
       try {
         if (key === 'plugins.usernameLogger.apiKey') {
           devLog('[IPC get-setting] Attempting to get plugins.usernameLogger.apiKey from Keytar.');
-          const apiKey = await keytar.getPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY);
+          const apiKey = await this.keytar.getPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY);
           return apiKey || '';
         }
         const valueFromStore = this._store.get(key);
         return valueFromStore;
       } catch (error) {
-        if (isDevelopment) console.error(`[Store/Keytar] Error getting setting '${key}':`, error);
-        return key === 'leakCheck.apiKey' ? '' : undefined;
+        if (isDevelopment) {
+           console.error(`[Store/Keytar GET] Error getting setting '${key}': ${error.message}`);
+           console.error(`[Store/Keytar GET] Stack: ${error.stack}`);
+        }
+        // Ensure consistent return for the specific key on error, otherwise undefined
+        return key === 'plugins.usernameLogger.apiKey' ? '' : undefined;
       }
     });
 
@@ -307,16 +326,19 @@ class Electron {
         if (key === 'plugins.usernameLogger.apiKey') {
           devLog('[IPC set-setting] Attempting to set plugins.usernameLogger.apiKey in Keytar.');
           if (typeof value === 'string' && value.trim() !== '') {
-            await keytar.setPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY, value);
+            await this.keytar.setPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY, value);
           } else {
-            await keytar.deletePassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY);
+            await this.keytar.deletePassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY);
           }
           return { success: true };
         }
         this._store.set(key, value);
         return { success: true };
       } catch (error) {
-        if (isDevelopment) console.error(`[Store/Keytar] Error setting setting '${key}' with value`, value, ':', error);
+        if (isDevelopment) {
+           console.error(`[Store/Keytar SET] Error setting setting '${key}' with value '${value}': ${error.message}`);
+           console.error(`[Store/Keytar SET] Stack: ${error.stack}`);
+        }
         return { success: false, error: error.message };
       }
     });
@@ -727,6 +749,19 @@ class Electron {
         this._window.webContents.send('broadcast-plugin-settings-updated');
       }
     });
+
+    ipcMain.on('check-for-updates', () => {
+      console.log('[IPC] Received check-for-updates signal for manual check.');
+      this.manualCheckInProgress = true; // Set flag
+      autoUpdater.checkForUpdates().catch(err => {
+        console.error('[Updater] Error during manual update check (IPC):', err.message);
+        if (this._window && this._window.webContents && !this._window.isDestroyed()) {
+          // Send error status back to renderer via the new manual-update-check-status channel
+          this._window.webContents.send('manual-update-check-status', { status: 'error', message: `Manual update check failed: ${err.message}` });
+        }
+        this.manualCheckInProgress = false; // Reset flag on error
+      });
+    });
   }
 
   async _migrateLeakCheckApiKeyToKeytar() {
@@ -740,14 +775,15 @@ class Electron {
 
     if (oldApiKey && typeof oldApiKey === 'string' && oldApiKey.trim() !== '') {
       try {
-        await keytar.setPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY, oldApiKey);
+        await this.keytar.setPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY, oldApiKey);
         devLog('[Migration LeakCheck][Keytar] Successfully migrated API key.');
-        this._store.set('leakCheck.apiKey', ''); 
+        this._store.set('leakCheck.apiKey', '');
         devLog('[Migration LeakCheck] Plaintext API key removed from store.');
         this._store.set(MIGRATION_FLAG_LEAK_CHECK_API_KEY_V1, true);
         devLog('[Migration LeakCheck] API key migration completed and flag set.');
       } catch (err) {
         console.error(`[Migration LeakCheck][Keytar] Error migrating API key: ${err.message}`);
+        if (isDevelopment) console.error(`[Migration LeakCheck][Keytar] Stack: ${err.stack}`);
       }
     } else {
       devLog('[Migration LeakCheck] No old API key found in store to migrate or key was empty.');
@@ -1137,12 +1173,12 @@ class Electron {
     })
 
     app.on('will-quit', async (event) => {
-      console.log('[App Quit] Entering will-quit handler.');
+      console.log('[App Quit START] Entering will-quit handler.');
       if (this._isQuitting) {
         console.log('[App Quit] will-quit handler already running, skipping subsequent calls.');
-        return; 
+        return;
       }
-      this._isQuitting = true; 
+      this._isQuitting = true;
 
       event.preventDefault();
       console.log('[App Quit] Default quit prevented. Starting graceful shutdown.');
@@ -1191,21 +1227,26 @@ class Electron {
         console.log('[App Quit] Performing other general cleanup...');
 
         if (this._apiProcess && !this._apiProcess.killed) {
-          console.log('[App Quit] Terminating API process...');
-          this._apiProcess.kill();
-          console.log('[App Quit] API process terminated.');
+          console.log('[App Quit API] Attempting to terminate API process...');
+          this._apiProcess.kill(); // Default SIGTERM
+          // Add a small delay or check for exit event if issues persist
+          console.log('[App Quit API] API process kill signal sent.');
+        } else if (this._apiProcess && this._apiProcess.killed) {
+          console.log('[App Quit API] API process already reported as killed.');
+        } else {
+          console.log('[App Quit API] API process not found or not active.');
         }
         console.log('[App Quit] General cleanup finished.');
 
         console.log('[App Quit] Main cleanup try block finished.');
-        console.log('[App Quit] All cleanup initiated, calling app.quit() to proceed with termination.');
-        app.quit(); 
+        console.log('[App Quit END] All cleanup initiated, calling app.quit() to proceed with termination.');
+        app.quit();
       } catch (error) {
-        console.error('[App Quit] Error during will-quit handler execution:', error);
-        console.log('[App Quit] Error occurred, forcing exit with app.exit(0).');
-        app.exit(1); 
+        console.error('[App Quit ERROR] Error during will-quit handler execution:', error);
+        console.log('[App Quit ERROR] Error occurred, forcing exit with app.exit(1).');
+        app.exit(1);
       }
-    }); 
+    });
 
 
     return this
@@ -1235,26 +1276,86 @@ class Electron {
   }
 
   _initAutoUpdater () {
-    autoUpdater.autoDownload = true; 
-    autoUpdater.allowDowngrade = false
+    autoUpdater.setFeedURL({
+      provider: 'github',
+      owner: 'glvckoma',
+      repo: 'Strawberry-Jam'
+    });
+    const enableAutoUpdates = this._store.get('updates.enableAutoUpdates', true);
+
+    autoUpdater.autoDownload = enableAutoUpdates; // Set based on setting
+    autoUpdater.allowDowngrade = true
     autoUpdater.allowPrerelease = false
 
-    const checkInterval = 1000 * 60 * 5 
-    autoUpdater.checkForUpdates()
-    setInterval(() => autoUpdater.checkForUpdates(), checkInterval)
+    if (enableAutoUpdates) {
+      console.log('[Updater] Automatic updates enabled. Scheduling checks.');
+      const checkInterval = 1000 * 60 * 5;
+      setTimeout(() => {
+        autoUpdater.checkForUpdates().catch(err => {
+          console.error('[Updater] Error during scheduled update check (setTimeout):', err.message);
+          // Optionally send an IPC message to renderer about this specific error
+          if (this._window && this._window.webContents && !this._window.isDestroyed()) {
+            this._window.webContents.send('app-update-status', { status: 'error', message: `Scheduled update check failed: ${err.message}` });
+          }
+        });
+      }, 5000);
+      setInterval(() => {
+        autoUpdater.checkForUpdates().catch(err => {
+          console.error('[Updater] Error during scheduled update check (setInterval):', err.message);
+          if (this._window && this._window.webContents && !this._window.isDestroyed()) {
+            this._window.webContents.send('app-update-status', { status: 'error', message: `Scheduled update check failed: ${err.message}` });
+          }
+        });
+      }, checkInterval);
+    } else {
+      console.log('[Updater] Automatic updates disabled by setting.');
+    }
 
-    autoUpdater.on('update-available', () => {
-      this.messageWindow('message', {
-        type: 'notify',
-        message: 'A new update is available. Downloading now...'
-      })
+    autoUpdater.on('checking-for-update', () => {
+      console.log('[Updater] Checking for update...');
+      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
+        this._window.webContents.send('manual-update-check-status', { status: 'checking', message: 'Checking for updates...' });
+      }
+      // Global toast via 'app-update-status' removed
     })
 
-    autoUpdater.on('update-downloaded', () => {
-      this.messageWindow('message', {
-        type: 'celebrate',
-        message: 'Update Downloaded. It will be installed on restart.'
-      })
+    autoUpdater.on('update-not-available', (info) => {
+      console.log('[Updater] Update not available.', info);
+      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
+        this._window.webContents.send('manual-update-check-status', { status: 'no-update', message: 'No new updates available.' });
+        this.manualCheckInProgress = false; // Reset flag
+      }
+      // Global toast via 'app-update-status' removed
+    })
+
+    autoUpdater.on('error', (err) => {
+      console.error('[Updater] Error in auto-updater.', err);
+      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
+        this._window.webContents.send('manual-update-check-status', { status: 'error', message: `Error checking for updates: ${err.message}` });
+        this.manualCheckInProgress = false; // Reset flag
+      }
+      // Global toast via 'app-update-status' removed
+    })
+
+    autoUpdater.on('update-available', (info) => {
+      console.log('[Updater] Update available.', info);
+      const messageText = autoUpdater.autoDownload
+        ? 'A new update is available. Downloading now...' // This will only happen if enableAutoUpdates is true
+        : 'A new update is available. Click "Update Now" to download.'; // For manual checks or if autoDownload is off
+      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
+        this._window.webContents.send('manual-update-check-status', { status: 'available', message: messageText, version: info.version });
+        // Do not reset manualCheckInProgress here, wait for download or error
+      }
+      // Global toast via 'app-update-status' removed
+    })
+
+    autoUpdater.on('update-downloaded', (info) => {
+      console.log('[Updater] Update downloaded.', info);
+      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
+        this._window.webContents.send('manual-update-check-status', { status: 'downloaded', message: 'Update downloaded. Click "Restart Now" to install.' });
+        this.manualCheckInProgress = false; // Reset flag
+      }
+      // Global toast via 'app-update-status' removed
     })
   }
 
@@ -1326,24 +1427,39 @@ class Electron {
     this._window.webContents.setWindowOpenHandler((details) => this._createWindow(details))
 
     this._window.on('closed', () => {
-      devLog('[Main Window Closed] Main window has been closed. Closing all other windows.');
-      const mainWindowId = this._window ? this._window.id : -1; 
+      devLog('[Main Window Closed START] Main window has been closed. Processing related cleanup.');
+      const mainWindowId = this._window ? this._window.id : -1; // Should be null here, but good for clarity
 
+      devLog('[Main Window Closed] Attempting to close/destroy all other plugin windows...');
+      let closedCount = 0;
       BrowserWindow.getAllWindows().forEach(win => {
-        if (typeof win.id === 'number' && win.id !== mainWindowId && !win.isDestroyed()) {
-          devLog(`[Main Window Closed] Destroying window: ${win.getTitle()} (ID: ${win.id})`);
+        // Check if it's not the main window (which is already closing/closed)
+        // and ensure it's not already destroyed.
+        if (win && typeof win.id === 'number' && win.id !== mainWindowId && !win.isDestroyed()) {
+          devLog(`[Main Window Closed] Destroying plugin window: ${win.getTitle()} (ID: ${win.id})`);
           try {
-            win.destroy();
+            win.destroy(); // More forceful than close()
+            closedCount++;
           } catch (e) {
-            console.error(`[Main Window Closed] Error destroying window ${win.getTitle()}:`, e);
+            console.error(`[Main Window Closed] Error destroying plugin window ${win.getTitle()}:`, e);
           }
         }
       });
+      devLog(`[Main Window Closed] Finished attempting to destroy plugin windows. Count: ${closedCount}`);
 
-      if (this.pluginWindows) this.pluginWindows.clear();
-      if (this._backgroundPlugins) this._backgroundPlugins.clear();
+      if (this.pluginWindows) {
+        devLog(`[Main Window Closed] Clearing pluginWindows map (size before: ${this.pluginWindows.size})`);
+        this.pluginWindows.clear();
+        devLog(`[Main Window Closed] pluginWindows map cleared (size after: ${this.pluginWindows.size})`);
+      }
+      if (this._backgroundPlugins) {
+        devLog(`[Main Window Closed] Clearing _backgroundPlugins set (size before: ${this._backgroundPlugins.size})`);
+        this._backgroundPlugins.clear();
+        devLog(`[Main Window Closed] _backgroundPlugins set cleared (size after: ${this._backgroundPlugins.size})`);
+      }
       
-      this._window = null; 
+      this._window = null;
+      devLog('[Main Window Closed END] Main window reference nulled and cleanup finished.');
     });
 
     try {
@@ -1433,22 +1549,22 @@ class Electron {
       })
     }
 
-    if (app.isPackaged) { 
-      const performServerCheck = this._store.get('ui.performServerCheckOnLaunch', true); 
-      if (performServerCheck) {
-        console.log('[Updater] Production mode detected. Initializing auto-updater (server check enabled).');
-        this._initAutoUpdater();
-      } else {
-        console.log('[Updater] Production mode detected. Auto-updater (server check) disabled by setting.');
-      }
-    } else {
-      console.log('[Updater] Development mode detected. Auto-updater disabled.');
-      const devUpdateConfigPath = path.join(app.getAppPath(), 'dev-app-update.yml');
-      fsPromises.access(devUpdateConfigPath).catch(() => {
-        fsPromises.writeFile(devUpdateConfigPath, 'provider: github').catch(err => {
-          console.error('[Updater] Failed to write dev-app-update.yml:', err);
-        });
+
+    // Always initialize the auto-updater to set feed URL and listeners.
+    // _initAutoUpdater internally respects 'updates.enableAutoUpdates' for scheduling automatic checks.
+    console.log('[Updater] Initializing auto-updater system (setting feed URL and listeners)...');
+    this._initAutoUpdater();
+
+    // Then, if performServerCheckOnLaunch is true, trigger an initial check.
+    const performServerCheckOnLaunch = this._store.get('ui.performServerCheckOnLaunch', true);
+    if (performServerCheckOnLaunch) {
+      console.log('[Updater] Performing initial update check on launch (ui.performServerCheckOnLaunch is true).');
+      autoUpdater.checkForUpdates().catch(err => {
+        console.error('[Updater] Error during initial launch update check:', err.message);
+        // No global toast here. Console log is sufficient for background checks.
       });
+    } else {
+      console.log('[Updater] Skipping initial update check on launch (ui.performServerCheckOnLaunch is false).');
     }
   }
 
