@@ -626,6 +626,14 @@ function setupIpcHandlers(electronInstance) {
     });
   });
 
+  ipcMain.on('download-update', () => {
+    autoUpdater.downloadUpdate().catch(err => {
+      if (electronInstance._window && electronInstance._window.webContents && !electronInstance._window.isDestroyed()) {
+        electronInstance._window.webContents.send('manual-update-check-status', { status: 'error', message: `Update download failed: ${err.message}` });
+      }
+    });
+  });
+
   let gameTimeInterval;
   let gameStartTime;
 

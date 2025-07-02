@@ -1332,7 +1332,7 @@
               console.warn("[LoginScreen] Caught AUTH_TOKEN_EXPIRED. Forcing re-login.");
               this.clearAuthToken();
               // Don't recursively call logIn(), just show error.
-              userMessage = "Your session has expired. Please try again.";
+              userMessage = "Your session has expired. Please log in again.";
               break;
             case "USER_RENAME_NEEDED":
             case "OTP_NEEDED":

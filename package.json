@@ -2,7 +2,7 @@
   "name": "strawberry-jam",
   "description": "strawberry jam is my personal fork of the project jam created and developed by sxip.",
   "main": "src/index.js",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "author": "glvckoma",
   "scripts": {
     "dev": "npm run pack && npx cross-env NODE_ENV=development electron .",
@@ -10,7 +10,8 @@
     "pack": "npx asar pack assets/extracted-winapp-public assets/winapp.asar --unpack *.node",
     "build": "npm run pack && npx electron-builder build -w",
     "publish": "npm run pack && npm run build && npx electron-builder build -w -p always",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "version:bump": "node scripts/version-bump.js"
   },
   "repository": {
     "type": "git",

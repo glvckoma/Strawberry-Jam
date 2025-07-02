@@ -88,12 +88,18 @@
               <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
                 <i class="fas fa-sync-alt mr-2 text-highlight-yellow"></i>Application Updates
               </h4>
-              <div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button type="button" id="checkForUpdatesBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
                   <i class="fas fa-search mr-2"></i>Check for Updates
                 </button>
-                <p class="mt-1 text-xs text-gray-400">Manually check for new versions of Strawberry Jam.</p>
-                <p id="manualUpdateStatusText" class="mt-2 text-xs text-gray-400"></p>
+                <button type="button" id="downloadUpdateBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition hidden">
+                  <i class="fas fa-download mr-2"></i>Download Now
+                </button>
+              </div>
+              <p class="mt-1 text-xs text-gray-400">Manually check for new versions of Strawberry Jam.</p>
+              <p id="manualUpdateStatusText" class="mt-2 text-xs text-gray-400"></p>
+              <div id="downloadProgressContainer" class="hidden w-full bg-tertiary-bg rounded-full h-2.5 mt-2">
+                <div id="downloadProgressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
               </div>
               <!-- Auto Update Toggle -->
               <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded mt-4">
