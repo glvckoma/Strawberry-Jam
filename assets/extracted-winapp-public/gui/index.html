@@ -299,29 +299,22 @@
       });
 
       const showOtpModal = () => {
-        console.log("[OTP Modal] Creating OTP modal...");
         const modal = document.createElement("otp-modal");
         
         modal.addEventListener("close", event => {
-          console.log("[OTP Modal] Close event triggered");
           document.getElementById("modal-layer").removeChild(modal);
         });
         
         modal.addEventListener("submit", event => {
-          console.log("[OTP Modal] Submit event triggered with OTP:", event.detail.otp);
           document.getElementById("modal-layer").removeChild(modal);
           const loginScreen = document.getElementById("login-screen");
           loginScreen.otp = event.detail.otp;
-          console.log("[OTP Modal] Set OTP on login screen, calling logIn()");
           loginScreen.logIn();
         });
         
         const modalLayer = document.getElementById("modal-layer");
         if (modalLayer) {
           modalLayer.appendChild(modal);
-          console.log("[OTP Modal] Modal appended to modal-layer, modal should be visible");
-          console.log("[OTP Modal] Modal layer children count:", modalLayer.children.length);
-          console.log("[OTP Modal] Modal element:", modal);
         } else {
           console.error("[OTP Modal] modal-layer element not found!");
         }
@@ -348,14 +341,9 @@
         
         try {
           // Always get fresh df from main process to ensure we have the current value
-          console.log("[AUTH] Requesting fresh DF from main process");
           const freshDf = await window.ipc.getDf();
           
           if (freshDf) {
-            // Check if UUID spoofing is enabled
-            const uuidSpooferEnabled = await window.ipc.invoke('get-setting', 'uuidSpoofingEnabled');
-            console.log(`[AUTH] Received df: ${freshDf.substr(0, 8)}... (UUID spoofing: ${uuidSpooferEnabled ? 'active' : 'disabled'})`);
-            
             // Always update globals.df with the latest value from main process
             globals.df = freshDf;
           } else {
@@ -373,7 +361,6 @@
         // Use custom df if provided, otherwise use the (freshly updated) globals.df
         const dfToUse = customDf || globals.df;
         request.df = dfToUse;
-        console.log(`[AUTH] Using df for authentication: ${request.df ? request.df.substr(0, 8) + '...' : 'undefined'}`);
         
         const response = await globals.fetch(`${globals.config.authenticator}/authenticate`, {
           method: "POST",
@@ -404,9 +391,6 @@
         if (response.status === 422) {
           const authError = JSON.parse(await response.text());
           
-          // Log the full error response for debugging
-          console.log("[AUTH] 422 Error Response:", authError);
-          
           // Check for 2FA/OTP requirements using multiple possible field names and values
           const errorText = (authError.error || authError.message || '').toLowerCase();
           const errorCode = authError.error_code;
@@ -419,12 +403,10 @@
               errorText.includes('verification') ||
               errorCode === 'otp_required' ||
               errorCode === 'two_factor_required') {
-            console.log("[AUTH] 2FA/OTP required, showing OTP modal");
             showOtpModal();
             throw new Error("OTP_NEEDED");
           }
           
-          console.log("[AUTH] 422 error but not OTP-related:", errorText);
           throw new Error("LOGIN_ERROR");
         }
         // unexpected response: log details and show generic login error
@@ -501,10 +483,6 @@
         const finalDf = dfToUse || globals.df; 
         
         // Log the df value being used for debugging (handle null values safely)
-        const dfUsedStr = finalDf ? finalDf.substr(0, 8) + '...' : 'undefined';
-        const dfToUseStr = dfToUse ? dfToUse.substr(0, 8) + '...' : 'undefined';
-        const globalsDfStr = globals.df ? globals.df.substr(0, 8) + '...' : 'undefined';
-        console.log(`[DF Debug] appendFlashVars using df: ${dfUsedStr} (received dfToUse: ${dfToUseStr}, globals.df: ${globalsDfStr})`);
         
         // Allow for testing different locale values for server swapping
         // Fetch settings and await their resolution
@@ -551,9 +529,6 @@
           params += "&rc_token=" + encodeURIComponent(globals.rcToken);
         }
         
-        // Log the current df value before making the request
-        console.log(`[DF Debug] Current globals.df before playerSessionData request: ${globals.df}`);
-        
         const response = await globals.fetch(`${globals.config.playerSessionData}/player?${params}`, {
           method: "GET",
           mode: "cors",
@@ -565,13 +540,6 @@
           throw new Error("AUTH_TOKEN_EXPIRED");
         }
         const responseData = JSON.parse(await response.text());
-        
-        // Log server selection related parameters for debugging
-        console.log('[PlayerSession] Full response data for server selection debugging:');
-        console.log('[PlayerSession] Country:', responseData.country);
-        console.log('[PlayerSession] Language:', responseData.language);
-        console.log('[PlayerSession] Game server:', responseData.game_server);
-        console.log('[PlayerSession] Account type:', responseData.game_account_type);
         
         if (responseData.rename_required) {
           showRenameUserModal(responseData.screen_name, responseData.rename_required_key);
@@ -722,7 +690,6 @@
           globals.currentUser = data.username;
           
           // Log the df value received from main process
-          console.log(`[DF Debug] Received df from main process: ${data.df}`);
           globals.df = data.df;
           
           globals.rcToken = data.rcToken;
@@ -800,7 +767,6 @@
       // Add handler for UUID update events
       window.ipc.on('update-df', (event, newDf) => {
         if (window.globals) {
-          console.log(`Updating df to: ${newDf.substr(0, 8)}...`);
           window.globals.df = newDf;
         } else {
           console.error('Globals not available for df update');
@@ -808,7 +774,6 @@
       });
 
       window.ipc.on("screenChange", (event, state) => {
-        console.log(`[GUI Index.html] Received screenChange event: ${state}`);
         const gameScreenElement = document.getElementById("game-screen");
         if (gameScreenElement && typeof gameScreenElement.setScreenState === 'function') {
           gameScreenElement.setScreenState(state);

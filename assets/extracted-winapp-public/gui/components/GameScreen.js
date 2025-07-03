@@ -405,7 +405,54 @@
       // Remove the specific "request-toggle-game-client-devtools" listener as the generic one above handles it.
       // window.ipc.on("request-toggle-game-client-devtools", () => { ... });
 
+      // --- [Start] Strawberry Jam Log Sanitization ---
+      const sanitizeLogMessage = (message) => {
+        let sanitized = message;
+        
+        // General regex for sensitive keys in JSON-like strings
+        const sensitiveJsonKeys = ['authToken', 'refreshToken', 'df', 'username', 'password', 'auth_token', 'gameSessionIdStr'];
+        sensitiveJsonKeys.forEach(key => {
+          // This regex looks for "key":"value" or key: 'value' and redacts the value.
+          const regex = new RegExp(`(["']?${key}["']?\\s*:\\s*["'])([^"']*)(["'])`, 'gi');
+          sanitized = sanitized.replace(regex, `$1[REDACTED]$3`);
+        });
+
+        // Regex for specific patterns that might not be in JSON
+        // Example: "Retrieved plaintext password for someuser from..."
+        const passwordWarningRegex = /(Retrieved plaintext password for )([^ ]+)( from)/gi;
+        sanitized = sanitized.replace(passwordWarningRegex, '$1[REDACTED]$3');
+
+        // Redact long JWT-like strings
+        const tokenRegex = /([a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]{20,})/g;
+        sanitized = sanitized.replace(tokenRegex, '[REDACTED_TOKEN]');
+
+        // Redact 64-character hex strings (like df)
+        const dfRegex = /[a-f0-9]{64}/gi;
+        sanitized = sanitized.replace(dfRegex, '[REDACTED_DF]');
+
+        return sanitized;
+      };
+      // --- [End] Strawberry Jam Log Sanitization ---
+
+      this.webViewElem.addEventListener("console-message", (event) => {
+        if (!window.gameClientConsoleLogs) {
+          window.gameClientConsoleLogs = [];
+        }
+        // Limit the number of stored logs to prevent memory issues
+        if (window.gameClientConsoleLogs.length > 500) {
+          window.gameClientConsoleLogs.splice(0, window.gameClientConsoleLogs.length - 400);
+        }
+        window.gameClientConsoleLogs.push({
+          level: event.level === 0 ? 'INFO' : event.level === 1 ? 'WARN' : 'ERROR',
+          message: sanitizeLogMessage(event.message),
+          timestamp: new Date().toISOString(),
+        });
+      });
+
       this.webViewElem.addEventListener("ipc-message", async event => {
+        // [Strawberry Jam Debug] Log all IPC messages from the webview to diagnose communication issues.
+        console.log('[GameScreen] IPC Message Received:', event.channel, event.args);
+
         switch (event.channel) {
           case "signupCompleted": {
             const {username, password} = event.args[0];
@@ -479,7 +526,6 @@
       if (!this.userTray) {
         this.userTray = window.UserTrayManager.create(theme);
       }
-      console.log(flashVars)
       // prevent race condition with reloads
       if (this.closeGameTimeout) {
         clearTimeout(this.closeGameTimeout);
@@ -493,11 +539,9 @@
         if (globals.config && globals.config.showTools) {
           if (this.webViewElem && !this.webViewElem.isDestroyed() && !this.webViewElem.isDevToolsOpened()) {
             this.webViewElem.openDevTools({ mode: 'detach' });
-            console.log('[GameScreen] Automatically opened game webview DevTools due to globals.config.showTools.');
           }
         }
         // Use the flashVars as-is without forcing locale to 'en'
-        console.log('[GameScreen] Using original flashVars with locale:', flashVars.locale);
         this.webViewElem.send("flashVarsReady", flashVars);
 
         // No longer sending 'game-webview-ready' for DevTools purposes, GameScreen handles its own.

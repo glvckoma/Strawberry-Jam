@@ -22,12 +22,10 @@
           </div>
         </div>
       `;
-      console.log('[AccountManagementPanel] constructed');
       this._currentThemeKey = null; // To store the current theme
     }
 
     connectedCallback() {
-      console.log('[AccountManagementPanel] connected to DOM');
       this.addAccountButtonElem = this.shadowRoot.querySelector(".account-add-button");
       this.savedAccountsListElem = this.shadowRoot.getElementById("saved-accounts-list");
 
@@ -43,20 +41,17 @@
     }
 
     disconnectedCallback() {
-      console.log('[AccountManagementPanel] disconnected from DOM');
       // Cleanup logic if needed
     }
 
     // --- Public methods / Attribute handling ---
     updateTheme(themeKey) {
-      console.log(`[AccountManagementPanel] Theme updated to: ${themeKey}`);
       this._currentThemeKey = themeKey;
       // Re-apply styles to existing slots if necessary
       this._applyThemeToSlots();
     }
 
     saveAccountWithCredentials(credentials) {
-      console.log('[AccountManagementPanel] Received credentials, attempting to save:', credentials.username);
       this._saveAccount(credentials.username, credentials.password);
     }
     
@@ -74,7 +69,6 @@
     // --- Internal Account Management Methods ---
     _handleAddAccountClick() {
       // Request credentials from LoginScreen
-      console.log('[AccountManagementPanel] Add account button clicked, requesting credentials.');
       this.dispatchEvent(new CustomEvent('request-credentials-for-add', {
         bubbles: true,
         composed: true
@@ -166,23 +160,17 @@
     
     _applyThemeToSlot(slotElement) {
         if (!slotElement) {
-            console.warn('[AccountManagementPanel] _applyThemeToSlot: slotElement is null/undefined.');
             return;
         }
-        console.log(`[AccountManagementPanel] _applyThemeToSlot: Processing slot. Theme: '${this._currentThemeKey}' (type: ${typeof this._currentThemeKey}). Slot text: '${slotElement.textContent}'`);
 
         if (this._currentThemeKey === 'banana.png' || this._currentThemeKey === 'pineapple.png') {
-            console.log(`[AccountManagementPanel] _applyThemeToSlot: Applying dark style for theme '${this._currentThemeKey}' to slot '${slotElement.textContent}' (with !important)`);
             slotElement.style.setProperty('color', '#4A4A4A', 'important'); // Dark gray for better contrast
         } else {
-            console.log(`[AccountManagementPanel] _applyThemeToSlot: Reverting/defaulting style for theme '${this._currentThemeKey}' to slot '${slotElement.textContent}'`);
             slotElement.style.setProperty('color', '', ''); // Revert to CSS var (which should be --theme-primary)
         }
     }
 
     _applyThemeToSlots() {
-        console.log(`[AccountManagementPanel] _applyThemeToSlots called. Current theme key: '${this._currentThemeKey}', type: ${typeof this._currentThemeKey}`);
-
         // Apply to saved account slots
         if (this.savedAccountsListElem) {
             const slots = this.savedAccountsListElem.querySelectorAll('.saved-account-slot:not(.empty)');
@@ -191,33 +179,21 @@
 
         // Apply to the add account button
         if (!this.addAccountButtonElem && this.shadowRoot) {
-            console.log('[AccountManagementPanel] _applyThemeToSlots: addAccountButtonElem not initially set, attempting to re-query.');
             this.addAccountButtonElem = this.shadowRoot.querySelector(".account-add-button");
-            if (this.addAccountButtonElem) {
-                console.log('[AccountManagementPanel] _applyThemeToSlots: addAccountButtonElem found after re-query.');
-            } else {
-                console.warn('[AccountManagementPanel] _applyThemeToSlots: addAccountButtonElem NOT found even after re-query attempt.');
-            }
         }
 
         if (this.addAccountButtonElem) {
-            console.log(`[AccountManagementPanel] _applyThemeToSlots: Applying to add button. Current theme: ${this._currentThemeKey}`);
             if (this._currentThemeKey === 'banana.png' || this._currentThemeKey === 'pineapple.png') {
-                console.log(`[AccountManagementPanel] _applyThemeToSlots: Applying dark style to add button for ${this._currentThemeKey} (with !important)`);
                 this.addAccountButtonElem.style.setProperty('color', '#4A4A4A', 'important'); // Dark gray for '+'
                 this.addAccountButtonElem.style.setProperty('borderColor', '#4A4A4A', 'important'); // Dark gray for border
             } else {
-                console.log(`[AccountManagementPanel] _applyThemeToSlots: Reverting add button style for ${this._currentThemeKey}`);
                 this.addAccountButtonElem.style.setProperty('color', ''); // Revert to CSS var (--theme-primary)
                 this.addAccountButtonElem.style.setProperty('borderColor', ''); // Revert to CSS var (--theme-primary)
             }
-        } else {
-            console.warn('[AccountManagementPanel] _applyThemeToSlots: addAccountButtonElem not found when trying to apply theme (this implies re-query also failed).');
         }
     }
 
     _handleAccountSelect(account) {
-      console.log(`[AccountManagementPanel] Account selected: ${account.username}.`);
       this.dispatchEvent(new CustomEvent('account-selected', {
         // Password is no longer sent from here as it's not securely stored by this client part.
         // The LoginScreen will need to handle password input.

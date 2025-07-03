@@ -7,6 +7,35 @@
   const _winappConsoleLogs = []; // Array to store captured logs
   // _mainLogPath is no longer used for this component's report button.
 
+  // --- [Start] Strawberry Jam Log Sanitization ---
+  const sanitizeLogMessage = (message) => {
+    let sanitized = message;
+    
+    // General regex for sensitive keys in JSON-like strings
+    const sensitiveJsonKeys = ['authToken', 'refreshToken', 'df', 'username', 'password', 'auth_token', 'gameSessionIdStr'];
+    sensitiveJsonKeys.forEach(key => {
+      // This regex looks for "key":"value" or key: 'value' and redacts the value.
+      const regex = new RegExp(`(["']?${key}["']?\\s*:\\s*["'])([^"']*)(["'])`, 'gi');
+      sanitized = sanitized.replace(regex, `$1[REDACTED]$3`);
+    });
+
+    // Regex for specific patterns that might not be in JSON
+    // Example: "Retrieved plaintext password for someuser from..."
+    const passwordWarningRegex = /(Retrieved plaintext password for )([^ ]+)( from)/gi;
+    sanitized = sanitized.replace(passwordWarningRegex, '$1[REDACTED]$3');
+
+    // Redact long JWT-like strings
+    const tokenRegex = /([a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]{20,})/g;
+    sanitized = sanitized.replace(tokenRegex, '[REDACTED_TOKEN]');
+
+    // Redact 64-character hex strings (like df)
+    const dfRegex = /[a-f0-9]{64}/gi;
+    sanitized = sanitized.replace(dfRegex, '[REDACTED_DF]');
+
+    return sanitized;
+  };
+  // --- [End] Strawberry Jam Log Sanitization ---
+
   // Capture console logs from this scope
   const originalConsoleLog = console.log;
   const originalConsoleWarn = console.warn;
@@ -17,7 +46,8 @@
   const captureLog = (level, ...args) => {
     const timestamp = new Date().toISOString();
     const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
-    _winappConsoleLogs.push({ timestamp, level, message });
+    const sanitizedMessage = sanitizeLogMessage(message); // Sanitize the log
+    _winappConsoleLogs.push({ timestamp, level, message: sanitizedMessage });
     if (_winappConsoleLogs.length > 500) { // Limit stored logs
       _winappConsoleLogs.splice(0, _winappConsoleLogs.length - 400); // Keep last 400
     }
@@ -942,9 +972,17 @@
               logsToReport.forEach(log => {
                 logContent += `[${log.timestamp}] [${log.level}] ${log.message}\n`;
               });
+
+              // Append game client logs if they exist
+              if (window.gameClientConsoleLogs && window.gameClientConsoleLogs.length > 0) {
+                logContent += `\n\n## Game Client Logs\n`;
+                window.gameClientConsoleLogs.forEach(log => {
+                  logContent += `[${log.timestamp}] [${log.level}] ${log.message}\n`;
+                });
+              }
               
               fsOps.writeFileSync(filePath, logContent, 'utf8');
-              alert(`Logs saved to your Desktop: ${filename}`);
+              alert(`Logs saved to your Desktop: ${filename}\nSubmit the logs in #tickets channel to recieve help`);
 
               // Log Rotation Logic for Desktop files REMOVED as per user request.
               // Files will now accumulate on the Desktop.
@@ -1295,6 +1333,11 @@
         // Persist new tokens
         if (userData.authToken) this.authToken = userData.authToken;
         if (userData.refreshToken) this.refreshToken = userData.refreshToken;
+
+        // Clear any previous error messages
+        this.usernameInputElem.error = "";
+        this.passwordInputElem.error = "";
+        this.passwordInputElem.value = ""; // Clear password field for security
 
         console.log('[LoginScreen] Login successful. Preparing to dispatch events.');
         
