@@ -682,6 +682,7 @@
             <div class="settings-item" style="font-size: 10px; padding-left: 10px; color: #8B6914; font-style: italic; margin-bottom: 6px;">ℹ️ Note: Click on the left or right side panels first to focus the window before using shortcuts</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + I: Toggle Developer Tools</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + R: Reload / Logout (Return to Login Screen)</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + H: Toggle Hide UI Elements (Settings/Report Buttons & User Tray)</div>
  
             <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">In-Game:</h5>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">F5: Toggle In-Game HUD</div>
@@ -689,6 +690,7 @@
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + C: Clone A Friend</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + T: Teleportation</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + R: Room User Scan</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + N: No Clip</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Equals / Numpad Add: Zoom In</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Minus / Numpad Subtract: Zoom Out</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Enter: Private message sytem</div>
@@ -794,6 +796,9 @@
       this.reportProblemBtn = this.shadowRoot.getElementById("report-problem-btn"); // Get report button
       this.settingsPanel = this.shadowRoot.getElementById("settings-panel");
       this.uuidSpooferToggle = this.shadowRoot.getElementById("uuid-spoofer-toggle");
+      
+      // Track UI visibility state for hotkey toggle
+      this._uiElementsHidden = false;
 
       // Listener for 'set-main-log-path' is removed as we are saving to Desktop.
       this.uuidSpoofingWarning = this.shadowRoot.getElementById("uuid-spoofing-warning");
@@ -1043,6 +1048,15 @@
         });
       }
 
+      // --- Hotkey Event Listener ---
+      document.addEventListener('keydown', (event) => {
+        // Ctrl + Shift + H: Toggle UI elements (settings/report buttons and user tray)
+        if (event.ctrlKey && event.shiftKey && event.key === 'H') {
+          event.preventDefault();
+          this.toggleUIElements();
+        }
+      });
+
       setTimeout(() => {
         this._initializeAsyncSettings();
         this.initializeSettings();
@@ -1160,6 +1174,32 @@
       }
       if (window.UserTrayManager.instance && typeof window.UserTrayManager.instance.updateTheme === 'function') {
         window.UserTrayManager.instance.updateTheme(theme);
+      }
+    }
+
+    toggleUIElements() {
+      this._uiElementsHidden = !this._uiElementsHidden;
+      
+      // Toggle settings and report buttons
+      if (this.settingsBtn) {
+        this.settingsBtn.style.display = this._uiElementsHidden ? 'none' : 'flex';
+      }
+      if (this.reportProblemBtn) {
+        this.reportProblemBtn.style.display = this._uiElementsHidden ? 'none' : 'flex';
+      }
+      
+      // Toggle user tray (if it exists)
+      if (window.UserTrayManager && window.UserTrayManager.instance) {
+        if (this._uiElementsHidden) {
+          window.UserTrayManager.hide();
+        } else {
+          window.UserTrayManager.show();
+        }
+      }
+      
+      // Also hide the settings panel if it's open
+      if (this._uiElementsHidden && this.settingsPanel) {
+        this.settingsPanel.classList.remove('show');
       }
     }
 
@@ -1292,7 +1332,6 @@
             this.clearAuthToken();
             this.clearRefreshToken();
             this.isFakePassword = false;
-            this.password = ""; // Clear password field
             // Throw the specific error to be handled by the catch block
             throw new Error("REFRESH_TOKEN_EXPIRED");
           }
@@ -1311,7 +1350,6 @@
               this.clearAuthToken();
               this.clearRefreshToken();
               this.isFakePassword = false;
-              this.password = ""; // Clear password field
               // Error message is already set in the main catch block, just ensure tokens are cleared.
             }
             // Re-throw to be caught by the main catch block
@@ -1337,7 +1375,6 @@
         // Clear any previous error messages
         this.usernameInputElem.error = "";
         this.passwordInputElem.error = "";
-        this.passwordInputElem.value = ""; // Clear password field for security
 
         console.log('[LoginScreen] Login successful. Preparing to dispatch events.');
         

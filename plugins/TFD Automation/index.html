@@ -45,6 +45,74 @@
         #itemLog.collapsed {
             max-height: 180px; /* Approx 5 items */
         }
+        
+        /* Custom Button Colors */
+        #startButton {
+            background: linear-gradient(to right, #10b981, #059669) !important;
+            padding: 8px 16px !important;
+            height: auto !important;
+        }
+        #startButton:hover {
+            background: linear-gradient(to right, #059669, #047857) !important;
+        }
+        
+        #stopButton {
+            background: linear-gradient(to right, #ef4444, #dc2626) !important;
+            padding: 8px 16px !important;
+            height: auto !important;
+        }
+        #stopButton:hover {
+            background: linear-gradient(to right, #dc2626, #b91c1c) !important;
+        }
+        
+        #resetStatsButton {
+            background: linear-gradient(to right, #3b82f6, #2563eb) !important;
+            padding: 8px 16px !important;
+            height: auto !important;
+        }
+        #resetStatsButton:hover {
+            background: linear-gradient(to right, #2563eb, #1d4ed8) !important;
+        }
+        
+        /* Whitelist Button Colors */
+        #saveWhitelistsButton, #clearWhitelistsButton, #openClothingJson, #openDenItemsJson {
+            background: #4b5563 !important;
+        }
+        #saveWhitelistsButton:hover, #clearWhitelistsButton:hover, #openClothingJson:hover, #openDenItemsJson:hover {
+            background: #374151 !important;
+        }
+        
+        /* Force Statistics Spacing */
+        .stats-container {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 80px !important;
+        }
+        
+        .stats-container > div {
+            text-align: center !important;
+        }
+        
+        /* Force Control Button Spacing */
+        .control-buttons-container {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 60px !important;
+        }
+        
+        .control-buttons-container > button {
+            padding: 8px 16px !important;
+            border-radius: 8px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            border: none !important;
+            color: white !important;
+            cursor: pointer !important;
+        }
     </style>
 </head>
 <body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
@@ -87,6 +155,7 @@
                             <li>• <strong>Start in your den</strong> for best results and stability</li>
                             <li>• <strong>4-minute minimum wait</strong> enforced to avoid reward blocking (13:00 countdown rule)</li>
                             <li>• <strong>Randomized gem delays</strong> (500-1000ms) to avoid bot detection</li>
+                            <li>• <strong>Smart item filtering</strong> automatically recycles unwanted items based on your whitelist</li>
                         </ul>
                     </div>
 
@@ -99,30 +168,59 @@
                             <li>• <strong>Don't switch rooms</strong> during automation to avoid packet errors</li>
                             <li>• <strong>Check your inventory</strong> after completion to see collected items</li>
                             <li>• <strong>Use loop mode</strong> for farming multiple runs automatically</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-yellow-300 mb-2">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>Important Notes
-                        </h3>
-                        <ul class="space-y-1 text-yellow-200">
-                            <li>• <strong>Quest timer starts</strong> when automation begins - wait time is calculated automatically</li>
-                            <li>• <strong>Auto-retry enabled</strong> by default - failed runs will retry up to your max retry setting</li>
-                            <li>• <strong>Sound notifications</strong> will alert you when runs complete or fail</li>
-                            <li>• <strong>Statistics are saved</strong> and persist between plugin sessions</li>
+                            <li>• <strong>Configure item filtering</strong> to automatically keep only valuable items</li>
                         </ul>
                     </div>
 
                     <div class="bg-purple-900/30 border border-purple-500/50 rounded-lg p-4">
                         <h3 class="font-semibold text-purple-300 mb-2">
-                            <i class="fas fa-cogs mr-2"></i>Settings Overview
+                            <i class="fas fa-magic mr-2"></i>Efficient Mode (🚀)
                         </h3>
                         <ul class="space-y-1 text-purple-200">
-                            <li>• <strong>Delay Multiplier:</strong> Adjust automation speed (0.5x faster, 2x slower)</li>
-                            <li>• <strong>Max Retries:</strong> How many times to retry failed runs</li>
-                            <li>• <strong>Loop Mode:</strong> Run once or multiple times automatically</li>
-                            <li>• <strong>Auto-retry & Sound:</strong> Enable/disable automatic retries and notifications</li>
+                            <li>• <strong>Smart Crystal Detection:</strong> Dynamically generates optimized crystal collection packets</li>
+                            <li>• <strong>Gift Pre-Analysis:</strong> Detects valuable items before collection to skip unwanted gifts</li>
+                            <li>• <strong>Configurable Delay:</strong> Adjust crystal packet timing (10ms default for maximum speed)</li>
+                            <li>• <strong>Special Mode:</strong> 8x faster crystal collection for experienced users</li>
+                            <li>• <strong>Auto-Skip Empty Runs:</strong> Leaves quest immediately if no valuable items detected</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4">
+                        <h3 class="font-semibold text-yellow-300 mb-2">
+                            <i class="fas fa-filter mr-2"></i>Item Filtering System
+                        </h3>
+                        <ul class="space-y-1 text-yellow-200">
+                            <li>• <strong>Whitelist Setup:</strong> Add clothing and den item IDs you want to keep (comma-separated)</li>
+                            <li>• <strong>Auto-Recycle:</strong> Items not in your whitelist are automatically recycled</li>
+                            <li>• <strong>Smart Detection:</strong> System identifies item types automatically</li>
+                            <li>• <strong>Sound Alerts:</strong> Get notified when valuable whitelisted items are found</li>
+                            <li>• <strong>Find Item IDs:</strong> Use the ID browser buttons to explore available items</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
+                        <h3 class="font-semibold text-red-300 mb-2">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Important Notes
+                        </h3>
+                        <ul class="space-y-1 text-red-200">
+                            <li>• <strong>Quest timer starts</strong> when automation begins - wait time is calculated automatically</li>
+                            <li>• <strong>Auto-retry enabled</strong> by default - failed runs will retry up to your max retry setting</li>
+                            <li>• <strong>Statistics are saved</strong> and persist between plugin sessions</li>
+                            <li>• <strong>Connection monitoring</strong> stops automation if connection is lost</li>
+                            <li>• <strong>Loop mode</strong> supports 1-100 runs or infinite looping</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-gray-900/30 border border-gray-500/50 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-300 mb-2">
+                            <i class="fas fa-cogs mr-2"></i>Settings Overview
+                        </h3>
+                        <ul class="space-y-1 text-gray-200">
+                            <li>• <strong>Max Retries:</strong> How many times to retry failed runs (1-10)</li>
+                            <li>• <strong>Loop Mode:</strong> Run once, multiple times, or infinite loops</li>
+                            <li>• <strong>Auto-retry & Sound:</strong> Enable/disable automatic retries and valuable item notifications</li>
+                            <li>• <strong>Log Settings:</strong> Choose whether to log recycled items in the received items list</li>
+                            <li>• <strong>Efficient Mode:</strong> Enable advanced crystal detection and smart gift collection</li>
                         </ul>
                     </div>
                 </div>
@@ -152,6 +250,9 @@
                         <i class="fas fa-info-circle"></i>
                     </button>
                 </p>
+                <p class="text-xs mt-2" style="color: #f87171 !important;">
+                    Efficient Mode algorithm by <a href="https://github.com/Secretmimi" target="_blank" class="font-medium" style="color: #f87171 !important; text-decoration: none;" onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='#f87171'">NoSmile</a>
+                </p>
             </div>
 
             <!-- Settings Panel -->
@@ -167,11 +268,19 @@
                         </label>
                         <label class="flex items-center space-x-2">
                             <input type="checkbox" id="soundNotificationCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Sound notifications</span>
+                            <span class="text-sm">Sound alerts for valuable items</span>
                         </label>
                         <label class="flex items-center space-x-2">
                             <input type="checkbox" id="dontLogRecycledCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
                             <span class="text-sm">Don't log recycled items</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="efficientModeCheckbox" class="form-checkbox h-4 w-4 text-purple-600 rounded">
+                            <span class="text-sm text-purple-300">🚀Efficient Mode by NoSmile</span>
+                        </label>
+                        <label class="flex items-center space-x-2 ml-4" id="specialModeContainer" style="display: none;">
+                            <input type="checkbox" id="specialModeCheckbox" class="form-checkbox h-4 w-4 text-yellow-600 rounded">
+                            <span class="text-sm text-yellow-300">⚡Special Mode 8x Faster</span>
                         </label>
                     </div>
                     <div class="space-y-4">
@@ -197,6 +306,11 @@
                                 <option value="100">100 Times</option>
                                 <option value="infinite" selected>Loop Forever</option>
                             </select>
+                        </div>
+                        <div id="crystalDelayContainer" style="display: none;">
+                            <label for="crystalDelay" class="block text-sm font-medium text-text-secondary mb-1">Crystal Delay (ms) - Efficient Mode Only:</label>
+                            <input type="number" id="crystalDelay" value="10" min="5" max="1000" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                            <small class="text-xs text-gray-400">Delay between crystal packets in efficient mode. Recommended: 10ms (fastest), 50ms (safe), 100ms (stable)</small>
                         </div>
                     </div>
                 </div>
@@ -235,7 +349,7 @@
                     </div>
                 </div>
                 <div class="mt-3 flex flex-wrap justify-center gap-2">
-                    <button id="saveWhitelistsButton" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200 font-medium shadow-md">
+                    <button id="saveWhitelistsButton" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
                         <i class="fas fa-save mr-2"></i>Save Whitelists
                     </button>
                     <button id="clearWhitelistsButton" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
@@ -244,40 +358,27 @@
                 </div>
                     
                     <div class="mt-4 flex space-x-2">
-                        <button id="openClothingJson" class="flex-1 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-md">
+                        <button id="openClothingJson" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
                             <i class="fas fa-tshirt mr-2"></i>Find Clothing IDs
                         </button>
-                        <button id="openDenItemsJson" class="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
+                        <button id="openDenItemsJson" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
                             <i class="fas fa-couch mr-2"></i>Find Den Item IDs
                         </button>
                     </div>
                     
-                    <!-- Help Section -->
-                    <div class="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-                        <h4 class="text-sm font-semibold text-blue-300 mb-2">
-                            <i class="fas fa-question-circle mr-2"></i>How to Use Item Filtering
-                        </h4>
-                        <ul class="text-xs text-blue-200 space-y-1">
-                            <li>• <strong>Find Item IDs:</strong> Use the buttons above to browse clothing and den item IDs</li>
-                            <li>• <strong>Add to Whitelist:</strong> Enter the IDs of items you want to KEEP (comma-separated)</li>
-                            <li>• <strong>Auto-Recycle:</strong> Any items NOT in your whitelist will be automatically recycled</li>
-                            <li>• <strong>Disable Filtering:</strong> Leave the whitelist empty to keep all items</li>
-                            <li>• <strong>Same IDs:</strong> Clothing and den items can have the same ID but are different items</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
 
             <!-- Control Panel -->
             <div class="bg-secondary-bg rounded-lg p-4 mb-6">
-                <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                    <button id="startButton" class="flex-1 sm:flex-none px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-lg">
+                <div class="control-buttons-container">
+                    <button id="startButton" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-md">
                         <i class="fas fa-play mr-2"></i>Start TFD Run
                     </button>
-                    <button id="stopButton" class="flex-1 sm:flex-none px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-medium shadow-lg" disabled>
+                    <button id="stopButton" class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-medium shadow-md" disabled>
                         <i class="fas fa-stop mr-2"></i>Stop Automation
                     </button>
-                    <button id="resetStatsButton" class="flex-1 sm:flex-none px-4 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-200 font-medium">
+                    <button id="resetStatsButton" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
                         <i class="fas fa-undo mr-2"></i>Reset Stats
                     </button>
                 </div>
@@ -311,18 +412,23 @@
             </div>
 
             <!-- Statistics -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="stats-card rounded-lg p-4 text-center">
-                    <div class="text-2xl font-bold text-green-400" id="successCount">0</div>
-                    <div class="text-sm text-text-secondary">Successful Runs</div>
-                </div>
-                <div class="stats-card rounded-lg p-4 text-center">
-                    <div class="text-2xl font-bold text-red-400" id="failureCount">0</div>
-                    <div class="text-sm text-text-secondary">Failed Runs</div>
-                </div>
-                <div class="stats-card rounded-lg p-4 text-center">
-                    <div class="text-2xl font-bold text-blue-400" id="totalRuns">0</div>
-                    <div class="text-sm text-text-secondary">Total Runs</div>
+            <div class="stats-card rounded-lg p-4 mb-6">
+                <h2 class="text-lg font-semibold mb-3 flex items-center">
+                    <i class="fas fa-chart-bar mr-2 text-purple-400"></i>Statistics
+                </h2>
+                <div class="stats-container">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-400" id="successCount">0</div>
+                        <div class="text-sm text-text-secondary">Successful</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-red-400" id="failureCount">0</div>
+                        <div class="text-sm text-text-secondary">Failed</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-400" id="totalRuns">0</div>
+                        <div class="text-sm text-text-secondary">Total</div>
+                    </div>
                 </div>
             </div>
 
@@ -332,13 +438,19 @@
                     <h2 class="text-lg font-semibold flex items-center">
                         <i class="fas fa-gift mr-2 text-yellow-400"></i>Received Items
                     </h2>
-                    <div>
+                    <div class="flex gap-2">
                         <button id="toggleLogButton" class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-xs font-medium" style="display: none;">
                             Show All
                         </button>
                         <button id="clearLogButton" class="px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 text-xs font-medium">
                             <i class="fas fa-trash-alt mr-1"></i>Clear Log
                         </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="relative">
+                        <input type="text" id="itemSearchBox" placeholder="Search items..." class="w-full pl-8 pr-4 py-2 rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                        <i class="fas fa-search absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
                     </div>
                 </div>
                 <div id="itemLog" class="bg-gray-800/50 rounded-lg p-2 border border-gray-700 space-y-2 pr-2 collapsed">

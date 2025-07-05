@@ -330,7 +330,10 @@ function setupEventHandlers ($modal, app) {
   $openOutputDirButton.on('click', async () => {
     try {
       const customOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir'); // Corrected key
-      const dirToOpen = (customOutputDir && customOutputDir.trim() !== '') ? customOutputDir : app.dataPath; // Behavior for empty custom path might need review later
+      
+      // Calculate the default Username Logger directory (one level up from app.dataPath + 'UsernameLogger')
+      const defaultUsernameLoggerPath = require('path').join(require('path').resolve(app.dataPath, '..'), 'UsernameLogger');
+      const dirToOpen = (customOutputDir && customOutputDir.trim() !== '') ? customOutputDir : defaultUsernameLoggerPath;
       
       if (dirToOpen) {
         if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
@@ -346,9 +349,10 @@ function setupEventHandlers ($modal, app) {
     } catch (error) {
       console.error('Error getting output directory setting for open:', error);
       showToast('Error opening directory', 'error');
-      // Fallback to app.dataPath if settings call fails
+      // Fallback to Username Logger default path if settings call fails
       if (app.dataPath && typeof ipcRenderer !== 'undefined' && ipcRenderer) {
-        ipcRenderer.send('open-directory', app.dataPath);
+        const fallbackPath = require('path').join(require('path').resolve(app.dataPath, '..'), 'UsernameLogger');
+        ipcRenderer.send('open-directory', fallbackPath);
       }
     }
   });

@@ -20,6 +20,11 @@ const totalRuns = document.getElementById('totalRuns');
 const autoRetryCheckbox = document.getElementById('autoRetryCheckbox');
 const soundNotificationCheckbox = document.getElementById('soundNotificationCheckbox');
 const dontLogRecycledCheckbox = document.getElementById('dontLogRecycledCheckbox');
+const efficientModeCheckbox = document.getElementById('efficientModeCheckbox');
+const specialModeCheckbox = document.getElementById('specialModeCheckbox');
+const specialModeContainer = document.getElementById('specialModeContainer');
+const crystalDelayContainer = document.getElementById('crystalDelayContainer');
+const crystalDelay = document.getElementById('crystalDelay');
 const maxRetries = document.getElementById('maxRetries');
 const loopMode = document.getElementById('loopMode');
 
@@ -43,6 +48,7 @@ const filterStatusText = document.getElementById('filterStatusText');
 const itemLog = document.getElementById('itemLog');
 const clearLogButton = document.getElementById('clearLogButton');
 const toggleLogButton = document.getElementById('toggleLogButton');
+const itemSearchBox = document.getElementById('itemSearchBox');
 
 // State Variables
 let receivedItems = [];
@@ -70,6 +76,25 @@ let isFirstDiPacket = true;
 let hasCapturedInitialDenState = false; // New state for den inventory
 const QUEST_DURATION_MS = 17 * 60 * 1000; // 17 minutes in milliseconds
 const MIN_WAIT_TIME_MS = 4 * 60 * 1000; // Must wait at least 4 minutes (17:00 - 13:00)
+
+// Efficient Mode Variables
+let isEfficientMode = false;
+let isSpecialMode = false;
+let efficientSniffing = false;
+let efficientSeqActive = false;
+let efficientCurrentInterval = null;
+let efficientQueue = [];
+let joinStepTimers = [];
+let giftCollectorTimers = [];
+let joinRetryTimer = null;
+let giftRetryTimer = null;
+let specialGiftSlots = [];
+let lastDetectedGoodies = [];
+let totalGoodies = 0;
+let efficientCrystalDelay = 10;
+
+// Efficient Mode Helper Functions
+const pad = k => String(k).padStart(2, '0');
 
 // Room ID management functions (based on phantoms plugin)
 const refreshRoom = async () => {
@@ -115,7 +140,219 @@ const validateRoomAvailability = async () => {
         return false;
     }
     return true;
+}
+
+// ===== EFFICIENT MODE FUNCTIONS =====
+
+// Dynamic Crystal Packet Generator
+let efficientCrystalPackets = [];
+let detectedGiftItems = [];
+
+// Generate crystal packets based on detected patterns
+const generateEfficientCrystalPackets = (crystalData) => {
+    const packets = [];
+    
+    // Add crystals based on detected patterns (instead of using TFD_packets.json)
+    crystalData.forEach(({ type, variant, count }) => {
+        for (let i = 1; i <= count; i++) {
+            let packet;
+            switch (type) {
+                case '1crystal':
+                case '2crystal':
+                    packet = {
+                        content: `%xt%o%qat%{room}%${type}_${pad(i)}${variant}%0%`,
+                        delay: efficientCrystalDelay / 1000 // Convert to seconds
+                    };
+                    break;
+                case '3water':
+                    const idx = Math.ceil(i / 2);
+                    packet = {
+                        content: (i % 2) ? 
+                            `%xt%o%qpup%{room}%3pail_00e%1441722%` :
+                            `%xt%o%qat%{room}%3water_${pad(idx)}${variant}%0%`,
+                        delay: efficientCrystalDelay / 1000
+                    };
+                    break;
+                case '3crystal':
+                    packet = {
+                        content: `%xt%o%qat%{room}%3crystal_${pad(i)}${variant}%0%`,
+                        delay: efficientCrystalDelay / 1000
+                    };
+                    break;
+                case '4socvol':
+                    packet = {
+                        content: `%xt%o%qat%{room}%4socvol${pad(i)}${variant}%0%`,
+                        delay: efficientCrystalDelay / 1000
+                    };
+                    break;
+                case '4crystal':
+                    packet = {
+                        content: `%xt%o%qat%{room}%4crystal_${pad(i)}${variant}%0%`,
+                        delay: efficientCrystalDelay / 1000
+                    };
+                    break;
+            }
+            if (packet) packets.push(packet);
+        }
+    });
+    
+    return packets;
 };
+
+// Efficient QQM Packet Handler - Gift Detection Only
+const efficientHandleQqm = (data) => {
+    if (!isEfficientMode || !isAutomationRunning) return;
+    
+    // Check if this is a qqm packet
+    const { raw: rawMessage } = data;
+    if (!rawMessage || !rawMessage.includes('%xt%qqm%')) return;
+    
+    try {
+        // Parse the raw message to extract base64 data
+        const parts = rawMessage.split('%');
+        if (parts.length < 5) {
+            return;
+        }
+        
+        const b64 = parts[4];
+        if (!b64) {
+            return;
+        }
+
+        const decoded = require('zlib')
+            .inflateSync(Buffer.from(b64, 'base64'))
+            .toString('utf8');
+
+        const splitParts = decoded
+            .split(/[^\x20-\x7E]+/)
+            .filter(p => p.length);
+
+        // Detect gift contents for smart collection - check both gift codes
+        const GIFT_CODES = ['guipckgft2', 'guipckgft4'];
+        // Based on user feedback: 385 is Red Brick Walls (den), 570 is Longbow (clothing)
+        // Let's try different offsets: maybe IDs are at positions 8, 11 instead
+        const GIFT_ID_OFFSETS = [8, 11, 14, 17]; // Try shifted pattern
+        const GIFT_FLAG_OFFSETS = [9, 12, 15, 18]; // Flags follow IDs
+        
+        for (let base = 0; base + Math.max(...GIFT_FLAG_OFFSETS) < splitParts.length; base++) {
+            const currentCode = splitParts[base];
+            if (GIFT_CODES.includes(currentCode)) {
+                const ids = GIFT_ID_OFFSETS.map(off => splitParts[base + off] || '0');
+                const flags = GIFT_FLAG_OFFSETS.map(off => splitParts[base + off] || '0');
+                
+                const whitelists = getWhitelists();
+                detectedGiftItems = [];
+
+                ids.forEach((id, i) => {
+                    // Skip empty slots (ID '0' or undefined)
+                    if (!id || id === '0') {
+                        return;
+                    }
+                    
+                    // Validate flag value (should be '0' or '1')
+                    const flagValue = flags[i];
+                    let itemType, isWhitelisted;
+                    
+                    if (flagValue !== '0' && flagValue !== '1') {
+                        // Try to determine item type by looking it up in both databases
+                        const clothingName = getItemName(id, 'clothing');
+                        const denName = getItemName(id, 'den');
+                        
+                        // If we found a match in clothing items (and it's not just the ID), use that
+                        if (clothingName && !clothingName.startsWith('Unknown') && clothingName !== id) {
+                            itemType = 'clothing';
+                            isWhitelisted = whitelists.clothing.size === 0 || whitelists.clothing.has(id);
+                        }
+                        // Otherwise try den items
+                        else if (denName && !denName.startsWith('Unknown') && denName !== id) {
+                            itemType = 'den';
+                            isWhitelisted = whitelists.den.size === 0 || whitelists.den.has(id);
+                        }
+                        // If not found in either, default to clothing
+                        else {
+                            itemType = 'clothing';
+                            isWhitelisted = whitelists.clothing.size === 0 || whitelists.clothing.has(id);
+                        }
+                    } else {
+                        itemType = flagValue === '0' ? 'den' : 'clothing';
+                        isWhitelisted = flagValue === '0' ? 
+                            (whitelists.den.size === 0 || whitelists.den.has(id)) :
+                            (whitelists.clothing.size === 0 || whitelists.clothing.has(id));
+                    }
+                    
+                    const itemName = getItemName(id, itemType);
+                    
+                    detectedGiftItems.push({
+                        slot: i,
+                        id: id,
+                        name: itemName,
+                        type: itemType,
+                        isWhitelisted: isWhitelisted
+                    });
+                    
+                    // Only log skipped items in efficient mode to avoid double-logging
+                    // Valuable items will be logged by the regular filtering system when actually received
+                    if (!isWhitelisted) {
+                        logReceivedItem(itemName, 'skipped');
+                    }
+                });
+
+                const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
+                if (valuableItems.length > 0) {
+                    updateStatus(`🎁 Valuable items detected: ${valuableItems.map(item => item.name).join(', ')}`, 'success');
+                } else {
+                    updateStatus(`📦 No valuable items in gifts, will skip collection`, 'info');
+                }
+                break;
+            }
+        }
+
+        // Detect crystal patterns for dynamic packet generation
+        const OFFSETS = [0, 270, 547, 781];
+        for (let base = 0; base + OFFSETS[3] < splitParts.length; base++) {
+            const p1 = splitParts[base];
+            const p2 = splitParts[base + OFFSETS[1]];
+            const p3 = splitParts[base + OFFSETS[2]];
+            const p4 = splitParts[base + OFFSETS[3]];
+
+            const m1 = /^1crystal_01([ab])$/.exec(p1);
+            const m2 = /^2crystal_01([ab])$/.exec(p2);
+            const m3 = /^3water_01([ab])$/.exec(p3);
+            const m4 = /^4ppoint01([ab])$/.exec(p4);
+
+            if (m1 || m2 || m3 || m4) {
+                const crystalData = [];
+                
+                if (m1) crystalData.push({ type: '1crystal', variant: m1[1], count: 25 });
+                if (m2) crystalData.push({ type: '2crystal', variant: m2[1], count: 25 });
+                
+                if (!isSpecialMode) {
+                    if (m3) {
+                        crystalData.push({ type: '3water', variant: m3[1], count: 40 });
+                        crystalData.push({ type: '3crystal', variant: m3[1], count: 20 });
+                    }
+                    if (m4) {
+                        crystalData.push({ type: '4socvol', variant: m4[1], count: 15 });
+                        crystalData.push({ type: '4crystal', variant: m4[1], count: 15 });
+                    }
+                }
+                
+                // Generate efficient crystal packets
+                efficientCrystalPackets = generateEfficientCrystalPackets(crystalData);
+                updateStatus(`🔮 Crystal patterns detected! Generated ${efficientCrystalPackets.length} optimized packets`, 'info');
+                break;
+            }
+        }
+    } catch (e) {
+        console.error('[TFD Automation] Error processing qqm packet:', e);
+    }
+};
+
+// Reset efficient mode variables
+const resetEfficientMode = () => {
+    efficientCrystalPackets = [];
+    detectedGiftItems = [];
+};;
 
 // Load stats from localStorage
 function loadStats() {
@@ -138,7 +375,7 @@ function updateStatsDisplay() {
     if (totalRuns) totalRuns.textContent = stats.total;
 }
 
-// Play notification sound
+// Play notification sound for valuable whitelisted items
 function playNotificationSound(type = 'success') {
     if (!soundNotificationCheckbox || !soundNotificationCheckbox.checked) return;
     
@@ -171,7 +408,6 @@ function playNotificationSound(type = 'success') {
 // Helper function to update UI status and log messages
 function updateStatus(message, type = 'info', step = null) {
     if (statusMessage) statusMessage.textContent = message;
-    console.log(`[TFD Automation] Status: ${message}`);
     
     // Update status icon
     if (statusIcon) {
@@ -226,7 +462,6 @@ async function getPlayerSfsUserId() {
     try {
         const userId = await dispatch.getState('userId');
         if (userId) {
-            console.log(`[TFD Automation] Dynamically retrieved playerSfsUserId: ${userId}`);
             return userId;
         }
     } catch (e) {
@@ -284,14 +519,9 @@ async function sendPacket(packet, isRaw = false, isGemPacket = false) {
         content = content.replaceAll('{playerSfsUserId}', playerSfsUserId);
     }
 
-    console.log(`[TFD Automation] Preparing to send packet.`);
-    console.log(`[TFD Automation]  - Type: ${type}`);
-    console.log(`[TFD Automation]  - Content: ${content}`);
-    console.log(`[TFD Automation]  - Delay: ${delay}ms`);
 
     try {
         await dispatch.sendRemoteMessage(content);
-        console.log(`[TFD Automation] Packet sent successfully.`);
     } catch (error) {
         // This is the critical change: if sendRemoteMessage fails, it will throw.
         // We re-throw a more specific error to be caught by the main try/catch block.
@@ -329,6 +559,11 @@ async function startAutomation() {
         return; // Don't start if no room is available
     }
 
+    // Get settings
+    isEfficientMode = efficientModeCheckbox && efficientModeCheckbox.checked;
+    isSpecialMode = specialModeCheckbox && specialModeCheckbox.checked;
+    efficientCrystalDelay = crystalDelay ? parseInt(crystalDelay.value) : 10;
+
     // Initialize loop settings
     const loopValue = loopMode ? loopMode.value : '1';
     if (loopValue === 'infinite') {
@@ -345,6 +580,10 @@ async function startAutomation() {
     if (stopButton) stopButton.disabled = false;
     isAutomationRunning = true;
     
+    // Reset efficient mode data
+    resetEfficientMode();
+    
+    // Run normal automation (efficient mode enhances it automatically)
     await runSingleAutomation();
 }
 
@@ -373,13 +612,11 @@ async function runSingleAutomation() {
         playerSfsUserId = await getPlayerSfsUserId(); // Get player SFS User ID
 
         // Send a request for the current den inventory to establish a baseline
-        console.log('[TFD Automation] Requesting current den inventory before starting quest...');
         await sendPacketWithRetry(`%xt%o%di%${getRoomIdToUse()}%`, true);
 
         // Step 1: Quest Creation
         updateStatus(`Creating TFD private quest (ID: ${QUEST_ID})...`, 'info', 1);
         const createQuestPacket = `%xt%o%qjc%${getRoomIdToUse()}%${textualRoomName}%${QUEST_ID}%0%`;
-        console.log(`[TFD Automation] About to send 'qjc' (Create Quest) packet.`);
         await sendPacketWithRetry(createQuestPacket, true);
 
         // Increased delay to allow game client to process qjc and join quest room
@@ -391,12 +628,10 @@ async function runSingleAutomation() {
         // Manually send quest start request after joining the quest room
         updateStatus('Quest room joined. Sending quest start request...', 'info', 2);
         const startQuestPacket = `%xt%o%qs%${getRoomIdToUse()}%${textualRoomName}%`;
-        console.log(`[TFD Automation] About to send 'qs' (Start Quest) packet.`);
         await sendPacketWithRetry(startQuestPacket, true);
 
         // Record quest start time for timer calculations
         questStartTime = Date.now();
-        console.log(`[TFD Automation] Quest timer started at ${new Date(questStartTime).toLocaleTimeString()}`);
 
         await new Promise(resolve => {
             currentTimeout = setTimeout(resolve, 2000); // Short delay after starting quest
@@ -406,9 +641,7 @@ async function runSingleAutomation() {
         // Step 3: Send Adventure Join Request
         updateStatus('Joining the adventure...', 'info', 3);
         const adventureJoinPacket = `%xt%o%qaskr%${getRoomIdToUse()}%liza01_%0%1%`;
-        console.log(`[TFD Automation] About to send 'qaskr' (Adventure Join) packet.`);
         await sendPacketWithRetry(adventureJoinPacket, true);
-        console.log(`[TFD Automation] The qaskr (Adventure Join) packet was sent correctly: ${adventureJoinPacket}`);
 
         await new Promise(resolve => {
             currentTimeout = setTimeout(resolve, 3000); // 3 second delay for adventure join
@@ -418,23 +651,67 @@ async function runSingleAutomation() {
         // Refresh room info after joining adventure
         await refreshRoom();
         const adventureRoomId = getRoomIdToUse();
-        console.log(`[TFD Automation] Adventure room ID: ${adventureRoomId}`);
 
         updateStatus('Adventure joined. Beginning gem collection...', 'info', 4);
 
-        // Step 4: Automate Gem Collection
-        for (let i = 0; i < TFD_packets.packets.length; i++) {
+        // Step 4: Automate Gem Collection (use efficient packets if available)
+        const packetsToUse = (isEfficientMode && efficientCrystalPackets.length > 0) ? 
+            efficientCrystalPackets : TFD_packets.packets;
+        
+        if (isEfficientMode && efficientCrystalPackets.length > 0) {
+            updateStatus(`🚀 Using ${efficientCrystalPackets.length} optimized crystal packets!`, 'success', 4);
+        }
+        
+        for (let i = 0; i < packetsToUse.length; i++) {
             if (!isAutomationRunning) { // Check if automation was stopped before sending next packet
                 updateStatus('Gem collection interrupted.');
                 return;
             }
-            const packet = TFD_packets.packets[i];
-            updateStatus(`Collecting gem ${i + 1}/${TFD_packets.packets.length}...`, 'info', 4 + i);
+            const packet = packetsToUse[i];
+            updateStatus(`Collecting gem ${i + 1}/${packetsToUse.length}...`, 'info', 4 + i);
             await sendPacketWithRetry(packet, false, true); // Send packet with randomized delay for gems
         }
         if (!isAutomationRunning) return; // Check if automation was stopped after loop
 
         updateStatus('Gem collection complete. Calculating reward timing...', 'info', totalSteps - 1);
+
+        // Check if efficient mode detected no valuable items - skip reward collection entirely
+        if (isEfficientMode) {
+            const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
+            if (detectedGiftItems.length === 0 || valuableItems.length === 0) {
+                updateStatus('📦 No valuable items - leaving quest immediately', 'info');
+                
+                // Jump straight to quest exit
+                await refreshRoom();
+                const exitRoomId = getRoomIdToUse();
+                const leaveQuestPacket = `%xt%o%qx%${exitRoomId}%`;
+                await sendPacketWithRetry(leaveQuestPacket, true);
+                
+                // Success - completed efficiently without waiting
+                stats.successful++;
+                stats.total++;
+                saveStats();
+                updateStatsDisplay();
+                
+                const loopStatus = isLooping ? ` (${currentLoopCount}/${totalLoopsToRun === Infinity ? '∞' : totalLoopsToRun})` : '';
+                updateStatus(`TFD automation completed efficiently!${loopStatus}`, 'success', totalSteps);
+                
+                // Check if we should continue looping
+                if (isLooping && (totalLoopsToRun === Infinity || currentLoopCount < totalLoopsToRun) && isAutomationRunning) {
+                    updateStatus(`Preparing next run${loopStatus}...`, 'info');
+                    await new Promise(resolve => {
+                        currentTimeout = setTimeout(resolve, 3000); // 3 second delay between runs
+                    });
+                    if (isAutomationRunning) {
+                        await runSingleAutomation();
+                        return;
+                    }
+                }
+                
+                stopAutomation();
+                return;
+            }
+        }
 
         // Calculate how long we need to wait before collecting rewards
         const elapsedTime = Date.now() - questStartTime;
@@ -445,7 +722,6 @@ async function runSingleAutomation() {
             const minutesLeft = Math.floor(totalSeconds / 60);
             const secondsLeft = totalSeconds % 60;
             updateStatus(`Waiting ${minutesLeft}m ${secondsLeft}s for safe reward collection (13:00 rule)...`, 'info');
-            console.log(`[TFD Automation] Must wait ${timeUntilSafeReward}ms (${totalSeconds}s) more before collecting rewards`);
             
             await new Promise(resolve => {
                 currentTimeout = setTimeout(resolve, timeUntilSafeReward);
@@ -462,7 +738,6 @@ async function runSingleAutomation() {
             updateStatus('Connection verified. Proceeding to collect rewards.', 'info');
 
         } else {
-            console.log(`[TFD Automation] Safe to collect rewards immediately (${Math.abs(timeUntilSafeReward)}ms past minimum)`);
         }
 
         updateStatus('Processing rewards...', 'info', totalSteps - 1);
@@ -478,10 +753,8 @@ async function runSingleAutomation() {
             throw new Error('No room ID available for reward collection');
         }
 
-        console.log(`[TFD Automation] Using room ID ${rewardRoomId} for reward collection`);
 
         // Send a request for the current den inventory to establish a baseline
-        console.log('[TFD Automation] Requesting current den inventory before collecting gifts...');
         await sendPacketWithRetry(`%xt%o%di%${rewardRoomId}%`, true);
         
         // Wait a moment for the initial `di` packet to be processed
@@ -489,29 +762,62 @@ async function runSingleAutomation() {
             currentTimeout = setTimeout(resolve, 2000);
         });
 
-        // Send qpgift packets for each reward slot (0-5 for TFD)
-        for (let i = 0; i < 6; i++) {
-            if (!isAutomationRunning) return;
+        // Send qpgift packets (use efficient detection if available)
+        if (isEfficientMode && detectedGiftItems.length > 0) {
+            const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
             
-            const qpgiftPacket = `%xt%o%qpgift%${rewardRoomId}%${i}%0%0%`;
-            await sendPacketWithRetry(qpgiftPacket, true);
-            console.log(`[TFD Automation] Sent qpgift ${i}: ${qpgiftPacket}`);
-            
-            // Small delay between qpgift packets
-            await new Promise(resolve => {
-                currentTimeout = setTimeout(resolve, 1000);
-            });
+            if (valuableItems.length > 0) {
+                updateStatus(`🎁 Collecting only valuable gifts: ${valuableItems.map(item => item.name).join(', ')}`, 'success');
+                
+                // Only collect valuable gift slots
+                for (const item of valuableItems) {
+                    if (!isAutomationRunning) return;
+                    
+                    const qpgiftPacket = `%xt%o%qpgift%${rewardRoomId}%${item.slot}%0%0%`;
+                    await sendPacketWithRetry(qpgiftPacket, true);
+                    
+                    await new Promise(resolve => {
+                        currentTimeout = setTimeout(resolve, 1000);
+                    });
+                }
+            } else {
+                updateStatus(`📦 No valuable items detected, skipping gift collection`, 'info');
+            }
+        } else if (isEfficientMode) {
+            // Standard collection for all slots
+            for (let i = 0; i < 6; i++) {
+                if (!isAutomationRunning) return;
+                
+                const qpgiftPacket = `%xt%o%qpgift%${rewardRoomId}%${i}%0%0%`;
+                await sendPacketWithRetry(qpgiftPacket, true);
+                
+                // Small delay between qpgift packets
+                await new Promise(resolve => {
+                    currentTimeout = setTimeout(resolve, 1000);
+                });
+            }
+        } else {
+            // Standard collection for all slots
+            for (let i = 0; i < 6; i++) {
+                if (!isAutomationRunning) return;
+                
+                const qpgiftPacket = `%xt%o%qpgift%${rewardRoomId}%${i}%0%0%`;
+                await sendPacketWithRetry(qpgiftPacket, true);
+                
+                // Small delay between qpgift packets
+                await new Promise(resolve => {
+                    currentTimeout = setTimeout(resolve, 1000);
+                });
+            }
         }
 
         // Send qpgiftdone packet to finalize reward collection
         if (!isAutomationRunning) return;
         const qpgiftdonePacket = `%xt%o%qpgiftdone%${rewardRoomId}%`;
         await sendPacketWithRetry(qpgiftdonePacket, true);
-        console.log(`[TFD Automation] Sent qpgiftdone: ${qpgiftdonePacket}`);
         
         // Random pause after done packet (500-1000ms)
         const randomPause = Math.floor(Math.random() * 501) + 500; // 500-1000ms
-        console.log(`[TFD Automation] Waiting ${randomPause}ms after qpgiftdone packet`);
         await new Promise(resolve => {
             currentTimeout = setTimeout(resolve, randomPause);
         });
@@ -529,7 +835,6 @@ async function runSingleAutomation() {
         const exitRoomId = getRoomIdToUse();
         const leaveQuestPacket = `%xt%o%qx%${exitRoomId}%`;
         await sendPacketWithRetry(leaveQuestPacket, true);
-        console.log(`[TFD Automation] Sent leave quest: ${leaveQuestPacket}`);
         
         // Success
         stats.successful++;
@@ -539,7 +844,6 @@ async function runSingleAutomation() {
         
         const loopStatus = isLooping ? ` (${currentLoopCount}/${totalLoopsToRun === Infinity ? '∞' : totalLoopsToRun})` : '';
         updateStatus(`TFD automation completed successfully!${loopStatus}`, 'success', totalSteps);
-        playNotificationSound('success');
         
         // Check if we should continue looping
         if (isLooping && (totalLoopsToRun === Infinity || currentLoopCount < totalLoopsToRun) && isAutomationRunning) {
@@ -576,6 +880,10 @@ function stopAutomation() {
     isLooping = false;
     currentLoopCount = 0;
     totalLoopsToRun = 1;
+    
+    // Reset efficient mode data
+    resetEfficientMode();
+    
     updateStatus(`Automation stopped${wasLooping ? ` after ${completedRuns} run(s)` : ''}.`, 'info');
     if (startButton) startButton.disabled = false;
     if (stopButton) stopButton.disabled = true;
@@ -708,17 +1016,14 @@ async function handleIncomingPackets(data) {
 
     // Handle clothing/accessory item packets (%xt%il%)
     if (rawMessage.startsWith('%xt%il%') && parts.length > 10 && parts[4] === '2') {
-        console.log('[TFD Automation] Received clothing/accessory gift packet (`il`). Processing...');
         try {
             const numAdded = parseInt(parts[9]);
             if (numAdded > 0) {
-                console.log(`[TFD Automation] Packet indicates ${numAdded} new clothing item(s).`);
                 let currentIndex = 11;
                 for (let i = 0; i < numAdded; i++) {
                     if (parts.length > currentIndex + 1) {
                         const invId = parts[currentIndex];
                         const defId = parts[currentIndex + 1];
-                        console.log(`[TFD Automation] Detected new clothing item - DefID: ${defId}, InvID: ${invId}`);
                         await processItemForFiltering(defId, invId, 'clothing');
                         currentIndex += 2; // Move to the next pair
                     }
@@ -731,13 +1036,11 @@ async function handleIncomingPackets(data) {
     
     // Handle den item inventory packets (%xt%di%)
     else if (rawMessage.startsWith('%xt%di%')) {
-        console.log(`[TFD Automation] Received den inventory update packet: ${rawMessage}`);
         try {
             const isAdventureRunning = questStartTime !== null; // A simple check to see if we're in an active run
 
             // Only capture the initial state ONCE per adventure run, before gifts are opened
             if (isAdventureRunning && !hasCapturedInitialDenState) {
-                console.log('[TFD Automation] Capturing initial den inventory state...');
                 const denItemCount = parseInt(parts[5]);
                 if (isNaN(denItemCount)) return;
 
@@ -749,11 +1052,9 @@ async function handleIncomingPackets(data) {
                     }
                     currentIndex += 9;
                 }
-                console.log(`[TFD Automation] Stored initial den inventory state with ${knownDenInvIds.size} items.`);
                 hasCapturedInitialDenState = true; // Mark as captured
             } else if (isAdventureRunning) {
                 // This is a subsequent `di` packet, likely a gift update.
-                console.log('[TFD Automation] Processing potential den item gift packet...');
                 const denItemCount = parseInt(parts[5]);
                 if (isNaN(denItemCount)) return;
 
@@ -764,7 +1065,6 @@ async function handleIncomingPackets(data) {
                         const defId = parts[currentIndex + 1];
 
                         if (!knownDenInvIds.has(invId)) {
-                            console.log(`[TFD Automation] Detected new den item by comparing inventories - DefID: ${defId}, InvID: ${invId}`);
                             await processItemForFiltering(defId, invId, 'den');
                             knownDenInvIds.add(invId); // Add to known list to avoid reprocessing
                         }
@@ -785,16 +1085,14 @@ async function processItemForFiltering(defId, invId, itemType) {
 
     if (defId && invId && defId.length > 0 && invId.length > 0) {
         const itemName = getItemName(defId, itemType);
-        console.log(`[TFD Automation] FILTERING - Item Type: ${itemType}, Name: ${itemName}, DefID: ${defId}, InvID: ${invId}`);
 
         if (whitelist.has(defId)) {
             updateStatus(`✓ Whitelisted: ${itemName}. Keeping it.`, 'info');
             logReceivedItem(itemName, 'kept');
-            console.log(`[TFD Automation] RESULT: KEEPING item ${defId} (${itemName}) - found on whitelist.`);
+            playNotificationSound('success'); // Play sound when valuable item is kept
         } else {
             updateStatus(`♻ Recycling: ${itemName}.`, 'warning');
             logReceivedItem(itemName, 'recycled');
-            console.log(`[TFD Automation] ACTION: RECYCLING item ${defId} (${itemName}) - not on whitelist.`);
             
             await new Promise(resolve => setTimeout(resolve, 150)); // Small delay
             
@@ -804,16 +1102,13 @@ async function processItemForFiltering(defId, invId, itemType) {
             if (itemType === 'den') {
                 // Use the den-specific recycling packet with the correct format
                 recyclePacket = `%xt%o%dr%${getRoomIdToUse()}%0%${invId}%`;
-                console.log(`[TFD Automation] Using DEN recycle packet: ${recyclePacket}`);
             } else {
                 // Default to the standard item recycling packet for clothing
                 recyclePacket = `%xt%o%ir%${getRoomIdToUse()}%${invId}%`;
-                console.log(`[TFD Automation] Using CLOTHING recycle packet: ${recyclePacket}`);
             }
             
             try {
                 await sendPacketWithRetry(recyclePacket, true);
-                console.log(`[TFD Automation] SUCCESS: Recycle request sent for InvID ${invId}.`);
             } catch (error) {
                 console.error(`[TFD Automation] FAILED: Could not send recycle request for InvID ${invId}:`, error);
                 updateStatus(`Error recycling ${itemName}: ${error.message}`, 'error');
@@ -838,7 +1133,18 @@ function renderItemLog() {
     if (!itemLog) return;
 
     const isCollapsed = itemLog.classList.contains('collapsed');
-    const itemsToRender = isCollapsed ? receivedItems.slice(-5) : receivedItems;
+    const searchTerm = itemSearchBox ? itemSearchBox.value.toLowerCase() : '';
+    
+    // Filter items based on search term
+    let filteredItems = receivedItems;
+    if (searchTerm) {
+        filteredItems = receivedItems.filter(item => 
+            item.name.toLowerCase().includes(searchTerm) ||
+            item.status.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    const itemsToRender = isCollapsed ? filteredItems.slice(-5) : filteredItems;
 
     if (receivedItems.length === 0) {
         itemLog.innerHTML = '<p class="text-sm text-text-secondary text-center">No items received yet.</p>';
@@ -846,9 +1152,22 @@ function renderItemLog() {
         return;
     }
 
+    if (filteredItems.length === 0 && searchTerm) {
+        itemLog.innerHTML = '<p class="text-sm text-text-secondary text-center">No items match your search.</p>';
+        toggleLogButton.style.display = 'none';
+        return;
+    }
+
     itemLog.innerHTML = ''; // Clear the log before rendering
     itemsToRender.forEach(item => {
-        const iconClass = item.status === 'kept' ? 'fa-star text-yellow-400' : 'fa-trash text-red-400';
+        let iconClass;
+        if (item.status === 'kept') {
+            iconClass = 'fa-star text-yellow-400';
+        } else if (item.status === 'skipped') {
+            iconClass = 'fa-forward text-blue-400';
+        } else {
+            iconClass = 'fa-trash text-red-400';
+        }
         const itemElement = document.createElement('div');
         itemElement.className = 'flex items-center justify-between text-sm p-1 bg-gray-900/50 rounded';
         itemElement.innerHTML = `
@@ -859,9 +1178,10 @@ function renderItemLog() {
     });
 
     // Manage toggle button visibility and text
-    if (receivedItems.length > 5) {
+    const totalCount = searchTerm ? filteredItems.length : receivedItems.length;
+    if (totalCount > 5) {
         toggleLogButton.style.display = 'inline-block';
-        toggleLogButton.textContent = isCollapsed ? `Show All (${receivedItems.length})` : 'Show Less';
+        toggleLogButton.textContent = isCollapsed ? `Show All (${totalCount})` : 'Show Less';
     } else {
         toggleLogButton.style.display = 'none';
     }
@@ -893,18 +1213,126 @@ function openFileInEditor(fileName) {
 
 // --- Settings Persistence ---
 function saveSettings() {
-    localStorage.setItem('tfd_dont_log_recycled', dontLogRecycledCheckbox.checked);
+    if (dontLogRecycledCheckbox) {
+        localStorage.setItem('tfd_dont_log_recycled', dontLogRecycledCheckbox.checked);
+    }
+    if (autoRetryCheckbox) {
+        localStorage.setItem('tfd_auto_retry', autoRetryCheckbox.checked);
+    }
+    if (soundNotificationCheckbox) {
+        localStorage.setItem('tfd_sound_notification', soundNotificationCheckbox.checked);
+    }
+    if (efficientModeCheckbox) {
+        localStorage.setItem('tfd_efficient_mode', efficientModeCheckbox.checked);
+    }
+    if (specialModeCheckbox) {
+        localStorage.setItem('tfd_special_mode', specialModeCheckbox.checked);
+    }
+    if (crystalDelay) {
+        localStorage.setItem('tfd_crystal_delay', crystalDelay.value);
+    }
+    if (maxRetries) {
+        localStorage.setItem('tfd_max_retries', maxRetries.value);
+    }
+    if (loopMode) {
+        localStorage.setItem('tfd_loop_mode', loopMode.value);
+    }
 }
 
 function loadSettings() {
-    const dontLogRecycled = localStorage.getItem('tfd_dont_log_recycled');
-    if (dontLogRecycled !== null) {
-        dontLogRecycledCheckbox.checked = JSON.parse(dontLogRecycled);
+    if (dontLogRecycledCheckbox) {
+        const dontLogRecycled = localStorage.getItem('tfd_dont_log_recycled');
+        if (dontLogRecycled !== null) {
+            dontLogRecycledCheckbox.checked = JSON.parse(dontLogRecycled);
+        }
+    }
+    
+    if (autoRetryCheckbox) {
+        const autoRetry = localStorage.getItem('tfd_auto_retry');
+        if (autoRetry !== null) {
+            autoRetryCheckbox.checked = JSON.parse(autoRetry);
+        }
+    }
+    
+    if (soundNotificationCheckbox) {
+        const soundNotification = localStorage.getItem('tfd_sound_notification');
+        if (soundNotification !== null) {
+            soundNotificationCheckbox.checked = JSON.parse(soundNotification);
+        }
+    }
+    
+    if (efficientModeCheckbox) {
+        const efficientMode = localStorage.getItem('tfd_efficient_mode');
+        if (efficientMode !== null) {
+            efficientModeCheckbox.checked = JSON.parse(efficientMode);
+            // Update UI visibility
+            const isChecked = efficientModeCheckbox.checked;
+            if (specialModeContainer) {
+                specialModeContainer.style.display = isChecked ? 'block' : 'none';
+            }
+            if (crystalDelayContainer) {
+                crystalDelayContainer.style.display = isChecked ? 'block' : 'none';
+            }
+        }
+    }
+    
+    if (specialModeCheckbox) {
+        const specialMode = localStorage.getItem('tfd_special_mode');
+        if (specialMode !== null) {
+            specialModeCheckbox.checked = JSON.parse(specialMode);
+        }
+    }
+    
+    if (crystalDelay) {
+        const delay = localStorage.getItem('tfd_crystal_delay');
+        if (delay !== null) {
+            crystalDelay.value = delay;
+        }
+    }
+    
+    if (maxRetries) {
+        const maxRetriesValue = localStorage.getItem('tfd_max_retries');
+        if (maxRetriesValue !== null) {
+            maxRetries.value = maxRetriesValue;
+        }
+    }
+    
+    if (loopMode) {
+        const loopModeValue = localStorage.getItem('tfd_loop_mode');
+        if (loopModeValue !== null) {
+            loopMode.value = loopModeValue;
+        }
     }
 }
 
 // --- Event Listeners ---
 if (dontLogRecycledCheckbox) dontLogRecycledCheckbox.addEventListener('change', saveSettings);
+if (autoRetryCheckbox) autoRetryCheckbox.addEventListener('change', saveSettings);
+if (soundNotificationCheckbox) soundNotificationCheckbox.addEventListener('change', saveSettings);
+if (maxRetries) maxRetries.addEventListener('change', saveSettings);
+if (loopMode) loopMode.addEventListener('change', saveSettings);
+
+// Efficient Mode Event Listeners
+if (efficientModeCheckbox) {
+    efficientModeCheckbox.addEventListener('change', () => {
+        const isChecked = efficientModeCheckbox.checked;
+        if (specialModeContainer) {
+            specialModeContainer.style.display = isChecked ? 'block' : 'none';
+        }
+        if (crystalDelayContainer) {
+            crystalDelayContainer.style.display = isChecked ? 'block' : 'none';
+        }
+        saveSettings();
+    });
+}
+
+if (specialModeCheckbox) {
+    specialModeCheckbox.addEventListener('change', saveSettings);
+}
+
+if (crystalDelay) {
+    crystalDelay.addEventListener('change', saveSettings);
+}
 
 // Event Listeners for UI buttons
 if (startButton) startButton.addEventListener('click', startAutomation);
@@ -926,6 +1354,13 @@ if (openDenItemsJson) openDenItemsJson.addEventListener('click', () => openFileI
 // Add event listener for whitelist input changes to update status in real-time
 if (clothingWhitelist) clothingWhitelist.addEventListener('input', updateFilteringStatus);
 if (denWhitelist) denWhitelist.addEventListener('input', updateFilteringStatus);
+
+// Add event listener for search box
+if (itemSearchBox) {
+    itemSearchBox.addEventListener('input', () => {
+        renderItemLog();
+    });
+}
 
 // Modal event listeners
 if (closeModal) closeModal.addEventListener('click', hideModal);
@@ -951,7 +1386,6 @@ async function loadItemData() {
         const clothingResponse = await fetch('./1000-clothing.json');
         if (clothingResponse.ok) {
             clothingItems = await clothingResponse.json();
-            console.log('[TFD Automation] Loaded clothing items successfully.');
         } else {
             console.error('[TFD Automation] Failed to load clothing.json');
         }
@@ -959,7 +1393,6 @@ async function loadItemData() {
         const denItemsResponse = await fetch('./1030-denitems.json');
         if (denItemsResponse.ok) {
             denItems = await denItemsResponse.json();
-            console.log('[TFD Automation] Loaded den items successfully.');
         } else {
             console.error('[TFD Automation] Failed to load den_items.json');
         }
@@ -999,6 +1432,10 @@ async function initialize() {
             // Listener for individual packets
             ipcRenderer.on('packet-event', (event, data) => {
                 handleIncomingPackets(data);
+                // Handle efficient mode packets
+                if (isEfficientMode && isAutomationRunning) {
+                    efficientHandleQqm(data);
+                }
             });
 
             // Listener for global connection status changes
