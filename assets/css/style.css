@@ -2222,9 +2222,22 @@ input:focus-visible {
   opacity: 1;
 }
 
+.theme-dragonfruit {
+  --theme-primary: #E91E63;
+  --theme-secondary: rgba(233, 30, 99, 0.3);
+  --theme-highlight: rgba(248, 187, 208, 0.3);
+  --theme-shadow: rgba(233, 30, 99, 0.1);
+  --theme-gradient-start: rgba(248, 187, 208, 0.3);
+  --theme-gradient-end: rgba(252, 228, 236, 0.6);
+  --theme-hover-border: rgba(233, 30, 99, 0.5);
+  --theme-radial-1: rgba(244, 143, 177, 0.05);
+  --theme-radial-2: rgba(244, 143, 177, 0.07);
+  --theme-settings-hover: rgba(233, 30, 99, 0.05);
+  --theme-settings-border: rgba(233, 30, 99, 0.2);
+}
+
 @media (min-width: 768px){
   .md\:grid-cols-2{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-
