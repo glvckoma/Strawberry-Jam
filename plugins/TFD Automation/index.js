@@ -290,11 +290,9 @@ const efficientHandleQqm = (data) => {
                         isWhitelisted: isWhitelisted
                     });
                     
-                    // Only log skipped items in efficient mode to avoid double-logging
-                    // Valuable items will be logged by the regular filtering system when actually received
-                    if (!isWhitelisted) {
-                        logReceivedItem(itemName, 'skipped');
-                    }
+                    // Log all items seen in chest as 'skipped' initially
+                    // Valuable items will be updated to 'kept' when actually collected
+                    logReceivedItem(itemName, 'skipped');
                 });
 
                 const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
@@ -1088,7 +1086,23 @@ async function processItemForFiltering(defId, invId, itemType) {
 
         if (whitelist.has(defId)) {
             updateStatus(`✓ Whitelisted: ${itemName}. Keeping it.`, 'info');
-            logReceivedItem(itemName, 'kept');
+            
+            // Check if this item was already seen in chest (logged as skipped)
+            const existingItemIndex = receivedItems.findIndex(item => 
+                item.name === itemName && item.status === 'skipped');
+            
+            if (existingItemIndex !== -1) {
+                // Update existing skipped item to kept (we're actually collecting it)
+                receivedItems[existingItemIndex].status = 'kept';
+                receivedItems[existingItemIndex].timestamp = new Date().toISOString();
+                console.log(`[TFD Automation] Updated ${itemName} from skipped to kept`);
+                renderItemLog();
+                localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
+            } else {
+                // Log as new kept item (not seen in chest preview)
+                logReceivedItem(itemName, 'kept');
+            }
+            
             playNotificationSound('success'); // Play sound when valuable item is kept
         } else {
             updateStatus(`♻ Recycling: ${itemName}.`, 'warning');
@@ -1121,16 +1135,31 @@ async function processItemForFiltering(defId, invId, itemType) {
 
 // Function to add item to the received items log
 function logReceivedItem(itemName, status) {
-    if (dontLogRecycledCheckbox.checked && status === 'recycled') {
+    // Check if the checkbox exists and is checked before skipping recycled items
+    if (dontLogRecycledCheckbox && dontLogRecycledCheckbox.checked && status === 'recycled') {
         return; // Do not log recycled items if the setting is checked
     }
-    receivedItems.push({ name: itemName, status });
+    
+    // Add debug logging to help troubleshoot
+    console.log(`[TFD Automation] Logging item: ${itemName} (${status})`);
+    
+    receivedItems.push({ name: itemName, status, timestamp: new Date().toISOString() });
     renderItemLog();
     localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
+    
+    // Force update the UI
+    if (itemLog) {
+        console.log(`[TFD Automation] Total received items: ${receivedItems.length}`);
+    }
 }
 
 function renderItemLog() {
-    if (!itemLog) return;
+    if (!itemLog) {
+        console.warn('[TFD Automation] itemLog element not found');
+        return;
+    }
+
+    console.log(`[TFD Automation] Rendering item log with ${receivedItems.length} items`);
 
     const isCollapsed = itemLog.classList.contains('collapsed');
     const searchTerm = itemSearchBox ? itemSearchBox.value.toLowerCase() : '';
@@ -1148,13 +1177,13 @@ function renderItemLog() {
 
     if (receivedItems.length === 0) {
         itemLog.innerHTML = '<p class="text-sm text-text-secondary text-center">No items received yet.</p>';
-        toggleLogButton.style.display = 'none';
+        if (toggleLogButton) toggleLogButton.style.display = 'none';
         return;
     }
 
     if (filteredItems.length === 0 && searchTerm) {
         itemLog.innerHTML = '<p class="text-sm text-text-secondary text-center">No items match your search.</p>';
-        toggleLogButton.style.display = 'none';
+        if (toggleLogButton) toggleLogButton.style.display = 'none';
         return;
     }
 
@@ -1166,7 +1195,7 @@ function renderItemLog() {
         } else if (item.status === 'skipped') {
             iconClass = 'fa-forward text-blue-400';
         } else {
-            iconClass = 'fa-trash text-red-400';
+            iconClass = 'fa-trash text-red-400'; // recycled
         }
         const itemElement = document.createElement('div');
         itemElement.className = 'flex items-center justify-between text-sm p-1 bg-gray-900/50 rounded';
@@ -1179,14 +1208,15 @@ function renderItemLog() {
 
     // Manage toggle button visibility and text
     const totalCount = searchTerm ? filteredItems.length : receivedItems.length;
-    if (totalCount > 5) {
+    if (totalCount > 5 && toggleLogButton) {
         toggleLogButton.style.display = 'inline-block';
         toggleLogButton.textContent = isCollapsed ? `Show All (${totalCount})` : 'Show Less';
-    } else {
+    } else if (toggleLogButton) {
         toggleLogButton.style.display = 'none';
     }
 
     itemLog.scrollTop = itemLog.scrollHeight;
+    console.log(`[TFD Automation] Rendered ${itemsToRender.length} items in log`);
 }
 
 // Function to clear the received items log
@@ -1415,6 +1445,52 @@ function loadItemLog() {
     }
 }
 
+// Test function to add sample items for debugging
+function addTestItems() {
+    console.log('[TFD Automation] Adding test items for debugging...');
+    logReceivedItem('Test Item 1', 'kept');
+    logReceivedItem('Test Item 2', 'recycled');
+    logReceivedItem('Test Item 3', 'skipped');
+    updateStatus('Added test items to log', 'info');
+}
+
+// Test function to simulate efficient mode detection and processing
+function testEfficientMode() {
+    console.log('[TFD Automation] Testing efficient mode item detection...');
+    
+    // Simulate seeing items in chest preview (all logged as skipped initially)
+    logReceivedItem('Rare Spike Collar', 'skipped');
+    logReceivedItem('Diamond Throne', 'skipped');
+    logReceivedItem('Common Necklace', 'skipped');
+    
+    setTimeout(() => {
+        console.log('[TFD Automation] Simulating actual item receipt...');
+        
+        // Simulate actually collecting the valuable items (update skipped -> kept)
+        const spikeIndex = receivedItems.findIndex(item => 
+            item.name === 'Rare Spike Collar' && item.status === 'skipped');
+        if (spikeIndex !== -1) {
+            receivedItems[spikeIndex].status = 'kept';
+            receivedItems[spikeIndex].timestamp = new Date().toISOString();
+            renderItemLog();
+            localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
+        }
+        
+        const throneIndex = receivedItems.findIndex(item => 
+            item.name === 'Diamond Throne' && item.status === 'skipped');
+        if (throneIndex !== -1) {
+            receivedItems[throneIndex].status = 'kept';
+            receivedItems[throneIndex].timestamp = new Date().toISOString();
+            renderItemLog();
+            localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
+        }
+        
+        // Common Necklace remains as 'skipped' since it wasn't valuable
+        
+        updateStatus('Efficient mode test completed - valuable items updated to kept', 'success');
+    }, 2000);
+}
+
 // Initialize
 async function initialize() {
     loadStats();
@@ -1453,6 +1529,13 @@ async function initialize() {
     }
 
     updateStatus('Ready to start TFD automation', 'info');
+    
+    // Add debugging functions to console (temporary debugging)
+    console.log('[TFD Automation] Debug functions available:');
+    console.log('  - addTestItems() - Add basic test items');
+    console.log('  - testEfficientMode() - Test efficient mode detection flow');
+    window.addTestItems = addTestItems; // Make it globally accessible for testing
+    window.testEfficientMode = testEfficientMode; // Make it globally accessible for testing
 }
 
 initialize();

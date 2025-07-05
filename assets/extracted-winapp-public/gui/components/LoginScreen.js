@@ -155,72 +155,44 @@
           }
           
           /* Settings button and panel styles */
-          .icon-button-top-left { /* Common style for top-left icon buttons */
+          .button-container-bottom-left {
             position: absolute;
-            top: 10px;
+            bottom: 10px; /* Reduced bottom padding */
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Space between buttons */
+            z-index: 1000;
+          }
+
+          .icon-button { /* Common style for icon buttons */
             width: 32px;
             height: 32px;
-            font-size: 18px; /* Adjusted for potentially smaller icons */
+            font-size: 18px;
             border: 2px solid var(--theme-primary, #e83d52);
             border-radius: 8px;
-            background-color: rgba(255, 245, 230, 0.95); /* Keep neutral */
+            background-color: rgba(255, 245, 230, 0.95);
             cursor: pointer;
             opacity: 0.8;
             transition: all 0.3s ease;
-            z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
           }
 
-          .icon-button-top-left:hover {
+          .icon-button:hover {
             opacity: 1;
             border-color: var(--theme-hover-border);
             transform: scale(1.05);
-          }
-
-          #settings-btn {
-            left: 10px;
-            /* Inherits from .icon-button-top-left */
           }
 
           #report-problem-btn {
-            left: 52px; /* Position next to settings button (10px left + 32px width + 10px gap) */
-            /* Inherits from .icon-button-top-left */
             font-size: 16px; /* Slightly smaller for bug icon if needed */
           }
-
-          :host(.fullscreen-active) #report-problem-btn {
-            top: 52px; /* Position below settings button */
-            left: 10px; /* Align with settings button */
-          }
           
           #settings-panel {
             position: absolute;
-            top: 50px; /* Below the buttons */
-            left: 10px;
-            width: 32px;
-            font-size: 20px;
-            border: 2px solid var(--theme-secondary);
-            border-radius: 8px;
-            background-color: rgba(255, 245, 230, 0.95); /* Keep neutral */
-            cursor: pointer;
-            opacity: 0.8;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-          }
-          
-          #settings-btn:hover {
-            opacity: 1;
-            border-color: var(--theme-hover-border);
-            transform: scale(1.05);
-          }
-          
-          #settings-panel {
-            position: absolute;
-            top: 50px;
+            bottom: 52px; /* Adjusted for new button position (10px + 32px button + 10px gap) */
             left: 10px;
             width: 250px;
             background-color: rgba(255, 245, 230, 0.95); /* Keep neutral */
@@ -228,7 +200,7 @@
             border-radius: 12px;
             padding: 15px;
             /* display: none; */ /* Handled by animation */
-            z-index: 1000;
+            z-index: 999; /* Below buttons */
             box-shadow: 0 8px 32px var(--theme-shadow);
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
           }
@@ -489,7 +461,7 @@
 
           #version {
             position: absolute;
-            left: 10px;
+            left: 52px; /* Moved to the right to avoid button overlap */
             bottom: 10px;
             display: grid;
             grid-template-columns: 1fr 24px;
@@ -565,8 +537,8 @@
           /* Context Menu Styling MOVED to AccountManagementPanel.css */
 
           /* Settings Panel Animation */
-          @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
+          @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
           }
           
@@ -577,7 +549,7 @@
             padding: 15px; /* Keep padding defined here, will be hidden by max-height: 0 */
             transition: max-height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
                         opacity 0.3s ease; /* Removed padding from transition */
-            transform-origin: top center;
+            transform-origin: bottom left;
             /* width: 250px; is already defined above, ensure it's not overridden */
             overflow-y: auto; /* Enable vertical scrolling */
             padding-right: 5px; /* Add some space for the scrollbar */
@@ -605,8 +577,7 @@
           #settings-panel.show {
             max-height: 500px; /* Adjust as needed to fit content */
             opacity: 1;
-            /* animation: slideDown 0.3s ease forwards; */ /* slideDown can be kept or rely on transition */
-            /* If slideDown is used, ensure it primarily handles transform/opacity if max-height handles size */
+            animation: slideUp 0.3s ease forwards;
           }
           
           /* Show/hide warning for UUID spoofing */
@@ -651,8 +622,10 @@
         </div>
 
         <!-- Settings Button and Panel -->
-        <button id="settings-btn" title="Settings" class="icon-button-top-left">⚙️</button>
-        <button id="report-problem-btn" title="Report a Problem" class="icon-button-top-left">🐛</button> <!-- Bug icon: 🐛 -->
+        <div class="button-container-bottom-left">
+          <button id="settings-btn" title="Settings" class="icon-button">⚙️</button>
+          <button id="report-problem-btn" title="Report a Problem" class="icon-button">🐛</button>
+        </div>
         <div id="settings-panel">
           <h3>Settings</h3>
           <div class="settings-group">
