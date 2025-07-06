@@ -1254,9 +1254,9 @@ async function processItemForFiltering(defId, invId, itemType) {
 
 // Function to add item to the received items log
 function logReceivedItem(itemName, status) {
-    // Check if the checkbox exists and is checked before skipping recycled items
-    if (dontLogRecycledCheckbox && dontLogRecycledCheckbox.checked && status === 'recycled') {
-        return; // Do not log recycled items if the setting is checked
+    // Check if the checkbox exists and is checked before skipping recycled and skipped items
+    if (dontLogRecycledCheckbox && dontLogRecycledCheckbox.checked && (status === 'recycled' || status === 'skipped')) {
+        return; // Do not log recycled or skipped items if the setting is checked
     }
     
     // Add debug logging to help troubleshoot

@@ -663,6 +663,9 @@
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + C: Clone A Friend</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + T: Teleportation</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + R: Room User Scan</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + M: Trade Marketplace</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + X: Headless mode</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + M: Manual Memory Cleanup</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + N: No Clip</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Equals / Numpad Add: Zoom In</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Minus / Numpad Subtract: Zoom Out</div>
