@@ -667,6 +667,11 @@ async function startAutomation() {
     isEfficientMode = efficientModeCheckbox && efficientModeCheckbox.checked;
     isSpecialMode = specialModeCheckbox && specialModeCheckbox.checked;
     efficientCrystalDelay = crystalDelay ? parseInt(crystalDelay.value) : 10;
+    
+    // CRITICAL: Reset gift detection at start of automation (before any adventures)
+    detectedGiftItems = [];
+    waitPeriodCrystalPackets = [];
+    console.log(`[TFD Automation] === AUTOMATION STARTED - RESET ALL GIFT DETECTION ===`);
 
     // Initialize loop settings
     const loopValue = loopMode ? loopMode.value : '1';
@@ -705,6 +710,13 @@ async function runSingleAutomation() {
     knownDenInvIds.clear();
     isFirstDiPacket = true;
     hasCapturedInitialDenState = false; // Reset for each new adventure
+    
+    // CRITICAL: Reset gift detection for new adventure (only if looping)
+    if (currentLoopCount > 1) {
+        detectedGiftItems = [];
+        waitPeriodCrystalPackets = [];
+        console.log(`[TFD Automation] === LOOP ${currentLoopCount} - RESET GIFT DETECTION ===`);
+    }
 
     try {
         await refreshRoom();
