@@ -939,9 +939,5 @@ const registerAppCommands = (app) => {
       },
       'Check if Animal Jam servers are online and display status information'
     );
-    app.consoleMessage({ type: 'warn', message: '[Core Commands] Using fallback registerConsoleCommand for "servers". Consider migrating fully to app.dispatch.onCommand.' });
-  } else {
-    app.consoleMessage({ type: 'error', message: '[Core Commands] Could not register "servers" command. No suitable registration method found on app object.' });
   }
-  
 }

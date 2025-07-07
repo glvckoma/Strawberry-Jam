@@ -785,6 +785,188 @@
           console.warn("[GUI Index.html] game-screen element not found.");
         }
       });
+
+      // Handle exit confirmation modal
+      window.ipc.on("show-exit-confirmation", () => {
+        console.log("[Exit Confirmation] Received show-exit-confirmation message");
+        console.log("[Exit Confirmation] About to create exit modal");
+        
+        // Create a simple modal using basic HTML elements
+        showExitConfirmationModal();
+      });
+
+      // Helper function to darken a hex color
+      function darkenThemeColor(hex, percent) {
+        if (!hex || hex.length < 7) return hex;
+        
+        // Convert hex to RGB
+        let r = parseInt(hex.slice(1, 3), 16);
+        let g = parseInt(hex.slice(3, 5), 16);
+        let b = parseInt(hex.slice(5, 7), 16);
+        
+        // Darken
+        r = Math.max(0, Math.floor(r * (100 - percent) / 100));
+        g = Math.max(0, Math.floor(g * (100 - percent) / 100));
+        b = Math.max(0, Math.floor(b * (100 - percent) / 100));
+        
+        // Convert back to hex
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+      }
+
+      function showExitConfirmationModal() {
+        // Remove any existing modal
+        const existingModal = document.getElementById('exit-confirmation-modal');
+        if (existingModal) {
+          existingModal.remove();
+        }
+
+        // Get current theme from the login screen element
+        const loginScreen = document.getElementById('login-screen');
+        let themePrimary = '#e83d52'; // Default strawberry theme
+        let themeSecondary = 'rgba(232, 61, 82, 0.3)';
+        let themeShadow = 'rgba(252, 93, 93, 0.1)';
+        let themeBoxBackground = 'rgba(255, 245, 230, 0.95)';
+        
+        if (loginScreen && loginScreen.shadowRoot) {
+          const computedStyle = getComputedStyle(loginScreen.shadowRoot.host);
+          themePrimary = computedStyle.getPropertyValue('--theme-primary').trim() || themePrimary;
+          themeSecondary = computedStyle.getPropertyValue('--theme-secondary').trim() || themeSecondary;
+          themeShadow = computedStyle.getPropertyValue('--theme-shadow').trim() || themeShadow;
+          themeBoxBackground = computedStyle.getPropertyValue('--theme-box-background').trim() || themeBoxBackground;
+        }
+
+        // Create modal backdrop
+        const modalBackdrop = document.createElement('div');
+        modalBackdrop.id = 'exit-confirmation-modal';
+        modalBackdrop.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(5px);
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'CCDigitalDelivery', sans-serif;
+        `;
+
+        // Create modal content with dynamic theming
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+          background: ${themeBoxBackground};
+          border: 3px solid ${themePrimary};
+          border-radius: 15px;
+          padding: 30px;
+          max-width: 450px;
+          width: 90%;
+          box-shadow: 0 20px 40px ${themeShadow}, 0 0 0 1px ${themeSecondary};
+          text-align: center;
+          position: relative;
+          animation: modalSlideIn 0.3s ease-out;
+        `;
+
+        modalContent.innerHTML = `
+          <style>
+            @keyframes modalSlideIn {
+              from { opacity: 0; transform: scale(0.9) translateY(-20px); }
+              to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+          </style>
+          <div style="color: ${themePrimary}; font-size: 24px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <span style="background: #E74C3C; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 18px;">✕</span>
+            Exit Game
+          </div>
+          <div style="color: #333333; font-size: 16px; line-height: 1.5; margin-bottom: 25px;">
+            Are you sure you want to exit the game?<br>
+            This will close all plugins as well.
+          </div>
+          <div style="margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; user-select: none;" id="dontAskContainer">
+            <input type="checkbox" id="dontAskCheckbox" style="width: 16px; height: 16px; cursor: pointer; accent-color: ${themePrimary};">
+            <label for="dontAskCheckbox" style="color: #666666; font-size: 14px; cursor: pointer;">Don't ask me again</label>
+          </div>
+          <div style="display: flex; gap: 15px; justify-content: center;">
+            <button id="cancelBtn" style="background: #4A5568; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; min-width: 100px;">Cancel</button>
+            <button id="confirmBtn" style="background: ${themePrimary}; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; min-width: 100px;">Yes, Exit</button>
+          </div>
+        `;
+
+        modalBackdrop.appendChild(modalContent);
+        document.body.appendChild(modalBackdrop);
+
+        // Add event listeners
+        const cancelBtn = modalContent.querySelector('#cancelBtn');
+        const confirmBtn = modalContent.querySelector('#confirmBtn');
+        const dontAskContainer = modalContent.querySelector('#dontAskContainer');
+        const checkbox = modalContent.querySelector('#dontAskCheckbox');
+
+        function closeModal(confirmed) {
+          const dontAskAgain = checkbox.checked;
+          
+          console.log(`[Exit Confirmation] User response: confirmed=${confirmed}, dontAskAgain=${dontAskAgain}`);
+          
+          // Send response back to main process
+          window.ipc.send('exit-confirmation-response', {
+            confirmed: confirmed,
+            dontAskAgain: dontAskAgain
+          });
+
+          // Remove modal
+          modalBackdrop.remove();
+        }
+
+        // Button event listeners
+        cancelBtn.addEventListener('click', () => closeModal(false));
+        confirmBtn.addEventListener('click', () => closeModal(true));
+
+        // Checkbox container click
+        dontAskContainer.addEventListener('click', (e) => {
+          if (e.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+          }
+        });
+
+        // Backdrop click to cancel
+        modalBackdrop.addEventListener('click', (e) => {
+          if (e.target === modalBackdrop) {
+            closeModal(false);
+          }
+        });
+
+        // Escape key to cancel
+        const handleKeyDown = (e) => {
+          if (e.key === 'Escape') {
+            document.removeEventListener('keydown', handleKeyDown);
+            closeModal(false);
+          }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+
+        // Button hover effects
+        cancelBtn.addEventListener('mouseenter', () => {
+          cancelBtn.style.background = '#5A6578';
+          cancelBtn.style.transform = 'translateY(-1px)';
+        });
+        cancelBtn.addEventListener('mouseleave', () => {
+          cancelBtn.style.background = '#4A5568';
+          cancelBtn.style.transform = 'translateY(0)';
+        });
+
+        confirmBtn.addEventListener('mouseenter', () => {
+          // Darken the theme primary color for hover effect
+          confirmBtn.style.background = darkenThemeColor(themePrimary, 15);
+          confirmBtn.style.transform = 'translateY(-1px)';
+        });
+        confirmBtn.addEventListener('mouseleave', () => {
+          confirmBtn.style.background = themePrimary;
+          confirmBtn.style.transform = 'translateY(0)';
+        });
+
+        // Focus the cancel button
+        setTimeout(() => cancelBtn.focus(), 100);
+      }
     </script>
 </body>
 </html>

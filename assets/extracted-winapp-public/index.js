@@ -14,6 +14,7 @@ const fsPromises = fs.promises; // Keep promises version available
 const config = require("./config.js");
 const server = require("./server.js");
 const translation = require("./translation.js");
+const net = require('net');
 
 // All Keytar-related service names and constants have been removed.
 
@@ -29,6 +30,7 @@ let win = null;
 // let gameWebviewContentsId = null; // Main process will not directly manage game webview DevTools via ID.
 
 let printWindow = null;
+let isClosing = false;
 
 const store = new Store();
 
@@ -359,10 +361,42 @@ ipcMain.on("loaded", async (event, message) => {
     if (webview && webview.send) webview.send("screenChange", "windowed");
   });
 
-  win.on("close", () => {
-    const position = win.getPosition();
-    store.set("window.x", position[0]);
-    store.set("window.y", position[1]);
+  win.on("close", (event) => {
+    log("debug", `[Exit Confirmation] Window close event triggered. isClosing: ${isClosing}`);
+    
+    if (isClosing) {
+      // Allow close to proceed
+      const position = win.getPosition();
+      store.set("window.x", position[0]);
+      store.set("window.y", position[1]);
+      
+      // Notify Strawberry Jam that AJ Classic is closing
+      notifyStrawberryJamClose();
+      return;
+    }
+    
+    // Prevent default close
+    event.preventDefault();
+    
+    // Check if user has disabled the confirmation
+    const skipConfirmation = store.get("ui.skipExitConfirmation", false);
+    log("debug", `[Exit Confirmation] Skip confirmation setting: ${skipConfirmation}`);
+    
+    if (skipConfirmation) {
+      log("info", "[Exit Confirmation] Skipping confirmation due to user preference");
+      // Close directly without confirmation
+      isClosing = true;
+      win.close();
+      return;
+    }
+    
+    // Show exit confirmation modal
+    if (win && win.webContents && !win.isDestroyed()) {
+      log("debug", "[Exit Confirmation] Sending show-exit-confirmation to renderer");
+      win.webContents.send("show-exit-confirmation");
+    } else {
+      log("error", "[Exit Confirmation] Cannot send to renderer - window not available");
+    }
   });
 });
 
@@ -884,6 +918,87 @@ const translate = (phrase) => {
   }
   return value;
 };
+
+// Function to notify Strawberry Jam when AJ Classic is closing
+const notifyStrawberryJamClose = () => {
+  try {
+    log("info", "[AJ Classic Close] notifyStrawberryJamClose called - attempting to notify main Strawberry Jam app");
+    
+    // Try to connect to Strawberry Jam's API server to notify about AJ Classic closing
+    const strawberryJamDataPath = process.env.STRAWBERRY_JAM_DATA_PATH;
+    if (strawberryJamDataPath) {
+      log("debug", `[AJ Classic Close] Found STRAWBERRY_JAM_DATA_PATH: ${strawberryJamDataPath}`);
+      // Send a HTTP request to the main Strawberry Jam application to close plugins
+      const http = require('http');
+      
+      // Try common ports that Strawberry Jam API might be running on
+      const ports = [8080, 8081, 8082, 9080, 3000];
+      
+      ports.forEach(port => {
+        const postData = JSON.stringify({
+          action: 'aj-classic-closing',
+          timestamp: Date.now()
+        });
+        
+        const options = {
+          hostname: '127.0.0.1',
+          port: port,
+          path: '/api/aj-classic-close',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          },
+          timeout: 1000  // 1 second timeout
+        };
+        
+        const req = http.request(options, (res) => {
+          if (res.statusCode === 200) {
+            log("info", `[AJ Classic Close] Successfully notified Strawberry Jam on port ${port}`);
+          } else {
+            log("warn", `[AJ Classic Close] Unexpected response code ${res.statusCode} from port ${port}`);
+          }
+        });
+        
+        req.on('error', (err) => {
+          log("debug", `[AJ Classic Close] Connection failed for port ${port}: ${err.message}`);
+        });
+        
+        req.on('timeout', () => {
+          log("debug", `[AJ Classic Close] Request timeout for port ${port}`);
+          req.destroy();
+        });
+        
+        req.write(postData);
+        req.end();
+      });
+    } else {
+      log("warn", "[AJ Classic Close] STRAWBERRY_JAM_DATA_PATH environment variable not set - cannot notify main app");
+    }
+  } catch (error) {
+    log("error", `[AJ Classic Close] Error in notifyStrawberryJamClose: ${error.message}`);
+  }
+};
+
+// Handle exit confirmation response from renderer
+ipcMain.on("exit-confirmation-response", (event, { confirmed, dontAskAgain }) => {
+  log("debug", `[Exit Confirmation] Received response: confirmed=${confirmed}, dontAskAgain=${dontAskAgain}`);
+  
+  if (dontAskAgain) {
+    store.set("ui.skipExitConfirmation", true);
+    log("info", "[Exit Confirmation] User chose to skip confirmation in future");
+  }
+  
+  if (confirmed) {
+    log("info", "[Exit Confirmation] User confirmed exit, closing application");
+    isClosing = true;
+    if (win && !win.isDestroyed()) {
+      win.close();
+    }
+  } else {
+    log("debug", "[Exit Confirmation] User cancelled exit");
+  }
+});
 
 ipcMain.on("translate", (event, message) => {
   if (win && win.webContents && !win.isDestroyed()) {

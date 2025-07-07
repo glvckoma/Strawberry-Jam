@@ -765,8 +765,6 @@ module.exports = class Application extends EventEmitter {
       description: command.description
     }));
     
-    console.log('[Autocomplete] Setting up autocomplete with commands:', commandSource);
-    
     this.$input.autocomplete({
       source: commandSource,
       position: { my: 'left top', at: 'left bottom', collision: 'flip' },
@@ -1211,7 +1209,7 @@ module.exports = class Application extends EventEmitter {
     try {
       // Log starting message with a unique ID
       this.consoleMessage({ 
-        message: 'Starting Animal Jam Classic...', 
+        message: 'Starting Strawberry Jam Classic...', 
         type: 'wait',
         details: { messageId: startMessageId } // Pass ID
       });
@@ -1236,7 +1234,7 @@ module.exports = class Application extends EventEmitter {
         }
         // Log success message HERE, after removing the starting message
         this.consoleMessage({
-          message: 'Successfully launched Animal Jam Classic!',
+          message: 'Successfully launched Strawberry Jam Classic!',
           type: 'success'
         });
       }
@@ -1517,6 +1515,14 @@ module.exports = class Application extends EventEmitter {
     // Listen for exit confirmation request from main process
     ipcRenderer.on('show-exit-confirmation', () => {
       this.modals.show('confirmExitModal');
+    });
+
+    // Listen for notification that plugins were closed by AJ Classic closing
+    ipcRenderer.on('plugins-closed-by-aj-classic', () => {
+      this.consoleMessage({
+        message: 'All plugins have been closed because Strawberry Jam Classic was closed.',
+        type: 'notify'
+      });
     });
 
     // Initialize modal close button styles

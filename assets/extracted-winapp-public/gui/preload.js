@@ -38,7 +38,8 @@ const sendWhitelist = new Set()
   .add('delete-account')
   .add('toggle-pin-account')
   .add('open-user-cache-file')
-  .add('request-main-log-path'); // CHANGED: For send/on pattern
+  .add('request-main-log-path') // CHANGED: For send/on pattern
+  .add('exit-confirmation-response'); // ADDED: For exit confirmation modal
 
 // main -> renderer
 const receiveWhitelist = new Set()
@@ -53,7 +54,8 @@ const receiveWhitelist = new Set()
   .add("signupCompleted")
   .add("toggleDevTools")
   .add("translate")
-  .add("request-toggle-game-client-devtools"); // Added for game client devtools
+  .add("request-toggle-game-client-devtools") // Added for game client devtools
+  .add("show-exit-confirmation"); // ADDED: For exit confirmation modal
 
   // allow renderer process to safely communicate with main process
 contextBridge.exposeInMainWorld(

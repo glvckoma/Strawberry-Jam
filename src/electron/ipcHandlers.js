@@ -27,6 +27,8 @@ let lastKnownGoodGameTime = 0;
 function setupIpcHandlers(electronInstance) {
   KEYTAR_SERVICE_LEAK_CHECK_API_KEY = `${app.getName()}-leak-check-api-key`;
 
+  // AJ Classic closing functionality moved to main process in index.js
+
   ipcMain.handle('read-json-file', async (event, filePath, defaultValue) => {
     const dataDir = getDataPath(app);
     const fullPath = path.join(dataDir, filePath);

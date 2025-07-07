@@ -814,6 +814,36 @@ class Electron {
         }
       });
 
+      // Listen for messages from API process
+      this._apiProcess.on('message', (message) => {
+        if (message && message.type === 'aj-classic-closing') {
+          logManager.log('[AJ Classic Close] Received notification from API process that AJ Classic is closing, closing all plugins', 'main', logManager.logLevels.INFO);
+          
+          // Close all plugin windows
+          if (this.pluginWindows) {
+            this.pluginWindows.forEach((window, name) => {
+              if (window && !window.isDestroyed()) {
+                try {
+                  logManager.log(`[AJ Classic Close] Closing plugin window: ${name}`, 'main', logManager.logLevels.INFO);
+                  window.close();
+                } catch (error) {
+                  logManager.error(`[AJ Classic Close] Error closing plugin window ${name}: ${error.message}`);
+                }
+              }
+            });
+            
+            // Clear the plugin windows map
+            this.pluginWindows.clear();
+            this._backgroundPlugins.clear();
+            
+            // Notify the main window that plugins were closed
+            if (this._window && !this._window.isDestroyed()) {
+              this._window.webContents.send('plugins-closed-by-aj-classic');
+            }
+          }
+        }
+      });
+
       // Give API process a moment to start, but don't block the main startup
       setTimeout(() => {
         if (this._apiProcess && !this._apiProcess.killed) {
