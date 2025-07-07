@@ -711,6 +711,55 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
+  // Launch AJ Classic external installation
+  ipcMain.on('launch-aj-classic', () => {
+    // Cross-platform path resolution for AJ Classic
+    const getAJClassicPath = () => {
+      if (process.platform === 'win32') {
+        return path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'aj-classic', 'AJ Classic.exe');
+      } else if (process.platform === 'darwin') {
+        return path.join('/', 'Applications', 'AJ Classic.app', 'Contents', 'MacOS', 'AJ Classic');
+      } else {
+        // Linux/other platforms - common installation paths
+        const possiblePaths = [
+          path.join(os.homedir(), '.local', 'share', 'aj-classic', 'AJ Classic'),
+          path.join('/opt', 'aj-classic', 'AJ Classic'),
+          path.join('/usr', 'local', 'bin', 'aj-classic')
+        ];
+        return possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
+      }
+    };
+
+    const exePath = getAJClassicPath();
+
+    if (!fs.existsSync(exePath)) {
+      logManager.error(`[Process] AJ Classic executable not found at: ${exePath}`);
+      dialog.showErrorBox('AJ Classic Launch Error', 
+        `Could not find AJ Classic installation.\n\nLooked for:\n${exePath}\n\nPlease ensure AJ Classic is installed correctly.`);
+      return;
+    }
+
+    try {
+      const classicProcess = spawn(exePath, [], {
+        detached: true,
+        stdio: 'ignore'
+      });
+
+      processManager.add(classicProcess);
+      classicProcess.unref(); // Allow parent to exit independently
+      
+      logManager.log(`AJ Classic launched from: ${exePath}`, 'main', logManager.logLevels.INFO);
+
+      classicProcess.on('error', (err) => {
+        logManager.error(`[Process] Error launching AJ Classic: ${err.message}`);
+        dialog.showErrorBox('AJ Classic Launch Error', `Failed to start AJ Classic:\n${err.message}`);
+      });
+    } catch (error) {
+      logManager.error(`[Process] Failed to spawn AJ Classic process: ${error.message}`);
+      dialog.showErrorBox('AJ Classic Launch Error', `Failed to start AJ Classic:\n${error.message}`);
+    }
+  });
+
   // Global IPC handlers that don't depend on electronInstance directly
   ipcMain.on('packet-event', (event, packetData) => {
     const windows = BrowserWindow.getAllWindows();

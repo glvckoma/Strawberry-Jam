@@ -976,11 +976,15 @@ module.exports = class Application extends EventEmitter {
         e.stopPropagation()
         $detailsContainer.toggleClass('hidden')
         const isHidden = $detailsContainer.hasClass('hidden')
-        $detailsButton.html(
-          isHidden
-            ? '<i class="fas fa-code mr-1"></i> Details'
-            : '<i class="fas fa-chevron-up mr-1"></i> Hide'
-        )
+        
+        // Use smooth rotation animation instead of icon switching
+        if (isHidden) {
+          $detailsButton.html('<i class="fas fa-chevron-down mr-1 smooth-chevron"></i> Details')
+          $detailsButton.find('i').css('transform', 'rotate(0deg)')
+        } else {
+          $detailsButton.html('<i class="fas fa-chevron-down mr-1 smooth-chevron"></i> Hide')
+          $detailsButton.find('i').css('transform', 'rotate(180deg)')
+        }
       })
 
       $container.after($detailsContainer)
@@ -1238,6 +1242,64 @@ module.exports = class Application extends EventEmitter {
         this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
         // Restore original onclick behavior
         this.$playButton.onclick = () => jam.application.openAnimalJam();
+      }
+    }
+  }
+
+  /**
+   * Opens AJ Classic external installation
+   * @returns {Promise<void>}
+   * @public
+   */
+  async openAJClassic () {
+    const ajClassicButton = document.getElementById('ajClassicButton');
+    if (!ajClassicButton) {
+      console.error("AJ Classic button element not found!");
+      return;
+    }
+
+    // Disable button and apply styles
+    ajClassicButton.classList.add('opacity-50', 'pointer-events-none');
+    ajClassicButton.onclick = () => false;
+    
+    const startMessageId = `start-aj-classic-${Date.now()}`;
+
+    try {
+      // Log starting message
+      this.consoleMessage({ 
+        message: 'Launching AJ Classic...', 
+        type: 'wait',
+        details: { messageId: startMessageId }
+      });
+      
+      // Send IPC message to launch AJ Classic
+      ipcRenderer.send('launch-aj-classic');
+      
+      // Success message after short delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Remove starting message
+      const startingMessageElement = document.querySelector(`[data-message-id='${startMessageId}']`);
+      if (startingMessageElement) {
+        $(startingMessageElement).remove();
+      }
+      
+      // Log success message
+      this.consoleMessage({
+        message: 'AJ Classic launched successfully!',
+        type: 'success'
+      });
+      
+    } catch (error) {
+      this.consoleMessage({
+        message: `Error launching AJ Classic: ${error.message}`,
+        type: 'error'
+      });
+    } finally {
+      // Re-enable button
+      if (ajClassicButton) {
+        ajClassicButton.classList.remove('opacity-50', 'pointer-events-none');
+        ajClassicButton.onclick = () => jam.application.openAJClassic();
       }
     }
   }

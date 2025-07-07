@@ -35,7 +35,19 @@
             class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
             onclick="jam.application.openAnimalJam()">
             <i class="fas fa-gamepad theme-icon text-xl"></i>
-            <span class="font-medium">Launch</span>
+            <span class="font-medium">Strawberry Jam</span>
+            <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+              <i class="fas fa-external-link-alt text-xs" style="color: var(--theme-primary);"></i>
+            </div>
+          </a>
+        </li>
+        <!-- AJ Classic -->
+        <li>
+          <a href="#" id="ajClassicButton"
+            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
+            onclick="jam.application.openAJClassic()">
+            <i class="fas fa-paw text-xl" style="color: #f2ba55;"></i>
+            <span class="font-medium">AJ Classic</span>
             <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
               <i class="fas fa-external-link-alt text-xs" style="color: var(--theme-primary);"></i>
             </div>
@@ -308,11 +320,26 @@
     .sidebar-chevron i {
       font-size: 1rem !important;
       vertical-align: middle;
+      /* Smooth chevron rotation animation */
+      transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform-origin: center;
+      display: inline-block;
     }
+    .collapsible-section {
+      /* Smooth content expansion/collapse animation */
+      transition: max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  opacity 0.3s ease,
+                  padding 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      overflow: hidden;
+      max-height: 1000px; /* Large enough for expanded content */
+    }
+    
     .collapsible-section.collapsed {
       max-height: 0 !important;
       opacity: 0;
       pointer-events: none;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
     }
     
     /* Clear Button Styles */
@@ -533,12 +560,11 @@
         navToggle.addEventListener("click", function () {
           navContent.classList.toggle("collapsed");
           const icon = navToggle.querySelector("i");
+          // Use smooth CSS transform instead of class switching
           if (navContent.classList.contains("collapsed")) {
-            icon.classList.remove("fa-chevron-up");
-            icon.classList.add("fa-chevron-down");
+            icon.style.transform = "rotate(180deg)";
           } else {
-            icon.classList.remove("fa-chevron-down");
-            icon.classList.add("fa-chevron-up");
+            icon.style.transform = "rotate(0deg)";
           }
         });
       }
@@ -550,12 +576,11 @@
         pluginsToggle.addEventListener("click", function () {
           pluginsContent.classList.toggle("collapsed");
           const icon = pluginsToggle.querySelector("i");
+          // Use smooth CSS transform instead of class switching
           if (pluginsContent.classList.contains("collapsed")) {
-            icon.classList.remove("fa-chevron-up");
-            icon.classList.add("fa-chevron-down");
+            icon.style.transform = "rotate(180deg)";
           } else {
-            icon.classList.remove("fa-chevron-down");
-            icon.classList.add("fa-chevron-up");
+            icon.style.transform = "rotate(0deg)";
           }
         });
       }

@@ -163,6 +163,7 @@
             flex-direction: column;
             gap: 10px; /* Space between buttons */
             z-index: 1000;
+            pointer-events: none; /* Allow clicks to pass through container */
           }
 
           .icon-button { /* Common style for icon buttons */
@@ -178,16 +179,81 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            pointer-events: auto; /* Re-enable pointer events only for the button itself */
+            /* Ensure the button doesn't extend beyond its visual bounds */
+            box-sizing: border-box;
+            overflow: hidden;
+            /* Remove any potential margin/padding that could extend hover area */
+            margin: 0;
+            padding: 0;
+            /* Ensure proper cursor behavior - only show pointer when directly over button */
+            cursor: pointer !important;
+            /* Limit interaction area to exact button size */
+            position: relative;
+            flex-shrink: 0;
           }
 
           .icon-button:hover {
             opacity: 1;
             border-color: var(--theme-hover-border);
             transform: scale(1.05);
+            /* Ensure hover effects don't extend beyond button boundaries */
+            transform-origin: center;
           }
 
           #report-problem-btn {
             font-size: 16px; /* Slightly smaller for bug icon if needed */
+          }
+
+          /* Ensure precise hover boundaries for both buttons */
+          #settings-btn, #report-problem-btn {
+            /* Strict containment of hover area */
+            contain: layout style;
+            /* Prevent any accidental hover area extension */
+            outline: none;
+            /* Ensure the button interaction area matches visual size exactly */
+            min-width: 32px;
+            max-width: 32px;
+            min-height: 32px;
+            max-height: 32px;
+            /* Remove any inherited styles that might extend hover area */
+            line-height: 1;
+            vertical-align: baseline;
+            /* Ensure cursor only changes when directly over the button */
+            cursor: pointer;
+            /* Create a strict boundary for pointer events */
+            clip-path: inset(0);
+          }
+
+          /* Ensure no cursor interference outside button bounds */
+          .button-container-bottom-left::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            pointer-events: none;
+            cursor: default;
+            z-index: -1;
+          }
+
+          /* Additional safeguards to prevent cursor interference */
+          .icon-button:not(:hover) {
+            cursor: default;
+          }
+          
+          .icon-button:hover {
+            cursor: pointer;
+          }
+
+          /* Ensure the game area maintains proper cursor behavior */
+          body:not(.login-screen) .button-container-bottom-left {
+            pointer-events: none !important;
+          }
+          
+          body:not(.login-screen) .icon-button {
+            pointer-events: none !important;
           }
           
           #settings-panel {
@@ -203,6 +269,11 @@
             z-index: 999; /* Below buttons */
             box-shadow: 0 8px 32px var(--theme-shadow);
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            /* Prevent content from extending beyond panel boundaries */
+            box-sizing: border-box;
+            overflow: hidden;
+            /* Ensure pointer events are contained within panel */
+            contain: layout style;
           }
           
           #settings-panel h3 {
@@ -214,6 +285,11 @@
             margin-bottom: 10px;
             text-shadow: 1px 1px 0px var(--theme-shadow);
             transition: color 0.3s ease, text-shadow 0.3s ease;
+            /* Prevent text overflow beyond panel */
+            box-sizing: border-box;
+            overflow: hidden;
+            word-wrap: break-word;
+            max-width: 100%;
           }
           
           .settings-group {
@@ -239,6 +315,12 @@
             padding: 4px;
             transition: background-color 0.2s;
             border-radius: 6px;
+            /* Prevent content from extending beyond panel boundaries */
+            box-sizing: border-box;
+            overflow: hidden;
+            word-wrap: break-word;
+            max-width: 100%;
+            flex-wrap: wrap;
           }
           
           .settings-item:hover {
@@ -247,6 +329,24 @@
           
           .settings-item input[type="checkbox"] {
             margin-right: 8px;
+          }
+
+          /* Ensure all settings panel content is properly contained */
+          #settings-panel * {
+            box-sizing: border-box;
+            max-width: 100%;
+          }
+
+          #settings-panel h4, #settings-panel h5 {
+            overflow: hidden;
+            word-wrap: break-word;
+            max-width: 100%;
+          }
+
+          #settings-panel label, #settings-panel select {
+            overflow: hidden;
+            word-wrap: break-word;
+            max-width: 100%;
           }
 
           .hidden {
@@ -553,6 +653,8 @@
             /* width: 250px; is already defined above, ensure it's not overridden */
             overflow-y: auto; /* Enable vertical scrolling */
             padding-right: 5px; /* Add some space for the scrollbar */
+            /* Prevent any cursor interference when panel is hidden */
+            pointer-events: none;
           }
 
           /* Custom Scrollbar Styles */
@@ -578,6 +680,8 @@
             max-height: 500px; /* Adjust as needed to fit content */
             opacity: 1;
             animation: slideUp 0.3s ease forwards;
+            /* Re-enable pointer events when panel is shown */
+            pointer-events: auto;
           }
           
           /* Show/hide warning for UUID spoofing */
