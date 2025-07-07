@@ -888,6 +888,42 @@ const registerAppCommands = (app) => {
       description: 'Check if Animal Jam servers are online and display status information'
       // Add other properties like 'permission' if your onCommand handler supports them
     });
+
+    // Add end command to kill AJ Classic processes
+    app.dispatch.onCommand({
+      name: 'end',
+      callback: async (commandData) => {
+        try {
+          app.consoleMessage({
+            type: 'notify',
+            message: 'Ending AJ Classic processes...'
+          });
+
+          // Send IPC message to main process to handle process termination
+          const { ipcRenderer } = require('electron');
+          const result = await ipcRenderer.invoke('end-aj-classic-processes');
+          
+          if (result.success) {
+            app.consoleMessage({
+              type: 'success',
+              message: `Successfully ended ${result.processCount} AJ Classic processes`
+            });
+          } else {
+            app.consoleMessage({
+              type: 'error',
+              message: `Failed to end processes: ${result.error}`
+            });
+          }
+        } catch (error) {
+          app.consoleMessage({
+            type: 'error',
+            message: `Error ending processes: ${error.message}`
+          });
+        }
+        return true; // Command handled
+      },
+      description: 'Ends all AJ Classic.exe processes'
+    });
   } else if (typeof app.registerConsoleCommand === 'function') {
     // Fallback to old method if app.dispatch.onCommand is not found (for safety, though we expect it)
     app.registerConsoleCommand(

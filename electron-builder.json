@@ -22,7 +22,14 @@
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "allowElevation": false,
-    "include": "build/installer.nsh"
+    "installerIcon": "./assets/images/icon.ico",
+    "uninstallerIcon": "./assets/images/icon.ico",
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Strawberry Jam",
+    "include": "build/installer.nsh",
+    "warningsAsErrors": false,
+    "guid": "a2f8d7c4-6f3b-4c9e-9a2b-1c8f9e4d7a3c"
   },
   "files": [
     "package.json",

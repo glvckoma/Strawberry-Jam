@@ -958,6 +958,98 @@ function setupIpcHandlers(electronInstance) {
       return { success: false, error: error.message };
     }
   });
+
+  // End AJ Classic processes handler
+  ipcMain.handle('end-aj-classic-processes', async () => {
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execAsync = util.promisify(exec);
+    
+    try {
+      let processCount = 0;
+      
+      if (process.platform === 'win32') {
+        // Windows: Use taskkill to end AJ Classic processes only
+        const processNames = ['AJ Classic.exe'];
+        
+        for (const processName of processNames) {
+          try {
+            // First check if the process exists
+            const { stdout: listOutput } = await execAsync(`tasklist /FI "IMAGENAME eq ${processName}" /FO CSV | findstr /V "INFO:"`);
+            
+            if (listOutput.includes(processName)) {
+              // Process exists, kill it
+              await execAsync(`taskkill /F /IM "${processName}"`);
+              
+              // Count how many processes were killed
+              const lines = listOutput.split('\n').filter(line => line.includes(processName));
+              processCount += lines.length - 1; // Subtract header line
+              
+              logManager.log(`Killed ${processName} processes`, 'main', logManager.logLevels.INFO);
+            }
+          } catch (killError) {
+            // Process might not exist, which is fine
+            if (!killError.message.includes('not found')) {
+              logManager.warn(`Failed to kill ${processName}: ${killError.message}`);
+            }
+          }
+        }
+      } else if (process.platform === 'darwin') {
+        // macOS: Use pkill to end AJ Classic processes only
+        const processNames = ['AJ Classic'];
+        
+        for (const processName of processNames) {
+          try {
+            // Check if process exists and kill it
+            const { stdout: killOutput } = await execAsync(`pkill -f "${processName}"`);
+            
+            // Count processes (pkill doesn't give us exact count, so we'll estimate)
+            const { stdout: countOutput } = await execAsync(`pgrep -f "${processName}" | wc -l`);
+            const count = parseInt(countOutput.trim(), 10);
+            
+            if (count > 0) {
+              processCount += count;
+              logManager.log(`Killed ${processName} processes`, 'main', logManager.logLevels.INFO);
+            }
+          } catch (killError) {
+            // Process might not exist, which is fine
+            if (!killError.message.includes('No matching processes')) {
+              logManager.warn(`Failed to kill ${processName}: ${killError.message}`);
+            }
+          }
+        }
+      } else {
+        // Linux/other platforms: Use pkill
+        const processNames = ['aj-classic', 'AJ Classic'];
+        
+        for (const processName of processNames) {
+          try {
+            await execAsync(`pkill -f "${processName}"`);
+            processCount++; // Rough estimate since pkill doesn't return exact count
+            logManager.log(`Killed ${processName} processes`, 'main', logManager.logLevels.INFO);
+          } catch (killError) {
+            // Process might not exist, which is fine
+            if (!killError.message.includes('No matching processes')) {
+              logManager.warn(`Failed to kill ${processName}: ${killError.message}`);
+            }
+          }
+        }
+      }
+      
+      return { 
+        success: true, 
+        processCount: processCount,
+        message: processCount > 0 ? `Successfully ended ${processCount} processes` : 'No AJ Classic processes were running'
+      };
+    } catch (error) {
+      logManager.error(`[IPC] Failed to end AJ Classic processes: ${error.message}`);
+      return { 
+        success: false, 
+        error: error.message,
+        processCount: 0
+      };
+    }
+  });
 }
 
 module.exports = setupIpcHandlers;

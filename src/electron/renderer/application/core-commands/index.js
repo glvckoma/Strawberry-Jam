@@ -9,6 +9,8 @@
  * @param {import('../')} application - The application instance.
  */
 function registerCoreCommands(dispatch, application) {
+  console.log('[Core Commands] Registering core commands...');
+  
   // Clear command - clears the console logs
   dispatch.onCommand({
     name: 'clear',
@@ -38,6 +40,8 @@ function registerCoreCommands(dispatch, application) {
       });
     }
   });
+  
+  console.log('[Core Commands] Successfully registered core commands:', Array.from(dispatch.commands.keys()));
 }
 
 module.exports = registerCoreCommands; 

@@ -760,11 +760,15 @@ module.exports = class Application extends EventEmitter {
       `)
     }
 
+    const commandSource = Array.from(this.dispatch.commands.values()).map(command => ({
+      value: command.name,
+      description: command.description
+    }));
+    
+    console.log('[Autocomplete] Setting up autocomplete with commands:', commandSource);
+    
     this.$input.autocomplete({
-      source: Array.from(this.dispatch.commands.values()).map(command => ({
-        value: command.name,
-        description: command.description
-      })),
+      source: commandSource,
       position: { my: 'left top', at: 'left bottom', collision: 'flip' },
       classes: {
         'ui-autocomplete': 'bg-secondary-bg/95 border border-sidebar-border rounded-lg shadow-lg z-50'
@@ -1405,6 +1409,9 @@ module.exports = class Application extends EventEmitter {
     
     // Register core commands
     registerCoreCommands(this.dispatch, this);
+    
+    // Refresh autocomplete to include core commands
+    this.refreshAutoComplete();
     
     // Load settings (log only in dev mode)
     await this.settings.load();
