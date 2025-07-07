@@ -146,6 +146,7 @@ const validateRoomAvailability = async () => {
 
 // Dynamic Crystal Packet Generator
 let efficientCrystalPackets = [];
+let waitPeriodCrystalPackets = []; // Additional packets for wait period in special mode
 let detectedGiftItems = [];
 
 // Generate crystal packets based on detected patterns
@@ -166,11 +167,14 @@ const generateEfficientCrystalPackets = (crystalData) => {
                     break;
                 case '3water':
                     const idx = Math.ceil(i / 2);
+                    const isPailPacket = (i % 2) === 1;
                     packet = {
-                        content: (i % 2) ? 
+                        content: isPailPacket ? 
                             `%xt%o%qpup%{room}%3pail_00e%1441722%` :
                             `%xt%o%qat%{room}%3water_${pad(idx)}${variant}%0%`,
-                        delay: efficientCrystalDelay / 1000
+                        delay: isPailPacket ? 
+                            Math.max(efficientCrystalDelay / 1000, 0.8) : // Pail pickup needs more time
+                            Math.max(efficientCrystalDelay / 1000, 0.6)   // Water collection can be faster
                     };
                     break;
                 case '3crystal':
@@ -182,13 +186,13 @@ const generateEfficientCrystalPackets = (crystalData) => {
                 case '4socvol':
                     packet = {
                         content: `%xt%o%qat%{room}%4socvol${pad(i)}${variant}%0%`,
-                        delay: efficientCrystalDelay / 1000
+                        delay: Math.max(efficientCrystalDelay / 1000, 1.0) // 4socvol needs minimum 1 second
                     };
                     break;
                 case '4crystal':
                     packet = {
                         content: `%xt%o%qat%{room}%4crystal_${pad(i)}${variant}%0%`,
-                        delay: efficientCrystalDelay / 1000
+                        delay: Math.max(efficientCrystalDelay / 1000, 0.8) // 4crystal needs minimum 800ms
                     };
                     break;
             }
@@ -242,7 +246,9 @@ const efficientHandleQqm = (data) => {
                 
                 const whitelists = getWhitelists();
                 console.log(`[TFD Automation] Current whitelists - Clothing: ${Array.from(whitelists.clothing).join(', ')}, Den: ${Array.from(whitelists.den).join(', ')}`);
-                detectedGiftItems = [];
+                
+                // Track which slots we've already detected to avoid duplicates, but don't reset the entire array
+                const currentPacketGifts = [];
 
                 ids.forEach((id, i) => {
                     // Skip empty slots (ID '0' or undefined)
@@ -285,36 +291,59 @@ const efficientHandleQqm = (data) => {
                     // Debug whitelist checking
                     console.log(`[TFD Automation] Chest item: ${itemName} (ID: ${id}, Type: ${itemType}, Whitelisted: ${isWhitelisted})`);
                     
-                    detectedGiftItems.push({
+                    const giftItem = {
                         slot: i,
                         id: id,
                         name: itemName,
                         type: itemType,
                         isWhitelisted: isWhitelisted
-                    });
+                    };
                     
-                    // Log items based on whitelist status
-                    if (isWhitelisted) {
-                        logReceivedItem(itemName, 'kept'); // Mark valuable items as kept immediately
-                        console.log(`[TFD Automation] ${itemName} is WHITELISTED - marked as kept`);
+                    // Add to current packet gifts
+                    currentPacketGifts.push(giftItem);
+                    
+                    // Check if this exact item (by ID and slot) is already in detectedGiftItems
+                    const existingItemIndex = detectedGiftItems.findIndex(item => 
+                        item.id === id && item.slot === i);
+                    
+                    if (existingItemIndex === -1) {
+                        // New item - add to detected gifts
+                        detectedGiftItems.push(giftItem);
+                        console.log(`[TFD Automation] NEW GIFT DETECTED: ${itemName} (slot ${i})`);
+                        
+                        // Log items based on whitelist status
+                        if (isWhitelisted) {
+                            logReceivedItem(itemName, 'kept'); // Mark valuable items as kept immediately
+                            console.log(`[TFD Automation] ${itemName} is WHITELISTED - marked as kept`);
+                        } else {
+                            logReceivedItem(itemName, 'skipped');
+                            console.log(`[TFD Automation] ${itemName} is NOT whitelisted - will be skipped`);
+                        }
                     } else {
-                        logReceivedItem(itemName, 'skipped');
-                        console.log(`[TFD Automation] ${itemName} is NOT whitelisted - will be skipped`);
+                        console.log(`[TFD Automation] EXISTING GIFT: ${itemName} (slot ${i}) - already detected`);
                     }
                 });
 
-                const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
+                // Show summary for current packet AND total accumulated gifts
+                const currentPacketValuable = currentPacketGifts.filter(item => item.isWhitelisted);
+                const totalValuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
+                
                 console.log(`[TFD Automation] === GIFT DETECTION COMPLETE ===`);
-                console.log(`[TFD Automation] Total items detected: ${detectedGiftItems.length}`);
-                console.log(`[TFD Automation] Valuable items detected: ${valuableItems.length}`);
+                console.log(`[TFD Automation] Current packet items: ${currentPacketGifts.length}`);
+                console.log(`[TFD Automation] Current packet valuable: ${currentPacketValuable.length}`);
+                console.log(`[TFD Automation] TOTAL accumulated items: ${detectedGiftItems.length}`);
+                console.log(`[TFD Automation] TOTAL valuable items: ${totalValuableItems.length}`);
                 console.log(`[TFD Automation] All detected items: ${detectedGiftItems.map(item => `${item.name}(${item.isWhitelisted ? 'KEEP' : 'SKIP'})`).join(', ')}`);
                 
-                if (valuableItems.length > 0) {
-                    updateStatus(`🎁 Valuable items detected: ${valuableItems.map(item => item.name).join(', ')}`, 'success');
-                    console.log(`[TFD Automation] Will proceed to collect valuable items after waiting period`);
+                if (currentPacketValuable.length > 0) {
+                    updateStatus(`🎁 New valuable items: ${currentPacketValuable.map(item => item.name).join(', ')} (Total: ${totalValuableItems.length})`, 'success');
+                    console.log(`[TFD Automation] New valuable items detected in this packet`);
+                } else if (totalValuableItems.length > 0) {
+                    updateStatus(`📊 Total valuable items: ${totalValuableItems.length} (${currentPacketGifts.length} new regular items)`, 'info');
+                    console.log(`[TFD Automation] No new valuable items in this packet, but have ${totalValuableItems.length} total valuable items`);
                 } else {
                     updateStatus(`📦 No valuable items in gifts, will skip collection`, 'info');
-                    console.log(`[TFD Automation] Will skip reward collection entirely`);
+                    console.log(`[TFD Automation] Still no valuable items detected`);
                 }
                 break;
             }
@@ -339,6 +368,7 @@ const efficientHandleQqm = (data) => {
                 if (m1) crystalData.push({ type: '1crystal', variant: m1[1], count: 25 });
                 if (m2) crystalData.push({ type: '2crystal', variant: m2[1], count: 25 });
                 
+                // In special mode, save layer 3&4 crystals for wait period collection
                 if (!isSpecialMode) {
                     if (m3) {
                         crystalData.push({ type: '3water', variant: m3[1], count: 40 });
@@ -348,11 +378,28 @@ const efficientHandleQqm = (data) => {
                         crystalData.push({ type: '4socvol', variant: m4[1], count: 15 });
                         crystalData.push({ type: '4crystal', variant: m4[1], count: 15 });
                     }
+                } else {
+                    // Store layer 3&4 crystal data for wait period collection
+                    const waitPeriodData = [];
+                    if (m3) {
+                        waitPeriodData.push({ type: '3water', variant: m3[1], count: 40 });
+                        waitPeriodData.push({ type: '3crystal', variant: m3[1], count: 20 });
+                    }
+                    if (m4) {
+                        waitPeriodData.push({ type: '4socvol', variant: m4[1], count: 15 });
+                        waitPeriodData.push({ type: '4crystal', variant: m4[1], count: 15 });
+                    }
+                    waitPeriodCrystalPackets = generateEfficientCrystalPackets(waitPeriodData);
+                    console.log(`[TFD Automation] Special mode: Reserved ${waitPeriodCrystalPackets.length} packets for wait period collection`);
                 }
                 
                 // Generate efficient crystal packets
                 efficientCrystalPackets = generateEfficientCrystalPackets(crystalData);
-                updateStatus(`🔮 Crystal patterns detected! Generated ${efficientCrystalPackets.length} optimized packets`, 'info');
+                if (isSpecialMode && waitPeriodCrystalPackets.length > 0) {
+                    updateStatus(`🔮 Crystal patterns detected! Generated ${efficientCrystalPackets.length} primary + ${waitPeriodCrystalPackets.length} wait-period packets`, 'info');
+                } else {
+                    updateStatus(`🔮 Crystal patterns detected! Generated ${efficientCrystalPackets.length} optimized packets`, 'info');
+                }
                 break;
             }
         }
@@ -361,11 +408,49 @@ const efficientHandleQqm = (data) => {
     }
 };
 
+// Function to collect additional crystals during wait period (special mode enhancement)
+const collectWaitPeriodCrystals = async () => {
+    if (!isSpecialMode || !isAutomationRunning || waitPeriodCrystalPackets.length === 0) {
+        return;
+    }
+    
+    console.log(`[TFD Automation] Starting wait period crystal collection - ${waitPeriodCrystalPackets.length} packets`);
+    updateStatus(`🔮 Collecting additional crystals during wait period (${waitPeriodCrystalPackets.length} packets)...`, 'info');
+    
+    for (let i = 0; i < waitPeriodCrystalPackets.length; i++) {
+        if (!isAutomationRunning) {
+            console.log('[TFD Automation] Wait period crystal collection interrupted - automation stopped');
+            return;
+        }
+        
+        const packet = waitPeriodCrystalPackets[i];
+        const packetType = packet.content.includes('3water') ? '3water' : 
+                          packet.content.includes('3crystal') ? '3crystal' :
+                          packet.content.includes('4socvol') ? '4socvol' :
+                          packet.content.includes('4crystal') ? '4crystal' :
+                          packet.content.includes('qpup') ? '3pail' : 'unknown';
+        
+        console.log(`[TFD Automation] Wait period crystal ${i + 1}/${waitPeriodCrystalPackets.length} (${packetType}, delay: ${packet.delay * 1000}ms): ${packet.content}`);
+        
+        try {
+            await sendPacketWithRetry(packet, false, true);
+        } catch (error) {
+            console.error(`[TFD Automation] Error sending wait period crystal packet ${i + 1} (${packetType}):`, error);
+            updateStatus(`Warning: Wait period crystal collection error - ${error.message}`, 'warning');
+            break;
+        }
+    }
+    
+    console.log(`[TFD Automation] Wait period crystal collection completed`);
+    updateStatus(`✨ Wait period crystal collection completed! Continuing to gift collection...`, 'success');
+};
+
 // Reset efficient mode variables
 const resetEfficientMode = () => {
     efficientCrystalPackets = [];
+    waitPeriodCrystalPackets = [];
     detectedGiftItems = [];
-};;
+};
 
 // Load stats from localStorage
 function loadStats() {
@@ -803,10 +888,93 @@ async function runSingleAutomation() {
             console.log(`[TFD Automation] Time until safe reward: ${timeUntilSafeReward}ms (${minutesLeft}m ${secondsLeft}s)`);
             updateStatus(`Waiting ${minutesLeft}m ${secondsLeft}s for safe reward collection (13:00 rule)...`, 'info');
             
-            await new Promise(resolve => {
-                currentTimeout = setTimeout(resolve, timeUntilSafeReward);
-            });
-            if (!isAutomationRunning) return;
+            // Special mode enhancement: collect additional crystals during wait if available
+            if (isSpecialMode && waitPeriodCrystalPackets.length > 0) {
+                console.log(`[TFD Automation] === SPECIAL MODE ENHANCEMENT: WAIT PERIOD CRYSTAL COLLECTION ===`);
+                
+                // Calculate time needed for crystal collection (estimate 3-5 seconds buffer)
+                const crystalCollectionTime = waitPeriodCrystalPackets.length * (efficientCrystalDelay + 100) + 5000; // Add 5s buffer
+                const timeAfterCrystals = timeUntilSafeReward - crystalCollectionTime;
+                
+                if (timeAfterCrystals > 0) {
+                    console.log(`[TFD Automation] Sufficient time for crystal collection. Starting immediately...`);
+                    updateStatus(`🚀 Special mode: Collecting additional crystals during wait period...`, 'info');
+                    
+                    // Collect crystals during wait period
+                    await collectWaitPeriodCrystals();
+                    if (!isAutomationRunning) return;
+                    
+                    // Request updated quest data to detect new gifts from additional crystals
+                    console.log(`[TFD Automation] === DETECTING NEW GIFTS FROM WAIT PERIOD CRYSTALS ===`);
+                    updateStatus(`🔍 Requesting updated quest data to detect new gifts...`, 'info');
+                    
+                    // Send quest status request to trigger server to send updated qqm data
+                    await refreshRoom();
+                    const questStatusRoomId = getRoomIdToUse();
+                    if (questStatusRoomId) {
+                        console.log(`[TFD Automation] Sending quest status request to get updated gift data...`);
+                        try {
+                            // Request quest status update which should trigger new qqm packet with updated gifts
+                            const questStatusPacket = `%xt%o%qgs%${questStatusRoomId}%`;
+                            await sendPacketWithRetry(questStatusPacket, true);
+                            
+                            // Wait for server response and gift detection
+                            await new Promise(resolve => {
+                                currentTimeout = setTimeout(resolve, 4000); // Wait 4 seconds for server response and processing
+                            });
+                            if (!isAutomationRunning) return;
+                            
+                            console.log(`[TFD Automation] Quest status request completed - gift detection should be updated`);
+                        } catch (error) {
+                            console.error(`[TFD Automation] Failed to request quest status for gift detection:`, error);
+                            updateStatus(`Warning: Could not refresh gift data - ${error.message}`, 'warning');
+                            
+                            // Fallback: just wait without the quest status request
+                            await new Promise(resolve => {
+                                currentTimeout = setTimeout(resolve, 2000);
+                            });
+                            if (!isAutomationRunning) return;
+                        }
+                    } else {
+                        console.log(`[TFD Automation] No room ID available for quest status request - using fallback wait`);
+                        await new Promise(resolve => {
+                            currentTimeout = setTimeout(resolve, 3000);
+                        });
+                        if (!isAutomationRunning) return;
+                    }
+                    
+                    console.log(`[TFD Automation] New gift detection completed`);
+                    
+                    // Wait remaining time after crystal collection and gift detection
+                    const remainingWaitTime = Math.max(0, MIN_WAIT_TIME_MS - (Date.now() - questStartTime));
+                    if (remainingWaitTime > 0) {
+                        const remainingSeconds = Math.ceil(remainingWaitTime / 1000);
+                        const remainingMinutes = Math.floor(remainingSeconds / 60);
+                        const remainingSecondsDisplay = remainingSeconds % 60;
+                        console.log(`[TFD Automation] Crystal collection complete. Waiting additional ${remainingWaitTime}ms (${remainingMinutes}m ${remainingSecondsDisplay}s)`);
+                        updateStatus(`⏱️ Waiting ${remainingMinutes}m ${remainingSecondsDisplay}s more until 13:00...`, 'info');
+                        
+                        await new Promise(resolve => {
+                            currentTimeout = setTimeout(resolve, remainingWaitTime);
+                        });
+                        if (!isAutomationRunning) return;
+                    }
+                } else {
+                    console.log(`[TFD Automation] Not enough time for crystal collection (need ${crystalCollectionTime}ms, have ${timeUntilSafeReward}ms). Using standard wait.`);
+                    updateStatus(`⏱️ Limited time - using standard wait for ${minutesLeft}m ${secondsLeft}s...`, 'info');
+                    
+                    await new Promise(resolve => {
+                        currentTimeout = setTimeout(resolve, timeUntilSafeReward);
+                    });
+                    if (!isAutomationRunning) return;
+                }
+            } else {
+                // Standard wait period (no special mode or no crystals to collect)
+                await new Promise(resolve => {
+                    currentTimeout = setTimeout(resolve, timeUntilSafeReward);
+                });
+                if (!isAutomationRunning) return;
+            }
 
             // **Proactive Connection Check**
             // Send a harmless packet to ensure the connection is still alive before proceeding.
@@ -824,6 +992,20 @@ async function runSingleAutomation() {
         }
 
         updateStatus('Processing rewards...', 'info', totalSteps - 1);
+        
+        // Enhanced special mode: Show summary of ALL detected gifts before collection
+        if (isSpecialMode && detectedGiftItems.length > 0) {
+            const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
+            const regularItems = detectedGiftItems.filter(item => !item.isWhitelisted);
+            console.log(`[TFD Automation] === FINAL GIFT SUMMARY ===`);
+            console.log(`[TFD Automation] Total gifts detected: ${detectedGiftItems.length}`);
+            console.log(`[TFD Automation] Valuable gifts (will collect): ${valuableItems.length} - ${valuableItems.map(item => item.name).join(', ')}`);
+            console.log(`[TFD Automation] Regular gifts (will skip): ${regularItems.length} - ${regularItems.map(item => item.name).join(', ')}`);
+            
+            if (valuableItems.length > 0) {
+                updateStatus(`🎁 Final summary: ${valuableItems.length} valuable + ${regularItems.length} regular gifts detected`, 'success');
+            }
+        }
 
         // Step 5: Automate Reward Collection (following phantoms plugin pattern)
         // Refresh room info before reward collection
