@@ -211,10 +211,11 @@ class ServerStatusChecker {
   /**
    * Fallback check that directly pings the game server
    * @param {string} serverHost - The server host to check
+   * @param {number} [port=8080] - The port to check on the server
    * @returns {Promise<{isOnline: boolean, responseTime: number, timestamp: number, server: string, accessStatus: string, statusCode: number|null, details: string}>} Status result
    * @private
    */
-  static async fallbackServerCheck(serverHost) {
+  static async fallbackServerCheck(serverHost, port = 8080) {
     const result = {
       isOnline: false,
       responseTime: 0,
@@ -230,7 +231,7 @@ class ServerStatusChecker {
       
       // Try to connect to the SmartFox server port (this is what the game actually connects to)
       const options = {
-        url: `https://${serverHost}:8080`,
+        url: `https://${serverHost}:${port}`,
         timeout: 5000,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AJClassic/1.5.7 Chrome/87.0.4280.141 Electron/11.5.0 Safari/537.36',
@@ -250,14 +251,14 @@ class ServerStatusChecker {
       // Any response means the server is up
       result.isOnline = true;
       result.accessStatus = 'ok';
-      result.details = `Game server responding on port 8080 (HTTP ${response.statusCode})`;
+      result.details = `Game server responding on port ${port} (HTTP ${response.statusCode})`;
       
     } catch (error) {
       // Check if it's a connection refused or timeout (indicating server might be down)
       if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
         result.isOnline = false;
         result.accessStatus = 'network_error';
-        result.details = `Cannot connect to game server ${serverHost}:8080 - Server appears to be offline`;
+        result.details = `Cannot connect to game server ${serverHost}:${port} - Server appears to be offline`;
       } else {
         // Other errors might indicate server is up but not responding to HTTP
         result.isOnline = true;

@@ -443,8 +443,10 @@
         globals.currentUser = userData.username;
         globals.setLanguage(userData.language);
 
-        flashVars.content = 'http://localhost:8080/'
-        flashVars.clientURL = `http://localhost:8080/${flashVars.deploy_version}/ajclient.swf`
+        // Get the actual API server port, defaulting to 8080 if not available
+        const apiPort = await window.ipc.invoke('get-api-port').catch(() => '8080');
+        flashVars.content = `http://localhost:${apiPort}/`
+        flashVars.clientURL = `http://localhost:${apiPort}/${flashVars.deploy_version}/ajclient.swf`
 
         // Don't wait for this call, it is purely informational
         // reportLogin({

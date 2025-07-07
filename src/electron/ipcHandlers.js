@@ -478,6 +478,64 @@ function setupIpcHandlers(electronInstance) {
     };
   });
 
+  ipcMain.handle('get-server-port', async () => {
+    // Get the server port from the application instance
+    if (electronInstance && electronInstance.application && electronInstance.application.server) {
+      return electronInstance.application.server.actualPort || 443;
+    }
+    return 443; // Default fallback
+  });
+
+  ipcMain.handle('get-api-port', async () => {
+    // Get the API server port from the forked process
+    try {
+      // Try to get the port from the API process if it's running
+      if (electronInstance && electronInstance._apiProcess && !electronInstance._apiProcess.killed) {
+        // Since the API server runs in a separate process, we need to communicate with it
+        // For now, we'll check if common ports are available by trying to connect
+        const net = require('net');
+        const ports = [8080, 8081, 8082, 9080, 3000];
+        
+        for (const port of ports) {
+          try {
+            // Try to connect to the port to see if our API server is running there
+            await new Promise((resolve, reject) => {
+              const socket = new net.Socket();
+              socket.setTimeout(100); // Very short timeout
+              
+              socket.on('connect', () => {
+                socket.destroy();
+                resolve(port);
+              });
+              
+              socket.on('timeout', () => {
+                socket.destroy();
+                reject(new Error('timeout'));
+              });
+              
+              socket.on('error', () => {
+                socket.destroy();
+                reject(new Error('connection failed'));
+              });
+              
+              socket.connect(port, '127.0.0.1');
+            });
+            
+            // If we get here, the port is responding
+            return port;
+          } catch (err) {
+            // Port not responding, try next
+            continue;
+          }
+        }
+      }
+    } catch (error) {
+      // Fall through to default
+    }
+    
+    return 8080; // Default fallback
+  });
+
   ipcMain.handle('get-enabled-plugins', async () => {
     try {
       const plugins = [];

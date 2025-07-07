@@ -14,6 +14,18 @@ const ApiRouter = require('./routes')
 const app = express()
 
 /**
+ * Fallback ports to try if the primary port is busy.
+ * @type {number[]}
+ */
+const FALLBACK_PORTS = [8080, 8081, 8082, 9080, 3000]
+
+/**
+ * The actual port the API server is listening on.
+ * @type {?number}
+ */
+let actualApiPort = null
+
+/**
  * Middleware
  */
 app.use(urlencoded({ extended: true }))
@@ -32,25 +44,62 @@ FilesController.initialize().catch(err => {
 })
 
 /**
- * Express listen with error handling and async callback
+ * Auto-detect available port and start server
  */
-const server = app.listen(8080, '127.0.0.1', () => {
-  console.log('[API Server] Successfully started on port 8080')
-})
+async function startServer() {
+  let lastError = null
 
-server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error('[API Server] Port 8080 is already in use. Attempting to use port 8081...')
-    const fallbackServer = app.listen(8081, '127.0.0.1', () => {
-      console.log('[API Server] Successfully started on fallback port 8081')
-    })
-    
-    fallbackServer.on('error', (fallbackError) => {
-      console.error('[API Server] Failed to start on both ports 8080 and 8081:', fallbackError.message)
-      process.exit(1)
-    })
-  } else {
-    console.error('[API Server] Failed to start server:', error.message)
+  for (const port of FALLBACK_PORTS) {
+    try {
+      await new Promise((resolve, reject) => {
+        const server = app.listen(port, '127.0.0.1', () => {
+          actualApiPort = port
+          console.log(`[API Server] Successfully started on port ${port}`)
+          
+          // Store reference for cleanup
+          global.apiServer = server
+          
+          resolve()
+        })
+
+        server.on('error', reject)
+      })
+
+      // Success! Break out of loop
+      break
+
+    } catch (error) {
+      lastError = error
+      if (error.code === 'EADDRINUSE') {
+        console.warn(`[API Server] Port ${port} is busy, trying next port...`)
+        continue
+      } else {
+        // Re-throw non-port-busy errors immediately
+        throw error
+      }
+    }
+  }
+
+  if (!actualApiPort) {
+    const errorMessage = `[API Server] Could not find an available port after trying ports: ${FALLBACK_PORTS.join(', ')}`
+    console.error(errorMessage + (lastError ? `. Last error: ${lastError.message}` : ''))
     process.exit(1)
   }
+}
+
+/**
+ * Get the actual API server port
+ * @returns {number|null} The port the API server is running on
+ */
+function getActualApiPort() {
+  return actualApiPort
+}
+
+// Start the server
+startServer().catch(error => {
+  console.error('[API Server] Failed to start:', error.message)
+  process.exit(1)
 })
+
+// Export the port getter for IPC access
+module.exports = { getActualApiPort }

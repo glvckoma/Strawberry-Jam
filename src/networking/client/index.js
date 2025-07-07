@@ -208,9 +208,12 @@ module.exports = class Client {
         return;
       }
       
+      // Use the server's actual port instead of hardcoded 443
+      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : 443
+      
       this._aj.connect({
         host: smartfoxServer,
-        port: 443, // Assuming SSL, common for SmartFox
+        port: serverPort,
         rejectUnauthorized: false // Common for self-signed or dev certs
       })
     })
@@ -582,10 +585,12 @@ module.exports = class Client {
 
 
     if (type === ConnectionMessageTypes.aj && packet.includes('cross-domain-policy')) {
+      // Use the server's actual port in cross-domain policy, with 443 as fallback
+      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : 443
       const crossDomainMessage = `<?xml version="1.0"?>
         <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">
         <cross-domain-policy>
-        <allow-access-from domain="*" to-ports="80,443"/>
+        <allow-access-from domain="*" to-ports="80,${serverPort}"/>
         </cross-domain-policy>`
 
       await this.sendConnectionMessage(crossDomainMessage)

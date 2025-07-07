@@ -28,6 +28,20 @@ module.exports = class Server {
      */
     this.clients = new Set()
     
+    /**
+     * The actual port the server is listening on.
+     * @type {?number}
+     * @public
+     */
+    this.actualPort = null
+
+    /**
+     * Fallback ports to try if the primary port is busy.
+     * @type {number[]}
+     * @private
+     */
+    this._fallbackPorts = [443, 444, 445, 8443, 9443]
+    
     // Ensure proper default settings
     this._ensureDefaultSettings()
   }
@@ -96,20 +110,60 @@ module.exports = class Server {
 
   /**
    * Create socket and begin listening for new connections.
+   * Auto-detects available port starting with 443.
    * @returns {Promise<void>}
    * @public
    */
   async serve () {
     if (this.server) throw new Error('The server has already been instantiated.')
 
-    this.server = net.createServer(this._onConnection.bind(this))
+    let lastError = null
 
-    await new Promise((resolve, reject) => {
-      this.server.once('listening', resolve)
-      this.server.once('error', reject)
+    for (const port of this._fallbackPorts) {
+      try {
+        this.server = net.createServer(this._onConnection.bind(this))
 
-      this.server.listen(443, '127.0.0.1')
-    })
+        await new Promise((resolve, reject) => {
+          this.server.once('listening', () => {
+            this.actualPort = port
+            this.application.consoleMessage({
+              message: `Server listening on port ${port}`,
+              type: 'notify'
+            })
+            resolve()
+          })
+          this.server.once('error', reject)
+
+          this.server.listen(port, '127.0.0.1')
+        })
+
+        // Success! Break out of loop
+        break
+
+      } catch (error) {
+        lastError = error
+        if (error.code === 'EADDRINUSE') {
+          this.application.consoleMessage({
+            message: `Port ${port} is busy, trying next port...`,
+            type: 'warn'
+          })
+          this.server = null // Reset for next attempt
+          continue
+        } else {
+          // Re-throw non-port-busy errors immediately
+          throw error
+        }
+      }
+    }
+
+    if (!this.server) {
+      const errorMessage = `Could not find an available port after trying ports: ${this._fallbackPorts.join(', ')}`
+      this.application.consoleMessage({
+        message: errorMessage,
+        type: 'error'
+      })
+      throw new Error(errorMessage + (lastError ? `. Last error: ${lastError.message}` : ''))
+    }
 
     this.server.on('error', (error) => {
       this.application.consoleMessage({

@@ -952,21 +952,28 @@
         this.loginBlocked = true;
         try {
           const flashVars = await globals.getFlashVarsFromWeb();
+          
+          // Get the actual API server port, defaulting to 8080 if not available
+          const apiPort = await window.ipc.invoke('get-api-port').catch(() => '8080');
+          
           // Override asset URLs so Create-Account also uses the local proxy instead of the official CDN
-          flashVars.content = 'http://localhost:8080/';
+          flashVars.content = `http://localhost:${apiPort}/`;
           if (flashVars.deploy_version) {
-            flashVars.clientURL = `http://localhost:8080/${flashVars.deploy_version}/ajclient.swf`;
+            flashVars.clientURL = `http://localhost:${apiPort}/${flashVars.deploy_version}/ajclient.swf`;
           }
           flashVars.smartfoxServer = 'localhost';          // or your proxy host
           flashVars.blueboxServer = 'localhost';
-          flashVars.blueboxPort   = '443';                // or the port your proxy listens on
-          flashVars.smartfoxPort  = '443';
+          
+          // Get the actual server port, defaulting to 443 if not available
+          const serverPort = await window.ipc.invoke('get-server-port').catch(() => '443');
+          flashVars.blueboxPort   = serverPort.toString();
+          flashVars.smartfoxPort  = serverPort.toString();
 
-          flashVars.playerWallHost   = 'http://localhost:8080/wall/';
+          flashVars.playerWallHost   = `http://localhost:${apiPort}/wall/`;
           flashVars.sbStatTrackerIp  = 'localhost';
 
-          flashVars.website = 'http://localhost:8080/';
-          flashVars.mdUrl   = 'http://localhost:8080/game/';
+          flashVars.website = `http://localhost:${apiPort}/`;
+          flashVars.mdUrl   = `http://localhost:${apiPort}/game/`;
 
           Object.assign(
             flashVars,
