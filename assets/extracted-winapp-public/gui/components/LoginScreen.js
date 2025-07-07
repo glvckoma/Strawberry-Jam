@@ -741,6 +741,13 @@
               </div>
             </div>
             <div class="settings-item">
+              <input type="checkbox" id="background-processing-toggle" style="vertical-align: middle;">
+              <label for="background-processing-toggle" style="vertical-align: middle;">Enable background processing</label>
+              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                💡 Allows plugins to continue running when the game window is minimized.
+              </div>
+            </div>
+            <div class="settings-item">
               <label for="server-swap-select" style="vertical-align: middle; margin-right: 8px;">Server Swap:</label>
               <select id="server-swap-select" style="vertical-align: middle; padding: 2px 4px; border-radius: 4px; border: 1px solid var(--theme-settings-border); background-color: white; color: #333; font-family: CCDigitalDelivery; font-size: 11px;">
                 <option value="">Default (US)</option>
@@ -877,6 +884,7 @@
       this.reportProblemBtn = this.shadowRoot.getElementById("report-problem-btn"); // Get report button
       this.settingsPanel = this.shadowRoot.getElementById("settings-panel");
       this.uuidSpooferToggle = this.shadowRoot.getElementById("uuid-spoofer-toggle");
+      this.backgroundProcessingToggle = this.shadowRoot.getElementById("background-processing-toggle");
       
       // Track UI visibility state for hotkey toggle
       this._uiElementsHidden = false;
@@ -1125,6 +1133,16 @@
           }
         });
       }
+
+      if (this.backgroundProcessingToggle) {
+        this.backgroundProcessingToggle.addEventListener('change', async () => {
+          try {
+            await window.ipc.invoke('set-setting', 'backgroundProcessing', this.backgroundProcessingToggle.checked);
+          } catch (err) {
+            console.error('Failed to save background processing setting:', err);
+          }
+        });
+      }
       
       if (this.serverSwapSelect) {
         this.serverSwapSelect.addEventListener('change', (e) => {
@@ -1313,6 +1331,19 @@
         })
         .catch(err => {
         });
+
+      window.ipc.invoke('get-setting', 'backgroundProcessing')
+        .then(backgroundProcessing => {
+          if (this.backgroundProcessingToggle) {
+            this.backgroundProcessingToggle.checked = backgroundProcessing !== false; // Default to true
+          }
+        })
+        .catch(err => {
+          // Default to enabled if setting doesn't exist
+          if (this.backgroundProcessingToggle) {
+            this.backgroundProcessingToggle.checked = true;
+          }
+        });
     }    initializeSettings() {
       
       window.ipc.invoke('get-setting', 'fruitTheme')
@@ -1357,6 +1388,19 @@
           }
         })
         .catch(err => {
+        });
+
+      window.ipc.invoke('get-setting', 'backgroundProcessing')
+        .then(backgroundProcessing => {
+          if (this.backgroundProcessingToggle) {
+            this.backgroundProcessingToggle.checked = backgroundProcessing !== false; // Default to true
+          }
+        })
+        .catch(err => {
+          // Default to enabled if setting doesn't exist
+          if (this.backgroundProcessingToggle) {
+            this.backgroundProcessingToggle.checked = true;
+          }
         });
     }
 

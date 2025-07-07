@@ -361,6 +361,34 @@ ipcMain.on("loaded", async (event, message) => {
     if (webview && webview.send) webview.send("screenChange", "windowed");
   });
 
+  win.on("minimize", () => {
+    log("debug", "[Window] Window minimized");
+    // Check background processing setting
+    const backgroundProcessing = store.get("backgroundProcessing", true); // Default to true
+    if (backgroundProcessing) {
+      // Disable background throttling to keep game running
+      if (win && win.webContents && !win.isDestroyed()) {
+        win.webContents.backgroundThrottling = false;
+      }
+    }
+    // Notify webview about minimize state
+    if (webview && webview.send) {
+      webview.send("screenChange", "minimized");
+    }
+  });
+
+  win.on("restore", () => {
+    log("debug", "[Window] Window restored");
+    // Re-enable background throttling (normal behavior)
+    if (win && win.webContents && !win.isDestroyed()) {
+      win.webContents.backgroundThrottling = true;
+    }
+    // Notify webview about restore state
+    if (webview && webview.send) {
+      webview.send("screenChange", "restored");
+    }
+  });
+
   win.on("close", (event) => {
     log("debug", `[Exit Confirmation] Window close event triggered. isClosing: ${isClosing}`);
     

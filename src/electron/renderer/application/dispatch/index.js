@@ -888,9 +888,6 @@ module.exports = class Dispatch {
    * @public
    */
   sendRemoteMessage (message) {
-    devLog(`[Dispatch] sendRemoteMessage called with:`, message);
-    devLog(`[Dispatch] Current server clients count: ${this._application.server.clients.size}`);
-    
     if (this._application.server.clients.size === 0) {
       console.warn('[Dispatch] No server clients connected to send remote message.');
       return Promise.resolve([]); // Return an empty resolved promise if no clients
@@ -898,7 +895,6 @@ module.exports = class Dispatch {
 
     const promises = [...this._application.server.clients].map(client => {
       try {
-        devLog(`[Dispatch] Attempting to send to client:`, client.id); // Assuming client has an id
         return client.sendRemoteMessage(message);
       } catch (e) {
         console.error(`[Dispatch] Error in client.sendRemoteMessage for client ${client.id}:`, e);

@@ -53,6 +53,15 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
+  ipcMain.handle('read-file', async (event, filePath) => {
+    try {
+      return await fsPromises.readFile(filePath, 'utf-8');
+    } catch (error) {
+      console.error(`[IPC] Error reading file '${filePath}':`, error);
+      throw error;
+    }
+  });
+
   ipcMain.on('show-toast', (event, { message, type }) => {
     const senderWindow = BrowserWindow.fromWebContents(event.sender);
     if (senderWindow && !senderWindow.isDestroyed()) {
@@ -731,6 +740,14 @@ function setupIpcHandlers(electronInstance) {
         const endTime = Date.now();
         const durationInSeconds = Math.round((endTime - gameStartTime) / 1000);
 
+        // Notify renderer process that game has exited
+        const allWindows = BrowserWindow.getAllWindows();
+        allWindows.forEach(window => {
+          if (window.webContents) {
+            window.webContents.send('game-process-exit');
+          }
+        });
+
         const dataDir = getDataPath(app);
         const gameTimeFilePath = path.join(dataDir, 'gametime.json');
         let gameTimeData = { totalGameTime: 0, totalUptime: 0 };
@@ -764,6 +781,14 @@ function setupIpcHandlers(electronInstance) {
       gameProcess.on('error', (err) => {
         logManager.error(`[Process] Error with game client process: ${err.message}`);
         gameStartTime = null;
+        
+        // Notify renderer process that game has exited due to error
+        const allWindows = BrowserWindow.getAllWindows();
+        allWindows.forEach(window => {
+          if (window.webContents) {
+            window.webContents.send('game-process-exit');
+          }
+        });
       });
     } catch (error) {
       logManager.error(`[Process] Failed to spawn game client process: ${error.message}`);

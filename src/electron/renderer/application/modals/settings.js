@@ -437,6 +437,23 @@ function setupEventHandlers ($modal, app) {
   const $downloadProgressContainer = $modal.find('#downloadProgressContainer');
   const $downloadProgressBar = $modal.find('#downloadProgressBar');
 
+  // View Updates button - shows the new updates modal
+  const $viewUpdatesBtn = $modal.find('#viewUpdatesBtn');
+  $viewUpdatesBtn.on('click', () => {
+    console.log('[DEBUG] View Updates button clicked');
+    
+    // Close the settings modal first
+    console.log('[DEBUG] Closing settings modal');
+    app.modals.close();
+    
+    // Show the updates modal after a brief delay to avoid conflict
+    setTimeout(() => {
+      console.log('[DEBUG] Opening updates modal after delay');
+      app.openUpdatesModal();
+    }, 100);
+  });
+
+  // Check for Updates button - restored to original functionality
   $checkForUpdatesBtn.on('click', () => {
     ipcRenderer.send('check-for-updates');
     // Initial state when button is clicked

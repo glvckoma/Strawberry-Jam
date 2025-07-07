@@ -228,8 +228,16 @@ module.exports = class Application extends EventEmitter {
      */
     this.$playButton = document.getElementById('playButton'); // Use vanilla JS as jQuery might not be ready
 
+    /**
+     * Whether the game client is currently running.
+     * @type {boolean}
+     * @private
+     */
+    this._isGameRunning = false;
+
     this._setupPluginIPC(); // Moved from instantiate to ensure handlers are ready early
     this._setupStatusIndicatorIPC(); // Add call to setup new listeners
+    this._setupGameProcessIPC(); // Add game process IPC listener
     // this._setupAppUpdateIPC(); // Call is already commented out, ensuring it remains so.
   }
 
@@ -428,6 +436,45 @@ module.exports = class Application extends EventEmitter {
       } catch (e) {
       }
     }
+  }
+
+  /**
+   * Sets up IPC listeners for game process events.
+   * @private
+   */
+  _setupGameProcessIPC() {
+    if (typeof require === "function") {
+      try {
+        const { ipcRenderer } = require('electron');
+
+        ipcRenderer.on('game-process-exit', () => {
+          this._handleGameProcessExit();
+        });
+
+      } catch (e) {
+      }
+    }
+  }
+
+  /**
+   * Handles when the game process exits.
+   * @private
+   */
+  _handleGameProcessExit() {
+    this._isGameRunning = false;
+    
+    // Re-enable the play button
+    if (this.$playButton) {
+      this.$playButton.classList.remove('opacity-100');
+      this.$playButton.onclick = () => jam.application.openAnimalJam();
+      // Remove the game running tooltip
+      this._removeGameRunningTooltip();
+    }
+
+    this.consoleMessage({
+      message: 'Strawberry Jam Classic has closed.',
+      type: 'info'
+    });
   }
 
   // /**
@@ -1198,6 +1245,15 @@ module.exports = class Application extends EventEmitter {
       if (!this.$playButton) return; // Still not found, exit
     }
 
+    // Check if game is already running
+    if (this._isGameRunning) {
+      this.consoleMessage({
+        message: 'Strawberry Jam Classic is already running!',
+        type: 'warning'
+      });
+      return;
+    }
+
     // Disable button and apply styles
     this.$playButton.classList.add('opacity-50', 'pointer-events-none');
     this.$playButton.onclick = () => false; // Prevent further clicks via onclick
@@ -1217,6 +1273,7 @@ module.exports = class Application extends EventEmitter {
       await this.patcher.killProcessAndPatch(); // Await the patching process
       
       launchSuccessful = true; // Assume success if killProcessAndPatch completes without error
+      this._isGameRunning = true; // Mark game as running
       
     } catch (error) {
       this.consoleMessage({
@@ -1239,11 +1296,22 @@ module.exports = class Application extends EventEmitter {
         });
       }
       
-      // Re-enable button and remove styles regardless of success/failure
+      // Handle button state based on game running status
       if (this.$playButton) {
-        this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
-        // Restore original onclick behavior
-        this.$playButton.onclick = () => jam.application.openAnimalJam();
+        if (this._isGameRunning) {
+          // Keep button disabled but make it fully opaque and allow hover for tooltip
+          this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
+          this.$playButton.classList.add('opacity-100');
+          this.$playButton.onclick = () => jam.application.openAnimalJam(); // Will show warning message
+          // Add tooltip indicating game is running
+          this._addGameRunningTooltip();
+        } else {
+          // Re-enable button normally if launch failed
+          this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
+          this.$playButton.onclick = () => jam.application.openAnimalJam();
+          // Remove the game running tooltip
+          this._removeGameRunningTooltip();
+        }
       }
     }
   }
@@ -1486,6 +1554,9 @@ module.exports = class Application extends EventEmitter {
     // this._setupPluginIPC(); // Call moved to constructor
     this.emit('ready')
 
+    // Check for version updates and show modal if needed
+    await this._checkVersionAndShowUpdatesModal();
+
     // Signal to main process that renderer is ready (for auto-resume logic)
     ipcRenderer.send('renderer-ready');
 
@@ -1621,6 +1692,29 @@ module.exports = class Application extends EventEmitter {
   }
 
   /**
+   * Adds a tooltip to the play button indicating the game is running.
+   * @private
+   */
+  _addGameRunningTooltip() {
+    if (this.$playButton) {
+      this.addTooltip(this.$playButton, 'Strawberry Jam is already running', {
+        theme: 'error',
+        position: 'top'
+      });
+    }
+  }
+
+  /**
+   * Removes the game running tooltip from the play button.
+   * @private
+   */
+  _removeGameRunningTooltip() {
+    if (this.$playButton) {
+      Tooltip.remove(this.$playButton);
+    }
+  }
+
+  /**
    * Apply tooltips to UI elements
    * Called after the DOM is fully loaded to ensure all elements exist
    * @private
@@ -1653,6 +1747,12 @@ module.exports = class Application extends EventEmitter {
     if (clearPacketLogButton) {
       this.addTooltip(clearPacketLogButton, 'Clear Network Messages');
     }
+    
+    // Navigation chevron button
+    const toggleNavButton = document.getElementById('toggleNavSection');
+    if (toggleNavButton) {
+      this.addTooltip(toggleNavButton, 'Toggle Navigation List');
+    }
   }
 
   /**
@@ -1665,6 +1765,7 @@ module.exports = class Application extends EventEmitter {
     $('#clearPacketLogButton').removeAttr('title');
     $('#refreshPluginsSection').removeAttr('title');
     $('#togglePluginsSection').removeAttr('title');
+    $('#toggleNavSection').removeAttr('title');
     
     // Remove title from info buttons
     $('.plugin-info-button').removeAttr('title');
@@ -1718,5 +1819,76 @@ module.exports = class Application extends EventEmitter {
    */
   openReportProblemModal () {
     this.modals.show('reportProblem')
+  }
+
+  /**
+   * Checks for version updates and shows the updates modal if needed.
+   * @returns {Promise<void>}
+   * @private
+   */
+  async _checkVersionAndShowUpdatesModal() {
+    try {
+      // Get user's last seen version
+      const lastSeenVersion = await ipcRenderer.invoke('get-setting', 'lastSeenVersion');
+      
+      // Load updates data
+      const path = require('path');
+      const dataPath = path.join(__dirname, '../../../data/updates-data.json');
+      const rawData = await ipcRenderer.invoke('read-file', dataPath);
+      const updatesData = JSON.parse(rawData);
+      
+      // Find the latest version in updates data
+      const latestVersion = Object.keys(updatesData).find(v => updatesData[v].isLatest);
+      
+      // Check if we should show updates modal
+      const shouldShow = latestVersion && 
+                        latestVersion !== lastSeenVersion && 
+                        this._isNewerVersion(latestVersion, lastSeenVersion || '0.0.0');
+      
+      if (shouldShow) {
+        // Small delay to ensure UI is fully loaded
+        setTimeout(() => {
+          this.modals.show('updatesModal', '#modalContainer', { 
+            version: latestVersion 
+          });
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error checking for version updates:', error);
+      // Fail silently - don't interrupt app startup
+    }
+  }
+
+  /**
+   * Compares two version strings to determine if first is newer than second.
+   * @param {string} version1 - Version to compare (e.g., "3.3.2")
+   * @param {string} version2 - Version to compare against (e.g., "3.3.1")
+   * @returns {boolean} True if version1 is newer than version2
+   * @private
+   */
+  _isNewerVersion(version1, version2) {
+    const v1Parts = version1.split('.').map(Number);
+    const v2Parts = version2.split('.').map(Number);
+    
+    for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+      const v1Part = v1Parts[i] || 0;
+      const v2Part = v2Parts[i] || 0;
+      
+      if (v1Part > v2Part) return true;
+      if (v1Part < v2Part) return false;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Opens the Updates modal manually.
+   * @public
+   */
+  openUpdatesModal(version = null) {
+    console.log('[DEBUG] openUpdatesModal called, version:', version);
+    this.modals.show('updatesModal', '#modalContainer', { 
+      version: version 
+    });
   }
 }

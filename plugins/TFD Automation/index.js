@@ -711,12 +711,10 @@ async function runSingleAutomation() {
     isFirstDiPacket = true;
     hasCapturedInitialDenState = false; // Reset for each new adventure
     
-    // CRITICAL: Reset gift detection for new adventure (only if looping)
-    if (currentLoopCount > 1) {
-        detectedGiftItems = [];
-        waitPeriodCrystalPackets = [];
-        console.log(`[TFD Automation] === LOOP ${currentLoopCount} - RESET GIFT DETECTION ===`);
-    }
+    // CRITICAL: Always reset gift detection for each new adventure
+    detectedGiftItems = [];
+    waitPeriodCrystalPackets = [];
+    console.log(`[TFD Automation] === ADVENTURE ${currentLoopCount} - RESET ALL GIFT STATE ===`);
 
     try {
         await refreshRoom();
@@ -1017,6 +1015,9 @@ async function runSingleAutomation() {
             if (valuableItems.length > 0) {
                 updateStatus(`🎁 Final summary: ${valuableItems.length} valuable + ${regularItems.length} regular gifts detected`, 'success');
             }
+        } else if (isEfficientMode && detectedGiftItems.length === 0) {
+            console.warn('[TFD Automation] Warning: No gifts detected in efficient mode - this is unusual');
+            updateStatus('⚠️ No gifts detected - this may indicate detection issues', 'warning');
         }
 
         // Step 5: Automate Reward Collection (following phantoms plugin pattern)
