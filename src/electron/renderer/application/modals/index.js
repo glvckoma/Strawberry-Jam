@@ -124,10 +124,8 @@ class ModalSystem {
    * @returns {JQuery<HTMLElement>|null} - The rendered modal or null if not found
    */
   async show (name, target = '#modalContainer', data = {}) {
-    console.log('[DEBUG] ModalSystem.show called:', name, 'data:', data);
     const modalModule = this.registeredModals.get(name)
     if (!modalModule) {
-      console.error('[DEBUG] Modal not found:', name);
       this.application.consoleMessage({
         message: `Modal "${name}" not found`,
         type: 'error'
@@ -183,32 +181,22 @@ class ModalSystem {
    * Close the currently active modal
    */
   close () {
-    console.log('[DEBUG] ModalSystem.close() called');
     if (this.activeModal) {
-      console.log('[DEBUG] Closing active modal:', this.activeModal.name);
       const { $container, name } = this.activeModal;
 
       const modalModule = this.registeredModals.get(name);
       if (modalModule && typeof modalModule.close === 'function') {
-        // console.log('[ModalSystem] Calling modal-specific close handler for:', name); // Log removed
         modalModule.close(this.application);
       }
 
-      // console.log('[ModalSystem] Hiding container:', $container); // Log removed
       $container.addClass('hidden');
-
-      setTimeout(() => {
-        // console.log('[ModalSystem] Emptying container after timeout:', $container); // Log removed
-        $container.empty();
-      }, 300);
+      $container.empty();
 
       // Emit modal closed event through the application instance
       this.application.emit(`modal:closed:${name}`, { name });
       this.application.emit('modal:closed', { name });
 
       this.activeModal = null;
-    } else {
-      // console.log('[ModalSystem] No active modal to close.'); // Log removed
     }
   }
 }

@@ -439,17 +439,13 @@ function setupEventHandlers ($modal, app) {
 
   // View Updates button - shows the new updates modal
   const $viewUpdatesBtn = $modal.find('#viewUpdatesBtn');
-  $viewUpdatesBtn.on('click', () => {
-    console.log('[DEBUG] View Updates button clicked');
-    
+  $viewUpdatesBtn.on('click', async () => {
     // Close the settings modal first
-    console.log('[DEBUG] Closing settings modal');
     app.modals.close();
     
     // Show the updates modal after a brief delay to avoid conflict
-    setTimeout(() => {
-      console.log('[DEBUG] Opening updates modal after delay');
-      app.openUpdatesModal();
+    setTimeout(async () => {
+      await app.openUpdatesModal();
     }, 100);
   });
 

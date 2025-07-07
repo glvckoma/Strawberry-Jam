@@ -1885,8 +1885,25 @@ module.exports = class Application extends EventEmitter {
    * Opens the Updates modal manually.
    * @public
    */
-  openUpdatesModal(version = null) {
-    console.log('[DEBUG] openUpdatesModal called, version:', version);
+  async openUpdatesModal(version = null) {
+    // If no version specified, get the latest version from updates data
+    if (!version) {
+      try {
+        const path = require('path');
+        const dataPath = path.join(__dirname, '../../../data/updates-data.json');
+        const rawData = await ipcRenderer.invoke('read-file', dataPath);
+        const updatesData = JSON.parse(rawData);
+        const dataKeys = Object.keys(updatesData);
+        const latestVersion = dataKeys.find(v => updatesData[v].isLatest);
+        const fallbackVersion = dataKeys[0];
+        version = latestVersion || fallbackVersion;
+      } catch (error) {
+        console.error('Failed to load version for manual open:', error);
+        // Fallback to a known version if all else fails
+        version = '3.3.2';
+      }
+    }
+    
     this.modals.show('updatesModal', '#modalContainer', { 
       version: version 
     });
