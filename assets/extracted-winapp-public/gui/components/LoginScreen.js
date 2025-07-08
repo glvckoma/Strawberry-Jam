@@ -819,7 +819,6 @@
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + R: Room User Scan</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + M: Trade Marketplace</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + X: Headless mode</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + M: Manual Memory Cleanup</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + N: No Clip</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Equals / Numpad Add: Zoom In</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Minus / Numpad Subtract: Zoom Out</div>

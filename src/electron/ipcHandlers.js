@@ -82,17 +82,41 @@ function setupIpcHandlers(electronInstance) {
     });
   });
 
+  // Track if we're already showing an exit confirmation to prevent spam
+  let showingExitConfirmation = false;
+  
   ipcMain.on('window-close', () => {
     const shouldPrompt = electronInstance._store.get('ui.promptOnExit', true);
     
     if (shouldPrompt && electronInstance._window && !electronInstance._window.isDestroyed()) {
+      // Prevent multiple exit confirmation modals
+      if (showingExitConfirmation) {
+        return;
+      }
+      
+      showingExitConfirmation = true;
       electronInstance._window.webContents.send('show-exit-confirmation');
+      
+      // Reset the flag after a reasonable timeout in case something goes wrong
+      setTimeout(() => {
+        showingExitConfirmation = false;
+      }, 10000); // 10 seconds timeout
     } else {
       electronInstance._window.close();
     }
   });
   
+  // Track if we're already processing an exit confirmation to prevent spam
+  let processingExitConfirmation = false;
+  
   ipcMain.on('exit-confirmation-response', (event, { confirmed, dontAskAgain }) => {
+    // Prevent multiple rapid responses
+    if (processingExitConfirmation) {
+      return;
+    }
+    
+    processingExitConfirmation = true;
+    showingExitConfirmation = false; // Reset the showing flag when we get a response
     
     if (dontAskAgain) {
       electronInstance._store.set('ui.promptOnExit', false);
@@ -101,6 +125,11 @@ function setupIpcHandlers(electronInstance) {
     if (confirmed) {
       electronInstance._window.close();
     }
+    
+    // Reset the flag after a short delay to prevent accidental double-clicks
+    setTimeout(() => {
+      processingExitConfirmation = false;
+    }, 500);
   });
 
   ipcMain.on('window-minimize', () => {

@@ -5,27 +5,56 @@
   class ExitConfirmModal extends HTMLElement {
     constructor() {
       super();
-      this.style.display = 'none';
-      this.style.position = 'fixed';
-      this.style.top = '0';
-      this.style.left = '0';
-      this.style.width = '100%';
-      this.style.height = '100%';
-      this.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-      this.style.backdropFilter = 'blur(5px)';
-      this.style.zIndex = '10000';
-      this.style.display = 'flex';
-      this.style.alignItems = 'center';
-      this.style.justifyContent = 'center';
-      this.style.fontFamily = "'CCDigitalDelivery', sans-serif";
+      
+      // Bind methods to preserve 'this' context
+      this.handleKeyDown = this.handleKeyDown.bind(this);
+      this.handleBackdropClick = this.handleBackdropClick.bind(this);
+      
+      this.isClosing = false;
+      this.initialized = false;
+      
+      // Ensure show method is immediately available
+      this.show = this.show.bind(this);
+      this.close = this.close.bind(this);
+    }
+    
+    connectedCallback() {
+      // Set up the modal when it's connected to the DOM
+      if (!this.initialized) {
+        this.initializeModal();
+        this.initialized = true;
+      }
+    }
+    
+    initializeModal() {
+      // Apply styles
+      this.style.cssText = `
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        font-family: 'CCDigitalDelivery', sans-serif;
+        opacity: 1;
+      `;
       
       this.createModal();
-      
       this.setupEventListeners();
       this.updateTheme();
     }
     
     createModal() {
+      // Don't create modal content if it already exists
+      if (this.querySelector('.modal-content')) {
+        return;
+      }
+      
       // Create the modal content without inline event handlers
       const modalContainer = document.createElement('div');
       modalContainer.innerHTML = `
@@ -225,32 +254,53 @@
       });
       
       // Backdrop click to cancel
-      this.addEventListener('click', (e) => {
-        if (e.target === this) {
-          this.close(false);
-        }
-      });
+      this.addEventListener('click', this.handleBackdropClick);
       
       // Escape key to cancel
       document.addEventListener('keydown', this.handleKeyDown);
     }
     
-    handleKeyDown = (e) => {
+    handleKeyDown(e) {
       if (e.key === 'Escape') {
         this.close(false);
       }
     }
     
+    handleBackdropClick(e) {
+      if (e.target === this) {
+        this.close(false);
+      }
+    }
+    
     show() {
+      // Ensure modal is initialized before showing
+      if (!this.initialized) {
+        this.initializeModal();
+        this.initialized = true;
+      }
+      
       this.style.display = 'flex';
+      this.style.opacity = '1';
+      
       // Focus the modal for keyboard events
       setTimeout(() => {
-        this.querySelector('#cancelBtn').focus();
+        const cancelBtn = this.querySelector('#cancelBtn');
+        if (cancelBtn) {
+          cancelBtn.focus();
+        }
       }, 100);
     }
     
     close(confirmed, dontAskAgain = false) {
+      // Prevent multiple close calls
+      if (this.isClosing) {
+        return;
+      }
+      this.isClosing = true;
+      
+      // Clean up event listeners
       document.removeEventListener('keydown', this.handleKeyDown);
+      this.removeEventListener('click', this.handleBackdropClick);
       
       // Dispatch event with result
       this.dispatchEvent(new CustomEvent('result', {
@@ -265,6 +315,9 @@
       if (modalContent) {
         modalContent.style.animation = 'modalSlideOut 0.2s ease-in forwards';
       }
+      
+      // Fade out the backdrop
+      this.style.transition = 'opacity 0.2s ease-in';
       this.style.opacity = '0';
       
       setTimeout(() => {
@@ -274,11 +327,64 @@
       }, 200);
     }
     
-    connectedCallback() {
-      // Custom element lifecycle method - called when element is added to DOM
+    updateTheme() {
+      // Get current theme from the login screen element
+      const loginScreen = document.getElementById('login-screen');
+      let themePrimary = '#e83d52'; // Default strawberry theme
+      let themeSecondary = 'rgba(232, 61, 82, 0.3)';
+      let themeShadow = 'rgba(252, 93, 93, 0.1)';
+      let themeBoxBackground = 'rgba(255, 245, 230, 0.95)';
+      
+      if (loginScreen && loginScreen.shadowRoot) {
+        const computedStyle = getComputedStyle(loginScreen.shadowRoot.host);
+        themePrimary = computedStyle.getPropertyValue('--theme-primary').trim() || themePrimary;
+        themeSecondary = computedStyle.getPropertyValue('--theme-secondary').trim() || themeSecondary;
+        themeShadow = computedStyle.getPropertyValue('--theme-shadow').trim() || themeShadow;
+        themeBoxBackground = computedStyle.getPropertyValue('--theme-box-background').trim() || themeBoxBackground;
+      }
+
+      // Apply theme CSS variables
+      this.style.setProperty('--modal-bg', themeBoxBackground);
+      this.style.setProperty('--modal-border', themePrimary);
+      this.style.setProperty('--modal-shadow', themeShadow);
+      this.style.setProperty('--modal-text-primary', themePrimary);
+      this.style.setProperty('--modal-text-secondary', '#333333');
+      this.style.setProperty('--modal-text-tertiary', '#666666');
+      this.style.setProperty('--modal-confirm-bg', themePrimary);
+      this.style.setProperty('--modal-confirm-text', 'white');
+      this.style.setProperty('--modal-confirm-hover-bg', this.darkenColor(themePrimary, 15));
+    }
+    
+    darkenColor(hex, percent) {
+      if (!hex || hex.length < 7) return hex;
+      
+      // Convert hex to RGB
+      let r = parseInt(hex.slice(1, 3), 16);
+      let g = parseInt(hex.slice(3, 5), 16);
+      let b = parseInt(hex.slice(5, 7), 16);
+      
+      // Darken
+      r = Math.max(0, Math.floor(r * (100 - percent) / 100));
+      g = Math.max(0, Math.floor(g * (100 - percent) / 100));
+      b = Math.max(0, Math.floor(b * (100 - percent) / 100));
+      
+      // Convert back to hex
+      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+    
+    
+    disconnectedCallback() {
+      // Clean up event listeners when element is removed
+      document.removeEventListener('keydown', this.handleKeyDown);
+      this.removeEventListener('click', this.handleBackdropClick);
     }
   }
   
   // Register the custom element
-  customElements.define('exit-confirm-modal', ExitConfirmModal);
+  try {
+    customElements.define('exit-confirm-modal', ExitConfirmModal);
+    console.log('[Exit Confirmation] Custom element registered successfully');
+  } catch (error) {
+    console.error('[Exit Confirmation] Failed to register custom element:', error);
+  }
 })();
