@@ -1,0 +1,469 @@
+{
+  "3.4.1": {
+    "version": "3.4.1",
+    "releaseDate": "2025-07-08",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "🛒",
+          "title": "Shopping Cart System",
+          "description": "Introduced new Shopping Cart system for personal shops with enhanced functionality.",
+          "priority": "major"
+        },
+        {
+          "icon": "🐾",
+          "title": "All Animals Available",
+          "description": "All animals available for purchase for 1k gems. Requires membership and 10 diamonds (Server sided checks).",
+          "priority": "major"
+        },
+        {
+          "icon": "🔄",
+          "title": "Multiple Instances Toggle",
+          "description": "Add new toggle 'allow multiple instances' in Settings -> Advanced -> Danger Zone. This will cause bugs, errors and issues so please don't flood help channels with the errors that occur.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "🚪",
+          "title": "Improved Exit Modal",
+          "description": "Improved exit modal for game client with better functionality and user experience.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "⌨️",
+          "title": "Enhanced Shortcuts",
+          "description": "Made all in-game shortcuts to also require shift for better control and reduced accidental triggers.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🐛",
+          "title": "Trading Bug Fix",
+          "description": "Fix trading bug found by @voiibi.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Auto Wheel Stuck Fix",
+          "description": "Fix Auto wheel getting stuck on one account found by @h1yok3.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Color Theming Fixes",
+          "description": "Fix Color theming for Exit modal, Wheel, and import accounts for lighter colors.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Typo Fix",
+          "description": "Fixed typo 'Private message sytem' to 'Private message system'.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": [
+        {
+          "icon": "⚠️",
+          "title": "Multiple Instances Warning",
+          "description": "The multiple instances toggle will cause bugs, errors and issues. Please don't flood help channels with errors that occur when using this feature.",
+          "priority": "enhancement"
+        }
+      ]
+    }
+  },
+  "3.4.0": {
+    "version": "3.4.0",
+    "releaseDate": "2025-07-07",
+    "isLatest": false,
+    "categories": {
+      "features": [
+        {
+          "icon": "🎨",
+          "title": "New Updates Modal System",
+          "description": "Added comprehensive updates popup since not everyone reads the announcements in full.",
+          "priority": "major"
+        },
+        {
+          "icon": "👥",
+          "title": "Enhanced Buddies List Management",
+          "description": "Added shift/ctrl + click to buddies list for easy cleaning. Note: this may lag on larger lists - go to your den for better performance.",
+          "priority": "major"
+        },
+        {
+          "icon": "🎰",
+          "title": "Semi-Auto Wheel Spinner",
+          "description": "Added Semi-Auto wheel spinner in login screen settings for all accounts in account manager. Features adjustable delay with 5-minute pause after batch completion to prevent rate limits.",
+          "priority": "major"
+        },
+        {
+          "icon": "📥",
+          "title": "Account Import Function",
+          "description": "Added import accounts button in login screen settings to easily import username:password combinations into the account manager.",
+          "priority": "major"
+        },
+        {
+          "icon": "🏛️",
+          "title": "AJ Classic Integration Enhanced",
+          "description": "Improved AJ Classic integration in main client for seamless launching experience.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "💬",
+          "title": "Private Chat System Update",
+          "description": "Implemented @DrEmoji's private chat update with enhanced functionality. Old 3.3.1 swf remains available for non-tinted bubble chat compatibility.",
+          "priority": "enhancement"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "⚡",
+          "title": "Enhanced TFD Efficient Mode",
+          "description": "TFD Automation Efficient mode now collects other crystals while waiting for 13:00, allowing for additional rewards and better resource utilization.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🔄",
+          "title": "Background Processing Enhancement",
+          "description": "Enhanced 'enable background processing' setting on login screen. Now enabled by default and significantly improves automation performance when minimized.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🛍️",
+          "title": "Smart Shop Item Detection",
+          "description": "Attempted to add logic to hide items if they already exist in other shops, reducing duplicate listings and improving shop efficiency.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🎨",
+          "title": "Comprehensive UI/UX Overhaul",
+          "description": "Extensive UI/UX enhancements across the entire application for improved user experience and modern design patterns.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🔒",
+          "title": "Enhanced Instance Protection",
+          "description": "Improved prevention of multiple Strawberry Jam instances with better detection and user feedback to reduce support requests.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "📦",
+          "title": "Robust Installation System",
+          "description": "Enhanced installation setup with improved validation to prevent users from installing in incorrect locations and reduce setup issues.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🐛",
+          "title": "TFD Settings Persistence",
+          "description": "Fixed TFD Automation settings not saving properly when changed, ensuring all configurations persist between sessions.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Settings UI Cursor Conflict",
+          "description": "Resolved conflict between settings button and game cursor that was causing interface issues.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Network Port Resolution",
+          "description": "Comprehensive fix for port 443/8080 issues that many users were experiencing. Improved automatic port detection and fallback mechanisms.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Den Item Purchasing System",
+          "description": "Fixed bulk den item purchasing functionality that was causing transaction failures and inventory issues.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Enhanced Exit Handling",
+          "description": "Improved game client exit modal functionality. Plugins now properly close when game client exits, preventing socket errors and cleanup issues.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [
+        {
+          "icon": "⌨️",
+          "title": "Ctrl + X",
+          "description": "Headless mode - Assists with performance when automating TFD. Requires extensive testing for optimal results.",
+          "keys": ["Ctrl", "X"]
+        },
+        {
+          "icon": "⌨️",
+          "title": "Ctrl + Shift + M",
+          "description": "Manual cache cleanup functionality for improved performance and troubleshooting. Currently in testing phase.",
+          "keys": ["Ctrl", "Shift", "M"]
+        },
+        {
+          "icon": "⌨️",
+          "title": "Ctrl + M",
+          "description": "Quick access to Trade Marketplace through enhanced shortcuts section for faster navigation.",
+          "keys": ["Ctrl", "M"]
+        }
+      ],
+      "commands": [
+        {
+          "icon": "💻",
+          "title": "'end' Command",
+          "description": "Terminates all lingering 'AJ Classic.exe' processes that sometimes remain in the background after game closure.",
+          "command": "end"
+        }
+      ],
+      "messages": [
+        {
+          "icon": "📢",
+          "title": "Intelligent Error Messaging",
+          "description": "Dramatically improved error messages that now provide exact problem descriptions. Users no longer need to ask in help chat - errors tell you exactly what's wrong!",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "⚠️",
+          "title": "Rate Limiting Warning",
+          "description": "Please be mindful of rate limits when using the Semi-Auto wheel spinner. Account popups before the wheel may affect automation performance.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🔧",
+          "title": "Testing Phase Notice",
+          "description": "Several features like headless mode and cache cleanup are in testing phases. Please report any issues encountered for continuous improvement.",
+          "priority": "enhancement"
+        }
+      ]
+    }
+  },
+  "3.3.1": {
+    "version": "3.3.1",
+    "releaseDate": "2025-07-05",
+    "isLatest": false,
+    "categories": {
+      "features": [
+        {
+          "icon": "🐲",
+          "title": "Dragonfruit Theme",
+          "description": "Added dragonfruit theme - don't forget to click the strawberry icon on login screen to change theme colors!",
+          "priority": "major"
+        },
+        {
+          "icon": "🎯",
+          "title": "New TFD Automation 'Efficient Mode'",
+          "description": "Better way to automate TFD with efficient gem collection and knowing rewards before opening chests.",
+          "priority": "major"
+        },
+        {
+          "icon": "💎",
+          "title": "Special Mode Gem Collection",
+          "description": "Collects only green and yellow gems - 8 times more efficient, needs around 40 packets vs 140+.",
+          "priority": "major"
+        },
+        {
+          "icon": "🔍",
+          "title": "Reward Preview",
+          "description": "Knowing reward before opening chest - detect what gifts are coming to see if it's worth waiting till 13:00.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "⚡",
+          "title": "More Efficient Gem Packets",
+          "description": "Uses exact gem packets instead of trying all combinations - much more efficient processing.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🎵",
+          "title": "Smart Sound Notifications",
+          "description": "TFD Automation now only makes sound notification if a whitelisted item is found.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "💾",
+          "title": "Persistent TFD Settings",
+          "description": "All TFD Automation settings are now persistent and saved between sessions.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🔍",
+          "title": "TFD Search Box",
+          "description": "Added search box to TFD Automation for easier item finding.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🎨",
+          "title": "TFD UI Enhancements",
+          "description": "Multiple UI enhancements to TFD Automation interface for better user experience.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🐾",
+          "title": "Pet Sorting Fixed",
+          "description": "Pet sorting functionality has been fixed and improved.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🛍️",
+          "title": "Bulk Buy Color Fix",
+          "description": "Bulk Buy now purchases the correct color as intended.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🐛",
+          "title": "Manual Update Settings Fix",
+          "description": "Fixed manual updating functionality in settings.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Login Screen Error Improvements",
+          "description": "Slight tweaks to login screen errors to be more direct and robust.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Report Problem Enhancement",
+          "description": "Upgraded report problem button to include .swf logs and omit sensitive information.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "LeakCheck Directory Fix",
+          "description": "Fixed output directory button in LeakCheck section of settings.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "QuestManager Lag Fix",
+          "description": "Modified QuestManager.as to prevent UI stacking causing lag - auto clears adventure, gem stack, and rewards.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [
+        {
+          "icon": "⌨️",
+          "title": "Ctrl + Shift + N",
+          "description": "Toggles on/off No Clip (sorta buggy, use to go somewhere then disable).",
+          "keys": ["Ctrl", "Shift", "N"]
+        },
+        {
+          "icon": "⌨️",
+          "title": "Ctrl + Shift + H",
+          "description": "Hide Settings/Bug/User Tray UI elements.",
+          "keys": ["Ctrl", "Shift", "H"]
+        }
+      ],
+      "commands": [],
+      "messages": [
+        {
+          "icon": "⚠️",
+          "title": "Bug Reporting Guidelines",
+          "description": "When reporting bugs, please describe what happened, what caused it, and steps to reproduce. Generic reports like 'colors are broken' don't help.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🔄",
+          "title": "Version Switching",
+          "description": "You can always change to an old working version in Advanced tab by swapping the Production client.",
+          "priority": "enhancement"
+        }
+      ]
+    }
+  },
+  "3.3.0": {
+    "version": "3.3.0",
+    "releaseDate": "2025-07-02",
+    "isLatest": false,
+    "categories": {
+      "features": [
+        {
+          "icon": "🎮",
+          "title": "Item Previewer Revamp",
+          "description": "Added Item previewer revamp by @danny - enhanced item preview functionality.",
+          "priority": "major"
+        },
+        {
+          "icon": "🍓",
+          "title": "Theme Color System",
+          "description": "Click the strawberry icon on login screen OR strawberry in main client to change theme colors - fruit themes available!",
+          "priority": "major"
+        },
+        {
+          "icon": "📋",
+          "title": "Auto TFD Den & Item Whitelists",
+          "description": "Added den & item whitelists for Auto TFD with specific item and den IDs for better automation control.",
+          "priority": "major"
+        },
+        {
+          "icon": "📊",
+          "title": "Auto TFD Item/Den Logs",
+          "description": "Added item/den logs to show what items you received/recycled/kept during automation.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "⚡",
+          "title": "Auto TFD Max Retries Setting",
+          "description": "Added max retries setting for small disconnects - proceeds with x amount of tries before stopping itself.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🔧",
+          "title": "Auto TFD Delay Optimization",
+          "description": "Removed adjusting delay speed setting as it's pointless and already randomized.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🎨",
+          "title": "Login Screen UI Improvements",
+          "description": "UI & error improvements on login screen for better user experience.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🔒",
+          "title": "Remember Me Logic Improvements",
+          "description": "More revisions to remember me logic to prevent logging in with expired tokens.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🐛",
+          "title": "Auto TFD Den Recycling Fix",
+          "description": "Fixed auto TFD den recycling - was using incorrect %ir% when %dr% packet exists. Fully tested and working.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Installation Directory Fix",
+          "description": "Attempted to address issues where Strawberry Jam was downloading to C:\\Program Files instead of AppData/Local/Programs.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": [
+        {
+          "icon": "📋",
+          "title": "Item IDs Available",
+          "description": "ITEMS: 21,24,64,134,135,138,146,147,148,150,152,167,169,229,231,246,263,277,286,328,342,354,452,485,491,528,538,543,592,620,637,674,691,693,701,703,714,718,719,779,813,832,837,844,851,905,922,1027,1032,1033,1041,1042,1064,1254,1258",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🏠",
+          "title": "Den IDs Available",
+          "description": "DEN: 8,13,16,19,24,27,60,61,64,65,89,97,114,115,130,155,422,368,384,335,344,359,533,233,585,354,238,380,292,351,387,393,356,460,481,1092,1093,1094,1285,1284,1283,1282,1281,1280,456,457,59,95,396,772,882,1103,1443,414,826,440,825,482,413,493,46,389,390,391,392,93,610,611,346,629,437,1095,1096,420,419,1135,2865,1083,1519",
+          "priority": "enhancement"
+        }
+      ]
+    }
+  }
+}
