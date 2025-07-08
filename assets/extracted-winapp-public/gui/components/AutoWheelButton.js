@@ -446,7 +446,28 @@
       this._showStatus(`Logging in: ${account.username}`, '');
       
       try {
-        // Dispatch login event and wait for login to complete
+        console.log(`[AutoWheel] DEBUG: Starting login for account ${this._currentAccount + 1}/${this._totalAccounts}:`, account);
+        console.log(`[AutoWheel] DEBUG: Account details - Username: "${account.username}", Password: "${account.password}"`);
+        
+        // Dispatch account selection event to properly select the account slot
+        console.log(`[AutoWheel] DEBUG: Dispatching account-selected event for "${account.username}"`);
+        document.dispatchEvent(new CustomEvent('account-selected', {
+          detail: { username: account.username, password: account.password },
+          bubbles: true,
+          composed: true
+        }));
+
+        // Small delay to let account selection process
+        console.log(`[AutoWheel] DEBUG: Waiting 1 second for account selection to process...`);
+        await this._waitWithTimer(1000);
+
+        // Check what's actually in the login fields now
+        const usernameField = document.querySelector('input[type="text"]');
+        const passwordField = document.querySelector('input[type="password"]');
+        console.log(`[AutoWheel] DEBUG: After account selection - Username field: "${usernameField?.value}", Password field: "${passwordField?.value}"`);
+
+        // Now dispatch login event
+        console.log(`[AutoWheel] DEBUG: Dispatching auto-wheel-login event for "${account.username}"`);
         this.dispatchEvent(new CustomEvent('auto-wheel-login', {
           detail: { account },
           bubbles: true,
@@ -454,7 +475,17 @@
         }));
 
         // Wait a bit for login to process
+        console.log(`[AutoWheel] DEBUG: Waiting 3 seconds for login to process...`);
         await this._waitWithTimer(3000);
+        
+        // Check login status
+        console.log(`[AutoWheel] DEBUG: Login attempt completed for "${account.username}"`);
+        const currentUsername = document.querySelector('input[type="text"]')?.value;
+        console.log(`[AutoWheel] DEBUG: Current username in field after login: "${currentUsername}"`);
+        
+        if (currentUsername !== account.username) {
+          console.warn(`[AutoWheel] WARNING: Expected username "${account.username}" but field shows "${currentUsername}"`);
+        }
         
         if (!this._isRunning) return;
 

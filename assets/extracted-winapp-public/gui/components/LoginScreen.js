@@ -1903,12 +1903,20 @@
           console.log('[LoginScreen] Auto wheel login:', account.username);
           
           try {
+            // Clear existing tokens to force password authentication for new account
+            console.log('[LoginScreen] DEBUG: Clearing auth tokens before switching accounts');
+            this.clearAuthToken();
+            this.clearRefreshToken();
+            
             // Set credentials and attempt login
+            console.log(`[LoginScreen] DEBUG: Setting credentials - Username: "${account.username}", Password: "${account.password}"`);
             this.username = account.username;
             this.password = account.password;
             this.isFakePassword = false;
             
+            console.log(`[LoginScreen] DEBUG: About to call logIn() for "${account.username}"`);
             await this.logIn();
+            console.log(`[LoginScreen] DEBUG: logIn() completed for "${account.username}"`);
           } catch (error) {
             console.error('[LoginScreen] Auto wheel login failed:', error);
           }
