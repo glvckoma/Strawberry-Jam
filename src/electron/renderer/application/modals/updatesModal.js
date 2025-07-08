@@ -34,9 +34,15 @@ exports.render = async function (app, data = {}) {
         return 0;
     });
 
+    // Calculate responsive modal height based on window size
+    const windowHeight = window.innerHeight;
+    const modalMaxHeight = Math.min(windowHeight * 0.85, 600); // Max 85% of window or 600px
+    const headerFooterHeight = 140; // Approximate height of header + footer
+    const contentHeight = modalMaxHeight - headerFooterHeight;
+
     const $modal = $(`
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm" id="updatesModalOverlay">
-            <div class="bg-primary-bg rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden transform">
+            <div class="bg-primary-bg rounded-xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden transform" style="max-height: ${modalMaxHeight}px;">
                 <!-- Header -->
                 <div class="px-6 py-4 bg-secondary-bg border-b border-sidebar-border">
                     <div class="flex items-center justify-between">
@@ -57,15 +63,12 @@ exports.render = async function (app, data = {}) {
                                     `).join('')}
                                 </select>
                             ` : ''}
-                            <button class="modal-close-button-std text-sidebar-text hover:text-text-primary transition-colors duration-200 transform rounded-full p-2" id="closeModalBtn" aria-label="Close">
-                                <i class="fas fa-times"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Content -->
-                <div class="flex h-full max-h-[calc(85vh-140px)]">
+                <div class="flex" style="height: ${contentHeight}px;">
                     <!-- Tab Navigation -->
                     <div class="w-48 bg-secondary-bg border-r border-sidebar-border p-4 overflow-y-auto">
                         <div class="space-y-2">
@@ -83,7 +86,7 @@ exports.render = async function (app, data = {}) {
                     </div>
 
                     <!-- Tab Content -->
-                    <div class="flex-1 bg-primary-bg overflow-y-auto p-6">
+                    <div class="flex-1 bg-primary-bg overflow-y-auto p-6 min-h-0" style="max-height: ${contentHeight}px;">
                         <div id="tabContent" class="tab-content animate-fade-in-up">
                             ${generateTabContent(versionData.categories)}
                         </div>
@@ -181,6 +184,11 @@ exports.render = async function (app, data = {}) {
                         }
                     },
                     complete: function() {
+                        // Clear animation styles to prevent scroll interference
+                        $content.css({
+                            'transition': '',
+                            'transform': ''
+                        });
                         // Add staggered animation to content items
                         $content.find('.space-y-4 > div').each(function(index) {
                             const $item = $(this);
@@ -195,8 +203,22 @@ exports.render = async function (app, data = {}) {
                                     'opacity': '1',
                                     'transform': 'translateY(0px)'
                                 });
+                                
+                                // Clear transitions after animation completes to prevent scroll interference
+                                setTimeout(() => {
+                                    $item.css({
+                                        'transition': '',
+                                        'transform': ''
+                                    });
+                                }, 300);
                             }, index * 50); // Stagger by 50ms per item
                         });
+                        
+                        // Force scroll container to recalculate after all animations
+                        setTimeout(() => {
+                            const $scrollContainer = $modal.find('.overflow-y-auto').last();
+                            $scrollContainer[0].scrollTop = $scrollContainer[0].scrollTop;
+                        }, 500);
                     }
                 });
             }
@@ -242,7 +264,7 @@ exports.render = async function (app, data = {}) {
         });
     });
 
-    $modal.find('#closeModalBtn, #closeModalBtn2, #updatesModalOverlay').click(function(e) {
+    $modal.find('#closeModalBtn2, #updatesModalOverlay').click(function(e) {
         if (e.target === this) {
             // Enhanced smooth exit animation
             $modal.find('.transform').css({
@@ -282,7 +304,7 @@ exports.render = async function (app, data = {}) {
             
             // Delay close to show toast
             setTimeout(() => {
-                $modal.find('#closeModalBtn').click();
+                $modal.find('#closeModalBtn2').click();
             }, 1500);
         } catch (error) {
             console.error('Failed to mark as read:', error);
@@ -343,10 +365,56 @@ exports.render = async function (app, data = {}) {
                         'opacity': '1',
                         'transform': 'translateY(0px)'
                     });
+                    
+                    // Clear transitions and transforms after animation to prevent scroll interference
+                    setTimeout(() => {
+                        $item.css({
+                            'transition': '',
+                            'transform': ''
+                        });
+                        
+                        // Force scroll recalculation on the last item
+                        if (index === $modal.find('#tabContent .space-y-4 > div').length - 1) {
+                            setTimeout(() => {
+                                const $scrollContainer = $modal.find('.overflow-y-auto').last();
+                                if ($scrollContainer.length) {
+                                    $scrollContainer[0].scrollTop = $scrollContainer[0].scrollTop;
+                                    // Also trigger a resize event to ensure proper scroll calculation
+                                    $scrollContainer.trigger('scroll');
+                                }
+                            }, 100);
+                        }
+                    }, 300);
                 }, 200 + (index * 75)); // Start after modal animation + stagger
             });
         }, 100);
     }, 10);
+
+    // Add window resize handler for responsiveness
+    const handleResize = () => {
+        const newWindowHeight = window.innerHeight;
+        const newModalMaxHeight = Math.min(newWindowHeight * 0.85, 600);
+        const newContentHeight = newModalMaxHeight - headerFooterHeight;
+        
+        $modal.find('.transform').css('max-height', `${newModalMaxHeight}px`);
+        $modal.find('.flex').first().css('height', `${newContentHeight}px`);
+        $modal.find('.overflow-y-auto').last().css('max-height', `${newContentHeight}px`);
+        
+        // Force scroll recalculation after resize
+        setTimeout(() => {
+            const $scrollContainer = $modal.find('.overflow-y-auto').last();
+            if ($scrollContainer.length) {
+                $scrollContainer[0].scrollTop = $scrollContainer[0].scrollTop;
+            }
+        }, 100);
+    };
+    
+    $(window).on('resize.updatesModal', handleResize);
+    
+    // Clean up resize handler when modal is removed
+    $modal.on('remove', () => {
+        $(window).off('resize.updatesModal');
+    });
 
     return $modal;
 };
@@ -480,5 +548,6 @@ function showToast($modal, message, type = 'success') {
 }
 
 exports.close = function (app) {
-    // Optional cleanup when modal is closed
+    // Clean up window resize event handler
+    $(window).off('resize.updatesModal');
 };

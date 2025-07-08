@@ -1900,7 +1900,7 @@ module.exports = class Application extends EventEmitter {
       } catch (error) {
         console.error('Failed to load version for manual open:', error);
         // Fallback to a known version if all else fails
-        version = '3.3.2';
+        version = '3.4.0';
       }
     }
     

@@ -2,7 +2,7 @@
   "name": "strawberry-jam",
   "description": "strawberry jam is my personal fork of the project jam created and developed by sxip.",
   "main": "src/index.js",
-  "version": "3.3.2",
+  "version": "3.4.1",
   "author": "glvckoma",
   "scripts": {
     "dev": "npm run pack && npx cross-env NODE_ENV=development electron .",

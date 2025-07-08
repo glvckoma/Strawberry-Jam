@@ -80,7 +80,12 @@
         const result = await window.ipc.invoke('save-account', { username, password });
         if (result.success) {
           this._displaySavedAccounts(result.accounts);
-          // Optionally dispatch success event
+          // Dispatch accounts-updated event for auto wheel component
+          document.dispatchEvent(new CustomEvent('accounts-updated', {
+            detail: { accounts: result.accounts },
+            bubbles: true,
+            composed: true
+          }));
         } else {
           console.error('[AccountManagementPanel] Error saving account:', result.error);
           this.dispatchEvent(new CustomEvent('account-operation-error', { 
@@ -244,6 +249,12 @@
           const result = await window.ipc.invoke('toggle-pin-account', account.username);
           if (result.success) {
             this._displaySavedAccounts(result.accounts);
+            // Dispatch accounts-updated event for auto wheel component
+            document.dispatchEvent(new CustomEvent('accounts-updated', {
+              detail: { accounts: result.accounts },
+              bubbles: true,
+              composed: true
+            }));
           } else {
             console.error('[AccountManagementPanel] Error toggling pin status:', result.error);
             this.dispatchEvent(new CustomEvent('account-operation-error', { 
@@ -272,6 +283,12 @@
             const result = await window.ipc.invoke('delete-account', account.username);
             if (result.success) {
               this._displaySavedAccounts(result.accounts);
+              // Dispatch accounts-updated event for auto wheel component
+              document.dispatchEvent(new CustomEvent('accounts-updated', {
+                detail: { accounts: result.accounts },
+                bubbles: true,
+                composed: true
+              }));
             } else {
               console.error('[AccountManagementPanel] Error deleting account:', result.error);
               this.dispatchEvent(new CustomEvent('account-operation-error', { 

@@ -918,6 +918,60 @@ ipcMain.handle('open-user-cache-file', async () => {
   }
 });
 
+// Import accounts from array
+ipcMain.handle('import-accounts', async (event, accounts) => {
+  log('debug', `[AccMan] Handling import-accounts request for ${accounts.length} accounts`);
+  if (!Array.isArray(accounts) || accounts.length === 0) {
+    log('error', '[AccMan] Invalid accounts array provided to import-accounts');
+    return { success: false, error: 'Invalid accounts array' };
+  }
+
+  try {
+    let savedAccountsMetadata = store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+    let importedCount = 0;
+
+    for (const account of accounts) {
+      if (!account.username || !account.password) {
+        log('warn', `[AccMan] Skipping invalid account: ${JSON.stringify(account)}`);
+        continue;
+      }
+
+      const accountMetadata = { username: account.username };
+      const existingAccountIndex = savedAccountsMetadata.findIndex(acc => 
+        acc.username.toLowerCase() === account.username.toLowerCase()
+      );
+
+      if (existingAccountIndex !== -1) {
+        // Update existing account
+        savedAccountsMetadata[existingAccountIndex] = accountMetadata;
+        log('info', `[AccMan] Updated existing account: ${account.username}`);
+      } else {
+        // Add new account
+        savedAccountsMetadata.push(accountMetadata);
+        log('info', `[AccMan] Added new account: ${account.username}`);
+      }
+
+      // Store plaintext password
+      store.set(`savedAccountPasswords.${account.username}`, account.password);
+      importedCount++;
+    }
+
+    store.set(STORE_KEY_SAVED_ACCOUNTS, savedAccountsMetadata);
+    log('info', `[AccMan] Import completed: ${importedCount} accounts imported`);
+
+    const updatedAccountsWithPasswords = await getSavedAccountsData();
+    return { 
+      success: true, 
+      imported: importedCount, 
+      total: accounts.length,
+      accounts: updatedAccountsWithPasswords 
+    };
+  } catch (error) {
+    log('error', `[AccMan] Error importing accounts: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('get-df', async () => {
   try {
     const currentDf = await getDf();

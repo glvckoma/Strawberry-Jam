@@ -275,6 +275,32 @@
             /* Ensure pointer events are contained within panel */
             contain: layout style;
           }
+
+          /* Auto Wheel and Import components positioning */
+          #auto-wheel-section {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            z-index: 1000;
+            display: none; /* Hidden by default */
+          }
+
+          #import-section {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: none; /* Hidden by default */
+          }
+
+          #auto-wheel-section.visible {
+            display: block;
+          }
+
+          #import-section.visible {
+            display: block;
+          }
           
           #settings-panel h3 {
             margin-top: 0;
@@ -760,6 +786,23 @@
             </div>
           </div>
           <div class="settings-group">
+            <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 10px; margin-bottom: 5px; text-align: left;">UI Components</h4>
+            <div class="settings-item">
+              <input type="checkbox" id="show-import-accounts-toggle" style="vertical-align: middle;">
+              <label for="show-import-accounts-toggle" style="vertical-align: middle;">Show Import Accounts</label>
+              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                📁 Shows the import button for uploading accounts from .txt files
+              </div>
+            </div>
+            <div class="settings-item">
+              <input type="checkbox" id="show-wheel-automation-toggle" style="vertical-align: middle;">
+              <label for="show-wheel-automation-toggle" style="vertical-align: middle;">Show Wheel Automation</label>
+              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                🎡 Shows the auto wheel component for automated account cycling
+              </div>
+            </div>
+          </div>
+          <div class="settings-group">
             <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 10px; margin-bottom: 5px; text-align: left;">Shortcuts</h4>
             
             <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">General:</h5>
@@ -795,6 +838,16 @@
           <a id="version-link">0.0.0</a>
           <ajd-progress-ring id="version-status-icon" stroke-color="#64cc4d" stroke-width="3" radius="11"></ajd-progress-ring>
         </div>
+
+        <!-- Import Button Section -->
+        <div id="import-section">
+          <import-button id="import-button-instance"></import-button>
+        </div>
+
+        <!-- Auto Wheel Section -->
+        <div id="auto-wheel-section">
+          <auto-wheel-button id="auto-wheel-button-instance"></auto-wheel-button>
+        </div>
       `;
 
       // --- Core Login State ---
@@ -822,6 +875,8 @@
       this.closeButtonElement = this.shadowRoot.getElementById("close-button");
       this.loginAppIconElem = this.shadowRoot.getElementById("login-app-icon"); // Get reference to the icon
       this.accountPanelInstance = this.shadowRoot.getElementById("account-panel-instance"); // Reference to the new panel
+      this.importButtonInstance = this.shadowRoot.getElementById("import-button-instance");
+      this.autoWheelButtonInstance = this.shadowRoot.getElementById("auto-wheel-button-instance");
       this.userTray = null;
 
 
@@ -885,6 +940,8 @@
       this.settingsPanel = this.shadowRoot.getElementById("settings-panel");
       this.uuidSpooferToggle = this.shadowRoot.getElementById("uuid-spoofer-toggle");
       this.backgroundProcessingToggle = this.shadowRoot.getElementById("background-processing-toggle");
+      this.showImportAccountsToggle = this.shadowRoot.getElementById("show-import-accounts-toggle");
+      this.showWheelAutomationToggle = this.shadowRoot.getElementById("show-wheel-automation-toggle");
       
       // Track UI visibility state for hotkey toggle
       this._uiElementsHidden = false;
@@ -1154,6 +1211,29 @@
         });
       }
 
+      // Add event listeners for UI component toggles
+      if (this.showImportAccountsToggle) {
+        this.showImportAccountsToggle.addEventListener('change', async () => {
+          try {
+            await window.ipc.invoke('set-setting', 'ui.showImportAccounts', this.showImportAccountsToggle.checked);
+            this._updateComponentVisibility();
+          } catch (err) {
+            console.error('Failed to save show import accounts setting:', err);
+          }
+        });
+      }
+
+      if (this.showWheelAutomationToggle) {
+        this.showWheelAutomationToggle.addEventListener('change', async () => {
+          try {
+            await window.ipc.invoke('set-setting', 'ui.showWheelAutomation', this.showWheelAutomationToggle.checked);
+            this._updateComponentVisibility();
+          } catch (err) {
+            console.error('Failed to save show wheel automation setting:', err);
+          }
+        });
+      }
+
       // --- Hotkey Event Listener ---
       document.addEventListener('keydown', (event) => {
         // Ctrl + Shift + H: Toggle UI elements (settings/report buttons and user tray)
@@ -1344,6 +1424,37 @@
             this.backgroundProcessingToggle.checked = true;
           }
         });
+
+      // Load UI component visibility settings
+      window.ipc.invoke('get-setting', 'ui.showImportAccounts')
+        .then(showImportAccounts => {
+          if (this.showImportAccountsToggle) {
+            this.showImportAccountsToggle.checked = showImportAccounts === true; // Default to false
+          }
+          this._updateComponentVisibility();
+        })
+        .catch(err => {
+          // Default to disabled if setting doesn't exist
+          if (this.showImportAccountsToggle) {
+            this.showImportAccountsToggle.checked = false;
+          }
+          this._updateComponentVisibility();
+        });
+
+      window.ipc.invoke('get-setting', 'ui.showWheelAutomation')
+        .then(showWheelAutomation => {
+          if (this.showWheelAutomationToggle) {
+            this.showWheelAutomationToggle.checked = showWheelAutomation === true; // Default to false
+          }
+          this._updateComponentVisibility();
+        })
+        .catch(err => {
+          // Default to disabled if setting doesn't exist
+          if (this.showWheelAutomationToggle) {
+            this.showWheelAutomationToggle.checked = false;
+          }
+          this._updateComponentVisibility();
+        });
     }    initializeSettings() {
       
       window.ipc.invoke('get-setting', 'fruitTheme')
@@ -1402,6 +1513,56 @@
             this.backgroundProcessingToggle.checked = true;
           }
         });
+
+      // Load UI component visibility settings in initializeSettings too
+      window.ipc.invoke('get-setting', 'ui.showImportAccounts')
+        .then(showImportAccounts => {
+          if (this.showImportAccountsToggle) {
+            this.showImportAccountsToggle.checked = showImportAccounts === true; // Default to false
+          }
+          this._updateComponentVisibility();
+        })
+        .catch(err => {
+          if (this.showImportAccountsToggle) {
+            this.showImportAccountsToggle.checked = false;
+          }
+          this._updateComponentVisibility();
+        });
+
+      window.ipc.invoke('get-setting', 'ui.showWheelAutomation')
+        .then(showWheelAutomation => {
+          if (this.showWheelAutomationToggle) {
+            this.showWheelAutomationToggle.checked = showWheelAutomation === true; // Default to false
+          }
+          this._updateComponentVisibility();
+        })
+        .catch(err => {
+          if (this.showWheelAutomationToggle) {
+            this.showWheelAutomationToggle.checked = false;
+          }
+          this._updateComponentVisibility();
+                 });
+    }
+
+    _updateComponentVisibility() {
+      const importSection = this.shadowRoot.getElementById('import-section');
+      const autoWheelSection = this.shadowRoot.getElementById('auto-wheel-section');
+
+      if (importSection) {
+        if (this.showImportAccountsToggle && this.showImportAccountsToggle.checked) {
+          importSection.classList.add('visible');
+        } else {
+          importSection.classList.remove('visible');
+        }
+      }
+
+      if (autoWheelSection) {
+        if (this.showWheelAutomationToggle && this.showWheelAutomationToggle.checked) {
+          autoWheelSection.classList.add('visible');
+        } else {
+          autoWheelSection.classList.remove('visible');
+        }
+      }
     }
 
     _isTokenExpired(token) {
@@ -1689,6 +1850,85 @@
             this.usernameInputElem.error = e.detail.message;
           }
         });
+      }
+
+      // Listen for any account changes to update auto wheel component
+      document.addEventListener('accounts-updated', async (event) => {
+        console.log('[LoginScreen] Accounts updated, refreshing auto wheel');
+        if (this.autoWheelButtonInstance) {
+          try {
+            const savedAccounts = await window.ipc.invoke('get-saved-accounts');
+            if (savedAccounts) {
+              this.autoWheelButtonInstance.setAccounts(savedAccounts);
+            }
+          } catch (error) {
+            console.error('[LoginScreen] Failed to refresh auto wheel accounts:', error);
+          }
+        }
+      });
+
+      // Setup import button event listeners
+      if (this.importButtonInstance) {
+        this.importButtonInstance.addEventListener('accounts-imported', async (event) => {
+          console.log('[LoginScreen] Accounts imported:', event.detail);
+          // Refresh account panel display
+          if (this.accountPanelInstance) {
+            await this.accountPanelInstance.loadAndDisplaySavedAccounts();
+          }
+          // Update auto wheel component with new accounts
+          if (this.autoWheelButtonInstance) {
+            this.autoWheelButtonInstance.setAccounts(event.detail.accounts);
+          }
+        });
+
+        this.importButtonInstance.addEventListener('import-error', (event) => {
+          console.error('[LoginScreen] Import error:', event.detail.message);
+          // Show error via password input error (since it's visible)
+          if (this.passwordInputElem) {
+            this.passwordInputElem.error = `Import failed: ${event.detail.message}`;
+          }
+        });
+      }
+
+      // Setup auto wheel event listeners
+      if (this.autoWheelButtonInstance) {
+        this.autoWheelButtonInstance.addEventListener('auto-wheel-login', async (event) => {
+          const account = event.detail.account;
+          console.log('[LoginScreen] Auto wheel login:', account.username);
+          
+          try {
+            // Set credentials and attempt login
+            this.username = account.username;
+            this.password = account.password;
+            this.isFakePassword = false;
+            
+            await this.logIn();
+          } catch (error) {
+            console.error('[LoginScreen] Auto wheel login failed:', error);
+          }
+        });
+
+        this.autoWheelButtonInstance.addEventListener('auto-wheel-logout', (event) => {
+          const account = event.detail.account;
+          console.log('[LoginScreen] Auto wheel logout:', account.username);
+          
+          // Trigger logout by dispatching the logout-requested event (same as user tray logout)
+          document.dispatchEvent(new CustomEvent("logout-requested"));
+        });
+
+        this.autoWheelButtonInstance.addEventListener('auto-wheel-stopped', () => {
+          console.log('[LoginScreen] Auto wheel stopped');
+        });
+
+        // Load saved accounts into auto wheel component
+        try {
+          const savedAccounts = await window.ipc.invoke('get-saved-accounts');
+          if (savedAccounts) {
+            this.autoWheelButtonInstance.setAccounts(savedAccounts);
+          }
+        } catch (error) {
+          console.error('[LoginScreen] Failed to load saved accounts for auto wheel:', error);
+        }
       }
     }
 

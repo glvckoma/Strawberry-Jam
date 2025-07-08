@@ -41,6 +41,7 @@
     "!**/node_modules/**/*.ts",
     "!**/node_modules/.bin",
     "!src/data/**/*",
+    "src/data/updates-data.json",
     "!dev/**/*",
     "!assets/extracted-winapp-dev/**/*",
     "!assets/extracted-winapp-public/**/*",
