@@ -18,7 +18,7 @@
           }
 
           .auto-wheel-container {
-            background-color: rgba(255, 245, 230, 0.95);
+            background-color: var(--theme-box-background, rgba(255, 245, 230, 0.95));
             border: 2px solid var(--theme-secondary, rgba(232, 61, 82, 0.3));
             border-radius: 12px;
             padding: 15px;
@@ -45,6 +45,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            text-shadow: var(--theme-text-shadow, none);
           }
 
           .wheel-icon {
@@ -64,7 +65,7 @@
 
           .control-button {
             padding: 6px 12px;
-            border: 2px solid var(--theme-primary, #e83d52);
+            border: 2px solid var(--theme-button-border, var(--theme-primary, #e83d52));
             border-radius: 6px;
             cursor: pointer;
             font-family: CCDigitalDelivery;
@@ -77,8 +78,9 @@
           }
 
           .start-button {
-            background-color: var(--theme-primary, #e83d52);
-            color: white;
+            background-color: var(--theme-button-bg, var(--theme-primary, #e83d52));
+            color: var(--theme-button-text, white);
+            text-shadow: var(--theme-text-shadow, none);
           }
 
           .start-button:hover {
@@ -117,7 +119,7 @@
 
           .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--theme-primary, #e83d52), var(--theme-hover-border, rgba(232, 61, 82, 0.8)));
+            background: linear-gradient(90deg, var(--theme-button-bg, var(--theme-primary, #e83d52)), var(--theme-hover-border, rgba(232, 61, 82, 0.8)));
             width: 0%;
             transition: width 0.3s ease;
             border-radius: 8px;
@@ -125,9 +127,10 @@
 
           .progress-text {
             font-size: 11px;
-            color: #6E4B37;
+            color: var(--theme-primary, #6E4B37);
             text-align: center;
             margin-bottom: 5px;
+            text-shadow: var(--theme-text-shadow, none);
           }
 
           .status-text {
@@ -136,6 +139,7 @@
             text-align: center;
             min-height: 12px;
             margin-top: 5px;
+            text-shadow: var(--theme-text-shadow, none);
           }
 
           .status-text.error {
@@ -159,7 +163,8 @@
             justify-content: space-between;
             margin: 8px 0;
             font-size: 11px;
-            color: #6E4B37;
+            color: var(--theme-primary, #6E4B37);
+            text-shadow: var(--theme-text-shadow, none);
           }
 
           .settings-input {
@@ -169,6 +174,47 @@
             border-radius: 4px;
             font-size: 11px;
             text-align: center;
+          }
+          
+          :host(.light-theme) .auto-wheel-container {
+            background-color: rgba(225, 210, 180, 0.97) !important;
+            border: 2px solid rgba(0, 0, 0, 0.3) !important;
+          }
+          
+          :host(.light-theme) .auto-wheel-title {
+            color: #333333 !important;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
+          }
+          
+          :host(.light-theme) .control-button {
+            background-color: var(--light-theme-btn-bg) !important;
+            border-color: rgba(0, 0, 0, 0.3) !important;
+            color: #333333 !important;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) !important;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
+          }
+          
+          :host(.light-theme) .control-button:hover {
+            background-color: var(--light-theme-btn-hover-bg) !important;
+          }
+          
+          :host(.light-theme) .progress-text {
+            color: #333333 !important;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
+          }
+          
+          :host(.light-theme) .status-text {
+            color: #333333 !important;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
+          }
+          
+          :host(.light-theme) .settings-row {
+            color: #333333 !important;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
+          }
+          
+          :host(.light-theme) .progress-bar {
+            background: linear-gradient(90deg, var(--light-theme-progress-bg), var(--light-theme-progress-end)) !important;
           }
         </style>
         <div class="auto-wheel-container">
@@ -228,6 +274,11 @@
       document.addEventListener('accounts-imported', (event) => {
         this._onAccountsUpdated(event.detail.accounts);
       });
+
+      // Apply theme on connect
+      if (this._currentThemeKey) {
+        this._applyTheme(this._currentThemeKey);
+      }
     }
 
     disconnectedCallback() {
@@ -236,6 +287,58 @@
 
     updateTheme(themeKey) {
       this._currentThemeKey = themeKey;
+      this._applyTheme(themeKey);
+    }
+
+    _applyTheme(themeKey) {
+      const root = document.documentElement;
+      const primary = getComputedStyle(root).getPropertyValue('--theme-primary').trim();
+      
+      if (primary) {
+        const primaryIsLight = this._isLightColor(primary);
+        const fruitKey = themeKey;
+        
+        // Apply light theme adaptations for banana and pineapple
+        if (primaryIsLight && (fruitKey === 'banana.png' || fruitKey === 'pineapple.png')) {
+          const darkenedBg = this._darkenColor(primary, 20);
+          const hoverBg = this._darkenColor(darkenedBg, 10);
+          
+          // Set CSS custom properties on the host element
+          this.style.setProperty('--light-theme-btn-bg', darkenedBg);
+          this.style.setProperty('--light-theme-btn-hover-bg', hoverBg);
+          this.style.setProperty('--light-theme-progress-bg', darkenedBg);
+          this.style.setProperty('--light-theme-progress-end', hoverBg);
+          this.classList.add('light-theme');
+        } else {
+          this.classList.remove('light-theme');
+          this.style.removeProperty('--light-theme-btn-bg');
+          this.style.removeProperty('--light-theme-btn-hover-bg');
+          this.style.removeProperty('--light-theme-progress-bg');
+          this.style.removeProperty('--light-theme-progress-end');
+        }
+      }
+    }
+
+    _isLightColor(hexColor) {
+      if (!hexColor || hexColor.length < 7) return false;
+      const r = parseInt(hexColor.slice(1, 3), 16);
+      const g = parseInt(hexColor.slice(3, 5), 16);
+      const b = parseInt(hexColor.slice(5, 7), 16);
+      const luminance = (r * 299 + g * 587 + b * 114) / 1000;
+      return luminance > 150;
+    }
+
+    _darkenColor(hex, percent) {
+      if (!hex || hex.length < 7) return hex;
+      let r = parseInt(hex.slice(1, 3), 16);
+      let g = parseInt(hex.slice(3, 5), 16);
+      let b = parseInt(hex.slice(5, 7), 16);
+      
+      r = Math.max(0, Math.floor(r * (100 - percent) / 100));
+      g = Math.max(0, Math.floor(g * (100 - percent) / 100));
+      b = Math.max(0, Math.floor(b * (100 - percent) / 100));
+      
+      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 
     setAccounts(accounts) {
@@ -343,12 +446,17 @@
       this._showStatus(`Logging in: ${account.username}`, '');
       
       try {
-        // Dispatch login event
+        // Dispatch login event and wait for login to complete
         this.dispatchEvent(new CustomEvent('auto-wheel-login', {
           detail: { account },
           bubbles: true,
           composed: true
         }));
+
+        // Wait a bit for login to process
+        await this._waitWithTimer(3000);
+        
+        if (!this._isRunning) return;
 
         // Wait for spin delay
         const spinDelay = (parseInt(this.spinDelayElem.value) || 30) * 1000;
@@ -357,13 +465,18 @@
         
         if (!this._isRunning) return;
 
-        // Dispatch logout event
+        // Dispatch logout event and wait for logout to complete
         this._showStatus(`Logging out: ${account.username}`, '');
         this.dispatchEvent(new CustomEvent('auto-wheel-logout', {
           detail: { account },
           bubbles: true,
           composed: true
         }));
+
+        // Wait for logout to complete
+        await this._waitWithTimer(3000);
+        
+        if (!this._isRunning) return;
 
         this._currentAccount++;
         this._accountsInCurrentBatch++;

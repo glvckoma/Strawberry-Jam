@@ -22,6 +22,7 @@
       this.createModal();
       
       this.setupEventListeners();
+      this.updateTheme();
     }
     
     createModal() {
@@ -55,20 +56,20 @@
       const style = document.createElement('style');
       style.textContent = `
         exit-confirm-modal .modal-content {
-          background: linear-gradient(135deg, #2D1B69 0%, #11101D 100%);
-          border: 3px solid #4A90E2;
+          background: var(--modal-bg, linear-gradient(135deg, #2D1B69 0%, #11101D 100%));
+          border: 3px solid var(--modal-border, #4A90E2);
           border-radius: 15px;
           padding: 30px;
           max-width: 450px;
           width: 90%;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+          box-shadow: 0 20px 40px var(--modal-shadow, rgba(0, 0, 0, 0.8));
           text-align: center;
           position: relative;
           animation: modalSlideIn 0.3s ease-out;
         }
         
         exit-confirm-modal .modal-header {
-          color: #4A90E2;
+          color: var(--modal-text-primary, #4A90E2);
           font-size: 24px;
           font-weight: bold;
           margin-bottom: 20px;
@@ -76,6 +77,7 @@
           align-items: center;
           justify-content: center;
           gap: 10px;
+          text-shadow: var(--modal-text-shadow, none);
         }
         
         exit-confirm-modal .exit-icon {
@@ -91,10 +93,11 @@
         }
         
         exit-confirm-modal .modal-body {
-          color: #E2E8F0;
+          color: var(--modal-text-secondary, #E2E8F0);
           font-size: 16px;
           line-height: 1.5;
           margin-bottom: 25px;
+          text-shadow: var(--modal-text-shadow, none);
         }
         
         exit-confirm-modal .checkbox-container {
@@ -115,9 +118,10 @@
         }
         
         exit-confirm-modal .checkbox-container label {
-          color: #A0AEC0;
+          color: var(--modal-text-tertiary, #A0AEC0);
           font-size: 14px;
           cursor: pointer;
+          text-shadow: var(--modal-text-shadow, none);
         }
         
         exit-confirm-modal .checkbox-container:hover label {
@@ -144,8 +148,8 @@
         }
         
         exit-confirm-modal #confirmBtn {
-          background: #E74C3C;
-          color: white;
+          background: var(--modal-confirm-bg, #E74C3C);
+          color: var(--modal-confirm-text, white);
           border: none;
           padding: 12px 24px;
           border-radius: 8px;
@@ -154,6 +158,8 @@
           cursor: pointer;
           transition: all 0.2s ease;
           min-width: 100px;
+          text-shadow: var(--modal-button-text-shadow, none);
+          box-shadow: var(--modal-button-shadow, none);
         }
         
         exit-confirm-modal #cancelBtn:hover {
@@ -162,7 +168,7 @@
         }
         
         exit-confirm-modal #confirmBtn:hover {
-          background: #C0392B;
+          background: var(--modal-confirm-hover-bg, #C0392B);
           transform: translateY(-1px);
         }
         

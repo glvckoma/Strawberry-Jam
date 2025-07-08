@@ -1361,6 +1361,12 @@
       if (window.UserTrayManager.instance && typeof window.UserTrayManager.instance.updateTheme === 'function') {
         window.UserTrayManager.instance.updateTheme(theme);
       }
+      if (this.importButtonInstance && typeof this.importButtonInstance.updateTheme === 'function') {
+        this.importButtonInstance.updateTheme(fruitKey);
+      }
+      if (this.autoWheelButtonInstance && typeof this.autoWheelButtonInstance.updateTheme === 'function') {
+        this.autoWheelButtonInstance.updateTheme(fruitKey);
+      }
     }
 
     toggleUIElements() {

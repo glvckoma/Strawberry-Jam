@@ -19,9 +19,9 @@
 
           .import-button {
             padding: 8px 16px;
-            background-color: var(--theme-primary, #e83d52);
-            color: white;
-            border: 2px solid var(--theme-secondary, rgba(232, 61, 82, 0.3));
+            background-color: var(--theme-button-bg, var(--theme-primary, #e83d52));
+            color: var(--theme-button-text, white);
+            border: 2px solid var(--theme-button-border, var(--theme-secondary, rgba(232, 61, 82, 0.3)));
             border-radius: 8px;
             cursor: pointer;
             font-family: CCDigitalDelivery;
@@ -32,12 +32,25 @@
             align-items: center;
             gap: 6px;
             user-select: none;
+            text-shadow: var(--theme-text-shadow, none);
           }
 
           .import-button:hover {
             background-color: var(--theme-hover-border, rgba(232, 61, 82, 0.8));
             transform: translateY(-1px);
             box-shadow: 0 4px 12px var(--theme-shadow, rgba(252, 93, 93, 0.3));
+          }
+          
+          :host(.light-theme) .import-button {
+            background-color: var(--light-theme-bg) !important;
+            border-color: rgba(0, 0, 0, 0.3) !important;
+            color: #333333 !important;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) !important;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
+          }
+          
+          :host(.light-theme) .import-button:hover {
+            background-color: var(--light-theme-hover-bg) !important;
           }
 
           .import-button:active {
@@ -100,6 +113,11 @@
       if (this.fileInputElem) {
         this.fileInputElem.addEventListener('change', (event) => this._handleFileSelected(event));
       }
+
+      // Apply theme on connect
+      if (this._currentThemeKey) {
+        this._applyTheme(this._currentThemeKey);
+      }
     }
 
     disconnectedCallback() {
@@ -107,8 +125,55 @@
     }
 
     updateTheme(themeKey) {
-      // Update theme variables if needed
       this._currentThemeKey = themeKey;
+      this._applyTheme(themeKey);
+    }
+
+    _applyTheme(themeKey) {
+      const root = document.documentElement;
+      const primary = getComputedStyle(root).getPropertyValue('--theme-primary').trim();
+      
+      if (primary) {
+        const primaryIsLight = this._isLightColor(primary);
+        const fruitKey = themeKey;
+        
+        // Apply light theme adaptations for banana and pineapple
+        if (primaryIsLight && (fruitKey === 'banana.png' || fruitKey === 'pineapple.png')) {
+          const darkenedBg = this._darkenColor(primary, 20);
+          const hoverBg = this._darkenColor(darkenedBg, 10);
+          
+          // Set CSS custom properties on the shadow root host
+          this.style.setProperty('--light-theme-bg', darkenedBg);
+          this.style.setProperty('--light-theme-hover-bg', hoverBg);
+          this.classList.add('light-theme');
+        } else {
+          this.classList.remove('light-theme');
+          this.style.removeProperty('--light-theme-bg');
+          this.style.removeProperty('--light-theme-hover-bg');
+        }
+      }
+    }
+
+    _isLightColor(hexColor) {
+      if (!hexColor || hexColor.length < 7) return false;
+      const r = parseInt(hexColor.slice(1, 3), 16);
+      const g = parseInt(hexColor.slice(3, 5), 16);
+      const b = parseInt(hexColor.slice(5, 7), 16);
+      const luminance = (r * 299 + g * 587 + b * 114) / 1000;
+      return luminance > 150;
+    }
+
+    _darkenColor(hex, percent) {
+      if (!hex || hex.length < 7) return hex;
+      let r = parseInt(hex.slice(1, 3), 16);
+      let g = parseInt(hex.slice(3, 5), 16);
+      let b = parseInt(hex.slice(5, 7), 16);
+      
+      r = Math.max(0, Math.floor(r * (100 - percent) / 100));
+      g = Math.max(0, Math.floor(g * (100 - percent) / 100));
+      b = Math.max(0, Math.floor(b * (100 - percent) / 100));
+      
+      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 
     _handleImportClick() {
