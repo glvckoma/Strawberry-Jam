@@ -1245,13 +1245,32 @@ module.exports = class Application extends EventEmitter {
       if (!this.$playButton) return; // Still not found, exit
     }
 
-    // Check if game is already running
+    // Check if game is already running and if multiple instances are allowed
     if (this._isGameRunning) {
-      this.consoleMessage({
-        message: 'Strawberry Jam Classic is already running!',
-        type: 'warning'
-      });
-      return;
+      try {
+        const allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
+        
+        if (!allowMultipleInstances) {
+          this.consoleMessage({
+            message: 'Strawberry Jam Classic is already running!',
+            type: 'warning'
+          });
+          return;
+        }
+        
+        // If multiple instances are allowed, warn user but continue
+        this.consoleMessage({
+          message: 'Multiple instance mode enabled - launching additional instance.',
+          type: 'notify'
+        });
+      } catch (error) {
+        // If we can't get the setting, default to preventing multiple instances
+        this.consoleMessage({
+          message: 'Strawberry Jam Classic is already running!',
+          type: 'warning'
+        });
+        return;
+      }
     }
 
     // Disable button and apply styles
@@ -1296,15 +1315,33 @@ module.exports = class Application extends EventEmitter {
         });
       }
       
-      // Handle button state based on game running status
+      // Handle button state based on game running status and multiple instances setting
       if (this.$playButton) {
         if (this._isGameRunning) {
-          // Keep button disabled but make it fully opaque and allow hover for tooltip
-          this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
-          this.$playButton.classList.add('opacity-100');
-          this.$playButton.onclick = () => jam.application.openAnimalJam(); // Will show warning message
-          // Add tooltip indicating game is running
-          this._addGameRunningTooltip();
+          try {
+            const allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
+            
+            if (allowMultipleInstances) {
+              // Re-enable button for multiple instances
+              this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
+              this.$playButton.onclick = () => jam.application.openAnimalJam();
+              // Remove any existing tooltip
+              this._removeGameRunningTooltip();
+            } else {
+              // Keep button disabled but make it fully opaque and allow hover for tooltip
+              this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
+              this.$playButton.classList.add('opacity-100');
+              this.$playButton.onclick = () => jam.application.openAnimalJam(); // Will show warning message
+              // Add tooltip indicating game is running
+              this._addGameRunningTooltip();
+            }
+          } catch (error) {
+            // If we can't get the setting, default to normal behavior (disabled)
+            this.$playButton.classList.remove('opacity-50', 'pointer-events-none');
+            this.$playButton.classList.add('opacity-100');
+            this.$playButton.onclick = () => jam.application.openAnimalJam();
+            this._addGameRunningTooltip();
+          }
         } else {
           // Re-enable button normally if launch failed
           this.$playButton.classList.remove('opacity-50', 'pointer-events-none');

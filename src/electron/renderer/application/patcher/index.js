@@ -244,23 +244,34 @@ module.exports = class Patcher {
         throw new Error(`Custom asar file not found at: ${customAsarPath}`)
       }
 
+      // Check if multiple instances are allowed before checking for file locks
+      let allowMultipleInstances = false;
+      try {
+        allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
+      } catch (error) {
+        // Default to false if we can't get the setting
+        allowMultipleInstances = false;
+      }
+
       // Remove existing asar files if they exist
       if (existsSync(asarPath)) {
         await rm(asarPath).catch(err => {
-          if (err.code === 'EBUSY') {
+          if (err.code === 'EBUSY' && !allowMultipleInstances) {
             throw new Error('AJ Classic is running in the background. Check Task Manager and end the "AJ Classic.exe" processes, then try again. You can also use the "end" command to close AJ Classic processes.')
           } else if (err.code === 'EPERM') {
             throw new Error('It seems like you installed Strawberry Jam in C:\\Program Files instead of C:\\Users\\User\\AppData\\Local\\Programs\\. Rerun the setup and change the installation location.')
           }
+          // For multiple instances mode, ignore EBUSY errors and continue
         })
       }
       if (existsSync(asarUnpackedPath)) {
         await rm(asarUnpackedPath, { recursive: true }).catch(err => {
-          if (err.code === 'EBUSY') {
+          if (err.code === 'EBUSY' && !allowMultipleInstances) {
             throw new Error('AJ Classic is running in the background. Check Task Manager and end the "AJ Classic.exe" processes, then try again. You can also use the "end" command to close AJ Classic processes.')
           } else if (err.code === 'EPERM') {
             throw new Error('It seems like you installed Strawberry Jam in C:\\Program Files instead of C:\\Users\\User\\AppData\\Local\\Programs\\. Rerun the setup and change the installation location.')
           }
+          // For multiple instances mode, ignore EBUSY errors and continue
         })
       }
 
@@ -344,27 +355,38 @@ module.exports = class Patcher {
         throw new Error(`Custom ASAR file not found at: ${customAsarPath}`)
       }
 
+      // Check if multiple instances are allowed before checking for file locks
+      let allowMultipleInstances = false;
+      try {
+        allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
+      } catch (error) {
+        // Default to false if we can't get the setting
+        allowMultipleInstances = false;
+      }
+
       // Remove existing ASAR files if they exist
       if (existsSync(asarPath)) {
         await rm(asarPath).catch(err => {
-          if (err.code === 'EBUSY') {
+          if (err.code === 'EBUSY' && !allowMultipleInstances) {
             throw new Error('AJ Classic is running in the background. Check Task Manager and end the "AJ Classic.exe" processes, then try again. You can also use the "end" command to close AJ Classic processes.')
           } else if (err.code === 'EPERM') {
             throw new Error('It seems like you installed Strawberry Jam in C:\\Program Files instead of C:\\Users\\User\\AppData\\Local\\Programs\\. Rerun the setup and change the installation location.')
-          } else {
+          } else if (err.code !== 'EBUSY') {
             throw new Error(`Error removing existing ASAR: ${err.message}`)
           }
+          // For multiple instances mode, ignore EBUSY errors and continue
         })
       }
       if (existsSync(asarUnpackedPath)) {
         await rm(asarUnpackedPath, { recursive: true }).catch(err => {
-          if (err.code === 'EBUSY') {
+          if (err.code === 'EBUSY' && !allowMultipleInstances) {
             throw new Error('AJ Classic is running in the background. Check Task Manager and end the "AJ Classic.exe" processes, then try again. You can also use the "end" command to close AJ Classic processes.')
           } else if (err.code === 'EPERM') {
             throw new Error('It seems like you installed Strawberry Jam in C:\\Program Files instead of C:\\Users\\User\\AppData\\Local\\Programs\\. Rerun the setup and change the installation location.')
-          } else {
+          } else if (err.code !== 'EBUSY') {
             throw new Error(`Error removing existing ASAR.unpacked: ${err.message}`)
           }
+          // For multiple instances mode, ignore EBUSY errors and continue
         })
       }
 

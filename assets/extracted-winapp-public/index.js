@@ -394,12 +394,19 @@ ipcMain.on("loaded", async (event, message) => {
     
     if (isClosing) {
       // Allow close to proceed
-      const position = win.getPosition();
-      store.set("window.x", position[0]);
-      store.set("window.y", position[1]);
+      log("info", "[Exit Confirmation] isClosing=true, allowing window to close");
+      try {
+        const position = win.getPosition();
+        store.set("window.x", position[0]);
+        store.set("window.y", position[1]);
+        log("debug", "[Exit Confirmation] Saved window position");
+      } catch (err) {
+        log("warn", `[Exit Confirmation] Failed to save window position: ${err.message}`);
+      }
       
       // Notify Strawberry Jam that AJ Classic is closing
       notifyStrawberryJamClose();
+      log("debug", "[Exit Confirmation] Close notification sent, allowing close to proceed");
       return;
     }
     
@@ -1002,8 +1009,15 @@ const translate = (phrase) => {
 };
 
 // Function to notify Strawberry Jam when AJ Classic is closing
+let isNotificationSent = false;
 const notifyStrawberryJamClose = () => {
   try {
+    // Prevent multiple notifications
+    if (isNotificationSent) {
+      log("debug", "[AJ Classic Close] Notification already sent, skipping duplicate call");
+      return;
+    }
+    
     log("info", "[AJ Classic Close] notifyStrawberryJamClose called - attempting to notify main Strawberry Jam app");
     
     // Try to connect to Strawberry Jam's API server to notify about AJ Classic closing
@@ -1015,8 +1029,17 @@ const notifyStrawberryJamClose = () => {
       
       // Try common ports that Strawberry Jam API might be running on
       const ports = [8080, 8081, 8082, 9080, 3000];
+      let notificationSuccessful = false;
       
-      ports.forEach(port => {
+      const tryPort = (portIndex) => {
+        if (portIndex >= ports.length || notificationSuccessful) {
+          if (!notificationSuccessful) {
+            log("warn", "[AJ Classic Close] Failed to notify Strawberry Jam on any port");
+          }
+          return;
+        }
+        
+        const port = ports[portIndex];
         const postData = JSON.stringify({
           action: 'aj-classic-closing',
           timestamp: Date.now()
@@ -1035,25 +1058,32 @@ const notifyStrawberryJamClose = () => {
         };
         
         const req = http.request(options, (res) => {
-          if (res.statusCode === 200) {
+          if (res.statusCode === 200 && !notificationSuccessful) {
+            notificationSuccessful = true;
+            isNotificationSent = true;
             log("info", `[AJ Classic Close] Successfully notified Strawberry Jam on port ${port}`);
-          } else {
-            log("warn", `[AJ Classic Close] Unexpected response code ${res.statusCode} from port ${port}`);
+          } else if (res.statusCode !== 200) {
+            log("debug", `[AJ Classic Close] Unexpected response code ${res.statusCode} from port ${port}`);
+            setTimeout(() => tryPort(portIndex + 1), 100);
           }
         });
         
         req.on('error', (err) => {
           log("debug", `[AJ Classic Close] Connection failed for port ${port}: ${err.message}`);
+          setTimeout(() => tryPort(portIndex + 1), 100);
         });
         
         req.on('timeout', () => {
           log("debug", `[AJ Classic Close] Request timeout for port ${port}`);
           req.destroy();
+          setTimeout(() => tryPort(portIndex + 1), 100);
         });
         
         req.write(postData);
         req.end();
-      });
+      };
+      
+      tryPort(0);
     } else {
       log("warn", "[AJ Classic Close] STRAWBERRY_JAM_DATA_PATH environment variable not set - cannot notify main app");
     }
@@ -1074,8 +1104,19 @@ ipcMain.on("exit-confirmation-response", (event, { confirmed, dontAskAgain }) =>
   if (confirmed) {
     log("info", "[Exit Confirmation] User confirmed exit, closing application");
     isClosing = true;
+    
+    // Force quit the application to prevent hanging
+    setTimeout(() => {
+      log("warn", "[Exit Confirmation] Force quitting application due to timeout");
+      app.quit();
+    }, 2000);
+    
     if (win && !win.isDestroyed()) {
+      log("debug", "[Exit Confirmation] Calling win.close()");
       win.close();
+    } else {
+      log("warn", "[Exit Confirmation] Window already destroyed or null, calling app.quit()");
+      app.quit();
     }
   } else {
     log("debug", "[Exit Confirmation] User cancelled exit");

@@ -439,6 +439,22 @@
                 <i class="fas fa-exclamation-triangle mr-2"></i>Danger Zone
               </h4>
 
+              <!-- Allow Multiple Instances -->
+              <div class="flex items-center justify-between bg-red-600/10 border border-red-600/30 p-3 rounded">
+                <div class="flex-1">
+                  <label for="allowMultipleInstancesToggle" class="text-sm text-text-primary font-medium">Allow Multiple Instances</label>
+                  <p class="text-xs text-red-400 mt-1">This will cause bugs, errors and issues so please don't flood help channels with the errors that occur.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer ml-3">
+                  <input type="checkbox" id="allowMultipleInstancesToggle" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
+                    <span class="toggle-text-off">OFF</span>
+                    <span class="toggle-text-on">ON</span>
+                  </div>
+                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                </label>
+              </div>
+
               <!-- Cache Size Display -->
               <div class="mb-4 py-2 px-3 bg-tertiary-bg/30 rounded">
                 <div class="flex items-center justify-between mb-1">

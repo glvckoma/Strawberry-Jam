@@ -673,6 +673,9 @@ async function loadSettings ($modal, app) { // Made async
     const selectedSwfFile = await ipcRenderer.invoke('get-setting', 'game.selectedSwfFile');
     const autoReapplySwfOnLaunch = await ipcRenderer.invoke('get-setting', 'game.autoReapplySwfOnLaunch');
 
+    // Multiple instances setting
+    const allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
+
     // Store the initial SWF file to check for changes on save
     $modal.data('initialSwfFile', selectedSwfFile || 'ajclient-prod.swf');
 
@@ -709,6 +712,9 @@ async function loadSettings ($modal, app) { // Made async
 
     // Populate Auto Reapply SWF on Launch setting
     $modal.find('#autoReapplySwfOnLaunchToggle').prop('checked', autoReapplySwfOnLaunch === true);
+
+    // Populate Multiple Instances setting
+    $modal.find('#allowMultipleInstancesToggle').prop('checked', allowMultipleInstances === true);
 
     // Set initial state for LeakCheck threshold
     if ($leakCheckAutoCheck.length) {
@@ -820,7 +826,8 @@ async function saveSettings ($modal, app) {
       { key: 'dev-log.performServerCheckOnLaunch', value: $modal.find('#performServerCheckOnLaunchToggle').is(':checked') },
       { key: 'updates.enableAutoUpdates', value: $modal.find('#enableAutoUpdatesToggle').is(':checked') },
       { key: 'game.selectedSwfFile', value: selectedSwfFile },
-      { key: 'game.autoReapplySwfOnLaunch', value: $modal.find('#autoReapplySwfOnLaunchToggle').is(':checked') }
+      { key: 'game.autoReapplySwfOnLaunch', value: $modal.find('#autoReapplySwfOnLaunchToggle').is(':checked') },
+      { key: 'ui.allowMultipleInstances', value: $modal.find('#allowMultipleInstancesToggle').is(':checked') }
     ];
 
     for (const setting of settingsToSave) {
