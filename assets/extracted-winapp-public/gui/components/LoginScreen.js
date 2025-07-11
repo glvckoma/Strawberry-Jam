@@ -36,42 +36,15 @@
   };
   // --- [End] Strawberry Jam Log Sanitization ---
 
-  // Capture console logs from this scope
-  const originalConsoleLog = console.log;
-  const originalConsoleWarn = console.warn;
-  const originalConsoleError = console.error;
-  const originalConsoleInfo = console.info;
-  const originalConsoleDebug = console.debug;
-
+  // Simplified console capture - only capture without overriding console methods
   const captureLog = (level, ...args) => {
     const timestamp = new Date().toISOString();
     const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
-    const sanitizedMessage = sanitizeLogMessage(message); // Sanitize the log
+    const sanitizedMessage = sanitizeLogMessage(message);
     _winappConsoleLogs.push({ timestamp, level, message: sanitizedMessage });
-    if (_winappConsoleLogs.length > 500) { // Limit stored logs
-      _winappConsoleLogs.splice(0, _winappConsoleLogs.length - 400); // Keep last 400
+    if (_winappConsoleLogs.length > 500) {
+      _winappConsoleLogs.splice(0, _winappConsoleLogs.length - 400);
     }
-  };
-
-  console.log = (...args) => {
-    captureLog('LOG', ...args);
-    originalConsoleLog.apply(console, args);
-  };
-  console.warn = (...args) => {
-    captureLog('WARN', ...args);
-    originalConsoleWarn.apply(console, args);
-  };
-  console.error = (...args) => {
-    captureLog('ERROR', ...args);
-    originalConsoleError.apply(console, args);
-  };
-  console.info = (...args) => {
-    captureLog('INFO', ...args);
-    originalConsoleInfo.apply(console, args);
-  };
-  console.debug = (...args) => {
-    captureLog('DEBUG', ...args);
-    originalConsoleDebug.apply(console, args);
   };
 
 
@@ -1057,13 +1030,20 @@
         forgotPassword();
       });
       this.createAccountElem.addEventListener("click", async () => {
-        if (this.loginBlocked) return;
+        console.log(`[CREATE ACCOUNT] ============= Starting create account process =============`);
+        if (this.loginBlocked) {
+          console.log(`[CREATE ACCOUNT] Create account blocked, returning early`);
+          return;
+        }
         this.loginBlocked = true;
         try {
+          console.log(`[CREATE ACCOUNT] Requesting FlashVars for account creation`);
           const flashVars = await globals.getFlashVarsFromWeb();
           
           // Get the actual API server port, defaulting to 8080 if not available
           const apiPort = await window.ipc.invoke('get-api-port').catch(() => '8080');
+          
+          console.log(`[CREATE ACCOUNT] Configuring FlashVars for local proxy - API Port: ${apiPort}`);
           
           // Override asset URLs so Create-Account also uses the local proxy instead of the official CDN
           flashVars.content = `http://localhost:${apiPort}/`;
@@ -1075,6 +1055,7 @@
           
           // Get the actual server port, defaulting to 443 if not available
           const serverPort = await window.ipc.invoke('get-server-port').catch(() => '443');
+          console.log(`[CREATE ACCOUNT] Using server port: ${serverPort}`);
           flashVars.blueboxPort   = serverPort.toString();
           flashVars.smartfoxPort  = serverPort.toString();
 
@@ -1084,14 +1065,30 @@
           flashVars.website = `http://localhost:${apiPort}/`;
           flashVars.mdUrl   = `http://localhost:${apiPort}/game/`;
 
+          console.log(`[CREATE ACCOUNT] Final FlashVars configuration:`, {
+            deploy_version: flashVars.deploy_version,
+            clientURL: flashVars.clientURL,
+            content: flashVars.content,
+            smartfoxServer: flashVars.smartfoxServer,
+            blueboxServer: flashVars.blueboxServer,
+            blueboxPort: flashVars.blueboxPort,
+            smartfoxPort: flashVars.smartfoxPort,
+            locale: globals.language,
+            webRefPath: "create_account",
+            affiliate_code: globals.affiliateCode
+          });
+
           Object.assign(
             flashVars,
             globals.getClientData(),
             { locale: globals.language, webRefPath: "create_account" },
             globals.affiliateCode ? { affiliate_code: globals.affiliateCode } : {}
           );
+          
+          console.log(`[CREATE ACCOUNT] Dispatching loggedIn event for account creation`);
           this.dispatchEvent(new CustomEvent("loggedIn", {detail: {flashVars}}));
         } catch (err) {
+          console.error(`[CREATE ACCOUNT] Error during account creation:`, err);
           globals.reportError("webClient", `Error creating account: ${err.stack || err.message}`);
           if (err.name != "Aborted") window.alert("Something went wrong :(");
           this.loginBlocked = false;
@@ -1690,40 +1687,54 @@
     }
 
     async logIn() {
-      if (this.loginBlocked) return;
+      console.log(`[LOGIN PROCESS] ============= Starting login process =============`);
+      console.log(`[LOGIN PROCESS] Username: ${this.username ? '[SET]' : '[NOT SET]'}`);
+      console.log(`[LOGIN PROCESS] Has Auth Token: ${!!this.authToken}`);
+      console.log(`[LOGIN PROCESS] Has Refresh Token: ${!!this.refreshToken}`);
+      console.log(`[LOGIN PROCESS] Remember Me: ${this.rememberMeElem ? this.rememberMeElem.value : 'unknown'}`);
+      
+      if (this.loginBlocked) {
+        console.log(`[LOGIN PROCESS] Login blocked, returning early`);
+        return;
+      }
       this.loginBlocked = true;
       this.logInButtonElem.disabled = true;
       this.logInButtonElem.classList.add("loading");
 
       try {
         // Centralized DF handling
+        console.log(`[DEFPACKS] Current DF state: ${globals.df ? 'SET' : 'NULL'}`);
+        console.log(`[DEFPACKS] UUID spoofer active: ${this.uuidSpooferToggle && this.uuidSpooferToggle.checked ? 'YES' : 'NO'}`);
+        
         if (globals.df === null || (this.uuidSpooferToggle && this.uuidSpooferToggle.checked)) {
-          console.log('[LoginScreen] Refreshing DF before login...');
+          console.log('[DEFPACKS] Refreshing DF before login...');
           try {
             const newDf = await window.ipc.refreshDf();
             if (newDf) {
               globals.df = newDf;
-              console.log(`[LoginScreen] Successfully refreshed DF: ${newDf.substr(0, 8)}...`);
+              console.log(`[DEFPACKS] Successfully refreshed DF: ${newDf.substr(0, 8)}...`);
             } else {
-              console.warn('[LoginScreen] Failed to get or refresh DF, login may fail.');
+              console.warn('[DEFPACKS] Failed to get or refresh DF, login may fail.');
             }
           } catch (dfErr) {
-            console.error('[LoginScreen] Error refreshing DF:', dfErr);
+            console.error('[DEFPACKS] Error refreshing DF:', dfErr);
           }
+        } else {
+          console.log(`[DEFPACKS] Using existing DF: ${globals.df.substr(0, 8)}...`);
         }
 
         let authResult;
 
         // 1. Check for a valid, non-expired auth token
         if (this.authToken && !this._isTokenExpired(this.authToken)) {
-          console.log("[LoginScreen] Auth token is valid. Attempting authentication with it.");
+          console.log("[ANIMAL JAM AUTH] Auth token is valid. Attempting authentication with it.");
           authResult = await globals.authenticateWithAuthToken(this.authToken);
         } 
         // 2. If auth token is expired or missing, try using the refresh token
         else if (this.refreshToken) {
           // **NEW**: First, check if the refresh token itself is expired client-side
           if (this._isTokenExpired(this.refreshToken)) {
-            console.warn("[LoginScreen] Refresh token has expired (client-side check). Clearing all tokens.");
+            console.warn("[ANIMAL JAM AUTH] Refresh token has expired (client-side check). Clearing all tokens.");
             this.clearAuthToken();
             this.clearRefreshToken();
             this.isFakePassword = false;
@@ -1732,16 +1743,16 @@
           }
 
           if (this.authToken) {
-            console.log("[LoginScreen] Auth token is expired or invalid. Attempting to refresh with a valid refresh token.");
+            console.log("[ANIMAL JAM AUTH] Auth token is expired or invalid. Attempting to refresh with a valid refresh token.");
           } else {
-            console.log("[LoginScreen] No auth token found. Attempting to use refresh token.");
+            console.log("[ANIMAL JAM AUTH] No auth token found. Attempting to use refresh token.");
           }
           try {
             authResult = await globals.authenticateWithRefreshToken(this.refreshToken, this.otp);
-            console.log("[LoginScreen] Successfully refreshed token.");
+            console.log("[ANIMAL JAM AUTH] Successfully refreshed token.");
           } catch (err) {
             if (err.message === "REFRESH_TOKEN_EXPIRED") {
-              console.warn("[LoginScreen] Refresh token has expired (server-side check). Clearing all tokens.");
+              console.warn("[ANIMAL JAM AUTH] Refresh token has expired (server-side check). Clearing all tokens.");
               this.clearAuthToken();
               this.clearRefreshToken();
               this.isFakePassword = false;
@@ -1753,7 +1764,7 @@
         }
         // 3. If no tokens are available or valid, fall back to password login
         else {
-          console.log("[LoginScreen] No valid tokens. Proceeding with password authentication.");
+          console.log("[ANIMAL JAM AUTH] No valid tokens. Proceeding with password authentication.");
           if (!this.username.length) throw new Error("EMPTY_USERNAME");
           if (!this.password.length) throw new Error("EMPTY_PASSWORD");
           authResult = await globals.authenticateWithPassword(this.username, this.password, this.otp, null);
@@ -1763,6 +1774,18 @@
         this.otp = null;
         const { userData, flashVars } = authResult;
         
+        console.log(`[FLASHVARS] Raw FlashVars received from authentication:`, {
+          deploy_version: flashVars.deploy_version,
+          smoke_version: flashVars.smoke_version,
+          smartfoxServer: flashVars.smartfoxServer,
+          blueboxServer: flashVars.blueboxServer,
+          clientURL: flashVars.clientURL,
+          content: flashVars.content,
+          df: flashVars.df ? flashVars.df.substr(0, 8) + '...' : 'NOT SET',
+          locale: flashVars.locale,
+          username: flashVars.username
+        });
+        
         // Persist new tokens
         if (userData.authToken) this.authToken = userData.authToken;
         if (userData.refreshToken) this.refreshToken = userData.refreshToken;
@@ -1771,20 +1794,52 @@
         this.usernameInputElem.error = "";
         this.passwordInputElem.error = "";
 
-        console.log('[LoginScreen] Login successful. Preparing to dispatch events.');
+        console.log('[LOGIN PROCESS] Login successful. Preparing to dispatch events.');
+        console.log(`[LOGIN PROCESS] User data:`, {
+          username: userData.username,
+          accountType: userData.accountType,
+          language: userData.language,
+          hasAuthToken: !!userData.authToken,
+          hasRefreshToken: !!userData.refreshToken
+        });
         
         // Send login success data to main process
-        window.ipc.send("loginSucceeded", {
+        const loginData = {
           username: userData.username,
           language: userData.language || 'en',
           rememberMe: this.rememberMeElem.value,
           authToken: userData.authToken,
           refreshToken: userData.refreshToken,
+        };
+        console.log(`[LOGIN PROCESS] Sending loginSucceeded to main process with data:`, {
+          username: loginData.username,
+          language: loginData.language,
+          rememberMe: loginData.rememberMe,
+          hasAuthToken: !!loginData.authToken,
+          hasRefreshToken: !!loginData.refreshToken
         });
+        window.ipc.send("loginSucceeded", loginData);
 
         // Dispatch event to switch to the game screen
         const theme = this._fruitThemes[this._fruitImages[this._currentFruitIndex]];
         theme.boxBackground = getComputedStyle(this.shadowRoot.host).getPropertyValue('--theme-box-background');
+        
+        console.log(`[FLASHVARS] Final FlashVars being sent to game screen:`, {
+          deploy_version: flashVars.deploy_version,
+          smoke_version: flashVars.smoke_version,
+          smartfoxServer: flashVars.smartfoxServer,
+          blueboxServer: flashVars.blueboxServer,
+          blueboxPort: flashVars.blueboxPort,
+          smartfoxPort: flashVars.smartfoxPort,
+          clientURL: flashVars.clientURL,
+          content: flashVars.content,
+          df: flashVars.df ? flashVars.df.substr(0, 8) + '...' : 'NOT SET',
+          locale: flashVars.locale,
+          username: flashVars.username,
+          auth_token: flashVars.auth_token ? '[SET]' : '[NOT SET]'
+        });
+        
+        console.log(`[LOGIN PROCESS] Dispatching loggedIn event to switch to game screen`);
         this.dispatchEvent(new CustomEvent("loggedIn", { detail: { flashVars, theme } }));
 
       } catch (err) {

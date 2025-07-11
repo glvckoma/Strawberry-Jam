@@ -366,9 +366,7 @@
       this._totalAccounts = this._accounts.length;
       this._updateProgressDisplay();
       
-      // Log the sorted account order for debugging
-      console.log('[AutoWheel] Accounts loaded and sorted:', 
-        this._accounts.map(acc => `${acc.username}${acc.pinned ? ' (📌)' : ''}`));
+      // Accounts loaded and sorted - removed verbose logging
     }
 
     _onAccountsUpdated(accounts) {
@@ -459,11 +457,10 @@
       this._showStatus(`Logging in: ${account.username}`, '');
       
       try {
-        console.log(`[AutoWheel] DEBUG: Starting login for account ${this._currentAccount + 1}/${this._totalAccounts}:`, account);
-        console.log(`[AutoWheel] DEBUG: Account details - Username: "${account.username}", Password: "${account.password}"`);
+        // Starting login for account
         
         // Dispatch account selection event to properly select the account slot
-        console.log(`[AutoWheel] DEBUG: Dispatching account-selected event for "${account.username}"`);
+        // Dispatching account-selected event
         document.dispatchEvent(new CustomEvent('account-selected', {
           detail: { username: account.username, password: account.password },
           bubbles: true,
@@ -471,16 +468,16 @@
         }));
 
         // Small delay to let account selection process
-        console.log(`[AutoWheel] DEBUG: Waiting 1 second for account selection to process...`);
+        // Waiting for account selection to process
         await this._waitWithTimer(1000);
 
         // Check what's actually in the login fields now
         const usernameField = document.querySelector('input[type="text"]');
         const passwordField = document.querySelector('input[type="password"]');
-        console.log(`[AutoWheel] DEBUG: After account selection - Username field: "${usernameField?.value}", Password field: "${passwordField?.value}"`);
+        // Account selection processed
 
         // Now dispatch login event
-        console.log(`[AutoWheel] DEBUG: Dispatching auto-wheel-login event for "${account.username}"`);
+        // Dispatching auto-wheel-login event
         this.dispatchEvent(new CustomEvent('auto-wheel-login', {
           detail: { account },
           bubbles: true,
@@ -488,13 +485,13 @@
         }));
 
         // Wait a bit for login to process
-        console.log(`[AutoWheel] DEBUG: Waiting 3 seconds for login to process...`);
+        // Waiting for login to process
         await this._waitWithTimer(3000);
         
         // Check login status
-        console.log(`[AutoWheel] DEBUG: Login attempt completed for "${account.username}"`);
+        // Login attempt completed
         const currentUsername = document.querySelector('input[type="text"]')?.value;
-        console.log(`[AutoWheel] DEBUG: Current username in field after login: "${currentUsername}"`);
+        // Checking login status
         
         if (currentUsername !== account.username) {
           console.warn(`[AutoWheel] WARNING: Expected username "${account.username}" but field shows "${currentUsername}"`);

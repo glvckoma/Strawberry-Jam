@@ -91,6 +91,7 @@
         });
       })();
       
+
       const globals = {
         config: {},
         systemData: {
@@ -131,6 +132,14 @@
 
         fetch(url, options, validCodes) {
           return new Promise(async (resolve, reject) => {
+            
+            // Console log for server communication tracking
+            console.log(`[SERVER COMM] Starting fetch to: ${url}`, {
+              method: options.method || 'GET',
+              timeout: options.timeout || 10000,
+              attempt: (options.attempts || 0) + 1
+            });
+            
             // track original call stack in an Error for helpful debugging of failures
             if (!options.error) options.error = new Error();
             if (!options.startTime) options.startTime = new Date().getTime();
@@ -146,30 +155,44 @@
             }
             try {
               const response = await window.fetch(url, options);
+              console.log(`[SERVER COMM] Response received from ${url}:`, {
+                status: response.status,
+                statusText: response.statusText,
+                duration: `${new Date().getTime() - options.startTime}ms`
+              });
               if ([200].concat(validCodes).includes(response.status)) {
                 resolve(response);
               }
               else {
+                console.error(`[SERVER COMM] Invalid response code ${response.status} for URL: ${url}`);
                 options.error.message = `Invalid response code: ${response.code} for URL: ${url}`;
                 reject(options.error);
               }
             }
             catch (err) {
+              console.error(`[SERVER COMM] Fetch error for ${url}:`, {
+                error: err.name,
+                message: err.message,
+                attempt: options.attempts
+              });
               if (err instanceof DOMException) {
                 // DOMException is thrown for timeouts and abortions.
                 // Perform handling via timer to allow fetch to cleanup.
                 setTimeout(async () => {
                   if (options.userAbortController && options.userAbortController.signal.aborted) {
+                    console.warn(`[SERVER COMM] Fetch aborted by user after ${new Date().getTime() - options.startTime}ms for URL: ${url}`);
                     options.error.name = "Aborted";
                     options.error.message = `Fetch aborted by user after ${new Date().getTime() - options.startTime}ms for URL: ${url}`;
                     reject(options.error);
                   }
                   else if (options.attempts >= options.maxAttempts) {
+                    console.error(`[SERVER COMM] Fetch timed out after ${options.attempts} attempts for URL: ${url}`);
                     options.error.name = "TimedOut"
                     options.error.message = `Fetch timed out (attempts:${options.attempts} timeout:${options.timeout}ms) for URL: ${url}`;
                     reject(options.error);
                   }
                   else {
+                    console.log(`[SERVER COMM] Retrying fetch (attempt ${options.attempts + 1}) for URL: ${url}`);
                     try {
                       const response = await globals.fetch(url, options, validCodes);
                       resolve(response);
@@ -183,6 +206,7 @@
               else {
                 // Network failure (excluding timeout), bad request options, or server-side CORS issue.
                 // Retrying these situations are unlikely to succeed within any typical retry window.
+                console.error(`[SERVER COMM] Network failure for ${url}:`, err);
                 options.error.name = err.name;
                 options.error.message = `${err.message} for URL: ${url}`;
                 reject(options.error);
@@ -260,12 +284,20 @@
         },
 
         async getFlashVarsFromWeb() {
+          console.log(`[ANIMAL JAM] Requesting FlashVars from Animal Jam web: ${globals.config.web}/flashvars`);
           const response = await globals.fetch(`${globals.config.web}/flashvars`, {
             method: "GET",
             mode: "cors",
             credentials: "include",
           });
-          return JSON.parse(await response.text());
+          const flashVars = JSON.parse(await response.text());
+          console.log(`[ANIMAL JAM] FlashVars received:`, {
+            deploy_version: flashVars.deploy_version,
+            smartfoxServer: flashVars.smartfoxServer,
+            blueboxServer: flashVars.blueboxServer,
+            clientURL: flashVars.clientURL
+          });
+          return flashVars;
         },
 
         localize() {
@@ -337,6 +369,7 @@
       };
 
       const authenticate = async (request, customDf) => {
+        console.log(`[ANIMAL JAM] Starting authentication with Animal Jam authenticator: ${globals.config.authenticator}/authenticate`);
         request.domain = "flash";
         
         try {
@@ -346,6 +379,7 @@
           if (freshDf) {
             // Always update globals.df with the latest value from main process
             globals.df = freshDf;
+            console.log(`[ANIMAL JAM] Using fresh DF for authentication`);
           } else {
             console.warn("[AUTH] Failed to get fresh DF from main process");
           }
@@ -361,6 +395,14 @@
         // Use custom df if provided, otherwise use the (freshly updated) globals.df
         const dfToUse = customDf || globals.df;
         request.df = dfToUse;
+        
+        console.log(`[ANIMAL JAM] Sending authentication request`, {
+          domain: request.domain,
+          hasUsername: !!request.username,
+          hasPassword: !!request.password,
+          hasRefreshToken: !!request.refresh_token,
+          hasOtp: !!request.otp
+        });
         
         const response = await globals.fetch(`${globals.config.authenticator}/authenticate`, {
           method: "POST",
@@ -447,6 +489,13 @@
         const apiPort = await window.ipc.invoke('get-api-port').catch(() => '8080');
         flashVars.content = `http://localhost:${apiPort}/`
         flashVars.clientURL = `http://localhost:${apiPort}/${flashVars.deploy_version}/ajclient.swf`
+        
+        console.log(`[SWF LOADING] Game client SWF URL configured:`, {
+          clientURL: flashVars.clientURL,
+          content: flashVars.content,
+          deploy_version: flashVars.deploy_version,
+          apiPort: apiPort
+        });
 
         // Don't wait for this call, it is purely informational
         // reportLogin({
@@ -531,6 +580,8 @@
           params += "&rc_token=" + encodeURIComponent(globals.rcToken);
         }
         
+        console.log(`[ANIMAL JAM] Requesting player session data from: ${globals.config.playerSessionData}/player?${params}`);
+        
         const response = await globals.fetch(`${globals.config.playerSessionData}/player?${params}`, {
           method: "GET",
           mode: "cors",
@@ -539,11 +590,21 @@
           },
         }, [401]);
         if (response.status !== 200) {
+          console.error(`[ANIMAL JAM] Player session request failed with status: ${response.status}`);
           throw new Error("AUTH_TOKEN_EXPIRED");
         }
         const responseData = JSON.parse(await response.text());
         
+        console.log(`[ANIMAL JAM] Player session data received:`, {
+          screen_name: responseData.screen_name,
+          game_server: responseData.game_server,
+          game_account_type: responseData.game_account_type,
+          language: responseData.language,
+          rename_required: responseData.rename_required
+        });
+        
         if (responseData.rename_required) {
+          console.log(`[ANIMAL JAM] User rename required for: ${responseData.screen_name}`);
           showRenameUserModal(responseData.screen_name, responseData.rename_required_key);
           throw new Error("USER_RENAME_NEEDED");
         }
@@ -753,11 +814,22 @@
           if (data.level.toLowerCase() === "error") {
             globals.reportError("electronClient", data.message);
           }
-          switch (data.level) {
-            case "debug": console.debug(data.message); break;
-            case "warn": console.warn(data.message); break;
-            case "error": console.error(data.message); break;
-            default: console.log(data.message); break;
+          
+          // Filter out noisy logs to keep console clean
+          const message = data.message || '';
+          const shouldSkip = message.includes('Retrieved plaintext password') ||
+                           message.includes('[WINAPP AccMan Helper]') ||
+                           message.includes('[App] App ready') ||
+                           message.includes('[AutoUpdate]') ||
+                           message.includes('[DevTools] Toggled');
+          
+          if (!shouldSkip) {
+            switch (data.level) {
+              case "debug": console.debug(data.message); break;
+              case "warn": console.warn(data.message); break;
+              case "error": console.error(data.message); break;
+              default: console.log(data.message); break;
+            }
           }
         });
       })();
@@ -781,11 +853,8 @@
         const gameScreenElement = document.getElementById("game-screen");
         if (gameScreenElement && typeof gameScreenElement.setScreenState === 'function') {
           gameScreenElement.setScreenState(state);
-        } else if (gameScreenElement) {
-          console.warn("[GUI Index.html] game-screen element does not have setScreenState method yet.");
-        } else {
-          console.warn("[GUI Index.html] game-screen element not found.");
         }
+        // Removed noisy warnings about setScreenState method
       });
 
       // Handle exit confirmation modal
