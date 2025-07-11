@@ -13,8 +13,8 @@ dev-app-update.yml
 build/*
 dev
 assets/flash/backups/*
-Docs
 UsernameLogger
 .claude
 Multi-Client-Feature.md
 data/*
+CLAUDE.md
