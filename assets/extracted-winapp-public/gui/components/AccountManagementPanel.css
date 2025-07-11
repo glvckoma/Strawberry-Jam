@@ -25,6 +25,12 @@
   padding-right: 5px; /* Add some space for the scrollbar */
 }
 
+/* Dark mode styles for the panel container */
+:host(.dark-mode) #panel-container {
+  background-color: rgba(45, 45, 45, 0.9);
+  box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+}
+
 /* Custom Scrollbar Styles */
 #panel-container::-webkit-scrollbar {
   width: 8px;

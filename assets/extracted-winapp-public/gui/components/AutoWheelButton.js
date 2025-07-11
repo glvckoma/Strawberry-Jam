@@ -27,6 +27,10 @@
             transition: all 0.3s ease;
           }
 
+          :host(.dark-mode) .auto-wheel-container {
+            background-color: rgba(45, 45, 45, 0.95);
+          }
+
           .auto-wheel-container:hover {
             box-shadow: 0 4px 12px var(--theme-shadow, rgba(252, 93, 93, 0.3));
           }
@@ -288,6 +292,15 @@
     updateTheme(themeKey) {
       this._currentThemeKey = themeKey;
       this._applyTheme(themeKey);
+    }
+
+    setDarkMode(isDarkMode) {
+      // Apply dark mode class to host element
+      if (isDarkMode) {
+        this.classList.add('dark-mode');
+      } else {
+        this.classList.remove('dark-mode');
+      }
     }
 
     _applyTheme(themeKey) {

@@ -138,9 +138,11 @@
             --theme-settings-hover: rgba(232, 61, 82, 0.05);
             --theme-settings-border: rgba(232, 61, 82, 0.2);
             --theme-box-background: rgba(255, 245, 230, 0.95); /* Default box background */
+            --theme-box-background-dark: rgba(45, 45, 45, 0.95); /* Dark mode box background */
             --theme-button-bg: var(--theme-primary); /* Default button background */
             --theme-button-border: var(--theme-secondary); /* Default button border */
             --theme-button-text: #FFFFFF; /* Default button text */
+            --dark-mode: 0; /* Dark mode flag: 0 = light, 1 = dark */
             
             width: 100vw;
             height: calc(100vh - 2px);
@@ -172,7 +174,7 @@
             font-size: 18px;
             border: 2px solid var(--theme-primary, #e83d52);
             border-radius: 8px;
-            background-color: rgba(255, 245, 230, 0.95);
+            background-color: var(--theme-box-background);
             cursor: pointer;
             opacity: 0.8;
             transition: all 0.3s ease;
@@ -261,7 +263,7 @@
             bottom: 52px; /* Adjusted for new button position (10px + 32px button + 10px gap) */
             left: 10px;
             width: 250px;
-            background-color: rgba(255, 245, 230, 0.95); /* Keep neutral */
+            background-color: var(--theme-box-background);
             border: 2px solid var(--theme-secondary);
             border-radius: 12px;
             padding: 15px;
@@ -388,6 +390,40 @@
             border: 1px solid var(--theme-secondary);
             opacity: 1;
             transition: opacity 0.2s, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease; /* Added background-color transition */
+          }
+
+          :host(.dark-mode) #box-background {
+            background-color: var(--theme-box-background-dark);
+          }
+
+          :host(.dark-mode) #settings-panel {
+            background-color: var(--theme-box-background-dark);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+          }
+
+          :host(.dark-mode) .icon-button {
+            background-color: var(--theme-box-background-dark);
+            border-color: rgba(255, 255, 255, 0.3);
+          }
+
+          :host(.dark-mode) .icon-button:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+          }
+
+          :host(.dark-mode) .settings-item {
+            color: #E0E0E0;
+          }
+
+          :host(.dark-mode) #settings-panel h3 {
+            color: #E0E0E0;
+          }
+
+          :host(.dark-mode) #settings-panel h4 {
+            color: #E0E0E0;
+          }
+
+          :host(.dark-mode) .settings-item div {
+            color: #B0B0B0 !important;
           }
 
           @media (max-width: 950px), (max-height: 590px) {
@@ -759,6 +795,7 @@
         <div id="settings-panel">
           <h3>Settings</h3>
           <div class="settings-group">
+            <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 0; margin-bottom: 5px; text-align: left;">General</h4>
             <div class="settings-item">
               <input type="checkbox" id="uuid-spoofer-toggle" style="vertical-align: middle;">
               <label for="uuid-spoofer-toggle" style="vertical-align: middle;">Enable UUID Spoofing</label>
@@ -771,6 +808,13 @@
               <label for="background-processing-toggle" style="vertical-align: middle;">Enable background processing</label>
               <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
                 💡 Allows plugins to continue running when the game window is minimized.
+              </div>
+            </div>
+            <div class="settings-item">
+              <input type="checkbox" id="dark-mode-toggle" style="vertical-align: middle;">
+              <label for="dark-mode-toggle" style="vertical-align: middle;">Dark Mode</label>
+              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                🌙 Switches background colors to a darker theme for better nighttime viewing.
               </div>
             </div>
             <div class="settings-item">
@@ -939,6 +983,7 @@
       this.settingsPanel = this.shadowRoot.getElementById("settings-panel");
       this.uuidSpooferToggle = this.shadowRoot.getElementById("uuid-spoofer-toggle");
       this.backgroundProcessingToggle = this.shadowRoot.getElementById("background-processing-toggle");
+      this.darkModeToggle = this.shadowRoot.getElementById("dark-mode-toggle");
       this.showImportAccountsToggle = this.shadowRoot.getElementById("show-import-accounts-toggle");
       this.showWheelAutomationToggle = this.shadowRoot.getElementById("show-wheel-automation-toggle");
       
@@ -1199,6 +1244,18 @@
           }
         });
       }
+
+      if (this.darkModeToggle) {
+        this.darkModeToggle.addEventListener('change', async () => {
+          try {
+            const isDarkMode = this.darkModeToggle.checked;
+            await window.ipc.invoke('set-setting', 'darkMode', isDarkMode);
+            this.toggleDarkMode(isDarkMode);
+          } catch (err) {
+            console.error('Failed to save dark mode setting:', err);
+          }
+        });
+      }
       
       if (this.serverSwapSelect) {
         this.serverSwapSelect.addEventListener('change', (e) => {
@@ -1368,6 +1425,31 @@
       }
     }
 
+    toggleDarkMode(isDarkMode) {
+      // Apply dark mode class to host element
+      if (isDarkMode) {
+        this.classList.add('dark-mode');
+      } else {
+        this.classList.remove('dark-mode');
+      }
+
+      // Update the theme-box-background CSS custom property
+      const root = document.documentElement;
+      if (isDarkMode) {
+        root.style.setProperty('--theme-box-background', 'var(--theme-box-background-dark)');
+      } else {
+        root.style.setProperty('--theme-box-background', 'rgba(255, 245, 230, 0.95)');
+      }
+
+      // Notify other components about dark mode change
+      if (this.accountPanelInstance && typeof this.accountPanelInstance.setDarkMode === 'function') {
+        this.accountPanelInstance.setDarkMode(isDarkMode);
+      }
+      if (this.autoWheelButtonInstance && typeof this.autoWheelButtonInstance.setDarkMode === 'function') {
+        this.autoWheelButtonInstance.setDarkMode(isDarkMode);
+      }
+    }
+
     toggleUIElements() {
       this._uiElementsHidden = !this._uiElementsHidden;
       
@@ -1427,6 +1509,21 @@
           // Default to enabled if setting doesn't exist
           if (this.backgroundProcessingToggle) {
             this.backgroundProcessingToggle.checked = true;
+          }
+        });
+
+      window.ipc.invoke('get-setting', 'darkMode')
+        .then(darkMode => {
+          if (this.darkModeToggle) {
+            this.darkModeToggle.checked = darkMode === true; // Default to false
+            this.toggleDarkMode(darkMode === true);
+          }
+        })
+        .catch(err => {
+          // Default to disabled if setting doesn't exist
+          if (this.darkModeToggle) {
+            this.darkModeToggle.checked = false;
+            this.toggleDarkMode(false);
           }
         });
 

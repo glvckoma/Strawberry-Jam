@@ -51,6 +51,15 @@
       this._applyThemeToSlots();
     }
 
+    setDarkMode(isDarkMode) {
+      // Apply dark mode class to host element
+      if (isDarkMode) {
+        this.classList.add('dark-mode');
+      } else {
+        this.classList.remove('dark-mode');
+      }
+    }
+
     saveAccountWithCredentials(credentials) {
       this._saveAccount(credentials.username, credentials.password);
     }

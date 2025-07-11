@@ -801,6 +801,10 @@
           existingModal.remove();
         }
 
+        // Check if dark mode is enabled by looking at the login screen
+        const loginScreen = document.getElementById('login-screen');
+        const isDarkMode = loginScreen && loginScreen.classList.contains('dark-mode');
+
         // Create modal backdrop
         const modalBackdrop = document.createElement('div');
         modalBackdrop.id = 'exit-confirmation-modal';
@@ -819,20 +823,29 @@
           font-family: 'CCDigitalDelivery', sans-serif;
         `;
 
-        // Create modal content
+        // Create modal content with conditional styling
         const modalContent = document.createElement('div');
+        const backgroundColor = isDarkMode ? 'rgba(45, 45, 45, 0.95)' : 'rgba(255, 245, 230, 0.95)';
+        const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#e83d52';
+        const boxShadow = isDarkMode ? '0 20px 40px rgba(0, 0, 0, 0.4)' : '0 20px 40px rgba(252, 93, 93, 0.1)';
+        
         modalContent.style.cssText = `
-          background: rgba(255, 245, 230, 0.95);
-          border: 3px solid #e83d52;
+          background: ${backgroundColor};
+          border: 3px solid ${borderColor};
           border-radius: 15px;
           padding: 30px;
           max-width: 450px;
           width: 90%;
-          box-shadow: 0 20px 40px rgba(252, 93, 93, 0.1);
+          box-shadow: ${boxShadow};
           text-align: center;
           position: relative;
           animation: modalSlideIn 0.3s ease-out;
         `;
+
+        // Define colors based on dark mode
+        const titleColor = isDarkMode ? '#E0E0E0' : '#e83d52';
+        const textColor = isDarkMode ? '#E0E0E0' : '#333333';
+        const labelColor = isDarkMode ? '#B0B0B0' : '#666666';
 
         modalContent.innerHTML = `
           <style>
@@ -841,17 +854,17 @@
               to { opacity: 1; transform: scale(1) translateY(0); }
             }
           </style>
-          <div style="color: #e83d52; font-size: 24px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <div style="color: ${titleColor}; font-size: 24px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
             <span style="background: #E74C3C; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 18px;">✕</span>
             Exit Game
           </div>
-          <div style="color: #333333; font-size: 16px; line-height: 1.5; margin-bottom: 25px;">
+          <div style="color: ${textColor}; font-size: 16px; line-height: 1.5; margin-bottom: 25px;">
             Are you sure you want to exit the game?<br>
             This will close all plugins as well.
           </div>
           <div style="margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; user-select: none;" id="dontAskContainer">
             <input type="checkbox" id="dontAskCheckbox" style="width: 16px; height: 16px; cursor: pointer; accent-color: #e83d52;">
-            <label for="dontAskCheckbox" style="color: #666666; font-size: 14px; cursor: pointer;">Don't ask me again</label>
+            <label for="dontAskCheckbox" style="color: ${labelColor}; font-size: 14px; cursor: pointer;">Don't ask me again</label>
           </div>
           <div style="display: flex; gap: 15px; justify-content: center;">
             <button id="cancelBtn" style="background: #4A5568; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; min-width: 100px;">Cancel</button>
