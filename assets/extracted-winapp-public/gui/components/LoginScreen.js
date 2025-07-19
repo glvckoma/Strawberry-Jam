@@ -406,7 +406,7 @@
             }
 
             :host {
-              background-color: rgba(255, 240, 245, 1); /* Keep neutral */
+              background-color: rgba(30, 27, 28, 0.14); /* Keep neutral */
               transition: background-image 0.3s ease;
             }
           }
@@ -426,6 +426,7 @@
               radial-gradient(circle at 10% 20%, var(--theme-radial-1) 0%, transparent 50%),
               radial-gradient(circle at 90% 80%, var(--theme-radial-2) 0%, transparent 50%);
             transition: background-image 0.3s ease;
+            border-radius: 20px;
           }
 
           #login-container {

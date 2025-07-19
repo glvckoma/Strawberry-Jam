@@ -17,7 +17,7 @@
             display: inline-block;
           }
 
-          .import-button {
+          .import-button, .delete-button {
             padding: 8px 16px;
             background-color: var(--theme-button-bg, var(--theme-primary, #e83d52));
             color: var(--theme-button-text, white);
@@ -35,10 +35,19 @@
             text-shadow: var(--theme-text-shadow, none);
           }
 
-          .import-button:hover {
+          .delete-button {
+            background-color: #dc3545;
+            border-color: rgba(220, 53, 69, 0.3);
+          }
+
+          .import-button:hover, .delete-button:hover {
             background-color: var(--theme-hover-border, rgba(232, 61, 82, 0.8));
             transform: translateY(-1px);
             box-shadow: 0 4px 12px var(--theme-shadow, rgba(252, 93, 93, 0.3));
+          }
+          
+          .delete-button:hover {
+            background-color: #c82333;
           }
           
           :host(.light-theme) .import-button {
@@ -88,10 +97,14 @@
             color: #dc3545;
           }
         </style>
-        <div>
+        <div style="display: flex; gap: 10px;">
           <div class="import-button" title="Import accounts from .txt file (username:password format)">
             <span class="import-icon">📁</span>
             <span>Import Accounts</span>
+          </div>
+          <div class="delete-button" title="Delete all imported accounts">
+            <span class="import-icon">🗑️</span>
+            <span>Delete Accounts</span>
           </div>
           <div class="status-text"></div>
           <input type="file" class="hidden-file-input" accept=".txt" />
@@ -103,11 +116,16 @@
 
     connectedCallback() {
       this.importButtonElem = this.shadowRoot.querySelector('.import-button');
+      this.deleteButtonElem = this.shadowRoot.querySelector('.delete-button');
       this.fileInputElem = this.shadowRoot.querySelector('.hidden-file-input');
       this.statusTextElem = this.shadowRoot.querySelector('.status-text');
 
       if (this.importButtonElem) {
         this.importButtonElem.addEventListener('click', () => this._handleImportClick());
+      }
+
+      if (this.deleteButtonElem) {
+        this.deleteButtonElem.addEventListener('click', () => this._handleDeleteClick());
       }
 
       if (this.fileInputElem) {
@@ -180,6 +198,54 @@
       if (this._importing) return;
       
       this.fileInputElem.click();
+    }
+
+    async _handleDeleteClick() {
+      if (this._importing) return;
+
+      const confirmation = confirm('Are you sure you want to delete all imported accounts? This action cannot be undone.');
+      if (!confirmation) return;
+
+      this._importing = true;
+      this.deleteButtonElem.classList.add('disabled');
+      this.statusTextElem.textContent = 'Deleting accounts...';
+      this.statusTextElem.className = 'status-text';
+
+      try {
+        const result = await window.ipc.invoke('delete-all-accounts');
+        
+        if (result.success) {
+          this.statusTextElem.textContent = `✓ ${result.deleted} accounts deleted`;
+          this.statusTextElem.className = 'status-text success';
+          
+          this.dispatchEvent(new CustomEvent('accounts-deleted', {
+            bubbles: true,
+            composed: true
+          }));
+        } else {
+          throw new Error(result.error || 'Deletion failed');
+        }
+      } catch (error) {
+        console.error('[ImportButton] Deletion error:', error);
+        this.statusTextElem.textContent = `✗ ${error.message}`;
+        this.statusTextElem.className = 'status-text error';
+        
+        this.dispatchEvent(new CustomEvent('delete-error', {
+          detail: { message: error.message },
+          bubbles: true,
+          composed: true
+        }));
+      } finally {
+        this._importing = false;
+        this.deleteButtonElem.classList.remove('disabled');
+        
+        setTimeout(() => {
+          if (this.statusTextElem) {
+            this.statusTextElem.textContent = '';
+            this.statusTextElem.className = 'status-text';
+          }
+        }, 3000);
+      }
     }
 
     async _handleFileSelected(event) {
@@ -297,4 +363,4 @@
       }
     }
   });
-})(); 
+})();

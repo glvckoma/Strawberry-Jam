@@ -492,13 +492,17 @@ function playNotificationSound(type = 'success') {
         } else if (type === 'error') {
             oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
             oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.2);
+        } else if (type === 'failure') {
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.5);
         }
         
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
         
         oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
+        oscillator.stop(audioContext.currentTime + 0.5);
     } catch (e) {
         console.warn('[TFD Automation] Could not play notification sound:', e);
     }
@@ -1175,7 +1179,7 @@ async function runSingleAutomation() {
         saveStats();
         updateStatsDisplay();
         updateStatus(`Error: ${error.message}`, 'error');
-        playNotificationSound('error');
+        playNotificationSound('failure');
         
         // Auto-retry logic is now handled by sendPacketWithRetry
     }

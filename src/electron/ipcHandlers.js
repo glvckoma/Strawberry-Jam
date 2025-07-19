@@ -1015,6 +1015,18 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
+  ipcMain.handle('delete-all-accounts', async () => {
+    try {
+      const savedAccounts = electronInstance._store.get('savedAccounts', []);
+      const deletedCount = savedAccounts.length;
+      electronInstance._store.set('savedAccounts', []);
+      return { success: true, deleted: deletedCount };
+    } catch (error) {
+      logManager.error(`[IPC] Failed to delete all accounts: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  });
+
   // End AJ Classic processes handler
   ipcMain.handle('end-aj-classic-processes', async () => {
     const { exec } = require('child_process');
