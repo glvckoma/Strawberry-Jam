@@ -19,6 +19,7 @@ const totalRuns = document.getElementById('totalRuns');
 // Settings Elements
 const autoRetryCheckbox = document.getElementById('autoRetryCheckbox');
 const soundNotificationCheckbox = document.getElementById('soundNotificationCheckbox');
+const connectionFailureSoundCheckbox = document.getElementById('connectionFailureSoundCheckbox');
 const dontLogRecycledCheckbox = document.getElementById('dontLogRecycledCheckbox');
 const efficientModeCheckbox = document.getElementById('efficientModeCheckbox');
 const specialModeCheckbox = document.getElementById('specialModeCheckbox');

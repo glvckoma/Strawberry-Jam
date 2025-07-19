@@ -263,24 +263,28 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-2">
                         <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="autoRetryCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Auto-retry on failure</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
                             <input type="checkbox" id="soundNotificationCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
                             <span class="text-sm">Sound alerts for valuable items</span>
                         </label>
                         <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="dontLogRecycledCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Don't log recycled & skipped items</span>
+                            <input type="checkbox" id="connectionFailureSoundCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                            <span class="text-sm">Sound on connection failure</span>
                         </label>
                         <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="efficientModeCheckbox" class="form-checkbox h-4 w-4 text-purple-600 rounded">
-                            <span class="text-sm text-purple-300">🚀Efficient Mode</span>
+                            <input type="checkbox" id="dontLogRecycledCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                            <span class="text-sm">Don't log recycled items</span>
                         </label>
-                        <label class="flex items-center space-x-2 ml-4" id="specialModeContainer" style="display: none;">
-                            <input type="checkbox" id="specialModeCheckbox" class="form-checkbox h-4 w-4 text-yellow-600 rounded">
-                            <span class="text-sm text-yellow-300">⚡Special Mode (8x Faster)</span>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="autoRetryCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                            <span class="text-sm">Auto-retry failed runs</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="efficientModeCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                            <span class="text-sm">Efficient Mode 🚀</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="specialModeCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                            <span class="text-sm">Special Mode (8x speed)</span>
                         </label>
                     </div>
                     <div class="space-y-4">
