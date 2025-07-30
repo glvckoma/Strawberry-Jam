@@ -10,6 +10,7 @@ The Membership plugin modifies your login packets to make your game client belie
 
 - Simulates membership status locally
 - Works automatically upon login
+- Allows setting a specific membership level
 - No configuration needed
 
 ## Important Limitations
@@ -23,7 +24,9 @@ Please be aware of the following limitations:
 
 ## How It Works
 
-This plugin intercepts the login message packet and modifies the `accountType` parameter to "2", which is the code for membership status. This tricks your local game client into displaying membership features without actually changing your account status on the server.
+This plugin intercepts the login message packet and modifies the `accountType` parameter to a specified level (default is "2"). This tricks your local game client into displaying membership features without actually changing your account status on the server.
+
+You can toggle the plugin on or off by typing `!membership` in the chat. You can also set a specific membership level by typing `!membership [level]`, for example, `!membership 3`.
 
 ## Compatibility
 

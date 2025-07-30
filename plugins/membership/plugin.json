@@ -1,7 +1,7 @@
 {
   "name": "Membership",
   "version": "1.0.0",
-  "description": "Toggle fake membership ON/OFF with !membership command (does not show up for others, you cannot buy member items or animals or go on member quests).",
+  "description": "Toggle or set fake membership level with !membership [level] command.",
   "author": "sxip",
   "main": "index.js",
   "type": "game"

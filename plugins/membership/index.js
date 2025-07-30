@@ -1,18 +1,26 @@
 module.exports = function ({ dispatch, application }) {
   let active = true // Default to ON
+  let membershipLevel = 2 // Default membership level
 
   /**
    * Handles the membership command to toggle fake membership.
    */
-  const handleMembershipCommand = async () => {
-    active = !active
-
-    if (active) {
-      dispatch.serverMessage('Fake membership enabled! This will take effect on your next login.')
-      console.log('[Membership] Fake membership ON. Re-login to see changes.')
+  const handleMembershipCommand = async ({ parameters }) => {
+    const level = parameters[0]
+    if (level && !isNaN(parseInt(level, 10))) {
+      membershipLevel = parseInt(level, 10)
+      active = true
+      dispatch.serverMessage(`Fake membership level set to ${membershipLevel}. This will take effect on your next login.`)
+      console.log(`[Membership] Fake membership level set to ${membershipLevel}. Re-login to see changes.`)
     } else {
-      dispatch.serverMessage('Fake membership disabled. This will take effect on your next login.')
-      console.log('[Membership] Fake membership OFF. Re-login to see changes.')
+      active = !active
+      if (active) {
+        dispatch.serverMessage('Fake membership enabled! This will take effect on your next login.')
+        console.log('[Membership] Fake membership ON. Re-login to see changes.')
+      } else {
+        dispatch.serverMessage('Fake membership disabled. This will take effect on your next login.')
+        console.log('[Membership] Fake membership OFF. Re-login to see changes.')
+      }
     }
   }
 
@@ -23,7 +31,7 @@ module.exports = function ({ dispatch, application }) {
     if (!active) return // Only modify login when plugin is active
 
     const { params } = message.value.b.o
-    params.accountType = 2
+    params.accountType = membershipLevel
   }
 
   /**
@@ -40,7 +48,14 @@ module.exports = function ({ dispatch, application }) {
    */
   dispatch.onCommand({
     name: 'membership',
-    description: 'Toggle fake membership ON/OFF (does not show up for others, you cannot buy member items).',
-    callback: handleMembershipCommand
+    description: 'Toggle fake membership or set a specific level (e.g., membership 3).',
+    callback: handleMembershipCommand,
+    parameters: [
+      {
+        name: 'level',
+        description: 'The membership level to set.',
+        required: false
+      }
+    ]
   })
 }
