@@ -669,6 +669,26 @@
             border-color: var(--theme-hover-border, #e83d52);
           }
 
+          #glockoma-credit {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: CCDigitalDelivery;
+            font-size: 12px;
+            color: #6E4B37;
+          }
+
+          #glockoma-credit a {
+            color: var(--theme-primary);
+            text-decoration: none;
+            font-weight: bold;
+          }
+
+          #glockoma-credit a:hover {
+            text-decoration: underline;
+          }
+
           /* Account Management Panel Styling MOVED to AccountManagementPanel.css */
           /* Context Menu Styling MOVED to AccountManagementPanel.css */
 
@@ -760,6 +780,9 @@
             <ajd-bubble-button id="create-account-btn" text="createAnimal"></ajd-bubble-button>
           </div>
         </div>
+        <div id="glockoma-credit">
+          Made with 🤎 by <a href="https://github.com/glvckoma" target="_blank">Glockoma</a>
+        </div>
 
         <!-- Settings Button and Panel -->
         <div class="button-container-bottom-left">
@@ -838,6 +861,8 @@
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + M: Trade Marketplace</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + X: Headless mode</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + N: No Clip</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + W: WASD movement mode</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + D: Den on Login</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Equals / Numpad Add: Zoom In</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Minus / Numpad Subtract: Zoom Out</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Enter: Private message system</div>

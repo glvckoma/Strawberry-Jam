@@ -176,7 +176,7 @@ class FilesController {
         } else if (filename === 'ajclient-old.swf') {
             displayName = 'Old Client';
         } else {
-          displayName = `Custom Client (${filename})`;
+          displayName = filename.replace('.swf', '')
         }
       } catch (error) {
         console.error(`Error getting stats for ${filename}:`, error);
