@@ -33,6 +33,13 @@ Strawberry Jam is a fork of the original [Jam](https://github.com/Sxip/jam) proj
 
 Using tools like Strawberry Jam might break the game's rules and result in account termination. Please be careful and use it responsibly. Neither I nor Sxip are responsible for any loss of accounts.
 
+## 📜 Legal Terms
+
+**Distribution and Sale Restrictions:**
+- Selling or commercially distributing Strawberry Jam without explicit written permission from me is **strictly prohibited**.
+- Any unauthorized commercial use or distribution may result in legal action.
+- For inquiries, please contact me through GitHub issues or Discord.
+
 ## 💡 Have an Idea?
 
 Got a cool idea for Strawberry Jam? We'd love to hear it!

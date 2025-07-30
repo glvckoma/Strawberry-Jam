@@ -179,6 +179,20 @@
             font-size: 11px;
             text-align: center;
           }
+
+          .settings-select {
+            width: 120px;
+            padding: 2px 4px;
+            border: 1px solid var(--theme-secondary, rgba(232, 61, 82, 0.3));
+            border-radius: 4px;
+            font-size: 11px;
+            background-color: var(--theme-box-background, rgba(255, 245, 230, 0.95));
+            color: var(--theme-primary, #6E4B37);
+          }
+
+          :host(.dark-mode) .settings-select {
+            background-color: rgba(45, 45, 45, 0.95);
+          }
           
           :host(.light-theme) .auto-wheel-container {
             background-color: rgba(225, 210, 180, 0.97) !important;
@@ -220,6 +234,12 @@
           :host(.light-theme) .progress-bar {
             background: linear-gradient(90deg, var(--light-theme-progress-bg), var(--light-theme-progress-end)) !important;
           }
+          
+          :host(.light-theme) .settings-select {
+            background-color: rgba(225, 210, 180, 0.97) !important;
+            border-color: rgba(0, 0, 0, 0.3) !important;
+            color: #333333 !important;
+          }
         </style>
         <div class="auto-wheel-container">
           <div class="auto-wheel-header">
@@ -238,6 +258,13 @@
           <div class="settings-row">
             <label>Batch Size:</label>
             <input type="number" class="settings-input" id="batch-size" value="10" min="1" max="50" title="Accounts per batch before 5min break">
+          </div>
+          
+          <div class="settings-row">
+            <label>Start From:</label>
+            <select class="settings-select" id="start-account" title="Select which account to start auto wheel from">
+              <option value="0">First Account</option>
+            </select>
           </div>
           
           <div class="progress-section">
@@ -269,6 +296,7 @@
       this.timerTextElem = this.shadowRoot.querySelector('.timer-text');
       this.spinDelayElem = this.shadowRoot.querySelector('#spin-delay');
       this.batchSizeElem = this.shadowRoot.querySelector('#batch-size');
+      this.startAccountElem = this.shadowRoot.querySelector('#start-account');
 
       if (this.controlButtonElem) {
         this.controlButtonElem.addEventListener('click', () => this._handleControlClick());
@@ -364,6 +392,7 @@
       });
       
       this._totalAccounts = this._accounts.length;
+      this._updateStartAccountDropdown();
       this._updateProgressDisplay();
       
       // Accounts loaded and sorted - removed verbose logging
@@ -371,6 +400,41 @@
 
     _onAccountsUpdated(accounts) {
       this.setAccounts(accounts);
+    }
+
+    _updateStartAccountDropdown() {
+      if (!this.startAccountElem) return;
+      
+      // Store current selection to restore if possible
+      const currentValue = this.startAccountElem.value;
+      
+      // Clear existing options
+      this.startAccountElem.innerHTML = '';
+      
+      // Add "First Account" option
+      const firstOption = document.createElement('option');
+      firstOption.value = '0';
+      firstOption.textContent = 'First Account';
+      this.startAccountElem.appendChild(firstOption);
+      
+      // Add option for each account
+      this._accounts.forEach((account, index) => {
+        const option = document.createElement('option');
+        option.value = index.toString();
+        const displayName = account.username.length > 12 ? 
+          account.username.substring(0, 12) + '...' : 
+          account.username;
+        option.textContent = `${index + 1}. ${displayName}${account.pinned ? ' 📌' : ''}`;
+        option.title = account.username; // Full username on hover
+        this.startAccountElem.appendChild(option);
+      });
+      
+      // Restore previous selection if it's still valid
+      if (currentValue && parseInt(currentValue) < this._accounts.length) {
+        this.startAccountElem.value = currentValue;
+      } else {
+        this.startAccountElem.value = '0';
+      }
     }
 
     _handleControlClick() {
@@ -388,7 +452,7 @@
       }
 
       this._isRunning = true;
-      this._currentAccount = 0;
+      this._currentAccount = parseInt(this.startAccountElem.value) || 0;
       this._currentBatch = 0;
       this._accountsInCurrentBatch = 0;
       
@@ -397,6 +461,7 @@
       this.wheelIconElem.classList.add('spinning');
       this.spinDelayElem.disabled = true;
       this.batchSizeElem.disabled = true;
+      this.startAccountElem.disabled = true;
       
       this._showStatus('Starting auto wheel...', '');
       
@@ -422,6 +487,7 @@
       this.wheelIconElem.classList.remove('spinning');
       this.spinDelayElem.disabled = false;
       this.batchSizeElem.disabled = false;
+      this.startAccountElem.disabled = false;
       
       this._updateProgressDisplay();
       this._showStatus('Auto wheel stopped', '');
@@ -582,7 +648,9 @@
       if (this._isRunning) {
         const currentAccount = this._accounts[this._currentAccount];
         const currentAccountText = currentAccount ? `${currentAccount.username}${currentAccount.pinned ? ' 📌' : ''}` : 'Unknown';
-        this.progressTextElem.textContent = `${currentAccountText} - ${this._currentAccount + 1}/${this._totalAccounts}${pinnedText}`;
+        const startIndex = parseInt(this.startAccountElem?.value || '0');
+        const remaining = this._totalAccounts - this._currentAccount;
+        this.progressTextElem.textContent = `${currentAccountText} - ${this._currentAccount + 1}/${this._totalAccounts} (${remaining} remaining)${pinnedText}`;
       } else {
         this.progressTextElem.textContent = `${this._totalAccounts} accounts loaded${pinnedText}`;
       }
