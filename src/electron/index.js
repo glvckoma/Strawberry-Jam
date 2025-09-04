@@ -485,10 +485,10 @@ class Electron {
       const consoleLimit = this._store.get('logs.consoleLimit', 1000);
       const networkLimit = this._store.get('logs.networkLimit', 1000);
   
-      logManager.initialize({
-        appDataPath: app.getPath('userData'),
-        maxMemoryLogs: consoleLimit
-      });
+    logManager.initialize({
+      appDataPath: app.getPath('userData'),
+      maxMemoryLogs: networkLimit
+    });
   
       const originalConsole = {
         log: console.log,

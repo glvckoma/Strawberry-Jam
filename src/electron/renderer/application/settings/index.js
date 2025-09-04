@@ -27,7 +27,11 @@ const DEFAULT_SETTINGS = {
   'leakCheck.autoLeakCheckThreshold': 100,
   'usernameLogger.collectNearbyPlayers': true,
   'usernameLogger.collectBuddies': true,
-  'plugins.usernameLogger.collection.enabled': true // Added default for this key
+  'plugins.usernameLogger.collection.enabled': true, // Added default for this key
+
+  // Log limiting settings
+  'logs.consoleLimit': 1000,
+  'logs.networkLimit': 1000
 }
 
 // Development mode check (safer than process.env which may be undefined in packaged app)
@@ -73,7 +77,11 @@ module.exports = class Settings {
         { key: 'leakCheck.autoLeakCheckThreshold', defaultValue: DEFAULT_SETTINGS['leakCheck.autoLeakCheckThreshold'] },
         { key: 'usernameLogger.collectNearbyPlayers', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectNearbyPlayers'] },
         { key: 'usernameLogger.collectBuddies', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectBuddies'] },
-        { key: 'plugins.usernameLogger.collection.enabled', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.collection.enabled'] } // Added to load list
+        { key: 'plugins.usernameLogger.collection.enabled', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.collection.enabled'] }, // Added to load list
+        
+        // Log limiting settings
+        { key: 'logs.consoleLimit', defaultValue: DEFAULT_SETTINGS['logs.consoleLimit'] },
+        { key: 'logs.networkLimit', defaultValue: DEFAULT_SETTINGS['logs.networkLimit'] }
       ]
 
       for (const {key, defaultValue} of settingsToLoad) {
