@@ -862,6 +862,7 @@
       const $searchContainer = $('#searchContainer')
 
       let currentFilter = 'all'
+      let currentSearchQuery = ''
 
       // Ensure initial container states
       $commandContainer.removeClass('hidden')
@@ -889,16 +890,19 @@
       });
 
       function applyFilter() {
+        const query = currentSearchQuery
         const $packets = $messageLog.children('div')
         $packets.each(function () {
           const $this = $(this)
           const isIncoming = $this.find('.fa-arrow-down').length > 0
           const isOutgoing = $this.find('.fa-arrow-up').length > 0
-          $this.toggle(
+          const directionMatch = (
             currentFilter === 'all' ||
             (currentFilter === 'incoming' && isIncoming) ||
             (currentFilter === 'outgoing' && isOutgoing)
           )
+          const textMatch = query === '' || $this.text().toLowerCase().includes(query)
+          $this.toggle(directionMatch && textMatch)
         })
       }
 
@@ -940,10 +944,8 @@
       })
 
       $packetSearch.on('input', function () {
-        const query = $(this).val().toLowerCase()
-        $messageLog.children('div').each(function () {
-          $(this).toggle($(this).text().toLowerCase().includes(query))
-        })
+        currentSearchQuery = ($(this).val() || '').toLowerCase()
+        applyFilter()
       })
 
       $('#filterAllButton, #filterIncomingButton, #filterOutgoingButton').on('click', function () {

@@ -1,0 +1,14 @@
+{
+  "name": "No Eyes",
+  "version": "1.0.0",
+  "description": "Remove eyes from your avatar with a simple command",
+  "author": "Glockoma",
+  "main": "index.js",
+  "type": "game",
+  "commands": [
+    {
+      "name": "noeyes",
+      "description": "Removes eyes from your avatar. Re-join the room to see changes."
+    }
+  ]
+}

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Packet Editor</title>
+  <!-- Base Styles -->
+  <link href="../../assets/css/style.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- jQuery (required for most plugins) -->
+  <script>window.jQuery = window.$ = require('jquery');</script>
+  <script src="../../assets/javascript/jquery-ui.js"></script>
+  <!-- Custom Toggle Switch Styles -->
+  <style>
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #6b7280;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: #10b981;
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    .toggle-switch:hover .toggle-slider {
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+  <!-- Standardized Draggable Header -->
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Packet Editor</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize">
+        <i class="fas fa-minus"></i>
+      </button>
+      <button class="jam-plugin-close" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="jam-plugin-content">
+    <div class="p-4 h-full overflow-y-auto">
+      <!-- Header Section -->
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold mb-2">Login Packet Editor</h3>
+        <p class="text-sm text-gray-400 mb-4">
+          Modify all variables in server-sent login packets. Changes will take effect on your next login.
+        </p>
+        
+        <!-- Toggle Section -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border mb-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-base font-medium">Packet Modification</h4>
+              <p class="text-sm text-gray-400">Enable/disable packet editing</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="packetEditorToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Packet Variables Section -->
+      <div class="space-y-4">
+        <!-- Basic User Info -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border">
+          <h4 class="text-base font-medium mb-3 flex items-center">
+            <i class="fas fa-user mr-2 text-blue-400"></i>
+            Basic User Information
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Username</label>
+              <input type="text" id="userName" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Username">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">User ID</label>
+              <input type="number" id="userId" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="User ID">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Database User ID</label>
+              <input type="number" id="dbUserId" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Database User ID">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Email</label>
+              <input type="email" id="email" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Email">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Avatar Name</label>
+              <input type="text" id="avName" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Avatar Name">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">UUID</label>
+              <input type="text" id="uuid" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="UUID">
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border">
+          <h4 class="text-base font-medium mb-3 flex items-center">
+            <i class="fas fa-cog mr-2 text-green-400"></i>
+            Account Settings
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Account Type</label>
+              <select id="accountType" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">Free</option>
+                <option value="1">Member</option>
+                <option value="2">Premium</option>
+                <option value="3">Diamond</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Is Moderator</label>
+              <select id="isModerator" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Is Guide</label>
+              <select id="isGuide" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Session ID</label>
+              <input type="number" id="sessionId" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Session ID">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Number of Logins</label>
+              <input type="number" id="numLogins" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Number of Logins">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Jamaa Date</label>
+              <input type="number" id="jamaaDate" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Jamaa Date">
+            </div>
+          </div>
+        </div>
+
+        <!-- Currency & Items -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border">
+          <h4 class="text-base font-medium mb-3 flex items-center">
+            <i class="fas fa-coins mr-2 text-yellow-400"></i>
+            Currency & Items
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Gems Count</label>
+              <input type="number" id="gemsCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Gems Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Diamonds Count</label>
+              <input type="number" id="diamondsCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Diamonds Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Gold Count</label>
+              <input type="number" id="goldCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Gold Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Silver Count</label>
+              <input type="number" id="silverCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Silver Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Straw Count</label>
+              <input type="number" id="strawCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Straw Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Stone Count</label>
+              <input type="number" id="stoneCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Stone Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Bamboo Count</label>
+              <input type="number" id="bambooCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Bamboo Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Orbs Count</label>
+              <input type="number" id="orbsCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Orbs Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Tickets Count</label>
+              <input type="number" id="ticketsCount" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Tickets Count">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Eco Credits</label>
+              <input type="number" id="ecoCredits" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Eco Credits">
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Settings -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border">
+          <h4 class="text-base font-medium mb-3 flex items-center">
+            <i class="fas fa-sliders-h mr-2 text-purple-400"></i>
+            Advanced Settings
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Active Pet Inv ID</label>
+              <input type="number" id="activePetInvId" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Active Pet Inv ID">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Active Den Room Inv ID</label>
+              <input type="number" id="activeDenRoomInvId" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Active Den Room Inv ID">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Per User Av ID</label>
+              <input type="number" id="perUserAvId" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Per User Av ID">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Interactions</label>
+              <input type="number" id="interactions" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Interactions">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Pending Flags</label>
+              <input type="number" id="pendingFlags" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Pending Flags">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Daily Gift Index</label>
+              <input type="number" id="dailyGiftIndex" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Daily Gift Index">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Recycle Percentage</label>
+              <input type="number" id="recyclePercentage" step="0.01" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Recycle Percentage">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Created At (Timestamp)</label>
+              <input type="number" id="createdAt" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Created At">
+            </div>
+          </div>
+        </div>
+
+        <!-- Privacy & Chat Settings -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border">
+          <h4 class="text-base font-medium mb-3 flex items-center">
+            <i class="fas fa-shield-alt mr-2 text-red-400"></i>
+            Privacy & Chat Settings
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Den Privacy Settings</label>
+              <select id="denPrivacySettings" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">Public</option>
+                <option value="1">Friends Only</option>
+                <option value="2">Private</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">E-Card Privacy Settings</label>
+              <select id="eCardPrivacySettings" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">Public</option>
+                <option value="1">Friends Only</option>
+                <option value="2">Private</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">SG Chat Type</label>
+              <select id="sgChatType" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">Disabled</option>
+                <option value="1">Friends Only</option>
+                <option value="2">Everyone</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Web Wall Status</label>
+              <select id="webWallStatus" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">Disabled</option>
+                <option value="1">Enabled</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Player Wall Settings</label>
+              <select id="playerWallSettings" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">Disabled</option>
+                <option value="1">Enabled</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Has Online Buddies</label>
+              <select id="hasOnlineBuddies" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subscription Settings -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border">
+          <h4 class="text-base font-medium mb-3 flex items-center">
+            <i class="fas fa-crown mr-2 text-yellow-500"></i>
+            Subscription Settings
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Subscription Source Type</label>
+              <select id="subscriptionSourceType" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">None</option>
+                <option value="1">Monthly</option>
+                <option value="2">Yearly</option>
+                <option value="3">Lifetime</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Days Left on Subscription</label>
+              <input type="number" id="numDaysLeftOnSubscription" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Days Left">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">AJHQ Gift Cards</label>
+              <input type="number" id="numAJHQGiftCards" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Gift Cards">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">AJHQ Bulk Gift Cards</label>
+              <input type="number" id="numAJHQBulkGiftCards" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Bulk Gift Cards">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Redemption Cards</label>
+              <input type="number" id="numRedemptionCards" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Redemption Cards">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Unread E-Cards</label>
+              <input type="number" id="numUnreadECards" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Unread E-Cards">
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Settings -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border">
+          <h4 class="text-base font-medium mb-3 flex items-center">
+            <i class="fas fa-comment mr-2 text-cyan-400"></i>
+            Message Settings
+          </h4>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Last Broadcast Message</label>
+              <textarea id="lastBroadcastMessage" rows="3" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Last broadcast message"></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">User Name Moderated</label>
+              <select id="userNameModerated" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">Not Moderated</option>
+                <option value="1">Moderated</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Variables -->
+        <div class="bg-secondary-bg/30 p-4 rounded-md border border-sidebar-border">
+          <h4 class="text-base font-medium mb-3 flex items-center">
+            <i class="fas fa-plus-circle mr-2 text-orange-400"></i>
+            Custom Variables
+          </h4>
+          <p class="text-sm text-gray-400 mb-4">
+            Add custom variables that aren't in the form above. These will be added to the login packet.
+          </p>
+          
+          <!-- Custom Variables List -->
+          <div id="customVariablesList" class="space-y-3 mb-4">
+            <!-- Custom variables will be added here dynamically -->
+          </div>
+          
+          <!-- Add New Variable Form -->
+          <div class="bg-tertiary-bg/50 p-3 rounded-md border border-sidebar-border">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-sm font-medium mb-1">Variable Name</label>
+                <input type="text" id="customVarName" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., pendingEmail">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Variable Value</label>
+                <input type="text" id="customVarValue" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., test@example.com">
+              </div>
+              <div class="flex items-end">
+                <button id="addCustomVar" class="w-full px-4 py-2 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition-colors">
+                  <i class="fas fa-plus mr-2"></i>Add Variable
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-6 flex space-x-3">
+        <button id="saveSettings" class="px-4 py-2 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition-colors flex-1">
+          <i class="fas fa-save mr-2"></i>Save Settings
+        </button>
+        <button id="resetSettings" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-md transition-colors flex-1">
+          <i class="fas fa-undo mr-2"></i>Reset to Default
+        </button>
+        <button id="loadFromPacket" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-md transition-colors flex-1">
+          <i class="fas fa-download mr-2"></i>Load from Last Packet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Plugin Utilities -->
+  <script src="../../assets/javascript/plugin-utils.js"></script>
+  <!-- Plugin Specific Script -->
+  <script src="index.js"></script>
+  <!-- Initialize Standardized UI -->
+  <script>
+    // Initialize the standardized UI components when the document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize standard plugin UI behavior (minimize/close)
+      initializePluginUI();
+    });
+  </script>
+</body>
+</html>

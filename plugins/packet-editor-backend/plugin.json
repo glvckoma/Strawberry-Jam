@@ -1,0 +1,10 @@
+{
+  "name": "Packet Editor Backend",
+  "version": "1.0.0",
+  "description": "Backend companion for Packet Editor UI plugin.",
+  "author": "Glockoma",
+  "main": "index.js",
+  "type": "game"
+}
+
+

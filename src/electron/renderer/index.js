@@ -318,12 +318,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         let logsToCopy = [];
-        const logEntries = messageLog.querySelectorAll('div');
+        // Only consider top-level packet entries (direct children)
+        const allEntries = messageLog.querySelectorAll(':scope > div');
+
+        // Only include entries that are currently visible (not filtered out)
+        const logEntries = Array.from(allEntries).filter(entry => {
+          const style = window.getComputedStyle(entry);
+          const isHidden = style.display === 'none' || style.visibility === 'hidden' || entry.classList.contains('hidden');
+          return !isHidden;
+        });
 
         logEntries.forEach(entry => {
           const isIncoming = entry.querySelector('.fa-arrow-down');
           const isOutgoing = entry.querySelector('.fa-arrow-up');
-          const logText = entry.textContent.trim();
+          // Packet text is inside the second child div (message container)
+          const messageContainer = entry.querySelector(':scope > div:nth-child(2)');
+          const logText = (messageContainer ? messageContainer.textContent : entry.textContent).trim();
 
           if (logText) {
             if (isIncoming) {
