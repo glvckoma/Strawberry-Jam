@@ -2,7 +2,7 @@
   "3.5.2": {
     "version": "3.5.2",
     "releaseDate": "2025-01-27",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -96,6 +96,58 @@
           "keys": ["Ctrl", "Shift", "U"]
         }
       ],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "3.5.3": {
+    "version": "3.5.3",
+    "releaseDate": "2025-09-13",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "🧭",
+          "title": "Rare Item/Pet Sorting",
+          "description": "Added sorting options for rare items and pets.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "📦",
+          "title": "Network Search Behavior",
+          "description": "Search in Network tab no longer re-displays all packets when new ones arrive.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "📋",
+          "title": "Filtered Copy in Network Tab",
+          "description": "Copy button now copies only the currently displayed (filtered) packets.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "👥",
+          "title": "Buddylist Sync on Login",
+          "description": "Forced full buddylist packet on login for consistency.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🧹",
+          "title": "Log Management Enforcement",
+          "description": "Addressed bug where Log Management user setting wasn’t being enforced.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🗑️",
+          "title": "Delete Accounts Button",
+          "description": "Fixed delete all accounts button and preserved pinned accounts.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
       "commands": [],
       "messages": []
     }

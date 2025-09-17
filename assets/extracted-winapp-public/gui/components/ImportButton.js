@@ -102,9 +102,9 @@
             <span class="import-icon">📁</span>
             <span>Import Accounts</span>
           </div>
-          <div class="delete-button" title="Delete all imported accounts">
+          <div class="delete-button" title="Delete all non-pinned accounts">
             <span class="import-icon">🗑️</span>
-            <span>Delete Accounts</span>
+            <span>Delete Non-Pinned</span>
           </div>
           <div class="status-text"></div>
           <input type="file" class="hidden-file-input" accept=".txt" />
@@ -203,7 +203,7 @@
     async _handleDeleteClick() {
       if (this._importing) return;
 
-      const confirmation = confirm('Are you sure you want to delete all imported accounts? This action cannot be undone.');
+      const confirmation = confirm('Delete all NON-pinned accounts? Pinned accounts will be kept.');
       if (!confirmation) return;
 
       this._importing = true;

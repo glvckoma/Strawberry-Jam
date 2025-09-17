@@ -892,6 +892,38 @@ ipcMain.handle('delete-account', async (event, username) => {
   }
 });
 
+// Delete only non-pinned saved accounts and associated plaintext passwords
+ipcMain.handle('delete-all-accounts', async () => {
+  log('debug', '[AccMan] Handling delete-all-accounts request (non-pinned only)');
+  try {
+    const savedAccountsMetadata = store.get(STORE_KEY_SAVED_ACCOUNTS, []);
+    if (!Array.isArray(savedAccountsMetadata)) {
+      store.set(STORE_KEY_SAVED_ACCOUNTS, []);
+      return { success: true, deleted: 0 };
+    }
+
+    const nonPinned = savedAccountsMetadata.filter(acc => !acc?.pinned);
+    const pinned = savedAccountsMetadata.filter(acc => acc?.pinned);
+    const deletedCount = nonPinned.length;
+
+    // Remove plaintext passwords for non-pinned usernames
+    for (const account of nonPinned) {
+      if (account && account.username) {
+        store.delete(`savedAccountPasswords.${account.username}`);
+      }
+    }
+
+    // Persist only pinned accounts
+    store.set(STORE_KEY_SAVED_ACCOUNTS, pinned);
+    log('info', `[AccMan] Deleted non-pinned accounts (count: ${deletedCount}). Kept pinned: ${pinned.length}`);
+
+    return { success: true, deleted: deletedCount, kept: pinned.length };
+  } catch (error) {
+    log('error', `[AccMan] Error deleting non-pinned accounts: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('toggle-pin-account', async (event, username) => {
   log('debug', `[AccMan] Handling toggle-pin-account request for ${username}`);
   if (!username) {

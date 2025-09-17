@@ -39,6 +39,7 @@ const sendWhitelist = new Set()
   .add('toggle-pin-account')
   .add('open-user-cache-file')
   .add('import-accounts')
+  .add('delete-all-accounts')
   .add('request-main-log-path') // CHANGED: For send/on pattern
   .add('exit-confirmation-response'); // ADDED: For exit confirmation modal
 

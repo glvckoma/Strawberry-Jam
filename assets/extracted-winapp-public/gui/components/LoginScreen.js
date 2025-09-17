@@ -2169,6 +2169,38 @@
             this.passwordInputElem.error = `Import failed: ${event.detail.message}`;
           }
         });
+
+        // Handle mass delete success: refresh lists and auto wheel
+        this.importButtonInstance.addEventListener('accounts-deleted', async () => {
+          try {
+            if (this.accountPanelInstance) {
+              await this.accountPanelInstance.loadAndDisplaySavedAccounts();
+            }
+            if (this.autoWheelButtonInstance) {
+              const savedAccounts = await window.ipc.invoke('get-saved-accounts');
+              if (savedAccounts) {
+                this.autoWheelButtonInstance.setAccounts(savedAccounts);
+              }
+            }
+            // Broadcast accounts-updated for any listeners
+            document.dispatchEvent(new CustomEvent('accounts-updated', {
+              detail: { accounts: [] },
+              bubbles: true,
+              composed: true
+            }));
+          } catch (error) {
+            console.error('[LoginScreen] Error refreshing after accounts-deleted:', error);
+          }
+        });
+
+        // Handle mass delete error: surface message
+        this.importButtonInstance.addEventListener('delete-error', (event) => {
+          const message = event?.detail?.message || 'Failed to delete accounts';
+          console.error('[LoginScreen] Delete-all error:', message);
+          if (this.passwordInputElem) {
+            this.passwordInputElem.error = `Delete failed: ${message}`;
+          }
+        });
       }
 
       // Setup auto wheel event listeners

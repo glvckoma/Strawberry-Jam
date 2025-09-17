@@ -1041,11 +1041,18 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.handle('delete-all-accounts', async () => {
     try {
       const savedAccounts = electronInstance._store.get('savedAccounts', []);
-      const deletedCount = savedAccounts.length;
-      electronInstance._store.set('savedAccounts', []);
-      return { success: true, deleted: deletedCount };
+      if (!Array.isArray(savedAccounts)) {
+        electronInstance._store.set('savedAccounts', []);
+        return { success: true, deleted: 0 };
+      }
+      const nonPinned = savedAccounts.filter(acc => !acc?.pinned);
+      const pinned = savedAccounts.filter(acc => acc?.pinned);
+      const deletedCount = nonPinned.length;
+      // Keep only pinned accounts
+      electronInstance._store.set('savedAccounts', pinned);
+      return { success: true, deleted: deletedCount, kept: pinned.length };
     } catch (error) {
-      logManager.error(`[IPC] Failed to delete all accounts: ${error.message}`);
+      logManager.error(`[IPC] Failed to delete non-pinned accounts: ${error.message}`);
       return { success: false, error: error.message };
     }
   });
