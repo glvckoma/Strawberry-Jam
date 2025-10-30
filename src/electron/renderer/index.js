@@ -180,7 +180,7 @@ const checkServerStatus = async () => {
     // Get server host from settings if available
     const serverHost = application.settings ? 
       application.settings.get('smartfoxServer') : 
-      'lb-iss04-classic-prod.animaljam.com';
+      'lb-iss02-classic-prod.animaljam.com';
     
     // Check server status
     const result = await ServerStatusChecker.checkServerStatus(serverHost);

@@ -43,7 +43,7 @@ const schema = {
     properties: {
       smartfoxServer: {
         type: 'string',
-        default: 'lb-iss04-classic-prod.animaljam.com'
+        default: 'lb-iss02-classic-prod.animaljam.com'
       },
       secureConnection: {
         type: 'boolean',

@@ -1,5 +1,5 @@
 const { ConnectionMessageTypes } = require('../../Constants')
-const { TLSSocket } = require('tls')
+const tls = require('tls')
 const DelimiterTransform = require('../transform')
 const { Socket } = require('net')
 
@@ -50,7 +50,7 @@ module.exports = class Client {
      * @private
      */
     const secureConnection = this._server.application.settings.get('secureConnection')
-    this._aj = secureConnection ? new TLSSocket() : new Socket()
+    this._aj = null // Will be created during connection attempt
 
     /**
      * Connected indicator
@@ -125,16 +125,7 @@ module.exports = class Client {
    * @public
    */
   async connect () { // Adapted from jam-master
-    if (this._aj.destroyed) {
-      const secureConnection = this._server &&
-        this._server.application &&
-        this._server.application.settings &&
-        typeof this._server.application.settings.get === 'function'
-        ? this._server.application.settings.get('secureConnection')
-        : false // Default to false if settings path is broken
-
-      this._aj = secureConnection ? new TLSSocket() : new Socket()
-    }
+    // Socket will be (re)created in _attemptConnection
 
     try {
       await this._attemptConnection() // From jam-master
@@ -203,10 +194,7 @@ module.exports = class Client {
         reject(new Error(`Connection timed out after ${timeoutDuration / 1000} seconds`))
       }, timeoutDuration)
 
-      this._aj.once('error', onError)
-      this._aj.once('connect', onConnected)
-
-      const smartfoxServer = (this._server && this._server.application && this._server.application.settings && this._server.application.settings.get('smartfoxServer')) || 'lb-iss04-classic-prod.animaljam.com';
+      const smartfoxServer = (this._server && this._server.application && this._server.application.settings && this._server.application.settings.get('smartfoxServer')) || 'lb-iss02-classic-prod.animaljam.com';
       
       if (!smartfoxServer || typeof smartfoxServer !== 'string' || !smartfoxServer.includes('animaljam')) {
         cleanupListeners();
@@ -217,12 +205,29 @@ module.exports = class Client {
       
       // Use the server's actual port instead of hardcoded 443
       const serverPort = this._server && this._server.actualPort ? this._server.actualPort : 443
-      
-      this._aj.connect({
-        host: smartfoxServer,
-        port: serverPort,
-        rejectUnauthorized: false // Common for self-signed or dev certs
-      })
+
+      const secureConnection = this._server && this._server.application && this._server.application.settings
+        ? this._server.application.settings.get('secureConnection') !== false
+        : true
+
+      if (secureConnection) {
+        // Proper TLS connect with SNI for load balancer routing
+        this._aj = tls.connect({
+          host: smartfoxServer,
+          port: serverPort,
+          servername: smartfoxServer,
+          rejectUnauthorized: false
+        }, onConnected)
+        this._aj.once('error', onError)
+      } else {
+        this._aj = new Socket()
+        this._aj.once('error', onError)
+        this._aj.once('connect', onConnected)
+        this._aj.connect({
+          host: smartfoxServer,
+          port: serverPort
+        })
+      }
     })
   }
 
@@ -590,6 +595,15 @@ module.exports = class Client {
         this._server.application.dispatch.all({ client: this, type, message })
     }
 
+
+    // Handle Flash security policy request coming from the local client
+    if (type === ConnectionMessageTypes.connection && typeof packet === 'string' && packet.trim().startsWith('<policy-file-request')) {
+      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : 443
+      const crossDomainMessage = `<?xml version="1.0"?>\n        <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">\n        <cross-domain-policy>\n        <allow-access-from domain="*" to-ports="80,${serverPort}"/>\n        </cross-domain-policy>`
+
+      await this.sendConnectionMessage(crossDomainMessage)
+      return
+    }
 
     if (type === ConnectionMessageTypes.aj && packet.includes('cross-domain-policy')) {
       // Use the server's actual port in cross-domain policy, with 443 as fallback

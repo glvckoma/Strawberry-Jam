@@ -271,7 +271,7 @@ module.exports = class Application extends EventEmitter {
    * @private
    */
   async _checkForHostChanges () {
-    const DEFAULT_SERVER = 'lb-iss04-classic-prod.animaljam.com';
+    const DEFAULT_SERVER = 'lb-iss02-classic-prod.animaljam.com';
     
     try {
       // Get flashvars data from AJ

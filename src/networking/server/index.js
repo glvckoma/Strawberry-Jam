@@ -59,7 +59,7 @@ module.exports = class Server {
     try {
       // Define default networking settings
       const defaultSettings = {
-        smartfoxServer: 'lb-iss04-classic-prod.animaljam.com',
+        smartfoxServer: 'lb-iss02-classic-prod.animaljam.com',
         secureConnection: true,
         autoReconnect: true
       };

@@ -9,10 +9,10 @@ class ServerStatusChecker {
   /**
    * Check if Animal Jam servers are online by attempting authentication
    * This mimics the actual game login process to get accurate status
-   * @param {string} serverHost - The server host to check (defaults to lb-iss04-classic-prod.animaljam.com)
+   * @param {string} serverHost - The server host to check (defaults to lb-iss02-classic-prod.animaljam.com)
    * @returns {Promise<{isOnline: boolean, responseTime: number, timestamp: number, server: string, accessStatus: string, statusCode: number|null, details: string}>} Status result
    */
-  static async checkServerStatus(serverHost = 'lb-iss04-classic-prod.animaljam.com') {
+  static async checkServerStatus(serverHost = 'lb-iss02-classic-prod.animaljam.com') {
     const result = {
       isOnline: false,
       responseTime: 0,
