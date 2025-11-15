@@ -53,7 +53,7 @@
             <i class="fas fa-cog text-highlight-yellow mr-2"></i>
             Settings
           </h3>
-          <button type="button" class="modal-close-button-std text-gray-400 transition-colors duration-200 transform rounded-full p-1 ml-auto flex-shrink-0 flex items-center justify-center" id="closeSettingsBtn">
+          <button type="button" class="text-gray-400 hover:bg-error-red hover:text-white transition-colors p-1 rounded-md ml-auto flex-shrink-0" id="closeSettingsBtn" aria-label="Close">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -339,6 +339,12 @@
                 </button>
                 <p class="mt-1 text-xs text-gray-400">Opens the directory where results and logs are saved.</p>
               </div>
+              <!-- Max Passwords per Account -->
+              <div>
+                <label for="leakCheckMaxPasswords" class="block mb-2 text-sm font-medium text-text-primary">Maximum Passwords per Account (General/Found Accounts Only)</label>
+                <input id="leakCheckMaxPasswords" type="number" min="0" step="1" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="0">
+                <p class="mt-1 text-xs text-gray-400">If a username has more than this many general/found account passwords, they will not be saved to found_accounts.txt. AJC accounts are always saved regardless of password count. Set to 0 for unlimited.</p>
+              </div>
             </div>
           </div>
           <!-- End LeakCheck Tab Content -->
@@ -493,9 +499,6 @@
 
         <!-- Modal Footer -->
         <div class="flex items-center justify-end p-4 border-t border-sidebar-border flex-shrink-0">
-          <button type="button" class="bg-tertiary-bg text-text-primary px-5 py-2.5 mr-3 rounded-lg hover:bg-sidebar-hover transition-all duration-200 border border-sidebar-border" id="cancelSettingsBtn">
-            <i class="fas fa-times mr-1.5"></i> Cancel
-          </button>
           <button type="button" class="bg-tertiary-bg text-white rounded-lg px-5 py-2.5 shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-100 focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-bg font-medium" id="saveSettingsBtn">
             <i class="fas fa-save mr-1.5"></i> Save Changes
           </button>

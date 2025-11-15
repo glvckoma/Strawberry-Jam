@@ -13,6 +13,9 @@ function devLog(...args) {
 const fs = require('fs').promises
 const Ajv = new (require('ajv'))({ useDefaults: true })
 const { ConnectionMessageTypes, PluginTypes, getDataPath } = require('../../../../Constants') // Import getDataPath
+const StateManager = require('../../../../managers/state/StateManager')
+const PluginManager = require('../../../../managers/plugin/PluginManager')
+const MessageDispatcher = require('../../../../managers/message/MessageDispatcher')
 
 /**
  * The path to the plugins folder.
@@ -123,6 +126,38 @@ module.exports = class Dispatch {
       any: new Map()
     }
 
+    /**
+     * Message dispatcher instance.
+     * @type {MessageDispatcher}
+     * @public
+     */
+    this.messageDispatcher = new MessageDispatcher(this.hooks, this._consoleMessage, this)
+
+    /**
+     * State manager instance.
+     * @type {StateManager}
+     * @public
+     */
+    this.stateManager = new StateManager(this.state, (hook) => this.onMessage(hook))
+
+    /**
+     * Plugin manager instance.
+     * @type {PluginManager}
+     * @public
+     */
+    this.pluginManager = new PluginManager({
+      plugins: this.plugins,
+      application: this._application,
+      dependencyManager: this.dependencyManager,
+      dataPath: this.dataPath,
+      consoleMessage: this._consoleMessage,
+      BASE_PATH: BASE_PATH,
+      clearAllCallback: () => this.clearAll(),
+      initializeDefaultStateHandlersCallback: () => this._initializeDefaultStateHandlers(),
+      shouldHideGamePluginsCallback: () => this._shouldHideGamePlugins(),
+      refreshPluginVisibilityCallback: () => this.refreshPluginVisibility()
+    })
+
   }
 
   /**
@@ -130,53 +165,7 @@ module.exports = class Dispatch {
    * @private
    */
   _initializeDefaultStateHandlers() {
-    this.onMessage({
-      type: ConnectionMessageTypes.aj,
-      message: 'rj', // Room Join packet
-      callback: ({ message }) => {
-
-        if (message.value && message.value.length > 6 && message.value[4] === '1') { // Status '1' is at index 4
-          const textualRoomId = message.value[5];         // e.g., "balloosh.room_main#94"
-          const numericalInstanceRoomId = message.value[6]; // e.g., "3695"
-
-          if (textualRoomId) {
-            this.setState('room', textualRoomId);
-          }
-
-          if (numericalInstanceRoomId && !isNaN(parseInt(numericalInstanceRoomId))) {
-            this.setState('internalRoomId', numericalInstanceRoomId); // For sending XT packets
-          } else {
-            // Fallback: if the textualRoomId itself is purely numerical (e.g. for some specific rooms). Unlikely for typical AJ rooms.
-            if (textualRoomId && !isNaN(parseInt(textualRoomId))) {
-                this.setState('internalRoomId', textualRoomId);
-                if (isDevelopment) console.warn(`[Dispatch] Fallback: Using textualRoomId '${textualRoomId}' as internalRoomId because numericalInstanceRoomId was invalid.`);
-            } else {
-                this.setState('internalRoomId', null);
-                if (isDevelopment) console.warn(`[Dispatch] No valid numerical room ID found in 'rj' packet. 'internalRoomId' set to null.`);
-            }
-          }
-        } else {
-          this.setState('room', null);
-          this.setState('internalRoomId', null);
-        }
-      }
-    });
-
-    this.onMessage({
-      type: ConnectionMessageTypes.aj,
-      message: 'login', // Login packet
-      callback: ({ message }) => {
-        // Attempt to extract player data based on @jam-master's structure
-        if (message.value && message.value.b && message.value.b.o && message.value.b.o.params) {
-          const playerData = message.value.b.o.params;
-          this.setState('player', playerData);
-          // The user ID is the first parameter in the login success packet
-          if (playerData[0]) {
-            this.setState('userId', playerData[0]);
-          }
-        }
-      }
-    });
+    this.stateManager.initializeDefaultStateHandlers()
   }
 
   get connected () {
@@ -194,26 +183,7 @@ module.exports = class Dispatch {
    * @static
    */
   static async readdirRecursive (directory) {
-    const result = []
-
-    const read = async (dir) => {
-      const entries = await fs.readdir(dir, { withFileTypes: true })
-
-      const promises = entries.map(async (entry) => {
-        const filepath = path.join(dir, entry.name)
-
-        if (entry.isDirectory()) {
-          await read(filepath)
-        } else {
-          result.push(filepath)
-        }
-      })
-
-      await Promise.all(promises)
-    }
-
-    await read(directory)
-    return result
+    return PluginManager.readdirRecursive(directory)
   }
 
   /**
@@ -263,17 +233,7 @@ module.exports = class Dispatch {
    * @public
    */
   async installDependencies (configuration) {
-    const { dependencies } = configuration
-
-    if (!dependencies || Object.keys(dependencies).length === 0) {
-      return
-    }
-
-    const installPromises = Object.entries(dependencies).map(
-      ([module, version]) => this.dependencyManager.install(module, version)
-    )
-
-    await Promise.all(installPromises)
+    return this.pluginManager.installDependencies(configuration)
   }
 
   /**
@@ -281,7 +241,7 @@ module.exports = class Dispatch {
    * @param {string} name
    */
   require (name) {
-    return this.dependencyManager.require(name)
+    return this.pluginManager.require(name)
   }
 
   /**
@@ -291,28 +251,7 @@ module.exports = class Dispatch {
    * @public
    */
   waitForJQuery (window, callback) {
-    return new Promise((resolve, reject) => {
-      const checkInterval = 100
-      const maxRetries = 100
-      let retries = 0
-
-      const intervalId = setInterval(() => {
-        if (typeof window.$ !== 'undefined') {
-          clearInterval(intervalId)
-          try {
-            callback()
-            resolve()
-          } catch (error) {
-            reject(error)
-          }
-        } else if (retries >= maxRetries) {
-          clearInterval(intervalId)
-          reject(new Error('jQuery was not found within the expected time.'))
-        } else {
-          retries++
-        }
-      }, checkInterval)
-    })
+    return this.pluginManager.waitForJQuery(window, callback)
   }
 
   /**
@@ -321,90 +260,7 @@ module.exports = class Dispatch {
    * @public
    */
   async load (filter = file => path.basename(file) === 'plugin.json') {
-    this.clearAll()
-    this._application.$pluginList.empty(); // Clear existing plugin list items
-
-    // Ensure BASE_PATH is defined
-      if (!BASE_PATH) {
-      this._consoleMessage({ type: 'error', message: 'Plugin base path (BASE_PATH) could not be determined. Cannot load plugins.' });
-      this._application._updateEmptyPluginMessage(); // Update empty message status
-      return;
-    }
-
-    try {
-      // Check if BASE_PATH exists, no need to create it as it should be part of the app structure
-      try {
-        await fs.access(BASE_PATH);
-      } catch (accessError) {
-        // If BASE_PATH doesn't exist, it's a critical issue with the app deployment/structure.
-        this._consoleMessage({ type: 'error', message: `Plugins directory not found at ${BASE_PATH}. Cannot load plugins.` });
-        this._application._updateEmptyPluginMessage();
-        return;
-      }
-
-      const files = await Dispatch.readdirRecursive(BASE_PATH); // Use BASE_PATH
-
-      const configFiles = files.filter(filter);
-
-      if (configFiles.length === 0) {
-        this._consoleMessage({ type: 'notify', message: 'No plugins found in the plugins directory.' });
-      this._application._updateEmptyPluginMessage(); 
-        return;
-      }
-
-      const pluginPromises = configFiles.map(async configFile => {
-        try {
-          const configuration = JSON.parse(await fs.readFile(configFile, 'utf8'));
-          const filepath = path.dirname(configFile);
-          // Pass the raw configuration for validation and preparation
-          return this._validateAndPrepareConfig(filepath, configuration.default || configuration);
-        } catch (error) {
-          this._consoleMessage({ type: 'error', message: `Error reading or parsing plugin config ${path.basename(configFile)}: ${error.message}` });
-          return null;
-        }
-      });
-
-      let loadedPluginConfigs = (await Promise.all(pluginPromises)).filter(r => r !== null);
-      
-      // Sort plugins by type (UI first, then game) and alphabetically within each type
-      loadedPluginConfigs.sort((a, b) => {
-        const aType = a.configuration.type;
-        const bType = b.configuration.type;
-        
-        // UI plugins come first
-        if (aType === 'ui' && bType === 'game') return -1;
-        if (aType === 'game' && bType === 'ui') return 1;
-        
-        // Within same type, sort alphabetically by name
-        return a.configuration.name.localeCompare(b.configuration.name);
-      });
-              
-      // Store all plugins regardless of visibility setting
-      for (const configData of loadedPluginConfigs) {
-        // _processAndRenderPlugin expects an object with configuration and filepath properties
-        await this._processAndRenderPlugin(configData); 
-      }
-
-      // After all plugins are loaded, filter the display based on settings
-      const hideGamePlugins = await this._shouldHideGamePlugins();
-      if (hideGamePlugins) {
-        // Hide game plugins from UI but keep them loaded and functional
-        this._application.$pluginList.find('[data-plugin-type="game"]').hide();
-      } else {
-        // Show all plugins
-        this._application.$pluginList.find('[data-plugin-type="game"]').show();
-      }
-
-    } catch (error) {
-      // Catch errors from readdirRecursive or other unexpected issues
-      this._consoleMessage({ type: 'error', message: `Error loading plugins: ${error.message}` });
-      devError('[Dispatch] Detailed error loading plugins:', error);
-    } finally {
-      this._application._updateEmptyPluginMessage(); // Call this after all processing
-      this._application.refreshAutoComplete();
-      // Ensure default state handlers are re-initialized after all plugins load and clearAll has run
-      this._initializeDefaultStateHandlers();
-    }
+    return this.pluginManager.load(filter)
   }
 
   /**
@@ -413,32 +269,7 @@ module.exports = class Dispatch {
    * @public
    */
   async all ({ client, type, message }) {
-    const ajHooks = type === ConnectionMessageTypes.aj ? this.hooks.aj.get(message.type) || [] : [];
-    const connectionHooks = type === ConnectionMessageTypes.connection ? this.hooks.connection.get(message.type) || [] : [];
-    const anyHooks = this.hooks.any.get(ConnectionMessageTypes.any) || [];
-
-    const hooks = [...ajHooks, ...connectionHooks, ...anyHooks];
-
-    if (hooks.length > 0) {} else {
-      // devLog(`[ROOMLOGIC_DEBUG] Dispatch.all: No hooks found for MessageType: ${message.type}.`);
-    }
-
-    const promises = hooks.map(async (hook, index) => {
-      try {
-        // ROOMLOGIC_DEBUG: Log which hook is about to be called
-        // To avoid excessive logging for every packet, we can be selective or add more detail if a specific packet is problematic
-        if (message.type === 'rj' || message.type === 'login') { // Example: Log details for rj or login
-        }
-        await hook({ client, type, dispatch: this, message });
-      } catch (error) {
-        this._consoleMessage({
-          type: 'error',
-          message: `Failed hooking packet ${message.type}. ${error.message}`
-        });
-      }
-    });
-
-    await Promise.all(promises);
+    return this.messageDispatcher.all({ client, type, message })
   }
 
   /**
@@ -447,22 +278,7 @@ module.exports = class Dispatch {
    * @public
    */
   async sendMultipleMessages ({ type, messages = [] } = {}) {
-    if (messages.length === 0) {
-      return Promise.resolve()
-    }
-
-    const sendFunction = type === ConnectionMessageTypes.aj
-      ? this.sendRemoteMessage.bind(this)
-      : this.sendConnectionMessage.bind(this)
-
-    try {
-      await Promise.all(messages.map(sendFunction))
-    } catch (error) {
-      this._consoleMessage({
-        type: 'error',
-        message: `Error sending messages: ${error.message}`
-      })
-    }
+    return this.messageDispatcher.sendMultipleMessages({ type, messages })
   }
 
   /**
@@ -537,212 +353,7 @@ module.exports = class Dispatch {
    * @returns {Promise<void>}
    */
   async refresh () {
-    const { $pluginList, consoleMessage } = this._application
-
-    // Check for open plugin windows and warn user
-    const openPluginWindows = await this._getOpenPluginWindows()
-    if (openPluginWindows.length > 0) {
-      const shouldProceed = await this._handleOpenPluginWindows(openPluginWindows)
-      if (!shouldProceed) {
-        this._consoleMessage({
-          type: 'notify',
-          message: 'Plugin refresh cancelled by user.'
-        })
-        return
-      }
-    }
-
-    // Start refresh animation only after user confirms
-    this._startRefreshAnimation()
-
-    $pluginList.empty()
-
-    const pluginPaths = [...this.plugins.values()].map(({ filepath, configuration: { main } }) => ({
-      jsPath: path.resolve(filepath, main),
-      jsonPath: path.resolve(filepath, 'plugin.json')
-    }))
-
-    for (const { jsPath, jsonPath } of pluginPaths) {
-      try {
-        await fs.access(jsPath)
-        const jsCacheKey = require.resolve(jsPath)
-        if (require.cache[jsCacheKey]) delete require.cache[jsCacheKey]
-      } catch (e) {
-        // ignore
-      }
-
-      try {
-        await fs.access(jsonPath)
-        const jsonCacheKey = require.resolve(jsonPath)
-        if (require.cache[jsonCacheKey]) delete require.cache[jsonCacheKey]
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    this.clearAll()
-    await this.load()
-
-    this._application.emit('refresh:plugins')
-    this._consoleMessage({
-      type: 'success',
-      message: `Successfully refreshed ${this.plugins.size} plugins.`
-    })
-  }
-
-  /**
-   * Gets list of currently open plugin windows
-   * @returns {Promise<string[]>} Array of open plugin names
-   * @private
-   */
-  async _getOpenPluginWindows() {
-    if (typeof require === "function") {
-      try {
-        const { ipcRenderer } = require('electron');
-        return await ipcRenderer.invoke('get-open-plugin-windows');
-      } catch (e) {
-        console.warn('[Dispatch] Could not get open plugin windows:', e);
-        return [];
-      }
-    }
-    return [];
-  }
-
-  /**
-   * Handles open plugin windows during refresh
-   * @param {string[]} openWindows Array of open plugin names
-   * @returns {Promise<boolean>} Whether to proceed with refresh
-   * @private
-   */
-  async _handleOpenPluginWindows(openWindows) {
-    // Check user preference for handling open windows during refresh
-    const refreshBehavior = await this._application.settings.get('plugins.refreshBehavior', 'ask');
-    
-    if (refreshBehavior === 'alwaysClose') {
-      await this._closePluginWindows(openWindows);
-      this._consoleMessage({
-        type: 'notify',
-        message: `Automatically closed ${openWindows.length} plugin window(s) before refresh (user preference).`
-      });
-      return true;
-    }
-
-    // Default behavior: ask user
-    return new Promise((resolve) => {
-      const pluginNames = openWindows.join(', ');
-      const message = `The following plugins are currently open: ${pluginNames}\n\nPlugin windows will be closed before refreshing to prevent instability.\n\nDo you want to continue?`;
-      
-      // Create a custom modal for better UX
-      const modal = $(`
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="backdrop-filter: blur(5px);">
-          <div class="bg-gray-800 rounded-lg p-6 max-w-md mx-4 shadow-2xl border border-gray-600">
-            <div class="flex items-center mb-4">
-              <i class="fas fa-exclamation-triangle text-yellow-400 text-xl mr-3"></i>
-              <h3 class="text-lg font-semibold text-white">Open Plugin Windows Detected</h3>
-            </div>
-            <p class="text-gray-300 mb-6">${message.replace(/\n\n/g, '</p><p class="text-gray-300 mb-4">')}</p>
-            <div class="flex flex-col gap-2">
-              <button id="refresh-proceed" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors">
-                <i class="fas fa-sync-alt mr-2"></i>Proceed (Close Windows & Refresh)
-              </button>
-              <button id="refresh-cancel" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors">
-                <i class="fas fa-times mr-2"></i>Cancel
-              </button>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-600">
-              <label class="flex items-center text-sm text-gray-400">
-                <input type="checkbox" id="rememberChoice" class="mr-2">
-                Always close plugin windows without asking
-              </label>
-            </div>
-          </div>
-        </div>
-      `);
-
-      $('body').append(modal);
-
-      modal.find('#refresh-proceed').on('click', async () => {
-        const remember = modal.find('#rememberChoice').is(':checked');
-        modal.remove();
-        
-        if (remember) {
-          await this._application.settings.set('plugins.refreshBehavior', 'alwaysClose');
-          this._consoleMessage({
-            type: 'notify',
-            message: 'Preference saved: Will automatically close plugin windows during future refreshes.'
-          });
-        }
-        
-        await this._closePluginWindows(openWindows);
-        resolve(true);
-      });
-
-      modal.find('#refresh-cancel').on('click', () => {
-        modal.remove();
-        resolve(false);
-      });
-
-      // Close on backdrop click
-      modal.on('click', (e) => {
-        if (e.target === modal[0]) {
-          modal.remove();
-          resolve(false);
-        }
-      });
-    });
-  }
-
-  /**
-   * Closes specified plugin windows
-   * @param {string[]} pluginNames Array of plugin names to close
-   * @returns {Promise<void>}
-   * @private
-   */
-  async _closePluginWindows(pluginNames) {
-    if (typeof require === "function") {
-      try {
-        const { ipcRenderer } = require('electron');
-        await ipcRenderer.invoke('close-plugin-windows', pluginNames);
-        this._consoleMessage({
-          type: 'notify',
-          message: `Closed ${pluginNames.length} plugin window(s) before refresh.`
-        });
-      } catch (e) {
-        console.warn('[Dispatch] Could not close plugin windows:', e);
-        this._consoleMessage({
-          type: 'warning',
-          message: 'Could not close some plugin windows. They may become unstable after refresh.'
-        });
-      }
-    }
-  }
-
-  /**
-   * Starts the refresh animation
-   * @private
-   */
-  _startRefreshAnimation() {
-    const pluginsSectionContent = document.getElementById("pluginsSectionContent");
-    const pluginList = document.getElementById("pluginList");
-    const refreshButton = document.getElementById("refreshPluginsSection");
-    const refreshIcon = refreshButton?.querySelector("i");
-    
-    if (pluginsSectionContent && pluginList && refreshIcon && refreshButton) {
-      // Disable the refresh button during animation
-      refreshButton.disabled = true;
-      
-      // Add refreshing state classes
-      pluginsSectionContent.classList.add("plugins-refreshing", "refresh-shimmer");
-      refreshIcon.classList.add("refresh-spinning");
-      
-      // Animate existing plugins out
-      const existingPlugins = pluginList.querySelectorAll("li");
-      existingPlugins.forEach((plugin, index) => {
-        setTimeout(() => {
-          plugin.classList.add("refreshing-fade-out");
-        }, index * 50); // Stagger the fade-out
-      });
-    }
+    return this.pluginManager.refresh()
   }
 
   /**
@@ -782,17 +393,7 @@ module.exports = class Dispatch {
    * @public
    */
   setState (key, value) {
-    // Don't update if value hasn't changed
-    if (this.state[key] === value) {
-      if (key === 'room') {}
-      return this;
-    }
-    
-    this.state[key] = value;
-    if (key === 'room') {}
-    
-    // IPC call for 'room' key removed as per reversion plan to align with @jam-master
-    return this;
+    return this.stateManager.setState(key, value)
   }
 
   /**
@@ -802,29 +403,7 @@ module.exports = class Dispatch {
    * @public
    */
   getStateSync (key) {
-    // For local state access, just return from memory
-    if (this.state[key] !== undefined) {
-      return this.state[key]
-    }
-    
-    // For IPC-based access (when running in renderer), handle specially
-    if (typeof require === 'function') {
-      try {
-        const { ipcRenderer } = require('electron')
-        // This is a synchronous IPC call - will block until response received
-        const value = ipcRenderer.sendSync('dispatch-get-state-sync', key)
-        if (value !== undefined) {
-          // Cache the value locally
-          this.state[key] = value
-          return value
-        }
-      } catch (e) {
-        console.error(`[Dispatch] Error in getStateSync for key ${key}:`, e)
-      }
-    }
-    
-    // Default case - state not found
-    return null
+    return this.stateManager.getStateSync(key)
   }
 
   /**
@@ -835,9 +414,7 @@ module.exports = class Dispatch {
    * @public
    */
   getState (key, defaultValue = null) {
-    const value = this.state[key] !== undefined ? this.state[key] : defaultValue;
-    if (key === 'room') {} else if (key === 'player') {}
-    return value;
+    return this.stateManager.getState(key, defaultValue)
   }
 
   /**
@@ -848,9 +425,7 @@ module.exports = class Dispatch {
    * @public
    */
   updateState (key, value) {
-    if (this.state[key]) this.state[key] = value
-    else throw new Error('Invalid state key.')
-    return this
+    return this.stateManager.updateState(key, value)
   }
 
   /**
@@ -943,16 +518,7 @@ module.exports = class Dispatch {
    * @public
    */
   onMessage ({ type, message, callback } = {}) {
-    const registrationMap = {
-      [ConnectionMessageTypes.aj]: this._registerAjHook.bind(this),
-      [ConnectionMessageTypes.connection]: this._registerConnectionHook.bind(this),
-      [ConnectionMessageTypes.any]: this._registerAnyHook.bind(this)
-    }
-
-    const registerHook = registrationMap[type]
-    if (registerHook) {
-      registerHook({ type, message, callback })
-    }
+    return this.messageDispatcher.onMessage({ type, message, callback })
   }
 
   /**
@@ -960,81 +526,8 @@ module.exports = class Dispatch {
    * @param options
    * @public
    */
-  offMessage ({ type, message, callback } = {}) { // Added 'message' parameter
-    const hooksMap = {
-      [ConnectionMessageTypes.aj]: this.hooks.aj,
-      [ConnectionMessageTypes.connection]: this.hooks.connection,
-      [ConnectionMessageTypes.any]: this.hooks.any
-    };
-
-    const specificHooksMap = hooksMap[type]; // e.g., this.hooks.aj
-
-    if (specificHooksMap) {
-      // Use the 'message' parameter to get the correct list of callbacks
-      const hookList = specificHooksMap.get(message);
-      if (hookList) {
-        const index = hookList.indexOf(callback);
-        if (index !== -1) {
-          hookList.splice(index, 1);
-        }
-        // If the list becomes empty, optionally delete the key from the map
-        if (hookList.length === 0) {
-          specificHooksMap.delete(message);
-        }
-      }
-    }
-  }
-
-  /**
- * Registers a message hook for the specified type.
- * @param {string} type - The type of hook to register.
- * @param {object} hook - The hook object containing message and callback.
- * @private
- */
-  _registerHook (type, { message, callback }) {
-    // type is 'aj', message is the specific XT command string like 'rj' or 'login'
-    if (!this.hooks[type]) {
-      return this._consoleMessage({
-        type: 'error',
-        message: `Invalid hook type: ${type}`
-      });
-    }
-
-    const hooksMap = this.hooks[type]; // e.g., this.hooks.aj
-    if (hooksMap.has(message)) {
-      hooksMap.get(message).push(callback);
-    } else {
-      hooksMap.set(message, [callback]);
-    }
-    // For debugging, let's see the state of this.hooks.aj after registration
-    if (type === 'aj') {}
-  }
-
-  /**
- * Registers a local message hook.
- * @param {object} hook - The hook object.
- * @private
- */
-  _registerConnectionHook (hook) {
-    this._registerHook('connection', hook)
-  }
-
-  /**
- * Registers a remote message hook.
- * @param {object} hook - The hook object.
- * @private
- */
-  _registerAjHook (hook) {
-    this._registerHook('aj', hook);
-  }
-
-  /**
- * Registers any message hook.
- * @param {object} hook - The hook object.
- * @private
- */
-  _registerAnyHook (hook) {
-    this._registerHook('any', { message: ConnectionMessageTypes.any, callback: hook.callback })
+  offMessage ({ type, message, callback } = {}) {
+    return this.messageDispatcher.offMessage({ type, message, callback })
   }
 
   clearAll () {
@@ -1049,94 +542,6 @@ module.exports = class Dispatch {
   }
 
 
-  /**
-   * Validates configuration and installs dependencies. Does not instantiate or render.
-   * @param {string} filepath - Directory path of the plugin
-   * @param {object} configuration - Raw configuration from plugin.json
-   * @returns {Promise<object|null>} - Object containing validated config and filepath, or null on error
-   * @private
-   */
-  async _validateAndPrepareConfig(filepath, configuration) {
-    const validate = Ajv.compile(ConfigurationSchema);
-    if (!validate(configuration)) {
-      this._consoleMessage({
-        type: 'error',
-        message: `Failed validating configuration for plugin in ${filepath}. ${validate.errors[0].message}.`
-      });
-      return null;
-    }
-
-    // Check for duplicate name before proceeding (although checked again later)
-    if (this.plugins.has(configuration.name)) {
-       this._consoleMessage({
-         type: 'warn',
-         message: `Duplicate plugin name found during validation: ${configuration.name}`
-       });
-    }
-
-    try {
-      // Ensure dependencies are installed before returning the config object
-      await this.installDependencies(configuration);
-      // Return an object that includes both filepath and the (now defaulted by AJV) configuration
-      return { filepath, configuration }; 
-    } catch (error) {
-      this._consoleMessage({
-        type: 'error',
-        message: `Error installing dependencies for plugin in ${filepath}: ${error.message}`
-      });
-      return null;
-    }
-  }
-
-  /**
-   * Processes a single validated plugin config: instantiates/stores plugin and renders UI item.
-   * @param {object} configData - Object containing { filepath, configuration }
-   * @returns {Promise<void>}
-   * @private
-   */
-  async _processAndRenderPlugin(configData) {
-    const { filepath, configuration } = configData;
-
-    // Final duplicate check before storing
-    if (this.plugins.has(configuration.name)) {
-      this._consoleMessage({
-        type: 'error',
-        message: `Plugin with the name ${configuration.name} already exists. Skipping.`
-      });
-      return;
-    }
-
-    try {
-      let pluginInstance = null;
-      if (configuration.type === 'game') {
-        const PluginClass = require(path.join(filepath, configuration.main));
-        pluginInstance = new PluginClass({
-          application: this._application,
-          dispatch: this,
-          dataPath: this.dataPath
-        });
-      }
-
-      // Store plugin data (instance is null for UI plugins here)
-      this.plugins.set(configuration.name, {
-        configuration,
-        filepath,
-        plugin: pluginInstance // Store instance for game plugins
-      });
-
-      // Render the item using Application method - this now returns the element
-      const $pluginElement = this._application.renderPluginItems(configuration); 
-
-      // Append the rendered element to the list
-      this._application.$pluginList.append($pluginElement);
-
-    } catch (error) {
-      this._consoleMessage({
-        type: 'error',
-        message: `Error processing/rendering plugin ${configuration.name}: ${error.message}`
-      });
-    }
-  }
 
   /**
    * Notifies all loaded plugins that have an onSettingsUpdated method.

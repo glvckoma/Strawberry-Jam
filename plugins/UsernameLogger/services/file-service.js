@@ -178,6 +178,29 @@ class FileService {
   }
 
   /**
+   * Counts non-empty lines in a file
+   * @param {string} filePath - Path to the file
+   * @returns {Promise<number>} Count of non-empty lines
+   */
+  async countLinesInFile(filePath) {
+    try {
+      if (!fsSync.existsSync(filePath)) {
+        return 0;
+      }
+
+      const content = await fs.readFile(filePath, 'utf8');
+      const lines = content.split(/\r?\n/).filter(line => line.trim());
+      return lines.length;
+    } catch (error) {
+      this.application.consoleMessage({
+        type: 'error',
+        message: `[Username Logger] Error counting lines in file ${filePath}: ${error.message}`
+      });
+      return 0;
+    }
+  }
+
+  /**
    * Checks if a file exists
    * @param {string} filePath - Path to the file
    * @returns {Promise<boolean>} True if the file exists

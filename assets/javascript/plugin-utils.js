@@ -14,7 +14,7 @@
       const link = document.createElement('link');
       link.id = 'jam-plugin-styles';
       link.rel = 'stylesheet';
-      link.href = '../../assets/css/plugin-styles.css';
+      link.href = 'app://assets/css/plugin-styles.css';
       document.head.appendChild(link);
     }
 

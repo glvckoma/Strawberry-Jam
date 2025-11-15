@@ -114,12 +114,12 @@
     </div>
 
     <div class="mt-4 pt-3 border-t border-sidebar-border/30 text-xs text-gray-500 text-center">
-      Forked with 🤎 by <a href="https://github.com/glvckoma" target="_blank" class="text-highlight-green hover:underline">Glockoma</a><br>
-      <span id="jamVersionText" class="text-xs text-highlight-green font-bold">Strawberry Jam</span> <span id="appVersionDisplay" class="text-xs text-highlight-green font-bold"></span><br>
+      Forked with 🤎 by <a href="https://github.com/glvckoma" target="_blank" class="text-highlight-green underline transition-colors" id="forkLink">Glockoma</a><br>
       <!-- Donate Link -->
       <a href="#" onclick="jam.application.open('https://ko-fi.com/glockoma')" class="text-xs text-yellow-700 hover:text-yellow-500 transition-colors underline">
          Support the Project!
-      </a>
+      </a><br>
+      <span id="appVersionDisplay" class="text-xs text-highlight-green font-bold"></span><br>
     </div>
   </div>
 
@@ -687,6 +687,16 @@
           #saveSettingsBtn:focus {
             --tw-ring-color: ${color};
           }
+          
+          /* Fork link hover color */
+          #forkLink:hover {
+            color: #22c55e !important;
+          }
+          
+          /* Version text theme color */
+          #appVersionDisplay {
+            color: ${color} !important;
+          }
         `;
         
         // Directly set colors on existing elements
@@ -697,6 +707,9 @@
         
         // Update Launch button external link icon color
         $('#playButton .fa-external-link-alt').css('color', color);
+        
+        // Update version text colors
+        $('#appVersionDisplay').css('color', color);
       };
       
       // Apply theme styles immediately on initial load to ensure icons are colored
@@ -712,6 +725,7 @@
           "app://assets/images/coconut.png",
           "app://assets/images/dragonfruit.png",
           "app://assets/images/pineapple.png",
+          "app://assets/images/pumpkin.png",
           "app://assets/images/strawberry.png"
         ];
         
@@ -723,6 +737,7 @@
           'coconut.png': { primary: '#A0522D' },
           'dragonfruit.png': { primary: '#E91E63' },
           'pineapple.png': { primary: '#FFEC8B' },
+          'pumpkin.png': { primary: '#FF8C00' },
           'strawberry.png': { primary: '#e83d52' }
         };
         
@@ -784,7 +799,6 @@
 
           document.title = displayName;
           $('#playButtonText').text(displayName);
-          $('#jamVersionText').text(displayName);
           
           if (theme && theme.primary) {
             // Update theme colors using our helper function

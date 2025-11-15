@@ -3,9 +3,65 @@ const path = require('path')
 const fs = require('fs')
 
 class FilesController {
-  constructor() {
-    this.flashDir = path.resolve('assets', 'flash');
-    this.optionsDir = path.join(this.flashDir, 'options');
+  constructor(app = null) {
+    this._app = app;
+    this._assetsPath = null;
+    this._flashDir = null;
+    this._optionsDir = null;
+    this._initialized = false;
+    
+    if (app) {
+      this._initializePaths(app);
+    }
+  }
+  
+  _initializePaths(app) {
+    const { getAssetsPath } = require('../../Constants');
+    this._assetsPath = getAssetsPath(app);
+    this._flashDir = path.join(this._assetsPath, 'flash');
+    this._optionsDir = path.join(this._flashDir, 'options');
+    this._initialized = true;
+  }
+  
+  initialize(app) {
+    if (!app) {
+      throw new Error('FilesController.initialize requires the Electron app object');
+    }
+    this._app = app;
+    this._initializePaths(app);
+  }
+  
+  _ensureInitialized() {
+    if (this._initialized) {
+      return;
+    }
+    
+    if (this._app) {
+      this._initializePaths(this._app);
+    } else {
+      let assetsPath;
+      if (process.env.STRAWBERRY_JAM_ASSETS_PATH) {
+        assetsPath = process.env.STRAWBERRY_JAM_ASSETS_PATH;
+      } else if (process.resourcesPath) {
+        assetsPath = path.join(process.resourcesPath, 'assets');
+      } else {
+        assetsPath = path.join(__dirname, '../../assets');
+      }
+      this._assetsPath = assetsPath;
+      this._flashDir = path.join(assetsPath, 'flash');
+      this._optionsDir = path.join(this._flashDir, 'options');
+      this._initialized = true;
+    }
+  }
+  
+  get flashDir() {
+    this._ensureInitialized();
+    return this._flashDir;
+  }
+  
+  get optionsDir() {
+    this._ensureInitialized();
+    return this._optionsDir;
   }
 
   /**
@@ -30,7 +86,7 @@ class FilesController {
    * This should be called on application startup.
    * @returns {Promise<void>}
    */
-  async initialize() {
+  async initializeSwf() {
     try {
       // Ensure options directory exists
       if (!fs.existsSync(this.optionsDir)) {
@@ -207,10 +263,22 @@ class FilesController {
     return response.sendFile(activeSwfPath);
   }
 
-  /**
-   * Proxies other requests to the Akamai servers.
-   */
+
   index (request, response) {
+    const requestPath = request.path.toLowerCase();
+    
+    if (requestPath.includes('ajclient.swf')) {
+      const legitimatePattern = /^\/\d{4}\/ajclient\.swf$/;
+      if (legitimatePattern.test(request.path)) {
+        console.log(`[SWF Update Blocker] Legitimate SWF request reached index(), serving locally: ${request.path}`);
+        return this.game(request, response);
+      } else {
+        console.log(`[SWF Update Blocker] Blocked SWF update request: ${request.path}`);
+        console.log(`[SWF Update Blocker] Note: Legitimate SWF requests should match /{4-digit}/ajclient.swf pattern`);
+        return response.status(404).send('SWF update blocked - using local modded SWF');
+      }
+    }
+    
     return request.pipe(
       HTTPClient.proxy({
         url: `${this.baseUrl}/${request.path}`,

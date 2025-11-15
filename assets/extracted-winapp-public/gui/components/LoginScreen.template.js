@@ -760,20 +760,25 @@
  
             <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">In-Game:</h5>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">F5: Toggle In-Game HUD</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + P: Become a phantom (client side only)</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + C: Clone A Friend</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + T: Teleportation</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + R: Room User Scan</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + M: Trade Marketplace</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + X: Headless mode</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + N: No Clip</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + W: WASD movement mode</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + D: Den on Login</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">F10: Toggle Mod Menu</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Equals / Numpad Add: Zoom In</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Minus / Numpad Subtract: Zoom Out</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + P: Become a phantom (client side only) - On/Off</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + C: Clone A Friend - Open</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + T: Teleportation - Open</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + R: Room User Scan - Open</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + M: Trade Marketplace - Open</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + X: Headless mode - On/Off</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + N: No Clip - On/Off</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + W: WASD movement mode - On/Off</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + D: Den on Login - On/Off + Textbox for username</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + -: Disable Startup Popups On/Off</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + G: Always Open Currency On/Off</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + S: Wheel Auto Spin - On/Off</div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + E: Shop Explorer - On/Off</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Enter: Private message system</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + U: Private message Toggle</div>
-            <div class="settings-item" style="font-size: 10px; padding: 4px 8px; margin-top: -6px; background-color: rgba(0,0,0,0.4); border-radius: 4px; color: white; display: inline-block; margin-left: 10px;">Credits to&nbsp;<span style="color:purple; font-weight:bold;">Doc</span>&nbsp;and&nbsp;<span style="color:pink; font-weight:bold;"></span></div>
+            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + U: Private message Toggle - On/Off</div>
+            <div class="settings-item" style="font-size: 10px; padding: 4px 8px; margin-top: -6px; background-color: rgba(0,0,0,0.4); border-radius: 4px; color: white; display: inline-block; margin-left: 10px;">Credits to&nbsp;<span style="color:purple; font-weight:bold;">Doc</span>&nbsp;&nbsp;<span style="color:pink; font-weight:bold;"></span></div>
 
             <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">Windows/Linux:</h5>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Alt + Enter / F11: Toggle Fullscreen</div>

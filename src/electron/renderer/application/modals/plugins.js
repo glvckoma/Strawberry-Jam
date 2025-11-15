@@ -170,9 +170,6 @@ exports.render = function (app) {
             <button type="button" class="text-xs text-gray-400 hover:text-highlight-green transition px-2 py-1 rounded store-tab-btn" id="refreshPluginsBtn">
               <i class="fas fa-sync-alt mr-1"></i> Refresh
             </button>
-            <button type="button" class="modal-close-button-std text-gray-400 transition-colors duration-200 transform rounded-full p-1 bg-tertiary-bg px-3 py-1" id="closeModalBtn">
-              Close
-            </button>
           </div>
         </div>
       </div>
@@ -278,7 +275,7 @@ exports.render = function (app) {
     }
   }
 
-  $modal.find('#closeLibraryModalBtn, #closeModalBtn, #closePluginHubHeaderBtn').on('click', closeHandler)
+  $modal.find('#closeLibraryModalBtn, #closePluginHubHeaderBtn').on('click', closeHandler)
 
   $modal.find('#modalBackdrop').on('click', function () {
     app.modals.close()

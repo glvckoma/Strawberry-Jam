@@ -25,8 +25,8 @@ To update an existing plugin to use the standardized UI:
 
 ```html
 <!-- In the <head> section -->
-<link href="../../assets/css/style.css" rel="stylesheet">
-<script src="../../assets/javascript/plugin-utils.js"></script>
+<link href="app://assets/css/style.css" rel="stylesheet">
+<script src="app://assets/javascript/plugin-utils.js"></script>
 ```
 
 2. Replace your custom header with the standardized header:

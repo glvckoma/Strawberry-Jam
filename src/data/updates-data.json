@@ -103,7 +103,7 @@
   "3.5.3": {
     "version": "3.5.3",
     "releaseDate": "2025-09-13",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -806,6 +806,197 @@
           "priority": "enhancement"
         }
       ]
+    }
+  },
+  "4.0.0": {
+    "version": "4.0.0",
+    "releaseDate": "2025-01-28",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "🔧",
+          "title": "Massive Code Rewrite and Modularization",
+          "description": "Complete codebase rewrite with improved modularization for better maintainability and performance.",
+          "priority": "major"
+        },
+        {
+          "icon": "🔍",
+          "title": "Enhanced Leakcheck General Accounts Filter",
+          "description": "New Leakcheck setting for General Accounts (not from AJC data breach). Allows you to NOT log combos that are greater than your set value. If you set it to 20, any username that has more combos than this number will NOT be saved to the found accounts file. Should make found accounts more worth viable.",
+          "priority": "major"
+        },
+        {
+          "icon": "🎡",
+          "title": "Persistent Autowheel Spinner Settings",
+          "description": "Autowheel Spinner now persists user settings across sessions with the ability to pause/resume/stop whenever.",
+          "priority": "major"
+        },
+        {
+          "icon": "🔔",
+          "title": "Stacking Toast Notifications",
+          "description": "Toast notifications now stack vertically and overlay everything for better visibility.",
+          "priority": "major"
+        },
+        {
+          "icon": "🛍️",
+          "title": "Shop Counter Display",
+          "description": "Added a shop counter to display the # of slots filled in your shop. (4/24)",
+          "priority": "major"
+        },
+        {
+          "icon": "🔘",
+          "title": "Toggle All Login Popups",
+          "description": "Added the ability to toggle all login popups for a cleaner experience.",
+          "priority": "major"
+        },
+        {
+          "icon": "💰",
+          "title": "Persistent Currency Display",
+          "description": "Added the ability to toggle currency to stay open always.",
+          "priority": "major"
+        },
+        {
+          "icon": "🎮",
+          "title": "Centralized Mod Menu",
+          "description": "Added a centralized mod menu 'F10' that contains all popups and mods easily toggleable. Any additions to the mod menu will not have hotkeys and must be enabled inside mod menu.",
+          "priority": "major"
+        },
+        {
+          "icon": "🏠",
+          "title": "Configurable Den on Login",
+          "description": "Den on login can now be configured with username in mod menu.",
+          "priority": "major"
+        },
+        {
+          "icon": "✏️",
+          "title": "Update Shop Prices When Full",
+          "description": "You can now update shop prices when the shop is full.",
+          "priority": "major"
+        },
+        {
+          "icon": "🎡",
+          "title": "Toggleable Auto Spin Wheel",
+          "description": "Auto spin wheel can now be toggled on/off with hotkey or mod menu.",
+          "priority": "major"
+        },
+        {
+          "icon": "🚫",
+          "title": "Anti-Afk Work Around",
+          "description": "Anti-Afk work around implemented and now toggleable in the mod menu.",
+          "priority": "major"
+        },
+        {
+          "icon": "🐾",
+          "title": "Frakenkitten & Nighthawk Pets",
+          "description": "Added Frakenkitten & Nighthawk pets into production swf.",
+          "priority": "major"
+        },
+        {
+          "icon": "💨",
+          "title": "Toggle Auto Dismiss Item Sold Popup",
+          "description": "Added a toggle in mod menu for auto dismissing of item sold popup.",
+          "priority": "major"
+        },
+        {
+          "icon": "🎨",
+          "title": "Advanced Animal Color Palette",
+          "description": "Added a toggle in mod menu for advanced animal color palette.",
+          "priority": "major"
+        },
+        {
+          "icon": "🎃",
+          "title": "Pumpkin Theme",
+          "description": "Added Pumpkin theme to the theme rotation.",
+          "priority": "major"
+        },
+        {
+          "icon": "🚪",
+          "title": "Room Manager Popup",
+          "description": "Added a Room Manager popup in mod menu. This contains all rooms in the defpacks for easy joining with a search box.",
+          "priority": "major"
+        },
+        {
+          "icon": "🛒",
+          "title": "Shop Explorer Popup",
+          "description": "Added a Shop Explorer popup in mod menu. This scrapes all player shops in the current den and lists item(s) and price(s). Easy access that shop with Open Shop button. Hotkey: Ctrl + Shift + E",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "📁",
+          "title": "Consolidated File Organization",
+          "description": "In cache consolidated all leakcheck files in Username Logger folder and .json/.txt files in Data folder.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "📊",
+          "title": "Enhanced Leakcheck Statistics",
+          "description": "When stopping or completing leakcheck it will now state # AJC accounts, # General accounts and # Not found in any leaks. Each 1 equals one username:password combo.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🔄",
+          "title": "Prevented Auto Updates to Modded SWF",
+          "description": "Prevented auto updates to our modded .swf files. This should fix infinite loading on login due to AJC updates.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "📦",
+          "title": "Fixed Duplicate Assets Folder",
+          "description": "Fixed duplicate 'assets' folder being present causing confusion.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "✅",
+          "title": "Improved Bulk Purchase Validation",
+          "description": "Improved bulk purchases validation to prevent any item issues.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🎯",
+          "title": "Focused SWF Variations",
+          "description": "Focused .swf variations: production(main client and up-to-date mods), egg-prediction(cause i broke it and forgor what i did to it), non purple private chats(for vids or memes), unmodded(utilize strawberry jam without all the mods). Removed useless older swf versions and dev client as it was outdated.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🏠",
+          "title": "Den Item Filtering",
+          "description": "Added some den item filtering, feel free to request more ideas.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🐛",
+          "title": "Infinite Loading Fix",
+          "description": "Fixed infinite loading on login due to AJC updates by preventing auto updates to modded .swf files.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Multi-Item Shop Edit Fix",
+          "description": "Fixed an issue where multi-item edits in shop would only edit 1.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [
+        {
+          "icon": "⌨️",
+          "title": "F10",
+          "description": "Opens centralized mod menu containing all popups and mods easily toggleable.",
+          "keys": ["F10"]
+        },
+        {
+          "icon": "⌨️",
+          "title": "Ctrl + Shift + E",
+          "description": "Opens Shop Explorer popup that scrapes all player shops in the current den.",
+          "keys": ["Ctrl", "Shift", "E"]
+        }
+      ],
+      "commands": [],
+      "messages": []
     }
   }
 }

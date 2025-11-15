@@ -1,5 +1,6 @@
 const path = require('path');
 const { ipcRenderer } = require('electron');
+const ToastService = require('../../../../ui/services/ToastService');
 
 exports.name = 'updatesModal';
 
@@ -63,6 +64,9 @@ exports.render = async function (app, data = {}) {
                                     `).join('')}
                                 </select>
                             ` : ''}
+                            <button type="button" class="text-gray-400 hover:bg-error-red hover:text-white transition-colors p-1 rounded-md" id="closeUpdatesModalHeaderBtn" aria-label="Close">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -103,9 +107,6 @@ exports.render = async function (app, data = {}) {
                         <div class="flex space-x-3">
                             <button id="markAsRead" class="px-4 py-2 bg-highlight-green/20 text-highlight-green hover:bg-highlight-green/30 rounded-lg transition-colors text-sm font-medium">
                                 <i class="fas fa-check mr-2"></i>Mark as Read
-                            </button>
-                            <button id="closeModalBtn2" class="px-4 py-2 bg-tertiary-bg text-sidebar-text hover:bg-sidebar-hover hover:text-text-primary rounded-lg transition-colors text-sm font-medium">
-                                <i class="fas fa-times mr-2"></i>Close
                             </button>
                         </div>
                     </div>
@@ -264,51 +265,57 @@ exports.render = async function (app, data = {}) {
         });
     });
 
-    $modal.find('#closeModalBtn2, #updatesModalOverlay').click(function(e) {
-        if (e.target === this) {
-            // Enhanced smooth exit animation
-            $modal.find('.transform').css({
-                'opacity': '1',
-                'transform': 'scale(1) translateY(0px)',
-                'filter': 'blur(0px)',
-                'transition': 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out, filter 0.2s ease-in-out'
-            }).animate({
-                'opacity': '0',
-                'transform': 'scale(0.9) translateY(-20px)',
-                'filter': 'blur(4px)'
-            }, {
-                duration: 300,
-                step: function(now, fx) {
-                    if (fx.prop === 'transform') {
-                        $(this).css('transform', `scale(${now}) translateY(-20px)`);
-                    } else if (fx.prop === 'filter') {
-                        $(this).css('filter', `blur(4px)`);
-                    }
-                },
-                complete: function() {
-                    app.modals.close();
+    const closeModal = function() {
+        // Enhanced smooth exit animation
+        $modal.find('.transform').css({
+            'opacity': '1',
+            'transform': 'scale(1) translateY(0px)',
+            'filter': 'blur(0px)',
+            'transition': 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out, filter 0.2s ease-in-out'
+        }).animate({
+            'opacity': '0',
+            'transform': 'scale(0.9) translateY(-20px)',
+            'filter': 'blur(4px)'
+        }, {
+            duration: 300,
+            step: function(now, fx) {
+                if (fx.prop === 'transform') {
+                    $(this).css('transform', `scale(${now}) translateY(-20px)`);
+                } else if (fx.prop === 'filter') {
+                    $(this).css('filter', `blur(4px)`);
                 }
-            });
-            
-            // Fade out backdrop with slight delay
-            setTimeout(() => {
-                $modal.animate({ 'opacity': '0' }, 250);
-            }, 50);
+            },
+            complete: function() {
+                app.modals.close();
+            }
+        });
+        
+        // Fade out backdrop with slight delay
+        setTimeout(() => {
+            $modal.animate({ 'opacity': '0' }, 250);
+        }, 50);
+    };
+
+    $modal.find('#closeUpdatesModalHeaderBtn').click(closeModal);
+
+    $modal.find('#updatesModalOverlay').click(function(e) {
+        if (e.target === this) {
+            closeModal();
         }
     });
 
     $modal.find('#markAsRead').click(async function() {
         try {
             await ipcRenderer.invoke('set-setting', 'lastSeenVersion', targetVersion);
-            showToast($modal, 'Updates marked as read!', 'success');
+            ToastService.showInModal($modal, 'Updates marked as read!', 'success', 3000, true);
             
             // Delay close to show toast
             setTimeout(() => {
-                $modal.find('#closeModalBtn2').click();
+                closeModal();
             }, 1500);
         } catch (error) {
             console.error('Failed to mark as read:', error);
-            showToast($modal, 'Failed to mark as read', 'error');
+            ToastService.showInModal($modal, 'Failed to mark as read', 'error', 3000, true);
         }
     });
 
@@ -491,61 +498,6 @@ function getPriorityClass(priority) {
     }
 }
 
-/**
- * Show a toast notification positioned relative to the modal
- * @param {jQuery} $modal - The modal element for positioning context
- * @param {string} message - The message to show
- * @param {string} type - The type of notification (success, error, warning)
- */
-function showToast($modal, message, type = 'success') {
-    const colors = {
-        success: 'bg-highlight-green text-white',
-        error: 'bg-red-500 text-white',
-        warning: 'bg-yellow-500 text-black'
-    };
-
-    const icons = {
-        success: 'fas fa-check-circle',
-        error: 'fas fa-exclamation-circle',
-        warning: 'fas fa-exclamation-triangle'
-    };
-
-    const toastId = `updates-toast-${Date.now()}`;
-    const toast = $(`
-        <div id="${toastId}" class="absolute top-4 right-4 px-4 py-2 rounded-lg shadow-xl z-[100000] text-sm font-medium ${colors[type] || colors.success}">
-            <i class="${icons[type]} mr-2"></i>${message}
-        </div>
-    `);
-    
-    // Enhanced toast animation
-    toast.css({
-        'opacity': '0',
-        'transform': 'translateY(-20px) scale(0.9)',
-        'filter': 'blur(2px)',
-        'transition': 'opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.2s ease-out'
-    });
-    
-    $modal.append(toast);
-    
-    // Animate in
-    setTimeout(() => {
-        toast.css({
-            'opacity': '1',
-            'transform': 'translateY(0px) scale(1)',
-            'filter': 'blur(0px)'
-        });
-    }, 10);
-
-    setTimeout(() => {
-        toast.css({
-            'opacity': '0',
-            'transform': 'translateY(-10px) scale(0.95)',
-            'filter': 'blur(1px)',
-            'transition': 'opacity 0.25s ease-in-out, transform 0.25s ease-in-out, filter 0.2s ease-in-out'
-        });
-        setTimeout(() => toast.remove(), 250);
-    }, 3000);
-}
 
 exports.close = function (app) {
     // Clean up window resize event handler

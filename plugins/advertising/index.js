@@ -240,29 +240,41 @@ document.addEventListener('DOMContentLoaded', () => {
       messageIndex++;
     }
 
-    let targetRoomId = await dispatch.getState('internalRoomId');
-    if (!targetRoomId) {
-        targetRoomId = await dispatch.getState('room');
-        if (targetRoomId) {
-             console.warn("Auto Advertising: Using textual room name as internalRoomId was not found. This might not work correctly for pubMsg.");
+    const textualRoomId = await dispatch.getState('room');
+    let internalRoomIdValue = await dispatch.getState('internalRoomId');
+    let parsedInternalRoomId = null;
+
+    if (internalRoomIdValue !== null && internalRoomIdValue !== undefined) {
+        parsedInternalRoomId = parseInt(internalRoomIdValue, 10);
+        if (isNaN(parsedInternalRoomId)) {
+            console.warn(`Auto Advertising: internalRoomId '${internalRoomIdValue}' could not be parsed to a number.`);
+            parsedInternalRoomId = null;
         }
+    }
+
+    let targetRoomId = null;
+    if (parsedInternalRoomId !== null) {
+        targetRoomId = parsedInternalRoomId;
+    } else if (textualRoomId) {
+        targetRoomId = textualRoomId;
+        console.warn(`Auto Advertising: Parsed internalRoomId not available (original value: ${internalRoomIdValue}). Falling back to textualRoomId: ${textualRoomId}. pubMsg might not work correctly.`);
     }
 
     if (!targetRoomId) {
       console.warn("Auto Advertising: Room ID (internal or textual) not available when trying to send message. Skipping this tick.");
-      scheduleNextMessage(); // Still schedule the next attempt
+      scheduleNextMessage();
       return;
     }
 
     try {
       const packet = `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${messageToSend}%9]]></txt></body></msg>`;
-      dispatch.sendRemoteMessage(packet);
+      await dispatch.sendRemoteMessage(packet);
+      scheduleNextMessage(); // Schedule the next message after successful send
     } catch (error) {
       console.error("Error sending message:", error);
       showToast("Error sending message", "error");
+      scheduleNextMessage(); // Still schedule next attempt even on error
     }
-    
-    scheduleNextMessage(); // Schedule the next message
   }
 
   /**
@@ -309,12 +321,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    let targetRoomId = await dispatch.getState('internalRoomId');
-    if (!targetRoomId) {
-        targetRoomId = await dispatch.getState('room');
-        if (targetRoomId) {
-             console.warn("Auto Advertising (Preview): Using textual room name as internalRoomId was not found. This might not work correctly for pubMsg.");
+    const textualRoomId = await dispatch.getState('room');
+    let internalRoomIdValue = await dispatch.getState('internalRoomId');
+    let parsedInternalRoomId = null;
+
+    if (internalRoomIdValue !== null && internalRoomIdValue !== undefined) {
+        parsedInternalRoomId = parseInt(internalRoomIdValue, 10);
+        if (isNaN(parsedInternalRoomId)) {
+            console.warn(`Auto Advertising (Preview): internalRoomId '${internalRoomIdValue}' could not be parsed to a number.`);
+            parsedInternalRoomId = null;
         }
+    }
+
+    let targetRoomId = null;
+    if (parsedInternalRoomId !== null) {
+        targetRoomId = parsedInternalRoomId;
+    } else if (textualRoomId) {
+        targetRoomId = textualRoomId;
+        console.warn(`Auto Advertising (Preview): Parsed internalRoomId not available (original value: ${internalRoomIdValue}). Falling back to textualRoomId: ${textualRoomId}. pubMsg might not work correctly.`);
     }
 
     if (!targetRoomId) {
@@ -325,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const packet = `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${message}%9]]></txt></body></msg>`;
-      dispatch.sendRemoteMessage(packet);
+      await dispatch.sendRemoteMessage(packet);
       showToast(`Preview sent: "${message}"`, "success");
     } catch (error) {
       console.error("Error sending preview message:", error);

@@ -1,10 +1,9 @@
-const { app, BrowserWindow, globalShortcut, shell, ipcMain, protocol, net, dialog, session } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, protocol, net, dialog, session } = require('electron');
 const path = require('path');
 const fs = require('fs'); // Changed to import standard fs module
 const fsPromises = fs.promises; // Alias for promises API
 const crypto = require('crypto');
 const { fork, spawn } = require('child_process');
-const { autoUpdater } = require('electron-updater');
 const Store = require('electron-store');
 const os = require('os');
 const processManager = require('../utils/ProcessManager');
@@ -22,6 +21,12 @@ const MIGRATION_FLAG_LEAK_CHECK_API_KEY_V1 = 'leakCheckApiKeyMigratedToKeytar_v1
 const Patcher = require('./renderer/application/patcher');
 const { getDataPath, getAssetsPath } = require('../Constants');
 const logManager = require('../utils/LogManager');
+const AutoUpdateService = require('../services/update/AutoUpdateService');
+const AppStateService = require('../services/state/AppStateService');
+const WindowCreationService = require('../services/window/WindowCreationService');
+const AppNotificationService = require('../services/notification/AppNotificationService');
+const GlobalShortcutManager = require('../managers/shortcut/GlobalShortcutManager');
+const CacheService = require('../services/cache/CacheService');
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 
@@ -29,7 +34,6 @@ const isDevelopment = process.env.NODE_ENV === 'development'
 function devLog(...args) {}
 function devWarn(...args) {}
 const USER_DATA_PATH = app.getPath('userData');
-const STATE_FILE_PATH = path.join(USER_DATA_PATH, 'jam_state.json');
 
 const STRAWBERRY_JAM_CLASSIC_BASE_PATH = process.platform === 'win32'
   ? path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'strawberry-jam-classic')
@@ -194,8 +198,14 @@ class Electron {
     setupIpcHandlers(this); // Call the new IPC setup function
     this.pluginWindows = new Map();
     this._backgroundPlugins = new Set();
-    this._setupFileOpeningIPC(); // Add this line
-    this.manualCheckInProgress = false; // Flag for manual update checks
+    this._setupFileOpeningIPC();
+    this.manualCheckInProgressRef = { value: false };
+    this.autoUpdateService = new AutoUpdateService(app, this._store, this._window, this.manualCheckInProgressRef);
+    this.appStateService = new AppStateService(app, DEFAULT_APP_STATE);
+    this.windowCreationService = new WindowCreationService(defaultWindowOptions);
+    this.appNotificationService = new AppNotificationService(this._window, this.pluginWindows, this._backgroundPlugins);
+    this.globalShortcutManager = new GlobalShortcutManager();
+    this.cacheService = new CacheService();
 
     ipcMain.on('broadcast-to-plugins', (event, channel, ...args) => {
       this.pluginWindows.forEach((window) => {
@@ -379,33 +389,12 @@ class Electron {
   } 
 
   async getAppState() {
-    try {
-      await fsPromises.access(STATE_FILE_PATH);
-      const data = await fsPromises.readFile(STATE_FILE_PATH, 'utf-8');
-      const currentState = JSON.parse(data);
-      const mergedState = {
-        ...DEFAULT_APP_STATE,
-        ...currentState,
-        leakCheck: { ...DEFAULT_APP_STATE.leakCheck, ...(currentState.leakCheck || {}) }
-      };
-      return mergedState;
-    } catch (error) {
-      if (error.code === 'ENOENT') {
-        return JSON.parse(JSON.stringify(DEFAULT_APP_STATE));
-      }
-      return JSON.parse(JSON.stringify(DEFAULT_APP_STATE));
-    }
+    return await this.appStateService.getAppState();
   }
 
   async setAppState(newState) {
-     try {
-       await fsPromises.mkdir(USER_DATA_PATH, { recursive: true });
-       await fsPromises.writeFile(STATE_FILE_PATH, JSON.stringify(newState, null, 2), 'utf-8');
-       return { success: true };
-     } catch (error) {
-       return { success: false, error: error.message };
-     }
-   }
+    return await this.appStateService.setAppState(newState);
+  }
 
   async _confirmNoOtherInstances(actionDescription) {
     const gotTheLock = app.requestSingleInstanceLock();
@@ -425,60 +414,16 @@ class Electron {
     }
   }
   _getCachePaths() {
-    const cachePaths = [];
-
-    if (process.platform === 'win32') {
-      // Clear the full Strawberry Jam app data directory
-      const appDataPath = app.getPath('appData');
-      cachePaths.push(path.join(appDataPath, 'strawberry-jam'));
-      
-      // Clear the AJ Classic directory
-      cachePaths.push(path.join(appDataPath, 'AJ Classic'));
-      
-    } else if (process.platform === 'darwin') {
-      // macOS paths
-      const homeDir = app.getPath('home');
-      const libraryPath = path.join(homeDir, 'Library', 'Application Support');
-      cachePaths.push(path.join(libraryPath, 'strawberry-jam'));
-      cachePaths.push(path.join(libraryPath, 'AJ Classic'));
-      
-    } else {
-    }
-
-    return cachePaths;
+    return this.cacheService.getCachePaths();
   }
+
   async _clearAppCache() {
-    const cachePaths = this._getCachePaths();
-
-    let errors = [];
-    for (const cachePath of cachePaths) {
-      try {
-        await fsPromises.rm(cachePath, { recursive: true, force: true });
-      } catch (error) {
-        if (error.code === 'ENOENT') {
-        } else {
-          console.error(`[Cache Clear Method] Failed to delete ${cachePath}:`, error);
-          errors.push(`Failed to delete ${path.basename(cachePath)}: ${error.message}`);
-        }
-      }
-    }
-
-    if (errors.length > 0) {
-      console.error('[Cache Clear Method] Finished with errors:', errors.join('; '));
-    } else {
-    }
+    return await this.cacheService.clearAppCache();
   }
 
   _getUninstallerPath() {
-    if (process.platform === 'win32') {
-      const localAppData = app.getPath('localAppData');
-      return path.join(localAppData, 'Programs', 'strawberry-jam', 'Uninstall strawberry-jam.exe');
-    } else if (process.platform === 'darwin') {
-      return null;
-    } else {
-        return null;
-      }
-    }
+    return this.cacheService.getUninstallerPath();
+  }
   
   
     create () {
@@ -572,96 +517,14 @@ class Electron {
     return this
   }
 
-  _registerShortcut (key, callback) {
-    globalShortcut.register(key, callback)
+  _registerShortcut(key, callback) {
+    this.globalShortcutManager.register(key, callback);
   }
 
-  _createWindow ({ url, frameName }) {
-    if (frameName === 'external') {
-      shell.openExternal(url)
-      return { action: 'deny' }
-    }
-
-    return {
-      action: 'allow',
-      overrideBrowserWindowOptions: {
-        ...defaultWindowOptions,
-        autoHideMenuBar: true,
-        frame: true,
-        webPreferences: {
-          ...defaultWindowOptions.webPreferences
-        }
-      }
-    }
+  _createWindow({ url, frameName }) {
+    return this.windowCreationService.createWindow({ url, frameName });
   }
 
-  _initAutoUpdater () {
-    if (!app.isPackaged) {
-      console.log('[AutoUpdater] Skipping auto-updater initialization in development mode.');
-      return;
-    }
-    
-    const enableAutoUpdates = this._store.get('updates.enableAutoUpdates', true);
-    autoUpdater.autoDownload = enableAutoUpdates;
-    autoUpdater.allowDowngrade = false;
-    autoUpdater.allowPrerelease = false;
-
-    autoUpdater.on('checking-for-update', () => {
-      console.log('[AutoUpdater] Checking for update...');
-      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
-        this._window.webContents.send('manual-update-check-status', { status: 'checking', message: 'Checking for updates...' });
-      }
-    });
-
-    autoUpdater.on('update-not-available', (info) => {
-      console.log('[AutoUpdater] Update not available.');
-      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
-        this._window.webContents.send('manual-update-check-status', { status: 'no-update', message: 'No new updates available.' });
-        this.manualCheckInProgress = false;
-      }
-    });
-
-    autoUpdater.on('error', (err) => {
-      console.error('[AutoUpdater] Error:', err.message);
-      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
-        this._window.webContents.send('manual-update-check-status', { status: 'error', message: `Error checking for updates: ${err.message}` });
-        this.manualCheckInProgress = false;
-      }
-    });
-
-    autoUpdater.on('update-available', (info) => {
-      console.log(`[AutoUpdater] Update available: ${info.version}`);
-      const messageText = autoUpdater.autoDownload
-        ? 'A new update is available. Downloading now...'
-        : 'A new update is available. Click "Update Now" to download.';
-      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
-        this._window.webContents.send('manual-update-check-status', { status: 'available', message: messageText, version: info.version });
-      }
-    });
-
-    autoUpdater.on('update-downloaded', (info) => {
-      console.log(`[AutoUpdater] Update downloaded: ${info.version}`);
-      if (this.manualCheckInProgress && this._window && this._window.webContents && !this._window.isDestroyed()) {
-        this._window.webContents.send('manual-update-check-status', { status: 'downloaded', message: 'Update downloaded. Click "Restart Now" to install.' });
-        this.manualCheckInProgress = false;
-      }
-    });
-
-    if (enableAutoUpdates) {
-      const checkInterval = 1000 * 60 * 5; // 5 minutes
-      setTimeout(() => {
-        autoUpdater.checkForUpdatesAndNotify().catch(err => {
-          console.error('[AutoUpdater] Initial check failed:', err.message);
-        });
-      }, 5000); // Initial check after 5 seconds
-      
-      setInterval(() => {
-        autoUpdater.checkForUpdatesAndNotify().catch(err => {
-          console.error('[AutoUpdater] Scheduled check failed:', err.message);
-        });
-      }, checkInterval);
-    }
-  }
 
   messageWindow (type, message = {}) {
     if (this._window && this._window.webContents) {
@@ -687,6 +550,7 @@ class Electron {
     };
     
     this._window = new BrowserWindow(windowOptions);
+    this.autoUpdateService.window = this._window;
     
     const { screen } = require('electron');
     const primaryDisplay = screen.getPrimaryDisplay();
@@ -726,6 +590,9 @@ class Electron {
 
     const assetsPath = getAssetsPath(app)
     
+    const FilesController = require('../api/controllers/FilesController');
+    FilesController.initialize(app);
+    
     this._window.webContents.send('set-data-path', dataPath)
     this._window.webContents.send('set-assets-path', assetsPath)
     this._window.webContents.send('set-user-data-path', USER_DATA_PATH)
@@ -763,45 +630,20 @@ class Electron {
       const dataPath = getDataPath(app);
       await fsPromises.mkdir(dataPath, { recursive: true });
     } catch (error) {
-      dialog.showErrorBox('Startup Error', `Failed to create base data directory. Some features might not work correctly.\n\nError: ${error.message}`);
-    }    if (app.isPackaged) {
-      const dataPath = getDataPath(app);
-      const filesToEnsure = [
-        'working_accounts.txt',
-        'collected_usernames.txt',
-        'processed_usernames.txt',
-        'potential_accounts.txt',
-        'found_accounts.txt',
-        'ajc_accounts.txt'
-      ];
-
-      try {
-        await fsPromises.mkdir(dataPath, { recursive: true });
-
-        // Create all files in parallel for better performance
-        const fileCreationPromises = filesToEnsure.map(async (filename) => {
-          const filePath = path.join(dataPath, filename);
-          try {
-            await fsPromises.access(filePath);
-          } catch (accessError) {
-            if (accessError.code === 'ENOENT') {
-              await fsPromises.writeFile(filePath, '', 'utf-8');
-            } else {
-            }
-          }
-        });
-
-        // Wait for all file operations to complete, but with a timeout
-        await Promise.all(fileCreationPromises).catch((error) => {
-        });
-      } catch (error) {
-        dialog.showErrorBox('Startup Error', `Failed to create necessary data files in ${dataPath}. Some features might not work correctly.\n\nError: ${error.message}`);
-      }    }
+      if (isDevelopment) {
+        console.error(`[Electron] Error creating data directory: ${error.message}`);
+      }
+    }
     
     // Fork API process with timeout and error handling
     try {
+      const assetsPath = getAssetsPath(app);
       this._apiProcess = fork(path.join(__dirname, '..', 'api', 'index.js'), [], {
-        silent: false // Allow child process to log to console
+        silent: false, // Allow child process to log to console
+        env: {
+          ...process.env,
+          STRAWBERRY_JAM_ASSETS_PATH: assetsPath
+        }
       });
       processManager.add(this._apiProcess);
 
@@ -814,35 +656,8 @@ class Electron {
         }
       });
 
-      // Listen for messages from API process
-      this._apiProcess.on('message', (message) => {
-        if (message && message.type === 'aj-classic-closing') {
-          logManager.log('[AJ Classic Close] Received notification from API process that AJ Classic is closing, closing all plugins', 'main', logManager.logLevels.INFO);
-          
-          // Close all plugin windows
-          if (this.pluginWindows) {
-            this.pluginWindows.forEach((window, name) => {
-              if (window && !window.isDestroyed()) {
-                try {
-                  logManager.log(`[AJ Classic Close] Closing plugin window: ${name}`, 'main', logManager.logLevels.INFO);
-                  window.close();
-                } catch (error) {
-                  logManager.error(`[AJ Classic Close] Error closing plugin window ${name}: ${error.message}`);
-                }
-              }
-            });
-            
-            // Clear the plugin windows map
-            this.pluginWindows.clear();
-            this._backgroundPlugins.clear();
-            
-            // Notify the main window that plugins were closed
-            if (this._window && !this._window.isDestroyed()) {
-              this._window.webContents.send('plugins-closed-by-aj-classic');
-            }
-          }
-        }
-      });
+      this.appNotificationService.window = this._window;
+      this.appNotificationService.notifyStrawberryJamClose(this._apiProcess);
 
       // Give API process a moment to start, but don't block the main startup
       setTimeout(() => {
@@ -855,16 +670,11 @@ class Electron {
     }
 
     if (isDevelopment) {
-      this._registerShortcut('F11', () => {
-        const focusedWindow = BrowserWindow.getFocusedWindow();
-        if (focusedWindow && focusedWindow.webContents) {
-          focusedWindow.webContents.toggleDevTools();
-        }
-      })
+      this.globalShortcutManager.registerDevToolsShortcut();
     }
 
 
-    this._initAutoUpdater();
+    this.autoUpdateService.initialize();
 
     // Apply SWF on launch if enabled
     try {

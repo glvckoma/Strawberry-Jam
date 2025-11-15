@@ -27,7 +27,7 @@ module.exports = {
               <i class="fas fa-bug mr-2 text-highlight-purple"></i>
               Report a Problem
             </h3>
-            <button class="modal-close-button-std p-2 rounded text-gray-400 hover:bg-error-red hover:text-white transition-colors focus:outline-none">
+            <button type="button" class="text-gray-400 hover:bg-error-red hover:text-white transition-colors p-1 rounded-md" aria-label="Close">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -89,10 +89,7 @@ module.exports = {
             </div>
           </div>
           
-          <div class="flex items-center justify-between px-6 py-4 bg-tertiary-bg border-t border-gray-700 sticky bottom-0 z-10">
-            <button id="cancel-report" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 hover:text-white text-gray-300 transition-colors duration-200 rounded-md flex items-center transform hover:scale-105">
-              <i class="fas fa-times mr-1.5"></i> Cancel
-            </button>
+          <div class="flex items-center justify-end px-6 py-4 bg-tertiary-bg border-t border-gray-700 sticky bottom-0 z-10">
             <button id="generate-report" class="px-4 py-2 bg-highlight-purple hover:bg-highlight-purple/80 text-white transition-colors duration-200 rounded-md flex items-center transform hover:scale-105 hover:shadow-glow focus:outline-none">
               <i class="fas fa-file-alt mr-1.5"></i> Generate Report
             </button>
@@ -175,10 +172,9 @@ module.exports = {
    */
   bindEvents($modal) {
     const $generateButton = $modal.find('#generate-report');
-    const $cancelButton = $modal.find('#cancel-report');
     const $copyButton = $modal.find('#copy-report');
     const $saveButton = $modal.find('#save-report');
-    const $closeButton = $modal.find('.modal-close-button-std');
+    const $closeButton = $modal.find('button[aria-label="Close"]');
     const $problemDescription = $modal.find('#problem-description');
     const $descriptionError = $modal.find('#description-error');
     const $modalContent = $modal.find('.modal-content');
@@ -225,15 +221,6 @@ module.exports = {
       }
       
       await this.generateReport($modal);
-    });
-    
-    // Cancel/close modal
-    $cancelButton.on('click', () => {
-      animateClose(() => {
-        if (this.application && this.application.modals) {
-          this.application.modals.close();
-        }
-      });
     });
     
     // X close button

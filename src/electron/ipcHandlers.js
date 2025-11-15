@@ -4,63 +4,46 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const crypto = require('crypto');
 const { spawn } = require('child_process');
+const { autoUpdater } = require('electron-updater');
 const processManager = require('../utils/ProcessManager');
 const logManager = require('../utils/LogManager');
-const os = require('os');
-const { autoUpdater } = require('electron-updater');
-const { getDataPath } = require('../Constants');
 const PriceCheckerScraper = require('../services/PriceCheckerScraper');
+const SettingsService = require('../services/settings/SettingsService');
+const FileIOHandler = require('../services/file/FileIOHandler');
+const WindowManager = require('../managers/window/WindowManager');
+const GameTimeTracker = require('../services/game/GameTimeTracker');
+const GameProcessManager = require('../managers/game/GameProcessManager');
+const AccountManager = require('../services/account/AccountManager');
+const SystemInfoService = require('../services/system/SystemInfoService');
+const { getUsernameLoggerPath } = require('../Constants');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const STRAWBERRY_JAM_CLASSIC_BASE_PATH = process.platform === 'win32'
-  ? path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'strawberry-jam-classic')
-  : process.platform === 'darwin'
-    ? path.join('/', 'Applications', 'Strawberry Jam Classic.app', 'Contents')
-    : undefined;
-
-let KEYTAR_SERVICE_LEAK_CHECK_API_KEY;
-const KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY = 'leak_checker_api_key';
-
-// Cache for game time to revert to in case of data corruption
-let lastKnownGoodGameTime = 0;
-
 function setupIpcHandlers(electronInstance) {
-  KEYTAR_SERVICE_LEAK_CHECK_API_KEY = `${app.getName()}-leak-check-api-key`;
+  const KEYTAR_SERVICE_LEAK_CHECK_API_KEY = `${app.getName()}-leak-check-api-key`;
+  const settingsService = new SettingsService(electronInstance._store, electronInstance.keytar, KEYTAR_SERVICE_LEAK_CHECK_API_KEY);
 
-  // AJ Classic closing functionality moved to main process in index.js
+  const gameStartTimeRef = { value: null };
+  const isGameTimeBeingTrackedRef = { value: false };
+  const lastKnownGoodGameTimeRef = { value: 0 };
+
+  const fileIOHandler = new FileIOHandler(app, electronInstance._window);
+  const windowManager = new WindowManager(electronInstance);
+  const gameTimeTracker = new GameTimeTracker(app, gameStartTimeRef, lastKnownGoodGameTimeRef);
+  const gameProcessManager = new GameProcessManager(electronInstance, gameTimeTracker, gameStartTimeRef, isGameTimeBeingTrackedRef);
+  const accountManager = new AccountManager(electronInstance._store);
+  const systemInfoService = new SystemInfoService();
 
   ipcMain.handle('read-json-file', async (event, filePath, defaultValue) => {
-    const dataDir = getDataPath(app);
-    const fullPath = path.join(dataDir, filePath);
-    try {
-      await fsPromises.access(fullPath);
-      const fileContent = await fsPromises.readFile(fullPath, 'utf-8');
-      return JSON.parse(fileContent);
-    } catch (error) {
-      return defaultValue;
-    }
+    return await fileIOHandler.readJsonFile(filePath, defaultValue);
   });
 
   ipcMain.handle('write-json-file', async (event, filePath, data) => {
-    const dataDir = getDataPath(app);
-    const fullPath = path.join(dataDir, filePath);
-    try {
-      await fsPromises.writeFile(fullPath, JSON.stringify(data, null, 2), 'utf-8');
-      return true;
-    } catch (error) {
-      console.error(`[IPC] Error writing JSON file '${fullPath}':`, error);
-      return false;
-    }
+    return await fileIOHandler.writeJsonFile(filePath, data);
   });
 
   ipcMain.handle('read-file', async (event, filePath) => {
-    try {
-      return await fsPromises.readFile(filePath, 'utf-8');
-    } catch (error) {
-      console.error(`[IPC] Error reading file '${filePath}':`, error);
-      throw error;
-    }
+    return await fileIOHandler.readFile(filePath);
   });
 
   ipcMain.on('show-toast', (event, { message, type }) => {
@@ -83,96 +66,24 @@ function setupIpcHandlers(electronInstance) {
     });
   });
 
-  // Track if we're already showing an exit confirmation to prevent spam
-  let showingExitConfirmation = false;
-  
   ipcMain.on('window-close', () => {
-    const shouldPrompt = electronInstance._store.get('ui.promptOnExit', true);
-    
-    if (shouldPrompt && electronInstance._window && !electronInstance._window.isDestroyed()) {
-      // Prevent multiple exit confirmation modals
-      if (showingExitConfirmation) {
-        return;
-      }
-      
-      showingExitConfirmation = true;
-      electronInstance._window.webContents.send('show-exit-confirmation');
-      
-      // Reset the flag after a reasonable timeout in case something goes wrong
-      setTimeout(() => {
-        showingExitConfirmation = false;
-      }, 10000); // 10 seconds timeout
-    } else {
-      electronInstance._window.close();
-    }
+    windowManager.handleWindowClose();
   });
-  
-  // Track if we're already processing an exit confirmation to prevent spam
-  let processingExitConfirmation = false;
-  
-  ipcMain.on('exit-confirmation-response', (event, { confirmed, dontAskAgain }) => {
-    // Prevent multiple rapid responses
-    if (processingExitConfirmation) {
-      return;
-    }
-    
-    processingExitConfirmation = true;
-    showingExitConfirmation = false; // Reset the showing flag when we get a response
-    
-    if (dontAskAgain) {
-      electronInstance._store.set('ui.promptOnExit', false);
-    }
-    
-    if (confirmed) {
-      electronInstance._window.close();
-    }
-    
-    // Reset the flag after a short delay to prevent accidental double-clicks
-    setTimeout(() => {
-      processingExitConfirmation = false;
-    }, 500);
+
+  ipcMain.on('exit-confirmation-response', (event, response) => {
+    windowManager.handleExitConfirmationResponse(response);
   });
 
   ipcMain.on('window-minimize', () => {
-    if (electronInstance._window) {
-      electronInstance._window.minimize();
-      electronInstance._handleAppMinimized();
-    }
+    windowManager.minimizeWindow();
   });
-  
+
   ipcMain.on('window-toggle-fullscreen', () => {
-    if (!electronInstance._window) return;
-    
-    if (!electronInstance._window.isFullScreen()) {
-      const bounds = electronInstance._window.getBounds();
-      electronInstance._savedWindowState = {
-        bounds,
-        isMaximized: electronInstance._window.isMaximized()
-      };
-    }
-    
-    electronInstance._window.setFullScreen(!electronInstance._window.isFullScreen());
-    
-    electronInstance._window.webContents.send('fullscreen-changed', electronInstance._window.isFullScreen());
+    windowManager.toggleFullscreen();
   });
 
   ipcMain.on('window-toggle-maximize', () => {
-    if (!electronInstance._window) return;
-    
-    if (electronInstance._window.isMaximized()) {
-      electronInstance._window.unmaximize();
-    } else {
-      if (!electronInstance._savedWindowState) {
-        electronInstance._savedWindowState = {
-          bounds: electronInstance._window.getBounds(),
-          isMaximized: false
-        };
-      }
-      
-      electronInstance._window.maximize();
-    }
-    
-    electronInstance._window.webContents.send('maximize-changed', electronInstance._window.isMaximized());
+    windowManager.toggleMaximize();
   });
 
   ipcMain.handle('get-modal-html', async (event, modalName) => {
@@ -201,39 +112,16 @@ function setupIpcHandlers(electronInstance) {
     return app.getVersion();
   });
 
+  ipcMain.handle('get-username-logger-path', () => {
+    return getUsernameLoggerPath(app);
+  });
+
   ipcMain.handle('get-setting', async (event, key) => {
-    try {
-      if (key === 'plugins.usernameLogger.apiKey') {
-        const apiKey = await electronInstance.keytar.getPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY);
-        return apiKey || '';
-      }
-      const valueFromStore = electronInstance._store.get(key);
-      return valueFromStore;
-    } catch (error) {
-      if (isDevelopment) {
-      }
-      return key === 'plugins.usernameLogger.apiKey' ? '' : undefined;
-    }
+    return await settingsService.getSetting(key);
   });
 
   ipcMain.handle('set-setting', async (event, key, value) => {
-    try {
-      if (key === 'plugins.usernameLogger.apiKey') {
-        if (typeof value === 'string' && value.trim() !== '') {
-          await electronInstance.keytar.setPassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY, value);
-        } else {
-          await electronInstance.keytar.deletePassword(KEYTAR_SERVICE_LEAK_CHECK_API_KEY, KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY);
-        }
-        return { success: true };
-      }
-      electronInstance._store.set(key, value);
-      
-      return { success: true };
-    } catch (error) {
-      if (isDevelopment) {
-      }
-      return { success: false, error: error.message };
-    }
+    return await settingsService.setSetting(key, value);
   });
 
   // IPC handler for getting SWF files information
@@ -306,31 +194,7 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.handle('save-text-file', async (event, options) => {
-    
-    if (!electronInstance._window) {
-      return { success: false, canceled: true };
-    }
-    
-    try {
-      const result = await dialog.showSaveDialog(electronInstance._window, {
-        title: 'Save Report',
-        defaultPath: options.suggestedFilename,
-        filters: [
-          { name: 'Text Files', extensions: ['txt'] },
-          { name: 'All Files', extensions: ['*'] }
-        ]
-      });
-      
-      if (result.canceled || !result.filePath) {
-        return { success: false, canceled: true };
-      }
-      
-      await fsPromises.writeFile(result.filePath, options.content, 'utf-8');
-      
-      return { success: true, filePath: result.filePath };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
+    return await fileIOHandler.saveTextFile(options);
   });
 
   ipcMain.on('app-restart', () => {
@@ -512,11 +376,7 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.on('open-plugin-window', electronInstance._handleOpenPluginWindow.bind(electronInstance));
 
   ipcMain.handle('get-os-info', async () => {
-    return {
-      platform: process.platform,
-      release: os.release(),
-      arch: process.arch
-    };
+    return systemInfoService.getOsInfo();
   });
 
   ipcMain.handle('get-server-port', async () => {
@@ -733,168 +593,12 @@ function setupIpcHandlers(electronInstance) {
     });
   });
 
-  let gameTimeInterval;
-  let gameStartTime;
-  let isGameTimeBeingTracked = false; // Track if we're already monitoring a game instance
-
   ipcMain.on('launch-game-client', () => {
-    const exePath = process.platform === 'win32'
-      ? path.join(STRAWBERRY_JAM_CLASSIC_BASE_PATH, 'AJ Classic.exe')
-      : process.platform === 'darwin'
-        ? path.join(STRAWBER_JAM_CLASSIC_BASE_PATH, 'MacOS', 'AJ Classic')
-        : undefined;
-
-    if (!exePath || !fs.existsSync(exePath)) {
-      logManager.error(`[Process] Game client executable not found at: ${exePath}`);
-      dialog.showErrorBox('Launch Error', `Could not find the game client executable. Please ensure it is installed correctly at:\n${exePath}`);
-      return;
-    }
-
-    const dataPath = getDataPath(app);
-    const spawnEnv = {
-      ...process.env,
-      STRAWBERRY_JAM_DATA_PATH: dataPath
-    };
-
-    try {
-      const gameProcess = spawn(exePath, [], {
-        detached: false,
-        stdio: 'ignore',
-        env: spawnEnv
-      });
-
-      processManager.add(gameProcess);
-      
-      // Only track game time for the first instance
-      if (!isGameTimeBeingTracked) {
-        gameStartTime = Date.now();
-        isGameTimeBeingTracked = true;
-        logManager.log('[Process] Starting game time tracking for first instance', 'main', logManager.logLevels.INFO);
-      } else {
-        logManager.log('[Process] Additional game instance launched - not tracking game time', 'main', logManager.logLevels.INFO);
-      }
-      
-      gameProcess.on('close', async (code) => {
-        logManager.log(`Game client process exited with code: ${code}`, 'main', logManager.logLevels.INFO);
-        
-        // Only update game time if this was the tracked instance
-        if (isGameTimeBeingTracked && gameStartTime) {
-          const endTime = Date.now();
-          const durationInSeconds = Math.round((endTime - gameStartTime) / 1000);
-
-          const dataDir = getDataPath(app);
-          const gameTimeFilePath = path.join(dataDir, 'gametime.json');
-          let gameTimeData = { totalGameTime: 0, totalUptime: 0 };
-
-          try {
-            await fsPromises.access(gameTimeFilePath);
-            const fileContent = await fsPromises.readFile(gameTimeFilePath, 'utf-8');
-            gameTimeData = JSON.parse(fileContent);
-            // Sanity check for game time
-            if (gameTimeData.totalGameTime > Date.now() / 1000) {
-              logManager.warn(`[Process] Detected abnormally high game time (${gameTimeData.totalGameTime}), reverting to last known value: ${lastKnownGoodGameTime}.`);
-              gameTimeData.totalGameTime = lastKnownGoodGameTime;
-            } else {
-              // Update the cache with the valid time from the file
-              lastKnownGoodGameTime = gameTimeData.totalGameTime;
-            }
-          } catch (error) {
-            // File doesn't exist, use defaults
-          }
-
-          gameTimeData.totalGameTime += durationInSeconds;
-
-          try {
-            await fsPromises.writeFile(gameTimeFilePath, JSON.stringify(gameTimeData, null, 2), 'utf-8');
-            logManager.log(`[Process] Updated game time: +${durationInSeconds}s (Total: ${gameTimeData.totalGameTime}s)`, 'main', logManager.logLevels.INFO);
-          } catch (error) {
-            logManager.error(`[Process] Failed to write total game time: ${error.message}`);
-          }
-          
-          // Reset tracking state
-          gameStartTime = null;
-          isGameTimeBeingTracked = false;
-        }
-
-        // Notify renderer process that game has exited
-        const allWindows = BrowserWindow.getAllWindows();
-        allWindows.forEach(window => {
-          if (window.webContents) {
-            window.webContents.send('game-process-exit');
-          }
-        });
-      });
-
-      gameProcess.on('error', (err) => {
-        logManager.error(`[Process] Error with game client process: ${err.message}`);
-        
-        // Only reset tracking if this was the tracked instance
-        if (isGameTimeBeingTracked && gameStartTime) {
-          gameStartTime = null;
-          isGameTimeBeingTracked = false;
-        }
-        
-        // Notify renderer process that game has exited due to error
-        const allWindows = BrowserWindow.getAllWindows();
-        allWindows.forEach(window => {
-          if (window.webContents) {
-            window.webContents.send('game-process-exit');
-          }
-        });
-      });
-    } catch (error) {
-      logManager.error(`[Process] Failed to spawn game client process: ${error.message}`);
-      dialog.showErrorBox('Launch Error', `Failed to start the game client process:\n${error.message}`);
-    }
+    gameProcessManager.launchGameClient();
   });
 
-  // Launch AJ Classic external installation
   ipcMain.on('launch-aj-classic', () => {
-    // Cross-platform path resolution for AJ Classic
-    const getAJClassicPath = () => {
-      if (process.platform === 'win32') {
-        return path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'aj-classic', 'AJ Classic.exe');
-      } else if (process.platform === 'darwin') {
-        return path.join('/', 'Applications', 'AJ Classic.app', 'Contents', 'MacOS', 'AJ Classic');
-      } else {
-        // Linux/other platforms - common installation paths
-        const possiblePaths = [
-          path.join(os.homedir(), '.local', 'share', 'aj-classic', 'AJ Classic'),
-          path.join('/opt', 'aj-classic', 'AJ Classic'),
-          path.join('/usr', 'local', 'bin', 'aj-classic')
-        ];
-        return possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
-      }
-    };
-
-    const exePath = getAJClassicPath();
-
-    if (!fs.existsSync(exePath)) {
-      logManager.error(`[Process] AJ Classic executable not found at: ${exePath}`);
-      dialog.showErrorBox('AJ Classic Launch Error', 
-        `Could not find AJ Classic installation.\n\nLooked for:\n${exePath}\n\nPlease ensure AJ Classic is installed correctly.`);
-      return;
-    }
-
-    try {
-      const classicProcess = spawn(exePath, [], {
-        detached: true,
-        stdio: 'ignore'
-      });
-
-      processManager.add(classicProcess);
-      classicProcess.unref(); // Allow parent to exit independently
-      
-      logManager.log(`AJ Classic launched from: ${exePath}`, 'main', logManager.logLevels.INFO);
-
-      classicProcess.on('error', (err) => {
-        logManager.error(`[Process] Error launching AJ Classic: ${err.message}`);
-        dialog.showErrorBox('AJ Classic Launch Error', `Failed to start AJ Classic:\n${err.message}`);
-      });
-    } catch (error) {
-      logManager.error(`[Process] Failed to spawn AJ Classic process: ${error.message}`);
-      dialog.showErrorBox('AJ Classic Launch Error', `Failed to start AJ Classic:\n${error.message}`);
-    }
+    gameProcessManager.launchAJClassic();
   });
 
   // Global IPC handlers that don't depend on electronInstance directly
@@ -958,103 +662,43 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.handle('get-total-game-time', async () => {
-    const dataDir = getDataPath(app);
-    const gameTimeFilePath = path.join(dataDir, 'gametime.json');
-    let totalGameTime = 0;
-    try {
-      await fsPromises.access(gameTimeFilePath);
-      const fileContent = await fsPromises.readFile(gameTimeFilePath, 'utf-8');
-      const data = JSON.parse(fileContent);
-      totalGameTime = data.totalGameTime || 0;
-
-      // Sanity check for game time. If it's a future timestamp, revert to the last known good value.
-      if (totalGameTime > Date.now() / 1000) {
-        logManager.warn(`[IPC] Detected abnormally high game time (${totalGameTime}), reverting to last known value: ${lastKnownGoodGameTime}.`);
-        totalGameTime = lastKnownGoodGameTime;
-      } else {
-        // It's a valid time, so update our cache
-        lastKnownGoodGameTime = totalGameTime;
-      }
-    } catch (error) {
-      // file does not exist
-    }
-
-    if (gameStartTime) {
-      const now = Date.now();
-      const sessionDuration = Math.round((now - gameStartTime) / 1000);
-      totalGameTime += sessionDuration;
-    }
-    
-    return totalGameTime;
+    return await gameTimeTracker.getTotalGameTime();
   });
 
   ipcMain.handle('get-total-uptime', async () => {
-    const dataDir = getDataPath(app);
-    const gameTimeFilePath = path.join(dataDir, 'gametime.json');
-    try {
-      await fsPromises.access(gameTimeFilePath);
-      const fileContent = await fsPromises.readFile(gameTimeFilePath, 'utf-8');
-      const data = JSON.parse(fileContent);
-      return data.totalUptime || 0;
-    } catch (error) {
-      return 0;
-    }
+    return await gameTimeTracker.getTotalUptime();
   });
 
   ipcMain.on('update-total-uptime', async (event, uptime) => {
-    const dataDir = getDataPath(app);
-    const gameTimeFilePath = path.join(dataDir, 'gametime.json');
-    let gameTimeData = { totalGameTime: 0, totalUptime: 0 };
-
-    try {
-      await fsPromises.access(gameTimeFilePath);
-      const fileContent = await fsPromises.readFile(gameTimeFilePath, 'utf-8');
-      gameTimeData = JSON.parse(fileContent);
-    } catch (error) {
-      // File doesn't exist, use defaults
-    }
-
-    gameTimeData.totalUptime = uptime;
-
-    try {
-      await fsPromises.writeFile(gameTimeFilePath, JSON.stringify(gameTimeData, null, 2), 'utf-8');
-    } catch (error) {
-      logManager.error(`[Process] Failed to write total uptime: ${error.message}`);
-    }
+    await gameTimeTracker.updateTotalUptime(uptime);
   });
 
   ipcMain.handle('reset-game-time', async () => {
-    const dataDir = getDataPath(app);
-    const gameTimeFilePath = path.join(dataDir, 'gametime.json');
-    const initialData = { totalGameTime: 0, totalUptime: 0 };
+    return await gameTimeTracker.resetGameTime();
+  });
 
-    try {
-      await fsPromises.writeFile(gameTimeFilePath, JSON.stringify(initialData, null, 2), 'utf-8');
-      lastKnownGoodGameTime = 0; // Reset the in-memory cache as well
-      return { success: true };
-    } catch (error) {
-      logManager.error(`[IPC] Failed to reset game time file: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+  ipcMain.handle('get-saved-accounts', async () => {
+    return await accountManager.getSavedAccounts();
+  });
+
+  ipcMain.handle('save-account', async (event, accountData) => {
+    return await accountManager.saveAccount(accountData);
+  });
+
+  ipcMain.handle('delete-account', async (event, username) => {
+    return await accountManager.deleteAccount(username);
   });
 
   ipcMain.handle('delete-all-accounts', async () => {
-    try {
-      const savedAccounts = electronInstance._store.get('savedAccounts', []);
-      if (!Array.isArray(savedAccounts)) {
-        electronInstance._store.set('savedAccounts', []);
-        return { success: true, deleted: 0 };
-      }
-      const nonPinned = savedAccounts.filter(acc => !acc?.pinned);
-      const pinned = savedAccounts.filter(acc => acc?.pinned);
-      const deletedCount = nonPinned.length;
-      // Keep only pinned accounts
-      electronInstance._store.set('savedAccounts', pinned);
-      return { success: true, deleted: deletedCount, kept: pinned.length };
-    } catch (error) {
-      logManager.error(`[IPC] Failed to delete non-pinned accounts: ${error.message}`);
-      return { success: false, error: error.message };
-    }
+    return await accountManager.deleteAllAccounts();
+  });
+
+  ipcMain.handle('toggle-pin-account', async (event, username) => {
+    return await accountManager.togglePinAccount(username);
+  });
+
+  ipcMain.handle('import-accounts', async (event, accounts) => {
+    return await accountManager.importAccounts(accounts);
   });
 
   // End AJ Classic processes handler
@@ -1079,94 +723,7 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.handle('end-aj-classic-processes', async () => {
-    const { exec } = require('child_process');
-    const util = require('util');
-    const execAsync = util.promisify(exec);
-    
-    try {
-      let processCount = 0;
-      
-      if (process.platform === 'win32') {
-        // Windows: Use taskkill to end AJ Classic processes only
-        const processNames = ['AJ Classic.exe'];
-        
-        for (const processName of processNames) {
-          try {
-            // First check if the process exists
-            const { stdout: listOutput } = await execAsync(`tasklist /FI "IMAGENAME eq ${processName}" /FO CSV | findstr /V "INFO:"`);
-            
-            if (listOutput.includes(processName)) {
-              // Process exists, kill it
-              await execAsync(`taskkill /F /IM "${processName}"`);
-              
-              // Count how many processes were killed
-              const lines = listOutput.split('\n').filter(line => line.includes(processName));
-              processCount += lines.length - 1; // Subtract header line
-              
-              logManager.log(`Killed ${processName} processes`, 'main', logManager.logLevels.INFO);
-            }
-          } catch (killError) {
-            // Process might not exist, which is fine
-            if (!killError.message.includes('not found')) {
-              logManager.warn(`Failed to kill ${processName}: ${killError.message}`);
-            }
-          }
-        }
-      } else if (process.platform === 'darwin') {
-        // macOS: Use pkill to end AJ Classic processes only
-        const processNames = ['AJ Classic'];
-        
-        for (const processName of processNames) {
-          try {
-            // Check if process exists and kill it
-            const { stdout: killOutput } = await execAsync(`pkill -f "${processName}"`);
-            
-            // Count processes (pkill doesn't give us exact count, so we'll estimate)
-            const { stdout: countOutput } = await execAsync(`pgrep -f "${processName}" | wc -l`);
-            const count = parseInt(countOutput.trim(), 10);
-            
-            if (count > 0) {
-              processCount += count;
-              logManager.log(`Killed ${processName} processes`, 'main', logManager.logLevels.INFO);
-            }
-          } catch (killError) {
-            // Process might not exist, which is fine
-            if (!killError.message.includes('No matching processes')) {
-              logManager.warn(`Failed to kill ${processName}: ${killError.message}`);
-            }
-          }
-        }
-      } else {
-        // Linux/other platforms: Use pkill
-        const processNames = ['aj-classic', 'AJ Classic'];
-        
-        for (const processName of processNames) {
-          try {
-            await execAsync(`pkill -f "${processName}"`);
-            processCount++; // Rough estimate since pkill doesn't return exact count
-            logManager.log(`Killed ${processName} processes`, 'main', logManager.logLevels.INFO);
-          } catch (killError) {
-            // Process might not exist, which is fine
-            if (!killError.message.includes('No matching processes')) {
-              logManager.warn(`Failed to kill ${processName}: ${killError.message}`);
-            }
-          }
-        }
-      }
-      
-      return { 
-        success: true, 
-        processCount: processCount,
-        message: processCount > 0 ? `Successfully ended ${processCount} processes` : 'No AJ Classic processes were running'
-      };
-    } catch (error) {
-      logManager.error(`[IPC] Failed to end AJ Classic processes: ${error.message}`);
-      return { 
-        success: false, 
-        error: error.message,
-        processCount: 0
-      };
-    }
+    return await gameProcessManager.endAJClassicProcesses();
   });
 }
 

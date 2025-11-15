@@ -18,9 +18,8 @@
   },
   "nsis": {
     "artifactName": "${productName}-Setup-${version}.${ext}",
-    "oneClick": false,
+    "oneClick": true,
     "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
     "allowElevation": false,
     "installerIcon": "./assets/images/icon.ico",
     "uninstallerIcon": "./assets/images/icon.ico",
@@ -29,7 +28,7 @@
     "shortcutName": "Strawberry Jam",
     "include": "build/installer.nsh",
     "warningsAsErrors": false,
-    "guid": "a2f8d7c4-6f3b-4c9e-9a2b-1c8f9e4d7a3c"
+    "guid": "a2f8d7c4-6f3b-4c9e-9a2b-1c8f9e4d7a3c",
   },
   "files": [
     "**/*",
@@ -46,24 +45,6 @@
       "to": "plugins",
       "filter": [
         "**/*",
-        "!**/*.bak",
-        "!**/*-backup*",
-        "!**/*.tmp",
-        "!**/*-copy*",
-        "!**/temp_*",
-        "!**/tmp_*"
-      ]
-    },
-    {
-      "from": "assets",
-      "to": "assets",
-      "filter": [
-        "**/*",
-        "!memory-bank/**/*",
-        "!extracted-winapp-dev/**/*",
-        "!extracted-winapp-public/**/*",
-        "!*-backup.asar",
-        "!*-dev.asar",
         "!**/*.bak",
         "!**/*-backup*",
         "!**/*.tmp",

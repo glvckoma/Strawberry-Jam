@@ -264,35 +264,36 @@
         },
 
         async authenticateWithAuthToken(authToken) {
-          // Instead of directly calling getGameData, validate the token first
-          // This ensures OTP requirements are properly handled
-          console.log("[AUTH] authenticateWithAuthToken called - validating token through authenticate function");
-          console.log("[AUTH] Token being validated:", authToken ? authToken.substring(0, 10) + '...' : 'null');
-          const request = {auth_token: authToken};
-          try {
-            const result = await authenticate(request);
-            console.log("[AUTH] Token validation successful");
-            return result;
-          } catch (err) {
-            console.error("[AUTH] Token validation failed:", err.message);
-            throw err;
+          if (!authServiceInstance) {
+            authServiceInstance = new AuthService({
+              globals: globals,
+              showOtpModal: showOtpModal,
+              getGameData: () => getGameData
+            });
           }
+          return await authServiceInstance.authenticateWithAuthToken(authToken);
         },
 
         async authenticateWithRefreshToken(refreshToken, otp) {
-          const request = {refresh_token: refreshToken};
-          if (otp) {
-            request.otp = otp;
+          if (!authServiceInstance) {
+            authServiceInstance = new AuthService({
+              globals: globals,
+              showOtpModal: showOtpModal,
+              getGameData: () => getGameData
+            });
           }
-          return await authenticate(request);
+          return await authServiceInstance.authenticateWithRefreshToken(refreshToken, otp);
         },
 
         async authenticateWithPassword(username, password, otp, customDf) {
-          const request = {username, password};
-          if (otp) {
-            request.otp = otp;
+          if (!authServiceInstance) {
+            authServiceInstance = new AuthService({
+              globals: globals,
+              showOtpModal: showOtpModal,
+              getGameData: () => getGameData
+            });
           }
-          return await authenticate(request, customDf);
+          return await authServiceInstance.authenticateWithPassword(username, password, otp, customDf);
         },
 
         async getFlashVarsFromWeb() {
@@ -349,7 +350,6 @@
         modal.addEventListener("close", event => {
           console.log("[OTP Modal] OTP modal closed");
           document.getElementById("modal-layer").removeChild(modal);
-          // If the modal is closed without submission, we should unblock the UI
           const loginScreen = document.getElementById("login-screen");
           if (loginScreen) {
             console.log("[OTP Modal] Modal closed without submission, unblocking UI");
@@ -362,7 +362,6 @@
           document.getElementById("modal-layer").removeChild(modal);
           const loginScreen = document.getElementById("login-screen");
           loginScreen.otp = event.detail.otp;
-          // Unblock the UI before calling logIn again
           console.log("[OTP Modal] Unblocking UI before calling logIn again");
           loginScreen.loginBlocked = false;
           console.log("[OTP Modal] UI unblocked, calling loginScreen.logIn()");
@@ -377,6 +376,219 @@
           console.error("[OTP Modal] modal-layer element not found!");
         }
       };
+
+      class AuthService {
+        constructor(options = {}) {
+          this.globals = options.globals || globals;
+          this.showOtpModal = options.showOtpModal || showOtpModal;
+          this.getDf = options.getDf || null;
+          this.getGameData = options.getGameData || null;
+          this.fetch = options.fetch || (this.globals && this.globals.fetch);
+          this.config = options.config || (this.globals && this.globals.config);
+        }
+
+        isTokenExpired(token) {
+          if (!token) return true;
+
+          const tokenParts = token.split('.');
+          if (tokenParts.length !== 3) {
+            console.log("Token does not have JWT format (3 parts):", tokenParts.length, "- treating as non-expiring refresh token");
+            return false;
+          }
+
+          try {
+            const payloadBase64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
+            const decodedJson = atob(payloadBase64);
+            const decoded = JSON.parse(decodedJson);
+
+            if (typeof decoded.exp !== 'number') {
+              console.error("Token expiration ('exp') is not a number:", decoded.exp);
+              return true;
+            }
+
+            const nowInSeconds = (Date.now() / 1000);
+            return decoded.exp < (nowInSeconds + 5);
+
+          } catch (e) {
+            console.error("Failed to decode or parse token:", e);
+            return true;
+          }
+        }
+
+        async authenticate(request, customDf, showOtpModalCallback) {
+          const showOtp = showOtpModalCallback || this.showOtpModal;
+          const getGameDataFunc = typeof this.getGameData === 'function' ? this.getGameData() : (this.getGameData || null);
+          const fetch = this.fetch || (this.globals && this.globals.fetch);
+          const config = this.config || (this.globals && this.globals.config);
+
+          if (!fetch || !config) {
+            throw new Error("AuthService: fetch or config not available");
+          }
+
+          console.log(`[ANIMAL JAM] Starting authentication with Animal Jam authenticator: ${config.authenticator}/authenticate`);
+          request.domain = "flash";
+
+          try {
+            const freshDf = await window.ipc.getDf();
+
+            if (freshDf && this.globals) {
+              this.globals.df = freshDf;
+              console.log(`[ANIMAL JAM] Using fresh DF for authentication`);
+            } else if (!freshDf) {
+              console.warn("[AUTH] Failed to get fresh DF from main process");
+            }
+          } catch (err) {
+            console.warn(`[AUTH] Error getting fresh df: ${err.message}`);
+          }
+
+          if (!this.globals || !this.globals.df) {
+            console.error("[AUTH] No valid DF available, authentication may fail");
+          }
+
+          const dfToUse = customDf || (this.globals ? this.globals.df : null);
+          request.df = dfToUse;
+
+          console.log(`[ANIMAL JAM] Sending authentication request`, {
+            domain: request.domain,
+            hasUsername: !!request.username,
+            hasPassword: !!request.password,
+            hasRefreshToken: !!request.refresh_token,
+            hasOtp: !!request.otp,
+            fullRequest: request
+          });
+
+          const response = await fetch(`${config.authenticator}/authenticate`, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(request),
+          }, [401, 422, 500]);
+
+          if (response.status === 200) {
+            const authenticateData = JSON.parse(await response.text());
+            console.log("[AUTH] Authentication response data:", {
+              hasAuthToken: !!authenticateData.auth_token,
+              hasRefreshToken: !!authenticateData.refresh_token,
+              authTokenLength: authenticateData.auth_token ? authenticateData.auth_token.length : 0,
+              refreshTokenLength: authenticateData.refresh_token ? authenticateData.refresh_token.length : 0,
+              refreshTokenParts: authenticateData.refresh_token ? authenticateData.refresh_token.split('.').length : 0,
+              fullResponse: authenticateData
+            });
+            const authenticatedByToken = (request.refresh_token !== undefined);
+            if (getGameDataFunc) {
+              return await getGameDataFunc(authenticateData, authenticatedByToken, dfToUse);
+            } else {
+              return authenticateData;
+            }
+          }
+
+          if (response.status === 401) {
+            const authError = JSON.parse(await response.text());
+
+            const errorText = (authError.error || authError.message || '').toLowerCase();
+            const errorCode = authError.error_code;
+
+            if (errorText.includes('otp') ||
+                errorText.includes('two') ||
+                errorText.includes('2fa') ||
+                errorText.includes('verification') ||
+                errorCode === 'otp_required' ||
+                errorCode === 'two_factor_required') {
+              if (showOtp) showOtp();
+              throw new Error("OTP_NEEDED");
+            }
+
+            switch (authError.error_code) {
+              case 100: throw new Error("REFRESH_TOKEN_EXPIRED");
+              case 101: throw new Error("WRONG_CREDENTIALS");
+              case 102: throw new Error("BANNED");
+              case 103: throw new Error("SUSPENDED");
+              default: throw new Error("LOGIN_ERROR");
+            }
+          }
+
+          if (response.status === 422) {
+            console.log("[AUTH] Received 422 status - checking for OTP requirements");
+
+            try {
+              const responseText = await response.text();
+              console.log("[AUTH] 422 response body:", responseText);
+
+              const authError = JSON.parse(responseText);
+              console.log("[AUTH] Parsed 422 error:", authError);
+
+              if (authError.error == "invalid_otp" || authError.error == "pending_otp_confirmation") {
+                console.log("[AUTH] OTP requirement detected, showing modal");
+                if (showOtp) showOtp();
+                throw new Error("OTP_NEEDED");
+              }
+
+              console.log("[AUTH] No OTP requirement found in 422 response, throwing LOGIN_ERROR");
+              throw new Error("LOGIN_ERROR");
+            } catch (parseErr) {
+              console.error("[AUTH] Error parsing 422 response:", parseErr);
+              throw new Error("LOGIN_ERROR");
+            }
+          }
+
+          console.error("[AUTH] Unexpected response status:", response.status);
+
+          try {
+            const responseText = await response.text();
+            console.error("[AUTH] Response body:", responseText);
+
+            const errorData = JSON.parse(responseText);
+            const errorText = (errorData.error || errorData.message || '').toLowerCase();
+
+            if (errorText.includes('otp') ||
+                errorText.includes('two') ||
+                errorText.includes('2fa') ||
+                errorText.includes('verification')) {
+              console.log("[AUTH] Found OTP requirement in unexpected response, showing OTP modal");
+              if (showOtp) showOtp();
+              throw new Error("OTP_NEEDED");
+            }
+          } catch (parseErr) {
+            console.error("[AUTH] Could not parse response body:", parseErr);
+          }
+
+          throw new Error("ERROR");
+        }
+
+        async authenticateWithAuthToken(authToken, showOtpModalCallback) {
+          console.log("[AUTH] authenticateWithAuthToken called - validating token through authenticate function");
+          console.log("[AUTH] Token being validated:", authToken ? authToken.substring(0, 10) + '...' : 'null');
+          const request = {auth_token: authToken};
+          try {
+            const result = await this.authenticate(request, null, showOtpModalCallback);
+            console.log("[AUTH] Token validation successful");
+            return result;
+          } catch (err) {
+            console.error("[AUTH] Token validation failed:", err.message);
+            throw err;
+          }
+        }
+
+        async authenticateWithRefreshToken(refreshToken, otp, showOtpModalCallback) {
+          const request = {refresh_token: refreshToken};
+          if (otp) {
+            request.otp = otp;
+          }
+          return await this.authenticate(request, null, showOtpModalCallback);
+        }
+
+        async authenticateWithPassword(username, password, otp, customDf, showOtpModalCallback) {
+          const request = {username, password};
+          if (otp) {
+            request.otp = otp;
+          }
+          return await this.authenticate(request, customDf, showOtpModalCallback);
+        }
+      }
+
+      let authServiceInstance = null;
 
       const showRenameUserModal = (username, renameToken) => {
         const modal = document.createElement("ajd-rename-user-modal");
@@ -394,146 +606,20 @@
         document.getElementById("modal-layer").appendChild(modal);
       };
 
+      let getGameData = null;
+
       const authenticate = async (request, customDf) => {
-        console.log(`[ANIMAL JAM] Starting authentication with Animal Jam authenticator: ${globals.config.authenticator}/authenticate`);
-        request.domain = "flash";
-        
-        try {
-          // Always get fresh df from main process to ensure we have the current value
-          const freshDf = await window.ipc.getDf();
-          
-          if (freshDf) {
-            // Always update globals.df with the latest value from main process
-            globals.df = freshDf;
-            console.log(`[ANIMAL JAM] Using fresh DF for authentication`);
-          } else {
-            console.warn("[AUTH] Failed to get fresh DF from main process");
-          }
-        } catch (err) {
-          console.warn(`[AUTH] Error getting fresh df: ${err.message}`);
-        }
-        
-        // Ensure we have a valid DF value by this point
-        if (!globals.df) {
-          console.error("[AUTH] No valid DF available, authentication may fail");
-        }
-        
-        // Use custom df if provided, otherwise use the (freshly updated) globals.df
-        const dfToUse = customDf || globals.df;
-        request.df = dfToUse;
-        
-        console.log(`[ANIMAL JAM] Sending authentication request`, {
-          domain: request.domain,
-          hasUsername: !!request.username,
-          hasPassword: !!request.password,
-          hasRefreshToken: !!request.refresh_token,
-          hasOtp: !!request.otp,
-          fullRequest: request
-        });
-        
-        const response = await globals.fetch(`${globals.config.authenticator}/authenticate`, {
-          method: "POST",
-          mode: "cors",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(request),
-        }, [401, 422, 500]);
-        if (response.status === 200) {
-          const authenticateData = JSON.parse(await response.text());
-          console.log("[AUTH] Authentication response data:", {
-            hasAuthToken: !!authenticateData.auth_token,
-            hasRefreshToken: !!authenticateData.refresh_token,
-            authTokenLength: authenticateData.auth_token ? authenticateData.auth_token.length : 0,
-            refreshTokenLength: authenticateData.refresh_token ? authenticateData.refresh_token.length : 0,
-            refreshTokenParts: authenticateData.refresh_token ? authenticateData.refresh_token.split('.').length : 0,
-            fullResponse: authenticateData
+        if (!authServiceInstance) {
+          authServiceInstance = new AuthService({
+            globals: globals,
+            showOtpModal: showOtpModal,
+            getGameData: () => getGameData
           });
-          const authenticatedByToken = (request.refresh_token !== undefined);
-          // Pass the dfToUse to getGameData to ensure it's consistently used
-          return await getGameData(authenticateData, authenticatedByToken, dfToUse);
         }
-        // account suspended/banned or other auth errors
-        if (response.status === 401) {
-          const authError = JSON.parse(await response.text());
-          
-          // Check if the 401 error is actually an OTP requirement
-          const errorText = (authError.error || authError.message || '').toLowerCase();
-          const errorCode = authError.error_code;
-          
-          if (errorText.includes('otp') || 
-              errorText.includes('two') || 
-              errorText.includes('2fa') || 
-              errorText.includes('verification') ||
-              errorCode === 'otp_required' ||
-              errorCode === 'two_factor_required') {
-            showOtpModal();
-            throw new Error("OTP_NEEDED");
-          }
-          
-          switch (authError.error_code) {
-            case 100: throw new Error("REFRESH_TOKEN_EXPIRED");
-            case 101: throw new Error("WRONG_CREDENTIALS");
-            case 102: throw new Error("BANNED");
-            case 103: throw new Error("SUSPENDED");
-            default: throw new Error("LOGIN_ERROR");
-          }
-        }
-        // unprocessable request
-        if (response.status === 422) {
-          console.log("[AUTH] Received 422 status - checking for OTP requirements");
-          
-          try {
-            const responseText = await response.text();
-            console.log("[AUTH] 422 response body:", responseText);
-            
-            const authError = JSON.parse(responseText);
-            console.log("[AUTH] Parsed 422 error:", authError);
-            
-            // Only show OTP modal for actual OTP-related errors (matching original logic)
-            if (authError.error == "invalid_otp" || authError.error == "pending_otp_confirmation") {
-              console.log("[AUTH] OTP requirement detected, showing modal");
-              showOtpModal();
-              throw new Error("OTP_NEEDED");
-            }
-            
-            console.log("[AUTH] No OTP requirement found in 422 response, throwing LOGIN_ERROR");
-            throw new Error("LOGIN_ERROR");
-          } catch (parseErr) {
-            console.error("[AUTH] Error parsing 422 response:", parseErr);
-            // If we can't parse the response, throw LOGIN_ERROR (not OTP_NEEDED)
-            throw new Error("LOGIN_ERROR");
-          }
-        }
-        // unexpected response: log details and show generic login error
-        console.error("[AUTH] Unexpected response status:", response.status);
-        
-        // Check if the response body contains OTP-related information even with unexpected status
-        try {
-          const responseText = await response.text();
-          console.error("[AUTH] Response body:", responseText);
-          
-          const errorData = JSON.parse(responseText);
-          const errorText = (errorData.error || errorData.message || '').toLowerCase();
-          
-          if (errorText.includes('otp') || 
-              errorText.includes('two') || 
-              errorText.includes('2fa') || 
-              errorText.includes('verification')) {
-            console.log("[AUTH] Found OTP requirement in unexpected response, showing OTP modal");
-            showOtpModal();
-            throw new Error("OTP_NEEDED");
-          }
-        } catch (parseErr) {
-          // If we can't parse the response, continue with generic error
-          console.error("[AUTH] Could not parse response body:", parseErr);
-        }
-        
-        throw new Error("ERROR");
+        return await authServiceInstance.authenticate(request, customDf);
       };
 
-      // Modify getGameData to accept customDf
-      const getGameData = async (authenticateData, authenticatedByToken, customDf) => {
+      getGameData = async (authenticateData, authenticatedByToken, customDf) => {
         let flashVars = await globals.getFlashVarsFromWeb();
         const clientVersion = (globals.rcToken
           && flashVars.smoke_version && flashVars.smoke_version != flashVars.deploy_version
@@ -725,7 +811,12 @@
     <script src="components/LoginScreen.utilities.js"></script>
     <script src="components/LoginScreen.themes.js"></script>
     <script src="components/LoginScreen.template.js"></script>
-    <script src="components/LoginScreen.js"></script> <!-- Depends on bridge functions -->
+    <script src="components/LoginScreen.theme-manager.js"></script>
+    <script src="components/LoginScreen.auth-manager.js"></script>
+    <script src="components/LoginScreen.ui-manager.js"></script>
+    <script src="components/LoginScreen.settings-initializer.js"></script>
+    <script src="components/LoginScreen.event-handlers.js"></script>
+    <script src="components/LoginScreen.js"></script>
     <script src="components/UserTray.js"></script> <!-- New tray - loaded before GameScreen -->
     <script src="components/GameScreen.js"></script>
     <script src="components/TextInput.js"></script>

@@ -103,10 +103,31 @@
             transform: translateY(-1px);
           }
 
+          .pause-button {
+            background-color: #ff9800;
+            color: white;
+            border-color: #ff9800;
+          }
+
+          .pause-button:hover {
+            background-color: #e68900;
+            transform: translateY(-1px);
+          }
+
           .control-button.disabled {
             opacity: 0.6;
             cursor: not-allowed;
             pointer-events: none;
+          }
+
+          .control-button.hidden {
+            display: none;
+          }
+
+          .button-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
           }
 
           .progress-section {
@@ -215,6 +236,16 @@
           :host(.light-theme) .control-button:hover {
             background-color: var(--light-theme-btn-hover-bg) !important;
           }
+
+          :host(.light-theme) .pause-button {
+            background-color: #ff9800 !important;
+            border-color: #ff9800 !important;
+            color: white !important;
+          }
+
+          :host(.light-theme) .pause-button:hover {
+            background-color: #e68900 !important;
+          }
           
           :host(.light-theme) .progress-text {
             color: #333333 !important;
@@ -247,7 +278,10 @@
               <span class="wheel-icon">🎡</span>
               <span>Auto Wheel</span>
             </div>
-            <div class="control-button start-button" data-action="start">Start</div>
+            <div class="button-group">
+              <div class="control-button pause-button hidden" data-action="pause" id="pause-button">Pause</div>
+              <div class="control-button start-button" data-action="start" id="start-button">Start</div>
+            </div>
           </div>
           
           <div class="settings-row">
@@ -279,16 +313,21 @@
       `;
       
       this._isRunning = false;
+      this._isPaused = false;
       this._currentAccount = 0;
       this._totalAccounts = 0;
       this._timer = null;
       this._accounts = [];
       this._currentBatch = 0;
       this._accountsInCurrentBatch = 0;
+      this._saveDebounceTimer = null;
+      this._pauseButtonElem = null;
     }
 
     connectedCallback() {
-      this.controlButtonElem = this.shadowRoot.querySelector('.control-button');
+      this.startButtonElem = this.shadowRoot.querySelector('#start-button');
+      this.pauseButtonElem = this.shadowRoot.querySelector('#pause-button');
+      this.controlButtonElem = this.startButtonElem;
       this.wheelIconElem = this.shadowRoot.querySelector('.wheel-icon');
       this.progressBarElem = this.shadowRoot.querySelector('.progress-bar');
       this.progressTextElem = this.shadowRoot.querySelector('.progress-text');
@@ -298,16 +337,31 @@
       this.batchSizeElem = this.shadowRoot.querySelector('#batch-size');
       this.startAccountElem = this.shadowRoot.querySelector('#start-account');
 
-      if (this.controlButtonElem) {
-        this.controlButtonElem.addEventListener('click', () => this._handleControlClick());
+      this._loadSavedSettings();
+      this._loadPausedState();
+
+      if (this.startButtonElem) {
+        this.startButtonElem.addEventListener('click', () => this._handleControlClick());
       }
 
-      // Listen for account list updates
+      if (this.pauseButtonElem) {
+        this.pauseButtonElem.addEventListener('click', () => this._handlePauseClick());
+      }
+
+      if (this.spinDelayElem) {
+        this.spinDelayElem.addEventListener('input', () => this._debounceSave());
+        this.spinDelayElem.addEventListener('change', () => this._saveSettings());
+      }
+
+      if (this.batchSizeElem) {
+        this.batchSizeElem.addEventListener('input', () => this._debounceSave());
+        this.batchSizeElem.addEventListener('change', () => this._saveSettings());
+      }
+
       document.addEventListener('accounts-imported', (event) => {
         this._onAccountsUpdated(event.detail.accounts);
       });
 
-      // Apply theme on connect
       if (this._currentThemeKey) {
         this._applyTheme(this._currentThemeKey);
       }
@@ -382,20 +436,140 @@
       return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
 
+    _loadSavedSettings() {
+      try {
+        const savedSpinDelay = localStorage.getItem('autoWheel.spinDelay');
+        const savedBatchSize = localStorage.getItem('autoWheel.batchSize');
+        
+        if (savedSpinDelay && this.spinDelayElem) {
+          const delay = parseInt(savedSpinDelay, 10);
+          if (!isNaN(delay) && delay >= 5 && delay <= 300) {
+            this.spinDelayElem.value = delay;
+          }
+        }
+        
+        if (savedBatchSize && this.batchSizeElem) {
+          const batch = parseInt(savedBatchSize, 10);
+          if (!isNaN(batch) && batch >= 1 && batch <= 50) {
+            this.batchSizeElem.value = batch;
+          }
+        }
+      } catch (error) {
+        console.error('[AutoWheel] Error loading settings:', error);
+      }
+    }
+
+    _saveSettings() {
+      try {
+        if (!this.spinDelayElem || !this.batchSizeElem) return;
+        
+        const spinDelay = parseInt(this.spinDelayElem.value, 10);
+        const batchSize = parseInt(this.batchSizeElem.value, 10);
+        
+        if (!isNaN(spinDelay) && spinDelay >= 5 && spinDelay <= 300) {
+          localStorage.setItem('autoWheel.spinDelay', spinDelay.toString());
+        }
+        
+        if (!isNaN(batchSize) && batchSize >= 1 && batchSize <= 50) {
+          localStorage.setItem('autoWheel.batchSize', batchSize.toString());
+        }
+      } catch (error) {
+        console.error('[AutoWheel] Error saving settings:', error);
+      }
+    }
+
+    _debounceSave() {
+      if (this._saveDebounceTimer) {
+        clearTimeout(this._saveDebounceTimer);
+      }
+      this._saveDebounceTimer = setTimeout(() => {
+        this._saveSettings();
+      }, 500);
+    }
+
+    _loadPausedState() {
+      try {
+        if (this._accounts.length === 0) {
+          return;
+        }
+        
+        const paused = localStorage.getItem('autoWheel.paused');
+        if (paused !== 'true') {
+          return;
+        }
+        
+        const savedCurrentAccount = localStorage.getItem('autoWheel.currentAccount');
+        const savedCurrentBatch = localStorage.getItem('autoWheel.currentBatch');
+        const savedAccountsInCurrentBatch = localStorage.getItem('autoWheel.accountsInCurrentBatch');
+        const savedTotalAccounts = localStorage.getItem('autoWheel.totalAccounts');
+        
+        if (savedCurrentAccount === null || savedCurrentBatch === null || 
+            savedAccountsInCurrentBatch === null || savedTotalAccounts === null) {
+          this._clearPausedState();
+          return;
+        }
+        
+        const currentAccount = parseInt(savedCurrentAccount, 10);
+        const currentBatch = parseInt(savedCurrentBatch, 10);
+        const accountsInCurrentBatch = parseInt(savedAccountsInCurrentBatch, 10);
+        const totalAccounts = parseInt(savedTotalAccounts, 10);
+        
+        if (isNaN(currentAccount) || isNaN(currentBatch) || 
+            isNaN(accountsInCurrentBatch) || isNaN(totalAccounts)) {
+          this._clearPausedState();
+          return;
+        }
+        
+        if (totalAccounts !== this._accounts.length || 
+            currentAccount < 0 || currentAccount >= this._accounts.length) {
+          this._clearPausedState();
+          return;
+        }
+        
+        this._isPaused = true;
+        this._currentAccount = currentAccount;
+        this._currentBatch = currentBatch;
+        this._accountsInCurrentBatch = accountsInCurrentBatch;
+        this._isRunning = true;
+        this._updateButtonVisibility();
+        if (this.spinDelayElem) this.spinDelayElem.disabled = true;
+        if (this.batchSizeElem) this.batchSizeElem.disabled = true;
+        if (this.startAccountElem) this.startAccountElem.disabled = true;
+        this._updateProgressDisplay();
+        this._showStatus('Paused - Click Resume to continue', '');
+      } catch (error) {
+        console.error('[AutoWheel] Error loading paused state:', error);
+        this._clearPausedState();
+      }
+    }
+
+    _clearPausedState() {
+      try {
+        localStorage.removeItem('autoWheel.paused');
+        localStorage.removeItem('autoWheel.currentAccount');
+        localStorage.removeItem('autoWheel.currentBatch');
+        localStorage.removeItem('autoWheel.accountsInCurrentBatch');
+        localStorage.removeItem('autoWheel.totalAccounts');
+      } catch (error) {
+        console.error('[AutoWheel] Error clearing paused state:', error);
+      }
+    }
+
     setAccounts(accounts) {
-      // Sort accounts so pinned accounts come first
       this._accounts = (accounts || []).sort((a, b) => {
-        // Pinned accounts come first (true > false when converted to numbers)
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
-        return 0; // Maintain original order for accounts with same pinned status
+        return 0;
       });
       
       this._totalAccounts = this._accounts.length;
       this._updateStartAccountDropdown();
-      this._updateProgressDisplay();
       
-      // Accounts loaded and sorted - removed verbose logging
+      if (this._accounts.length > 0 && !this._isRunning) {
+        this._loadPausedState();
+      }
+      
+      this._updateProgressDisplay();
     }
 
     _onAccountsUpdated(accounts) {
@@ -445,19 +619,126 @@
       }
     }
 
+    _handlePauseClick() {
+      if (this._isPaused) {
+        this._resumeAutoWheel();
+      } else if (this._isRunning) {
+        this._pauseAutoWheel();
+      }
+    }
+
+    _updateButtonVisibility() {
+      if (!this.startButtonElem || !this.pauseButtonElem) return;
+      
+      if (this._isRunning) {
+        this.startButtonElem.classList.add('stop-button');
+        this.startButtonElem.classList.remove('start-button');
+        this.startButtonElem.textContent = 'Stop';
+        this.pauseButtonElem.classList.remove('hidden');
+        if (this._isPaused) {
+          this.pauseButtonElem.textContent = 'Resume';
+        } else {
+          this.pauseButtonElem.textContent = 'Pause';
+        }
+      } else {
+        this.startButtonElem.classList.add('start-button');
+        this.startButtonElem.classList.remove('stop-button');
+        this.startButtonElem.textContent = 'Start';
+        this.pauseButtonElem.classList.add('hidden');
+      }
+    }
+
+    _pauseAutoWheel() {
+      if (!this._isRunning || this._isPaused) return;
+      
+      this._isPaused = true;
+      
+      try {
+        localStorage.setItem('autoWheel.paused', 'true');
+        localStorage.setItem('autoWheel.currentAccount', this._currentAccount.toString());
+        localStorage.setItem('autoWheel.currentBatch', this._currentBatch.toString());
+        localStorage.setItem('autoWheel.accountsInCurrentBatch', this._accountsInCurrentBatch.toString());
+        localStorage.setItem('autoWheel.totalAccounts', this._totalAccounts.toString());
+      } catch (error) {
+        console.error('[AutoWheel] Error saving paused state:', error);
+      }
+      
+      if (this._timer) {
+        clearTimeout(this._timer);
+        this._timer = null;
+      }
+      
+      this._updateButtonVisibility();
+      this._updateProgressDisplay();
+      this._showStatus('Paused - Click Resume to continue', '');
+      this.timerTextElem.textContent = '';
+    }
+
+    async _resumeAutoWheel() {
+      if (!this._isPaused || !this._isRunning) return;
+      
+      const savedCurrentAccount = localStorage.getItem('autoWheel.currentAccount');
+      const savedCurrentBatch = localStorage.getItem('autoWheel.currentBatch');
+      const savedAccountsInCurrentBatch = localStorage.getItem('autoWheel.accountsInCurrentBatch');
+      const savedTotalAccounts = localStorage.getItem('autoWheel.totalAccounts');
+      
+      if (savedCurrentAccount !== null && savedCurrentBatch !== null && 
+          savedAccountsInCurrentBatch !== null && savedTotalAccounts !== null) {
+        const currentAccount = parseInt(savedCurrentAccount, 10);
+        const currentBatch = parseInt(savedCurrentBatch, 10);
+        const accountsInCurrentBatch = parseInt(savedAccountsInCurrentBatch, 10);
+        const totalAccounts = parseInt(savedTotalAccounts, 10);
+        
+        if (!isNaN(currentAccount) && !isNaN(currentBatch) && 
+            !isNaN(accountsInCurrentBatch) && !isNaN(totalAccounts)) {
+          
+          if (totalAccounts === this._accounts.length && 
+              currentAccount >= 0 && currentAccount < this._accounts.length) {
+            this._currentAccount = currentAccount;
+            this._currentBatch = currentBatch;
+            this._accountsInCurrentBatch = accountsInCurrentBatch;
+          } else {
+            this._showStatus('Account list changed. Resuming from saved position may be invalid.', 'error');
+          }
+        }
+      }
+      
+      this._clearPausedState();
+      this._isPaused = false;
+      this._updateButtonVisibility();
+      this.wheelIconElem.classList.add('spinning');
+      this._updateProgressDisplay();
+      this._showStatus('Resuming auto wheel...', '');
+      
+      try {
+        await this._runAutoWheelCycle();
+      } catch (error) {
+        console.error('[AutoWheel] Error during auto wheel resume:', error);
+        this._showStatus(`Error: ${error.message}`, 'error');
+        this._stopAutoWheel();
+      }
+    }
+
     async _startAutoWheel() {
       if (this._accounts.length === 0) {
         this._showStatus('No accounts available. Please import accounts first.', 'error');
         return;
       }
 
+      if (this._isPaused) {
+        await this._resumeAutoWheel();
+        return;
+      }
+
+      this._clearPausedState();
+      this._isPaused = false;
       this._isRunning = true;
       this._currentAccount = parseInt(this.startAccountElem.value) || 0;
       this._currentBatch = 0;
       this._accountsInCurrentBatch = 0;
       
-      this.controlButtonElem.textContent = 'Stop';
-      this.controlButtonElem.className = 'control-button stop-button';
+      this._saveSettings();
+      this._updateButtonVisibility();
       this.wheelIconElem.classList.add('spinning');
       this.spinDelayElem.disabled = true;
       this.batchSizeElem.disabled = true;
@@ -476,14 +757,15 @@
 
     _stopAutoWheel() {
       this._isRunning = false;
+      this._isPaused = false;
       
       if (this._timer) {
         clearTimeout(this._timer);
         this._timer = null;
       }
       
-      this.controlButtonElem.textContent = 'Start';
-      this.controlButtonElem.className = 'control-button start-button';
+      this._clearPausedState();
+      this._updateButtonVisibility();
       this.wheelIconElem.classList.remove('spinning');
       this.spinDelayElem.disabled = false;
       this.batchSizeElem.disabled = false;
@@ -493,7 +775,6 @@
       this._showStatus('Auto wheel stopped', '');
       this.timerTextElem.textContent = '';
       
-      // Dispatch stop event
       this.dispatchEvent(new CustomEvent('auto-wheel-stopped', {
         bubbles: true,
         composed: true
@@ -501,6 +782,10 @@
     }
 
     async _runAutoWheelCycle() {
+      if (this._isPaused) {
+        return;
+      }
+
       if (!this._isRunning || this._currentAccount >= this._accounts.length) {
         this._showStatus('Auto wheel completed!', 'success');
         this._stopAutoWheel();
@@ -509,70 +794,59 @@
 
       const batchSize = parseInt(this.batchSizeElem.value) || 10;
       
-      // Check if we need a 5-minute break
       if (this._accountsInCurrentBatch >= batchSize) {
         this._showStatus('Taking 5-minute break after batch...', '');
-        await this._waitWithTimer(5 * 60 * 1000); // 5 minutes
+        await this._waitWithTimer(5 * 60 * 1000);
+        
+        if (this._isPaused || !this._isRunning) return;
+        
         this._currentBatch++;
         this._accountsInCurrentBatch = 0;
-        
-        if (!this._isRunning) return;
       }
+
+      if (this._isPaused || !this._isRunning) return;
 
       const account = this._accounts[this._currentAccount];
       this._showStatus(`Logging in: ${account.username}`, '');
       
       try {
-        // Starting login for account
-        
-        // Dispatch account selection event to properly select the account slot
-        // Dispatching account-selected event
         document.dispatchEvent(new CustomEvent('account-selected', {
           detail: { username: account.username, password: account.password },
           bubbles: true,
           composed: true
         }));
 
-        // Small delay to let account selection process
-        // Waiting for account selection to process
         await this._waitWithTimer(1000);
 
-        // Check what's actually in the login fields now
+        if (this._isPaused || !this._isRunning) return;
+
         const usernameField = document.querySelector('input[type="text"]');
         const passwordField = document.querySelector('input[type="password"]');
-        // Account selection processed
 
-        // Now dispatch login event
-        // Dispatching auto-wheel-login event
         this.dispatchEvent(new CustomEvent('auto-wheel-login', {
           detail: { account },
           bubbles: true,
           composed: true
         }));
 
-        // Wait a bit for login to process
-        // Waiting for login to process
         await this._waitWithTimer(3000);
         
-        // Check login status
-        // Login attempt completed
+        if (this._isPaused || !this._isRunning) return;
+        
         const currentUsername = document.querySelector('input[type="text"]')?.value;
-        // Checking login status
         
         if (currentUsername !== account.username) {
           console.warn(`[AutoWheel] WARNING: Expected username "${account.username}" but field shows "${currentUsername}"`);
         }
         
-        if (!this._isRunning) return;
+        if (this._isPaused || !this._isRunning) return;
 
-        // Wait for spin delay
         const spinDelay = (parseInt(this.spinDelayElem.value) || 30) * 1000;
         this._showStatus(`Spinning wheel for ${account.username}...`, '');
         await this._waitWithTimer(spinDelay);
         
-        if (!this._isRunning) return;
+        if (this._isPaused || !this._isRunning) return;
 
-        // Dispatch logout event and wait for logout to complete
         this._showStatus(`Logging out: ${account.username}`, '');
         this.dispatchEvent(new CustomEvent('auto-wheel-logout', {
           detail: { account },
@@ -580,20 +854,19 @@
           composed: true
         }));
 
-        // Wait for logout to complete
         await this._waitWithTimer(3000);
         
-        if (!this._isRunning) return;
+        if (this._isPaused || !this._isRunning) return;
 
         this._currentAccount++;
         this._accountsInCurrentBatch++;
         this._updateProgressDisplay();
 
-        // Small delay before next account
         await this._waitWithTimer(2000);
         
-        // Continue with next account
-        if (this._isRunning) {
+        if (this._isPaused || !this._isRunning) return;
+        
+        if (this._isRunning && !this._isPaused) {
           await this._runAutoWheelCycle();
         }
       } catch (error) {
@@ -607,7 +880,8 @@
         const endTime = startTime + ms;
         
         const updateTimer = () => {
-          if (!this._isRunning) {
+          if (!this._isRunning || this._isPaused) {
+            this.timerTextElem.textContent = '';
             resolve();
             return;
           }
@@ -641,11 +915,15 @@
       const progress = (this._currentAccount / this._totalAccounts) * 100;
       this.progressBarElem.style.width = `${progress}%`;
       
-      // Count pinned accounts for display
       const pinnedCount = this._accounts.filter(acc => acc.pinned).length;
       const pinnedText = pinnedCount > 0 ? ` (📌${pinnedCount})` : '';
       
-      if (this._isRunning) {
+      if (this._isPaused) {
+        const currentAccount = this._accounts[this._currentAccount];
+        const currentAccountText = currentAccount ? `${currentAccount.username}${currentAccount.pinned ? ' 📌' : ''}` : 'Unknown';
+        const remaining = this._totalAccounts - this._currentAccount;
+        this.progressTextElem.textContent = `⏸️ PAUSED: ${currentAccountText} - ${this._currentAccount + 1}/${this._totalAccounts} (${remaining} remaining)${pinnedText}`;
+      } else if (this._isRunning) {
         const currentAccount = this._accounts[this._currentAccount];
         const currentAccountText = currentAccount ? `${currentAccount.username}${currentAccount.pinned ? ' 📌' : ''}` : 'Unknown';
         const startIndex = parseInt(this.startAccountElem?.value || '0');

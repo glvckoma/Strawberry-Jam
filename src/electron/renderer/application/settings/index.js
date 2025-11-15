@@ -28,6 +28,7 @@ const DEFAULT_SETTINGS = {
   'usernameLogger.collectNearbyPlayers': true,
   'usernameLogger.collectBuddies': true,
   'plugins.usernameLogger.collection.enabled': true, // Added default for this key
+  'plugins.usernameLogger.maxPasswordsPerAccount': 0,
 
   // Log limiting settings
   'logs.consoleLimit': 1000,
@@ -78,6 +79,7 @@ module.exports = class Settings {
         { key: 'usernameLogger.collectNearbyPlayers', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectNearbyPlayers'] },
         { key: 'usernameLogger.collectBuddies', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectBuddies'] },
         { key: 'plugins.usernameLogger.collection.enabled', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.collection.enabled'] }, // Added to load list
+        { key: 'plugins.usernameLogger.maxPasswordsPerAccount', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.maxPasswordsPerAccount'] },
         
         // Log limiting settings
         { key: 'logs.consoleLimit', defaultValue: DEFAULT_SETTINGS['logs.consoleLimit'] },

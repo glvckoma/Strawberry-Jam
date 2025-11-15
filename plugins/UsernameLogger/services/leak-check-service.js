@@ -106,6 +106,9 @@ class LeakCheckService {
       try {
         // Get API key
         const apiKey = await this.apiService.getApiKey();
+        
+        // Get max passwords setting
+        const maxPasswords = await this.application.settings.get('plugins.usernameLogger.maxPasswordsPerAccount', 0);
 
         // Log the retrieved key type and value (masked) in dev mode BEFORE the check
         if (isDevMode) {
@@ -206,6 +209,8 @@ class LeakCheckService {
         let notFoundCount = 0;
         let errorCount = 0;
         let invalidCharCount = 0;
+        let foundAjcCount = 0;
+        let foundGeneralCount = 0;
         let currentOverallIndex = startIndex - 1; // Initialize to startIndex - 1 since we increment at start of loop
         const totalToProcess = limitedUsernamesToCheck.length;
         const progressMessageId = `leakcheck-progress-${Date.now()}`;
@@ -236,7 +241,10 @@ class LeakCheckService {
             }
             
             // Write batches
-            await this._writeBatches(paths, processedBatch, foundGeneralBatch, foundAjcBatch, potentialBatch);
+            await this._writeBatches(paths, processedBatch, foundGeneralBatch, foundAjcBatch, potentialBatch, foundNoPassBatch);
+            
+            const sessionProcessedCount = processedInThisRun - 1;
+            const sessionNoLeaksCount = notFoundCount;
             
             // Update the index to the last successfully completed item
             const lastCompletedIndex = currentOverallIndex - 1;
@@ -276,9 +284,11 @@ class LeakCheckService {
               lastIndexProcessed: lastCompletedIndex
             };
             
+            const breakdownMessage = `[Username Logger] Leak check ${action}.\nBreakdown:\n- AJC Accounts Found: ${foundAjcCount}\n- General Accounts Found: ${foundGeneralCount}\n- No Leaks: ${sessionNoLeaksCount}\n- Total Processed: ${sessionProcessedCount}`;
+            
             this.application.consoleMessage({
-                type: 'warn', // Use 'warn' for orange styling
-                message: `[Username Logger] Leak check ${action}. Processed: ${summary.processed}, Found: ${summary.found}, Not Found: ${summary.notFound}, Errors: ${summary.errors}, Invalid: ${summary.invalidChar}`
+                type: 'warn',
+                message: breakdownMessage
             });
             
             return { 
@@ -330,15 +340,29 @@ class LeakCheckService {
                     if (isAjc) {
                       foundAjcBatch.push(accountEntry);
                       passwordsFoundAjc++;
+                      foundAjcCount++;
                     } else {
                       foundGeneralBatch.push(accountEntry);
                       passwordsFoundGeneral++;
+                      foundGeneralCount++;
                     }
                   } else {
                     // Track result without a password for separate logging
                     foundNoPassBatch.push(username);
                     noPasswordHits++;
                   }
+                }
+
+                if (maxPasswords > 0 && passwordsFoundGeneral > maxPasswords) {
+                  console.log(`[LeakCheck Debug] REJECTED - Username: ${username}, General Password Count: ${passwordsFoundGeneral}, Limit: ${maxPasswords}, NOT saved to found_accounts.txt`);
+                  
+                  foundGeneralBatch.splice(foundGeneralBatch.length - passwordsFoundGeneral, passwordsFoundGeneral);
+                  foundGeneralCount -= passwordsFoundGeneral;
+                  
+                  this.application.consoleMessage({
+                    type: 'warn',
+                    message: `[Username Logger] Skipped general accounts for ${username}: ${passwordsFoundGeneral} passwords exceed limit of ${maxPasswords} (AJC accounts still saved)`
+                  });
                 }
 
                 // Log summary of found passwords
@@ -516,10 +540,11 @@ class LeakCheckService {
           `[Username Logger] Leak check complete. Processed: ${processedInThisRun}/${totalToProcess}, Found: ${foundCount}, Not Found: ${notFoundCount}, Errors: ${errorCount}, Invalid: ${invalidCharCount}`
         );
 
-        // Emit a standalone completion summary that will remain after cleanup
+        const breakdownMessage = `[Username Logger] Leak check complete.\nBreakdown:\n- AJC Accounts Found: ${foundAjcCount}\n- General Accounts Found: ${foundGeneralCount}\n- No Leaks: ${notFoundCount}\n- Total Processed: ${processedInThisRun}`;
+
         this.application.consoleMessage({
           type: 'success',
-          message: `[Username Logger] Leak check complete. Processed: ${processedInThisRun}/${totalToProcess}, Found: ${foundCount}, Not Found: ${notFoundCount}, Errors: ${errorCount}, Invalid: ${invalidCharCount}`
+          message: breakdownMessage
         });
 
         // --- START AUTO-TRIM LOGIC ---

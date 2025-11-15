@@ -1,0 +1,320 @@
+const { ipcRenderer } = require('electron');
+const $ = require('jquery');
+
+class SettingsEventHandler {
+  constructor(toastService, settingsSaver) {
+    this.toastService = toastService;
+    this.settingsSaver = settingsSaver;
+  }
+
+  setupEventHandlers($modal, app, uiManager) {
+    if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
+      ipcRenderer.removeAllListeners('manual-update-check-status');
+    }
+
+    const self = this;
+    const $openOutputDirButton = $modal.find('#openOutputDirBtn');
+    const $leakCheckOutputDirInput = $modal.find('#leakCheckOutputDirInput');
+    const $clearCacheButton = $modal.find('#clearCacheBtn');
+    const $uninstallButton = $modal.find('#uninstallBtn');
+    const $cacheSizeValue = $modal.find('#cacheSizeValue');
+    const $cacheSizeDetails = $modal.find('#cacheSizeDetails');
+    const $leakCheckAutoCheck = $modal.find('#leakCheckAutoCheck');
+    const $leakCheckThresholdContainer = $modal.find('#leakCheckThresholdContainer');
+
+    $modal.find('#closeSettingsBtn, #cancelSettingsBtn').on('click', () => {
+      app.modals.close();
+    });
+
+    $modal.find('#saveSettingsBtn').on('click', () => {
+      this.settingsSaver.saveSettings($modal, app);
+    });
+
+    $modal.find('.settings-tab').on('click', function () {
+      const tabId = $(this).data('tab');
+      uiManager.setActiveTab(tabId, $modal);
+      
+      if (tabId === 'advanced') {
+        uiManager.loadCacheSize($modal);
+      }
+    });
+
+    $modal.find('#selectedSwfFile').on('change', function() {
+      const selectedFile = $(this).val();
+      const $currentName = $modal.find('#currentSwfName');
+      const $currentSize = $modal.find('#currentSwfSize');
+      
+      $currentName.text(selectedFile);
+      $currentSize.text('Updating...');
+      
+      uiManager.updateSwfFileInfo($modal, selectedFile);
+    });
+
+    $modal.find('#refreshSwfListBtn').on('click', async function() {
+      const $button = $(this);
+      const originalText = $button.html();
+      
+      $button.html('Refreshing...').prop('disabled', true);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        const currentSelection = $modal.find('#selectedSwfFile').val();
+        
+        await uiManager.loadSwfFileSettings($modal, currentSelection);
+        
+        self.toastService.showInModal($modal, 'SWF file list refreshed successfully!', 'success');
+        
+        $button.removeClass('bg-sidebar-hover').addClass('bg-green-500 text-white transition-all duration-300');
+        
+        setTimeout(() => {
+          $button.removeClass('bg-green-500 text-white').addClass('bg-sidebar-hover');
+        }, 1000);
+        
+      } catch (error) {
+        console.error('Error refreshing SWF files:', error);
+        self.toastService.showInModal($modal, 'Error refreshing SWF files', 'error');
+      } finally {
+        $button.html(originalText).prop('disabled', false);
+      }
+    });
+
+    $modal.find('#reapplySwfBtn').on('click', async function() {
+      const $button = $(this);
+      const originalText = $button.html();
+      
+      $button.html('Reapplying...').prop('disabled', true);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        const selectedFile = $modal.find('#selectedSwfFile').val();
+        
+        if (!selectedFile) {
+          self.toastService.showInModal($modal, 'No SWF file selected.', 'error');
+          return;
+        }
+        
+        const result = await ipcRenderer.invoke('reapply-swf-file', selectedFile);
+
+        if (result.success) {
+          self.toastService.showInModal($modal, 'SWF file reapplied successfully!', 'success');
+          if (app && app.consoleMessage) {
+              app.consoleMessage({
+                type: 'notify',
+                message: `Game client file '${selectedFile}' was reapplied. Changes will apply on next game launch.`
+              });
+          }
+          
+          $button.removeClass('bg-sidebar-hover').addClass('bg-green-500 text-white transition-all duration-300');
+          
+          setTimeout(() => {
+            $button.removeClass('bg-green-500 text-white').addClass('bg-sidebar-hover');
+          }, 1000);
+          
+        } else {
+          self.toastService.showInModal($modal, `Failed to reapply SWF: ${result.error}`, 'error');
+        }
+      } catch (error) {
+        console.error('Error reapplying SWF file:', error);
+        self.toastService.showInModal($modal, 'Error reapplying SWF file', 'error');
+      } finally {
+        $button.html(originalText).prop('disabled', false);
+      }
+    });
+
+    const toggleThresholdVisibility = () => {
+     if ($leakCheckAutoCheck.is(':checked')) {
+       $leakCheckThresholdContainer.css('opacity', '1').find('input').prop('disabled', false);
+     } else {
+       $leakCheckThresholdContainer.css('opacity', '0.5').find('input').prop('disabled', true);
+     }
+    };
+
+    $leakCheckAutoCheck.on('change', toggleThresholdVisibility);
+
+    $openOutputDirButton.on('click', async () => {
+      try {
+        const customOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir');
+        const defaultUsernameLoggerPath = await ipcRenderer.invoke('get-username-logger-path');
+        const dirToOpen = (customOutputDir && customOutputDir.trim() !== '') ? customOutputDir : defaultUsernameLoggerPath;
+        
+        if (dirToOpen) {
+          if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
+            ipcRenderer.send('open-directory', dirToOpen);
+          } else {
+             console.error('ipcRenderer not available for opening directory');
+             this.toastService.showInModal($modal, 'IPC Error: Cannot open directory', 'error');
+          }
+        } else {
+          console.error('Target directory path not available to open.');
+          this.toastService.showInModal($modal, 'Error: Target directory path not loaded', 'error');
+        }
+      } catch (error) {
+        console.error('Error getting output directory setting for open:', error);
+        this.toastService.showInModal($modal, 'Error opening directory', 'error');
+        try {
+          const fallbackPath = await ipcRenderer.invoke('get-username-logger-path');
+          if (fallbackPath && typeof ipcRenderer !== 'undefined' && ipcRenderer) {
+            ipcRenderer.send('open-directory', fallbackPath);
+          }
+        } catch (fallbackError) {
+          console.error('Error getting fallback path:', fallbackError);
+        }
+      }
+    });
+
+    $clearCacheButton.on('click', async () => {
+      const confirmed = await uiManager.showConfirmationModal(
+        'Clear Cache Confirmation',
+        'Are you sure you want to clear all application cache? This will delete both the AJ Classic and Strawberry Jam data directories from your AppData folder. Your saved usernames and settings may be preserved, but all other cache data will be removed. Strawberry Jam will close to complete the process.',
+        'Close App & Clear Cache',
+        'Cancel'
+      );
+
+      if (confirmed) {
+        this.toastService.showInModal($modal, 'Attempting to clear cache...', 'warning');
+        try {
+          const result = await ipcRenderer.invoke('danger-zone:clear-cache');
+          if (!result.success) {
+            this.toastService.showInModal($modal, `Failed to clear cache: ${result.error || result.message || 'Unknown error'}`, 'error');
+          }
+        } catch (error) {
+          console.error('Error invoking clear cache:', error);
+          this.toastService.showInModal($modal, `Error clearing cache: ${error.message}`, 'error');
+        }
+      }
+    });
+
+    $uninstallButton.on('click', async () => {
+      const confirmed = await uiManager.showConfirmationModal(
+        'Uninstall Confirmation',
+        'Are you absolutely sure you want to uninstall Strawberry Jam? This will remove the application and cannot be undone. Strawberry Jam will close to start the uninstaller.',
+        'Close App & Uninstall',
+        'Cancel'
+      );
+
+      if (confirmed) {
+        this.toastService.showInModal($modal, 'Attempting to uninstall...', 'warning');
+        try {
+          const result = await ipcRenderer.invoke('danger-zone:uninstall');
+          if (!result.success) {
+             this.toastService.showInModal($modal, `Failed to start uninstall: ${result.error || result.message || 'Unknown error'}`, 'error');
+          }
+        } catch (error) {
+          console.error('Error invoking uninstall:', error);
+          this.toastService.showInModal($modal, `Error starting uninstall: ${error.message}`, 'error');
+        }
+      }
+    });
+
+    $modal.find('#resetGameTimeBtn').on('click', async () => {
+      const confirmed = await uiManager.showConfirmationModal(
+        'Reset Time Counters',
+        'Are you sure you want to reset all game time and uptime counters to zero? This action cannot be undone.',
+        'Reset Counters',
+        'Cancel'
+      );
+
+      if (confirmed) {
+        try {
+          await ipcRenderer.invoke('reset-game-time');
+          this.toastService.showInModal($modal, 'Game time and uptime have been reset.', 'success');
+        } catch (error) {
+          console.error('Error resetting game time:', error);
+          this.toastService.showInModal($modal, `Failed to reset time counters: ${error.message}`, 'error');
+        }
+      }
+    });
+
+    const $checkForUpdatesBtn = $modal.find('#checkForUpdatesBtn');
+    const $downloadUpdateBtn = $modal.find('#downloadUpdateBtn');
+    const $manualUpdateStatusText = $modal.find('#manualUpdateStatusText');
+    const $downloadProgressContainer = $modal.find('#downloadProgressContainer');
+    const $downloadProgressBar = $modal.find('#downloadProgressBar');
+
+    const $viewUpdatesBtn = $modal.find('#viewUpdatesBtn');
+    $viewUpdatesBtn.on('click', async () => {
+      app.modals.close();
+      
+      setTimeout(async () => {
+        await app.openUpdatesModal();
+      }, 100);
+    });
+
+    $checkForUpdatesBtn.on('click', () => {
+      ipcRenderer.send('check-for-updates');
+      $manualUpdateStatusText.text('Checking for updates...').removeClass('text-green-400 text-red-400').addClass('text-yellow-400');
+      $checkForUpdatesBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Checking...').prop('disabled', true);
+    });
+
+    $downloadUpdateBtn.on('click', () => {
+      ipcRenderer.send('download-update');
+      $manualUpdateStatusText.text('Downloading update...').removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
+      $downloadUpdateBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Downloading...').prop('disabled', true);
+      $downloadProgressContainer.removeClass('hidden');
+    });
+
+    ipcRenderer.on('manual-update-check-status', async (event, { status, message, version }) => {
+      const autoUpdatesEnabled = await ipcRenderer.invoke('get-setting', 'updates.enableAutoUpdates');
+
+      switch (status) {
+        case 'checking':
+          $manualUpdateStatusText.text(message || 'Checking for updates...').removeClass('text-yellow-400 text-red-400').addClass('text-green-400');
+          $checkForUpdatesBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Checking...').prop('disabled', true);
+          $downloadUpdateBtn.addClass('hidden');
+          break;
+        case 'no-update':
+          $manualUpdateStatusText.text(message || 'No new updates available.').removeClass('text-green-400 text-red-400').addClass('text-yellow-400');
+          $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false);
+          $downloadUpdateBtn.addClass('hidden');
+          break;
+        case 'available':
+          const availableMessage = version ? `Update v${version} is available.` : message;
+          $manualUpdateStatusText.text(availableMessage).removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
+          
+          if (autoUpdatesEnabled) {
+            $checkForUpdatesBtn.html('<i class="fas fa-cloud-download-alt mr-2"></i>Downloading...').prop('disabled', true);
+            $downloadUpdateBtn.addClass('hidden');
+          } else {
+            $manualUpdateStatusText.text(`${availableMessage} Click "Download Now" to get it.`);
+            $checkForUpdatesBtn.addClass('hidden');
+            $downloadUpdateBtn.removeClass('hidden').prop('disabled', false);
+          }
+          break;
+        case 'downloading':
+          const progress = version;
+          $manualUpdateStatusText.text(`Downloading update... ${progress.toFixed(1)}%`).removeClass('text-yellow-400 text-red-400').addClass('text-blue-400');
+          $downloadProgressBar.css('width', `${progress}%`);
+          $downloadUpdateBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Downloading...').prop('disabled', true);
+          $downloadProgressContainer.removeClass('hidden');
+          break;
+        case 'downloaded':
+          $manualUpdateStatusText.text(message || 'Update downloaded. Restart to install.').removeClass('text-yellow-400 text-red-400').addClass('text-purple-400');
+          $downloadProgressContainer.addClass('hidden');
+          $downloadUpdateBtn.addClass('hidden');
+          $checkForUpdatesBtn.removeClass('hidden').html('<i class="fas fa-power-off mr-2"></i>Restart to Install')
+            .prop('disabled', false)
+            .off('click')
+            .on('click', () => {
+              ipcRenderer.send('app-restart');
+            });
+          break;
+        case 'error':
+          $manualUpdateStatusText.text(message || 'Error checking for updates.').removeClass('text-yellow-400 text-green-400').addClass('text-red-400');
+          $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false).removeClass('hidden');
+          $downloadUpdateBtn.addClass('hidden');
+          $downloadProgressContainer.addClass('hidden');
+          break;
+        default:
+          $manualUpdateStatusText.text('').removeClass('text-yellow-400 text-green-400 text-red-400');
+          $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false).removeClass('hidden');
+          $downloadUpdateBtn.addClass('hidden');
+          $downloadProgressContainer.addClass('hidden');
+      }
+    });
+  }
+}
+
+module.exports = SettingsEventHandler;
+

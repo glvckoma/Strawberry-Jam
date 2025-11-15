@@ -659,27 +659,35 @@ module.exports = class Client {
         this._server.application.dispatch.intervals.clear();
     }
 
+    const wasConnected = this.connected;
+    
     if (this.connected) {
       this.connected = false;
-      if (this._server && this._server.application && !manual) { // Check application exists
+      if (this._server && this._server.application && !manual) {
         this._server.application.emit('connection:change', false);
-        
-        // Only show disconnect message if not manual and game wasn't just launched
-        // and we haven't shown a disconnect message recently
+      }
+    }
+    
+    if (this._server && this._server.application && !manual && wasConnected) {
+      if (!this._recentlyDisconnected) {
+        const isGameClosing = this._server.application._isGameRunning === false;
         const wasJustLaunched = (typeof this._wasGameJustLaunched === 'function') ? this._wasGameJustLaunched() : false;
-        const shouldShowMessage = !wasJustLaunched && !this._recentlyDisconnected;
         
-        if (shouldShowMessage) {
+        if (!isGameClosing && !wasJustLaunched) {
           this._recentlyDisconnected = true;
           this._server.application.consoleMessage({
               message: 'Connection to Animal Jam servers closed.',
               type: 'notify'
           });
           
-          // Reset the flag after a delay to prevent spam
           setTimeout(() => {
             this._recentlyDisconnected = false;
-          }, 5000); // 5 second cooldown
+          }, 10000);
+        } else {
+          this._recentlyDisconnected = true;
+          setTimeout(() => {
+            this._recentlyDisconnected = false;
+          }, 2000);
         }
       }
     }
@@ -711,7 +719,7 @@ module.exports = class Client {
         if (!messageElement) continue;
         
         const successText = messageElement.textContent || '';
-        if (successText.includes('Successfully launched Animal Jam Classic')) {
+        if (successText.includes('Successfully launched Strawberry Jam Classic')) {
           const timestampElement = messageElement.querySelector('.text-xs.text-gray-500');
           if (!timestampElement) return true; 
           

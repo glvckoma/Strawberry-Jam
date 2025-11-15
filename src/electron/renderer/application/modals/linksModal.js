@@ -25,7 +25,8 @@ module.exports = {
     });
 
     const $closeButton = $('<button>', {
-      class: 'modal-close-button-std text-gray-400 transition-colors duration-200 transform rounded-full p-1',
+      type: 'button',
+      class: 'text-gray-400 hover:bg-error-red hover:text-white transition-colors p-1 rounded-md',
       'aria-label': 'Close'
     }).append(
       $('<i>', { class: 'fas fa-times' })
