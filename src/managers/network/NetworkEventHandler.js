@@ -10,7 +10,7 @@ module.exports = class NetworkEventHandler {
 
   attach() {
     if (this._isAttached && this._callback) {
-      return
+      this.detach()
     }
 
     this._callback = ({ message, type }) => {

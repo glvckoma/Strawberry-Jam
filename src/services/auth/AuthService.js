@@ -147,6 +147,11 @@ class AuthService {
           throw new Error("OTP_NEEDED")
         }
 
+        if (authError.error == "username_not_present") {
+          console.error("[AUTH] 422 error: username_not_present - this usually means auth_token was used instead of refresh_token")
+          throw new Error("LOGIN_ERROR")
+        }
+
         console.log("[AUTH] No OTP requirement found in 422 response, throwing LOGIN_ERROR")
         throw new Error("LOGIN_ERROR")
       } catch (parseErr) {

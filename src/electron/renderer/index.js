@@ -107,44 +107,75 @@ const setupIpcEvents = () => {
     .on('message', (sender, args) => application.consoleMessage({ ...args }))
 }
 
+const startPluginRefreshAnimation = () => {
+  const pluginsSectionContent = document.getElementById("pluginsSectionContent");
+  const pluginList = document.getElementById("pluginList");
+  const refreshButton = document.getElementById("refreshPluginsSection");
+  const refreshIcon = refreshButton ? refreshButton.querySelector("i") : null;
+
+  if (!pluginsSectionContent || !pluginList || !refreshButton || !refreshIcon) {
+    return;
+  }
+
+  refreshButton.disabled = true;
+  pluginsSectionContent.classList.add("plugins-refreshing", "refresh-shimmer");
+  refreshIcon.classList.add("refresh-spinning");
+
+  const pluginItems = pluginList.querySelectorAll("li");
+  pluginItems.forEach((plugin, index) => {
+    const cleanup = () => {
+      plugin.classList.remove("refreshing-fade-out");
+      plugin.style.animationDelay = "";
+      plugin.removeEventListener("animationend", cleanup);
+    };
+
+    plugin.classList.remove("refreshing-fade-in");
+    plugin.style.animationDelay = `${index * 60}ms`;
+    plugin.classList.add("refreshing-fade-out");
+    plugin.addEventListener("animationend", cleanup);
+  });
+};
+
+const completePluginRefreshAnimation = () => {
+  setTimeout(() => {
+    const pluginsSectionContent = document.getElementById("pluginsSectionContent");
+    const pluginList = document.getElementById("pluginList");
+    const refreshIcon = document.querySelector("#refreshPluginsSection i");
+    const refreshButton = document.getElementById("refreshPluginsSection");
+
+    if (!pluginsSectionContent || !pluginList || !refreshIcon || !refreshButton) {
+      return;
+    }
+
+    pluginsSectionContent.classList.remove("plugins-refreshing", "refresh-shimmer");
+    refreshIcon.classList.remove("refresh-spinning");
+    refreshButton.disabled = false;
+
+    const newPlugins = pluginList.querySelectorAll("li");
+    newPlugins.forEach((plugin, index) => {
+      const cleanup = () => {
+        plugin.classList.remove("refreshing-fade-in");
+        plugin.style.animationDelay = "";
+        plugin.removeEventListener("animationend", cleanup);
+      };
+
+      plugin.style.animationDelay = `${index * 70}ms`;
+      plugin.classList.add("refreshing-fade-in");
+      plugin.addEventListener("animationend", cleanup);
+    });
+  }, 120);
+};
+
 const setupAppEvents = () => {
   application
     .on('ready', () => application.activateAutoComplete())
+    .on('refresh:plugins:start', () => {
+      startPluginRefreshAnimation()
+    })
     .on('refresh:plugins', () => {
       application.refreshAutoComplete()
       application.attachNetworkingEvents()
-      
-      // Handle refresh animation completion
-      setTimeout(() => {
-        const pluginsSectionContent = document.getElementById("pluginsSectionContent");
-        const pluginList = document.getElementById("pluginList");
-        const refreshIcon = document.querySelector("#refreshPluginsSection i");
-        
-        if (pluginsSectionContent && pluginList && refreshIcon) {
-          // Stop refresh animations
-          pluginsSectionContent.classList.remove("plugins-refreshing", "refresh-shimmer");
-          refreshIcon.classList.remove("refresh-spinning");
-          
-          // Re-enable the refresh button
-          const refreshButton = document.getElementById("refreshPluginsSection");
-          if (refreshButton) {
-            refreshButton.disabled = false;
-          }
-          
-          // Animate new plugins in with staggered effect
-          const newPlugins = pluginList.querySelectorAll("li");
-          newPlugins.forEach((plugin, index) => {
-            plugin.classList.add("refreshing-fade-in");
-            plugin.style.animationDelay = `${index * 75}ms`;
-            
-            // Clean up animation classes after animation completes
-            setTimeout(() => {
-              plugin.classList.remove("refreshing-fade-in");
-              plugin.style.animationDelay = "";
-            }, 500 + (index * 75));
-          });
-        }
-      }, 100); // Small delay to ensure plugins are rendered
+      completePluginRefreshAnimation()
     })
 }
 

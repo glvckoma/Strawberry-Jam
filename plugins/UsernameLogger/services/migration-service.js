@@ -239,13 +239,6 @@ class MigrationService {
       }
 
       const totalIgnored = loadedCount + collectedCount + addedFromAccounts;
-      if (totalIgnored > 0) {
-        this.application.consoleMessage({
-          type: 'logger',
-          message: `[Username Logger] ${totalIgnored} existing usernames will be ignored.`
-        });
-      }
-
       return true;
     } catch (error) {
       this.application.consoleMessage({

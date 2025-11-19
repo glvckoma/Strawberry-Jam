@@ -82,27 +82,7 @@
         let authTokenOtpNeeded = false;
         let refreshTokenOtpNeeded = false;
         
-        if (this.loginScreen.authToken && !this._isTokenExpired(this.loginScreen.authToken)) {
-          console.log("[ANIMAL JAM AUTH] Auth token is valid. Attempting authentication with it.");
-          try {
-            authResult = await globals.authenticateWithAuthToken(this.loginScreen.authToken);
-            console.log("[ANIMAL JAM AUTH] Auth token authentication successful");
-          } catch (err) {
-            console.log("[ANIMAL JAM AUTH] Auth token authentication failed:", err.message);
-            
-            if (err.message === "OTP_NEEDED" && this.loginScreen.refreshToken) {
-              console.log("[ANIMAL JAM AUTH] OTP needed for auth token, trying refresh token instead");
-              authTokenFailed = true;
-              authTokenOtpNeeded = true;
-            } else if (err.message === "LOGIN_ERROR" && this.loginScreen.refreshToken) {
-              console.log("[ANIMAL JAM AUTH] Auth token failed with LOGIN_ERROR, trying refresh token instead");
-              authTokenFailed = true;
-            } else {
-              throw err;
-            }
-          }
-        } 
-        if ((!this.loginScreen.authToken || this._isTokenExpired(this.loginScreen.authToken) || authTokenFailed) && this.loginScreen.refreshToken) {
+        if (this.loginScreen.refreshToken) {
           console.log("[ANIMAL JAM AUTH] Attempting refresh token authentication");
           console.log("[ANIMAL JAM AUTH] Refresh token format check:", this.loginScreen.refreshToken ? this.loginScreen.refreshToken.split('.').length + ' parts' : 'null');
           
@@ -115,7 +95,7 @@
           }
 
           if (this.loginScreen.authToken) {
-            console.log("[ANIMAL JAM AUTH] Auth token is expired or invalid. Attempting to refresh with a valid refresh token.");
+            console.log("[ANIMAL JAM AUTH] Refresh token available. Prioritizing refresh token over auth token.");
           } else {
             console.log("[ANIMAL JAM AUTH] No auth token found. Attempting to use refresh token.");
           }
@@ -136,16 +116,34 @@
               this.loginScreen.clearRefreshToken();
               this.loginScreen.isFakePassword = false;
             } else if (err.message === "OTP_NEEDED") {
-              console.log("[ANIMAL JAM AUTH] OTP needed for refresh token, will fall back to password login");
+              console.log("[ANIMAL JAM AUTH] OTP needed for refresh token, will fall back to auth token or password login");
               refreshTokenOtpNeeded = true;
             } else {
               throw err;
             }
           }
         }
+        
+        if (!authResult && this.loginScreen.authToken && !this._isTokenExpired(this.loginScreen.authToken) && !refreshTokenOtpNeeded) {
+          console.log("[ANIMAL JAM AUTH] Refresh token not available or failed. Attempting authentication with auth token.");
+          try {
+            authResult = await globals.authenticateWithAuthToken(this.loginScreen.authToken);
+            console.log("[ANIMAL JAM AUTH] Auth token authentication successful");
+          } catch (err) {
+            console.log("[ANIMAL JAM AUTH] Auth token authentication failed:", err.message);
+            
+            if (err.message === "OTP_NEEDED") {
+              console.log("[ANIMAL JAM AUTH] OTP needed for auth token");
+              authTokenFailed = true;
+              authTokenOtpNeeded = true;
+            } else {
+              authTokenFailed = true;
+            }
+          }
+        }
         if (authResult) {
           console.log("[ANIMAL JAM AUTH] Using successful token authentication result");
-        } else if (!this.loginScreen.authToken || this._isTokenExpired(this.loginScreen.authToken) || authTokenFailed || refreshTokenOtpNeeded) {
+        } else if ((!this.loginScreen.refreshToken || refreshTokenOtpNeeded) && (!this.loginScreen.authToken || this._isTokenExpired(this.loginScreen.authToken) || authTokenFailed)) {
           console.log("[ANIMAL JAM AUTH] No valid tokens or OTP needed. Proceeding with password authentication.");
           console.log("[ANIMAL JAM AUTH] OTP for password auth:", this.loginScreen.otp ? '[SET]' : '[NOT SET]');
           

@@ -647,7 +647,7 @@ module.exports = class Application extends EventEmitter {
     })
     
     this.consoleMessage({
-      message: 'Thanks for choosing strawberry jam, type commands here to use plugins.',
+      message: 'Enjoy 33.33% off BerryBreach purchases using code "HOLIDAYS2025" until 12/31/2025.',
       type: 'welcome'
     })
     

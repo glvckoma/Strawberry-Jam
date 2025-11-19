@@ -10,6 +10,7 @@ A powerful UI-based plugin that allows you to set up and schedule automated adve
 - Save and load advertisement configurations
 - Simple start/stop controls with status indicator
 - Customizable time intervals between messages
+- Configurable packet suffix to match your current game session
 
 ## How to Use
 
@@ -31,6 +32,11 @@ A powerful UI-based plugin that allows you to set up and schedule automated adve
 #### Message Order
 - **Sequential**: Messages are sent in the order they appear (1, 2, 3, etc.)
 - **Random**: Messages are sent in random order
+
+#### Message Suffix
+- Use the **Message Suffix** field to control what is appended to every packet, defaulting to `%0`
+- If advertising stops working, send a manual chat and inspect the raw payload to see the suffix after `${messageToSend}` inside `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${messageToSend}%0]]></txt></body></msg>`; copy that value into the input (only the part after the message)
+- Saved configurations and local storage both remember this value, so update it whenever you notice the suffix changing
 
 ### Starting and Stopping
 

@@ -31,6 +31,24 @@ exports.render = function (app) {
   ];
   const LOCAL_PLUGINS_DIR = path.resolve('plugins/')
 
+  const refreshPluginsWithAnimation = async () => {
+    if (!app || !app.dispatch || typeof app.dispatch.load !== 'function') {
+      return
+    }
+
+    if (typeof app.emit === 'function') {
+      app.emit('refresh:plugins:start')
+    }
+
+    try {
+      await app.dispatch.load()
+    } finally {
+      if (typeof app.emit === 'function') {
+        app.emit('refresh:plugins')
+      }
+    }
+  }
+
   // Define tab state
   let activeTab = 'store' // Default active tab: store, installed, github
 
@@ -701,10 +719,7 @@ exports.render = function (app) {
 
       app.modals.close()
 
-      if (typeof app.dispatch.load === 'function') {
-        app.dispatch.load()
-        app.emit('refresh:plugins')
-      }
+      await refreshPluginsWithAnimation()
 
       // Refresh the current tab
       if (activeTab === 'store') {
@@ -818,10 +833,7 @@ exports.render = function (app) {
         type: 'success'
       })
 
-      if (typeof app.dispatch.load === 'function') {
-        app.dispatch.load()
-        app.emit('refresh:plugins')
-      }
+      await refreshPluginsWithAnimation()
       
       // Refresh the current tab if we're staying in the modal
       if (activeTab === 'installed') {
@@ -1173,10 +1185,7 @@ exports.render = function (app) {
         type: 'success'
       });
 
-      if (typeof app.dispatch.load === 'function') {
-        app.dispatch.load();
-        app.emit('refresh:plugins');
-      }
+      await refreshPluginsWithAnimation();
       
       // Refresh the current tab
       if (activeTab === 'github') {

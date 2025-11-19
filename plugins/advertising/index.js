@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadBtn = document.getElementById('load-btn');
   const intervalInput = document.getElementById('interval');
   const orderType = document.getElementById('order-type');
+  const messageSuffixInput = document.getElementById('message-suffix');
   const statusIndicator = document.getElementById('status-indicator');
   const fileInput = document.getElementById('file-input');
   const messageTemplate = document.getElementById('message-template');
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
       randomIntervalEnabled: randomIntervalToggle.checked,
       minInterval: minIntervalInput.value,
       maxInterval: maxIntervalInput.value,
+      messageSuffix: messageSuffixInput.value,
     };
     localStorage.setItem('advertisingPluginState', JSON.stringify(state));
   }
@@ -44,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function loadState() {
     const state = JSON.parse(localStorage.getItem('advertisingPluginState'));
     if (!state) {
+      messageSuffixInput.value = '%0';
       addMessageBox();
       return;
     }
@@ -53,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
     randomIntervalToggle.checked = state.randomIntervalEnabled || false;
     minIntervalInput.value = state.minInterval || 30;
     maxIntervalInput.value = state.maxInterval || 90;
+    messageSuffixInput.value = state.messageSuffix || '%0';
+    messageSuffixInput.value = state.messageSuffix || '%0';
 
     if (Array.isArray(state.messages) && state.messages.length > 0) {
       messagesContainer.innerHTML = '';
@@ -267,13 +272,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const packet = `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${messageToSend}%9]]></txt></body></msg>`;
+      const packet = `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${messageToSend}${getMessageSuffix()}]]></txt></body></msg>`;
       await dispatch.sendRemoteMessage(packet);
-      scheduleNextMessage(); // Schedule the next message after successful send
+      scheduleNextMessage();
     } catch (error) {
       console.error("Error sending message:", error);
       showToast("Error sending message", "error");
-      scheduleNextMessage(); // Still schedule next attempt even on error
+      scheduleNextMessage();
     }
   }
 
@@ -288,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
       randomIntervalEnabled: randomIntervalToggle.checked,
       minInterval: minIntervalInput.value,
       maxInterval: maxIntervalInput.value,
+      messageSuffix: messageSuffixInput.value,
     };
 
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
@@ -348,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const packet = `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${message}%9]]></txt></body></msg>`;
+      const packet = `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${message}${getMessageSuffix()}]]></txt></body></msg>`;
       await dispatch.sendRemoteMessage(packet);
       showToast(`Preview sent: "${message}"`, "success");
     } catch (error) {
@@ -406,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
       randomIntervalToggle.checked = config.randomIntervalEnabled || false;
       minIntervalInput.value = config.minInterval || 30;
       maxIntervalInput.value = config.maxInterval || 90;
+      messageSuffixInput.value = config.messageSuffix || '%0';
       toggleIntervalView();
 
       if (Array.isArray(config.messages)) {
@@ -441,6 +448,12 @@ document.addEventListener('DOMContentLoaded', () => {
   minIntervalInput.addEventListener('input', saveState);
   maxIntervalInput.addEventListener('input', saveState);
   orderType.addEventListener('change', saveState);
+  messageSuffixInput.addEventListener('input', saveState);
+
+  function getMessageSuffix() {
+    const suffix = (messageSuffixInput.value || '').trim();
+    return suffix === '' ? '%0' : suffix;
+  }
 
   window.addEventListener('beforeunload', stopAdvertising);
 

@@ -470,56 +470,86 @@
 
     /* Plugin Refresh Animations */
     @keyframes refresh-fade-out {
-      0% { 
-        opacity: 1; 
-        transform: translateY(0) scale(1); 
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
       }
-      100% { 
-        opacity: 0; 
-        transform: translateY(-10px) scale(0.95);
+      60% {
+        opacity: 0.2;
+        transform: translateY(-4px) scale(0.99);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.97);
       }
     }
 
     @keyframes refresh-fade-in {
-      0% { 
-        opacity: 0; 
-        transform: translateY(10px) scale(0.95); 
+      0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
       }
-      100% { 
-        opacity: 1; 
+      40% {
+        opacity: 0.7;
+        transform: translateY(-2px) scale(1.01);
+      }
+      100% {
+        opacity: 1;
         transform: translateY(0) scale(1);
       }
     }
 
     @keyframes refresh-spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg) scale(1);
+      }
+      65% {
+        transform: rotate(240deg) scale(0.96);
+      }
+      100% {
+        transform: rotate(360deg) scale(1);
+      }
     }
 
     @keyframes refresh-shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      0% {
+        background-position: 220% 0;
+        opacity: 0.2;
+      }
+      50% {
+        opacity: 0.45;
+      }
+      100% {
+        background-position: -220% 0;
+        opacity: 0.2;
+      }
     }
 
     .refreshing-fade-out {
-      animation: refresh-fade-out 0.4s ease-out forwards;
+      animation: refresh-fade-out 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
     .refreshing-fade-in {
-      animation: refresh-fade-in 0.5s ease-out forwards;
+      animation: refresh-fade-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
 
     .refresh-spinning {
-      animation: refresh-spin 1s linear infinite;
+      animation: refresh-spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     }
 
     .refresh-shimmer {
-      background: linear-gradient(90deg, 
-        transparent 0%, 
-        rgba(59, 130, 246, 0.15) 50%, 
-        transparent 100%);
-      background-size: 200% 100%;
-      animation: refresh-shimmer 1.5s ease-in-out infinite;
+      background: linear-gradient(
+        110deg,
+        rgba(59, 130, 246, 0) 0%,
+        rgba(59, 130, 246, 0.18) 35%,
+        rgba(244, 63, 94, 0.16) 55%,
+        rgba(16, 185, 129, 0.18) 70%,
+        rgba(59, 130, 246, 0) 100%
+      );
+      background-size: 240% 100%;
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.85) 18%, rgba(0, 0, 0, 0.95) 82%, transparent 100%);
+      mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.85) 18%, rgba(0, 0, 0, 0.95) 82%, transparent 100%);
+      animation: refresh-shimmer 1.6s ease-in-out infinite;
     }
 
     .plugins-refreshing #pluginList {

@@ -191,18 +191,19 @@ class UsernameLogger {
       const autoCheckEnabled = await this.application.settings.get('plugins.usernameLogger.autoCheck.enabled');
       const autoCheckThreshold = await this.application.settings.get('plugins.usernameLogger.autoCheck.threshold');
 
-      // Log master toggle status if it's the initial call or if the state changed
-      if (this.isLoggingCurrentlyEnabled === null || this.isLoggingCurrentlyEnabled !== currentEnableLogging) {
+      const isInitialState = this.isLoggingCurrentlyEnabled === null;
+      const stateChanged = !isInitialState && this.isLoggingCurrentlyEnabled !== currentEnableLogging;
+      if (stateChanged) {
+        const ignoredCount = this.stateModel.getIgnoredUsernamesCount();
+        const message = currentEnableLogging
+          ? `Username Logging is enabled${ignoredCount > 0 ? ` - ${ignoredCount} existing usernames will be ignored.` : '.'}`
+          : 'Username Logging is disabled.';
         this.application.consoleMessage({
           type: currentEnableLogging ? 'success' : 'warn',
-          // Differentiate initial log from subsequent change logs slightly for clarity
-          message: (this.isLoggingCurrentlyEnabled === null)
-            ? `Username Logging is ${currentEnableLogging ? 'enabled' : 'disabled'}.`
-            : `Username Logging is now ${currentEnableLogging ? 'enabled' : 'disabled'}.`
+          message
         });
       }
 
-      // Update stored state for the master toggle
       this.isLoggingCurrentlyEnabled = currentEnableLogging;
       // this.wasCollectingNearby and this.wasCollectingBuddies are no longer used for logging here.
 

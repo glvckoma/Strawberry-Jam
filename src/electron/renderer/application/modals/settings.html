@@ -250,7 +250,12 @@
               <!-- API Key -->
               <div>
                 <label for="leakCheckApiKey" class="block mb-2 text-sm font-medium text-text-primary">API Key</label>
-                <input id="leakCheckApiKey" type="password" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="Enter LeakCheck API Key">
+                <div class="relative inline-block w-full">
+                  <input id="leakCheckApiKey" type="password" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full pr-10" placeholder="Enter LeakCheck API Key">
+                  <button type="button" id="leakCheckApiKeyToggle" style="position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%);" class="text-text-primary hover:text-highlight-yellow transition-colors focus:outline-none bg-transparent border-0 cursor-pointer z-10">
+                    <i class="fas fa-eye text-sm"></i>
+                  </button>
+                </div>
                 <p class="mt-1 text-xs text-gray-400">Requires a <a href="https://leakcheck.io/" target="_blank" class="text-highlight-yellow hover:underline">LeakCheck.io</a> Pro subscription.</p>
               </div>
               <!-- Auto Leak Check Section -->

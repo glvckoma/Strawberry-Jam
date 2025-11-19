@@ -11,8 +11,13 @@
 
   <!-- Standardized Draggable Header -->
   <div class="jam-plugin-header">
-    <span class="jam-plugin-title">Auto Advertising</span>
-    <div class="jam-plugin-controls">
+    <div class="flex items-center gap-2">
+      <span class="jam-plugin-title">Auto Advertising</span>
+    </div>
+    <div class="jam-plugin-controls flex items-center gap-2">
+      <span id="status-indicator" class="px-2 py-1 text-xs rounded-full bg-error-red/20 text-error-red">
+        <i class="fas fa-circle mr-1"></i> Inactive
+      </span>
       <button class="jam-plugin-minimize" aria-label="Minimize">
         <i class="fas fa-minus"></i>
       </button>
@@ -25,21 +30,7 @@
   <!-- Main Content Area (this will be hidden/shown on minimize) -->
   <div class="jam-plugin-content p-6 flex-1 flex flex-col h-full">
     <!-- The existing div with class "flex-1 flex flex-col h-full" is now effectively replaced by jam-plugin-content and its inner structure -->
-    <div class="bg-secondary-bg rounded-md shadow p-4 mb-4">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-lg font-medium text-text-primary">Auto Advertising</h1>
-          <p class="text-sm text-gray-400 mt-1">Set up automated messages to be sent periodically</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <span id="status-indicator" class="px-2 py-1 text-xs rounded-full bg-error-red/20 text-error-red">
-            <i class="fas fa-circle mr-1"></i> Inactive
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex-1 overflow-y-auto mb-4 pr-1" style="max-height: calc(100% - 180px)">
+    <div class="flex-1 overflow-y-auto mb-4 pr-1" style="max-height: calc(100% - 80px)">
       <div class="bg-secondary-bg rounded-md shadow p-4 space-y-4 mb-4">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-base font-medium text-text-primary">Message Rotation</h2>
@@ -100,6 +91,16 @@
             </select>
             <p class="mt-1 text-xs text-gray-400">How messages will be rotated</p>
           </div>
+          <div class="flex-1 min-w-[200px]">
+            <label for="message-suffix" class="block text-xs font-medium text-gray-400 mb-1">Message Suffix</label>
+            <input type="text" id="message-suffix" maxlength="10" value="%0"
+              class="w-full bg-tertiary-bg text-text-primary placeholder-gray-400 p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-highlight-green text-sm"
+              placeholder="%0">
+            <p class="mt-1 text-xs text-gray-400">
+              If advertising stops working, send a chat manually in-game and review the network tab packet:
+              [CDATA[{messageToSend}%0]] then change the value for %0 to yours.
+            </p>
+          </div>
         </div>
 
       </div>
@@ -118,7 +119,7 @@
           </button>
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex gap-2 items-center">
           <button id="start-btn"
             class="px-4 py-2 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition text-sm">
             <i class="fas fa-play mr-2"></i> Start

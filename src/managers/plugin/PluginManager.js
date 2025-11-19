@@ -356,23 +356,8 @@ class PluginManager {
   }
 
   _startRefreshAnimation() {
-    const pluginsSectionContent = document.getElementById("pluginsSectionContent")
-    const pluginList = document.getElementById("pluginList")
-    const refreshButton = document.getElementById("refreshPluginsSection")
-    const refreshIcon = refreshButton?.querySelector("i")
-
-    if (pluginsSectionContent && pluginList && refreshIcon && refreshButton) {
-      refreshButton.disabled = true
-
-      pluginsSectionContent.classList.add("plugins-refreshing", "refresh-shimmer")
-      refreshIcon.classList.add("refresh-spinning")
-
-      const existingPlugins = pluginList.querySelectorAll("li")
-      existingPlugins.forEach((plugin, index) => {
-        setTimeout(() => {
-          plugin.classList.add("refreshing-fade-out")
-        }, index * 50)
-      })
+    if (this._application && typeof this._application.emit === "function") {
+      this._application.emit("refresh:plugins:start")
     }
   }
 

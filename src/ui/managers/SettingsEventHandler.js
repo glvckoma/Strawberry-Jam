@@ -21,6 +21,22 @@ class SettingsEventHandler {
     const $cacheSizeDetails = $modal.find('#cacheSizeDetails');
     const $leakCheckAutoCheck = $modal.find('#leakCheckAutoCheck');
     const $leakCheckThresholdContainer = $modal.find('#leakCheckThresholdContainer');
+    const $leakCheckApiKey = $modal.find('#leakCheckApiKey');
+    const $leakCheckApiKeyToggle = $modal.find('#leakCheckApiKeyToggle');
+
+    $leakCheckApiKeyToggle.on('click', function() {
+      const $input = $leakCheckApiKey;
+      const $icon = $(this).find('i');
+      const isPassword = $input.attr('type') === 'password';
+      
+      if (isPassword) {
+        $input.attr('type', 'text');
+        $icon.removeClass('fa-eye').addClass('fa-eye-slash');
+      } else {
+        $input.attr('type', 'password');
+        $icon.removeClass('fa-eye-slash').addClass('fa-eye');
+      }
+    });
 
     $modal.find('#closeSettingsBtn, #cancelSettingsBtn').on('click', () => {
       app.modals.close();
