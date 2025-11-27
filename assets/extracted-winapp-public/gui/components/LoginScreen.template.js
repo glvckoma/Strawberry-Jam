@@ -16,13 +16,16 @@
             --theme-radial-2: rgba(255, 200, 200, 0.07);
             --theme-settings-hover: rgba(232, 61, 82, 0.05);
             --theme-settings-border: rgba(232, 61, 82, 0.2);
-            --theme-box-background: rgba(255, 245, 230, 0.95); /* Default box background */
+            /* CRITICAL: Default to dark mode to prevent light mode flash */
+            /* Will be switched to light if user preference is light mode */
+            --theme-box-background: rgba(45, 45, 45, 0.95); /* Default to dark */
             --theme-box-background-dark: rgba(45, 45, 45, 0.95); /* Dark mode box background */
+            --theme-box-background-light: rgba(255, 245, 230, 0.95); /* Light mode box background */
             --theme-button-bg: var(--theme-primary); /* Default button background */
             --theme-button-border: var(--theme-secondary); /* Default button border */
             --theme-button-text: #FFFFFF; /* Default button text */
             --dark-mode: 0; /* Dark mode flag: 0 = light, 1 = dark */
-            
+
             width: 100vw;
             height: calc(100vh - 2px);
             display: grid;
@@ -33,6 +36,17 @@
                                  ". . . .";        /* Adjusted for new column */
             background-color: rgba(239, 234, 221, 0);
             transition: background-color 0.2s;
+
+            /* Hide login screen until theme is loaded to prevent FOUC */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-out;
+          }
+
+          :host(.theme-ready) {
+            /* Show login screen once theme is loaded */
+            opacity: 1;
+            visibility: visible;
           }
           
           /* Settings button and panel styles */
@@ -269,6 +283,8 @@
             border: 1px solid var(--theme-secondary);
             opacity: 1;
             transition: opacity 0.2s, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease; /* Added background-color transition */
+            /* Ensure dark mode background is applied immediately when class is present */
+            will-change: background-color;
           }
 
           :host(.dark-mode) #box-background {
@@ -671,7 +687,7 @@
         </div>
         <div id="box">
 <div id="login-container">
-  <img src="images/strawberry.png" alt="App Icon" id="login-app-icon" style="width:90px;display:block;margin-bottom:8px;margin-left:auto;margin-right:auto;"> <!-- Changed default src -->
+  <img src="images/strawberry.png" alt="App Icon" id="login-app-icon" style="width:90px;display:block;margin-bottom:8px;margin-left:auto;margin-right:auto;" loading="lazy"> <!-- Changed default src -->
   <div id="player-login-text">playerLogin</div>
   <ajd-text-input id="username-input" placeholder="username" type="text"></ajd-text-input>
             <ajd-text-input id="password-input" placeholder="password" type="password"></ajd-text-input>

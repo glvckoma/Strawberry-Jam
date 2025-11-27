@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const randomIntervalContainer = document.getElementById('random-interval-container');
   const minIntervalInput = document.getElementById('min-interval');
   const maxIntervalInput = document.getElementById('max-interval');
+  const targetAccountSelect = document.getElementById('target-account');
 
   /**
    * Saves all settings and messages to local storage
@@ -36,8 +37,65 @@ document.addEventListener('DOMContentLoaded', () => {
       minInterval: minIntervalInput.value,
       maxInterval: maxIntervalInput.value,
       messageSuffix: messageSuffixInput.value,
+      targetAccount: targetAccountSelect.value,
     };
     localStorage.setItem('advertisingPluginState', JSON.stringify(state));
+  }
+
+  /**
+   * Populates the target account dropdown with connected clients
+   */
+  async function updateAccountDropdown() {
+    try {
+      let clients = [];
+      
+      // Try to get connected clients - handle both sync and async cases
+      if (dispatch && typeof dispatch.getConnectedClients === 'function') {
+        const result = dispatch.getConnectedClients();
+        // Handle promise if async
+        if (result && typeof result.then === 'function') {
+          clients = await result;
+        } else {
+          clients = result;
+        }
+      }
+      
+      // Ensure clients is an array
+      if (!Array.isArray(clients)) {
+        clients = [];
+      }
+      
+      const currentValue = targetAccountSelect.value;
+      
+      // Clear existing options except "All Accounts"
+      targetAccountSelect.innerHTML = '<option value="">All Accounts</option>';
+      
+      // Add connected accounts (filter out duplicates by username)
+      const uniqueUsernames = new Set();
+      clients.forEach(client => {
+        if (client && client.username && client.connected && !uniqueUsernames.has(client.username)) {
+          uniqueUsernames.add(client.username);
+          const option = document.createElement('option');
+          option.value = client.username;
+          option.textContent = client.username;
+          targetAccountSelect.appendChild(option);
+        }
+      });
+      
+      // Restore previous selection if it still exists
+      if (currentValue) {
+        const optionExists = Array.from(targetAccountSelect.options).some(
+          opt => opt.value === currentValue
+        );
+        if (optionExists) {
+          targetAccountSelect.value = currentValue;
+        } else {
+          targetAccountSelect.value = '';
+        }
+      }
+    } catch (error) {
+      console.error("Error updating account dropdown:", error);
+    }
   }
 
   /**
@@ -57,7 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
     minIntervalInput.value = state.minInterval || 30;
     maxIntervalInput.value = state.maxInterval || 90;
     messageSuffixInput.value = state.messageSuffix || '%0';
-    messageSuffixInput.value = state.messageSuffix || '%0';
+    if (state.targetAccount !== undefined) {
+      targetAccountSelect.value = state.targetAccount || '';
+    }
 
     if (Array.isArray(state.messages) && state.messages.length > 0) {
       messagesContainer.innerHTML = '';
@@ -69,6 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     toggleIntervalView();
+    
+    // Update account dropdown after loading state
+    updateAccountDropdown();
   }
 
   /**
@@ -273,7 +336,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const packet = `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${messageToSend}${getMessageSuffix()}]]></txt></body></msg>`;
-      await dispatch.sendRemoteMessage(packet);
+      const options = {};
+      const selectedAccount = targetAccountSelect.value;
+      if (selectedAccount && selectedAccount !== '') {
+        options.targetUsername = selectedAccount;
+      }
+      await dispatch.sendRemoteMessage(packet, options);
       scheduleNextMessage();
     } catch (error) {
       console.error("Error sending message:", error);
@@ -355,7 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const packet = `<msg t="sys"><body action="pubMsg" r="${targetRoomId}"><txt><![CDATA[${message}${getMessageSuffix()}]]></txt></body></msg>`;
-      await dispatch.sendRemoteMessage(packet);
+      const options = {};
+      const selectedAccount = targetAccountSelect.value;
+      if (selectedAccount && selectedAccount !== '') {
+        options.targetUsername = selectedAccount;
+      }
+      await dispatch.sendRemoteMessage(packet, options);
       showToast(`Preview sent: "${message}"`, "success");
     } catch (error) {
       console.error("Error sending preview message:", error);
@@ -449,6 +522,11 @@ document.addEventListener('DOMContentLoaded', () => {
   maxIntervalInput.addEventListener('input', saveState);
   orderType.addEventListener('change', saveState);
   messageSuffixInput.addEventListener('input', saveState);
+  targetAccountSelect.addEventListener('change', saveState);
+
+  // Update account dropdown periodically and on load
+  updateAccountDropdown();
+  setInterval(updateAccountDropdown, 5000); // Update every 5 seconds
 
   function getMessageSuffix() {
     const suffix = (messageSuffixInput.value || '').trim();

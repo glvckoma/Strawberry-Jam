@@ -334,8 +334,8 @@ class Electron {
               window.jam = window.jam || {};
 
               const dispatchObj = {
-                sendRemoteMessage: function(msg) {
-                  ipcRenderer.send('send-remote-message', msg);
+                sendRemoteMessage: function(msg, options) {
+                  ipcRenderer.send('send-remote-message', { message: msg, options: options || {} });
                 },
                 sendConnectionMessage: function(msg) {
                   ipcRenderer.send('send-connection-message', msg);
@@ -345,6 +345,9 @@ class Electron {
                 },
                 getStateSync: function(key) {
                   return ipcRenderer.sendSync('dispatch-get-state-sync', key);
+                },
+                getConnectedClients: function() {
+                  return ipcRenderer.invoke('dispatch-get-connected-clients');
                 },
                 runInBackground: ${runInBackground}
               };
@@ -676,16 +679,12 @@ class Electron {
 
     this.autoUpdateService.initialize();
 
-    // Apply SWF on launch if enabled
     try {
-      const autoReapply = this._store.get('game.autoReapplySwfOnLaunch');
-      if (autoReapply) {
-        const selectedFile = this._store.get('game.selectedSwfFile');
-        if (selectedFile) {
-          logManager.log(`[Auto Reapply] Auto-reapplying SWF file: ${selectedFile}`, 'main', logManager.logLevels.INFO);
-          const FilesController = require('../api/controllers/FilesController');
-          FilesController.replaceSwfFile(selectedFile);
-        }
+      const selectedFile = this._store.get('game.selectedSwfFile');
+      if (selectedFile) {
+        logManager.log(`[Auto Reapply] Auto-reapplying SWF file: ${selectedFile}`, 'main', logManager.logLevels.INFO);
+        const FilesController = require('../api/controllers/FilesController');
+        FilesController.replaceSwfFile(selectedFile);
       }
     } catch (error) {
       console.error('Error applying SWF on launch:', error);

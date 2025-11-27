@@ -43,6 +43,29 @@ class IPCManager {
           }
         })
 
+        ipcRenderer.on('plugin-remote-message-with-options', async (event, data) => {
+          let processedMsg = data.message || data
+          const options = data.options || {}
+          
+          if (this.application.dispatch && typeof processedMsg === 'string' && processedMsg.includes('{room}')) {
+            try {
+              const currentRoom = await this.application.dispatch.getState('room')
+              if (currentRoom) {
+                processedMsg = processedMsg.replaceAll('{room}', currentRoom)
+              }
+            } catch (error) {
+            }
+          }
+          
+          if (this.application.dispatch && typeof this.application.dispatch.sendRemoteMessage === 'function') {
+            this.application.dispatch.sendRemoteMessage(processedMsg, options).catch(err => {
+              this.application.consoleMessage({ type: 'error', message: `Error sending remote message from plugin: ${err.message}` })
+            })
+          } else {
+            this.application.consoleMessage({ type: 'error', message: 'Cannot send remote message: Dispatch not ready.' })
+          }
+        })
+
         ipcRenderer.on('plugin-connection-message', (event, msg) => {
           if (this.application.dispatch && typeof this.application.dispatch.sendConnectionMessage === 'function') {
             this.application.dispatch.sendConnectionMessage(msg).catch(err => {

@@ -39,7 +39,6 @@ class SettingsSaver {
         { key: 'dev-log.performServerCheckOnLaunch', value: $modal.find('#performServerCheckOnLaunchToggle').is(':checked') },
         { key: 'updates.enableAutoUpdates', value: $modal.find('#enableAutoUpdatesToggle').is(':checked') },
         { key: 'game.selectedSwfFile', value: selectedSwfFile },
-        { key: 'game.autoReapplySwfOnLaunch', value: $modal.find('#autoReapplySwfOnLaunchToggle').is(':checked') },
         { key: 'ui.allowMultipleInstances', value: $modal.find('#allowMultipleInstancesToggle').is(':checked') }
       ];
 

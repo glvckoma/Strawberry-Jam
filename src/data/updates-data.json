@@ -810,8 +810,8 @@
   },
   "4.0.0": {
     "version": "4.0.0",
-    "releaseDate": "2025-01-28",
-    "isLatest": true,
+    "releaseDate": "2025-11-15",
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -995,6 +995,122 @@
           "keys": ["Ctrl", "Shift", "E"]
         }
       ],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "4.0.1": {
+    "version": "4.0.1",
+    "releaseDate": "2025-11-18",
+    "isLatest": false,
+    "categories": {
+      "features": [
+        {
+          "icon": "🎩",
+          "title": "Multi-Hat Toggle in Mod Menu",
+          "description": "Added multi-hat items into mod menu for toggle allowing users to enable/disable.",
+          "priority": "major"
+        },
+        {
+          "icon": "🛒",
+          "title": "My Shop Cart System Toggle",
+          "description": "Added a toggle in mod menu for My Shop cart system.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "📢",
+          "title": "Auto Advertisement Plugin Enhancements",
+          "description": "Fixed Auto Advertisement plugin. Added configuration for packet + minor UI changes and refinements.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🎨",
+          "title": "UI Enhancements",
+          "description": "Other UI enhancements & bugs squashed.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🐭",
+          "title": "Mod Menu Mouse Actions Fix",
+          "description": "Addressed issue where mouse actions were not always registering in the mod menu.",
+          "priority": "fix"
+        },
+        {
+          "icon": "💬",
+          "title": "Private Chat Toggle Fix",
+          "description": "Fixed the private chat toggle.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🔄",
+          "title": "Plugin Refresh Packet Logging Fix",
+          "description": "Fixed an issue where refreshing plugins would break packet logging.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🚫",
+          "title": "Anti-AFK Fix",
+          "description": "Anti-afk fixed again.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "4.0.2": {
+    "version": "4.0.2",
+    "releaseDate": "2025-11-27",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "❌",
+          "title": "2FA Popup Close Button",
+          "description": "Added 'x' button to 2FA popup.",
+          "priority": "major"
+        },
+        {
+          "icon": "👤",
+          "title": "Username-Specific Packet Targeting",
+          "description": "Users can now specify which logged in username to send packets to for Advertising, Packet Spammer, and TFD Automation plugins.",
+          "priority": "major"
+        },
+        {
+          "icon": "👕",
+          "title": "Multiple Clothing Items Toggle",
+          "description": "Users can now wear multiple of any clothing item by toggling the option in the mod menu.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "🛒",
+          "title": "Bulk Buying Process Refinement",
+          "description": "Refined the bulk buying process. Increase delay between each item.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "⚡",
+          "title": "Login Screen Load Time Improvement",
+          "description": "Improve login screen load time.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🔄",
+          "title": "Reapply SWF Button Fix",
+          "description": "Addressed 'Reapply swf' button not working appropriately.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
       "commands": [],
       "messages": []
     }

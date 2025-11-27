@@ -69,14 +69,34 @@
             z-index: 1;
             right: 10px;
             top: 10px;
+            width: 30px;
+            height: 30px;
+            border: none;
+            background-color: transparent;
+            color: #7A4A12;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+          }
+
+          #close-button:hover {
+            background-color: rgba(122, 74, 18, 0.1);
+          }
+
+          #close-button:active {
+            background-color: rgba(122, 74, 18, 0.2);
           }
         </style>
 
         <div id="modal-body">
           <div id="header-div">
             <span id="header-text">2-STEP VERIFICATION</span>
-            <ajd-sprite-sheet-button graphic="core_close_btn_sprite" id="close-button">
-            </ajd-sprite-sheet-button>
+            <button id="close-button" type="button">×</button>
           </div>
           <div id="body-div">
             <span id="body-text">

@@ -28,6 +28,7 @@ const crystalDelayContainer = document.getElementById('crystalDelayContainer');
 const crystalDelay = document.getElementById('crystalDelay');
 const maxRetries = document.getElementById('maxRetries');
 const loopMode = document.getElementById('loopMode');
+const targetAccount = document.getElementById('targetAccount');
 
 // Modal Elements
 const educationalModal = document.getElementById('educationalModal');
@@ -630,7 +631,12 @@ async function sendPacket(packet, isRaw = false, isGemPacket = false) {
 
 
     try {
-        await dispatch.sendRemoteMessage(content);
+        const options = {};
+        const selectedAccount = targetAccount ? targetAccount.value : '';
+        if (selectedAccount && selectedAccount !== '') {
+            options.targetUsername = selectedAccount;
+        }
+        await dispatch.sendRemoteMessage(content, options);
     } catch (error) {
         // This is the critical change: if sendRemoteMessage fails, it will throw.
         // We re-throw a more specific error to be caught by the main try/catch block.
@@ -1803,6 +1809,88 @@ async function initialize() {
     }
 
     updateStatus('Ready to start TFD automation', 'info');
+    
+    // Initialize account dropdown
+    updateAccountDropdown();
+    loadAccountSelection();
+    setInterval(updateAccountDropdown, 5000); // Update every 5 seconds
+}
+
+/**
+ * Populates the target account dropdown with connected clients
+ */
+async function updateAccountDropdown() {
+    try {
+        let clients = [];
+        
+        if (dispatch && typeof dispatch.getConnectedClients === 'function') {
+            const result = dispatch.getConnectedClients();
+            if (result && typeof result.then === 'function') {
+                clients = await result;
+            } else {
+                clients = result;
+            }
+        }
+        
+        if (!Array.isArray(clients)) {
+            clients = [];
+        }
+        
+        const currentValue = targetAccount ? targetAccount.value : '';
+        
+        if (targetAccount) {
+            targetAccount.innerHTML = '<option value="">All Accounts</option>';
+            
+            const uniqueUsernames = new Set();
+            clients.forEach(client => {
+                if (client && client.username && client.connected && !uniqueUsernames.has(client.username)) {
+                    uniqueUsernames.add(client.username);
+                    const option = document.createElement('option');
+                    option.value = client.username;
+                    option.textContent = client.username;
+                    targetAccount.appendChild(option);
+                }
+            });
+            
+            if (currentValue) {
+                const optionExists = Array.from(targetAccount.options).some(
+                    opt => opt.value === currentValue
+                );
+                if (optionExists) {
+                    targetAccount.value = currentValue;
+                } else {
+                    targetAccount.value = '';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error updating account dropdown:', error);
+    }
+}
+
+/**
+ * Loads the selected account from localStorage
+ */
+function loadAccountSelection() {
+    try {
+        if (targetAccount) {
+            const saved = localStorage.getItem('tfd-targetAccount');
+            if (saved) {
+                targetAccount.value = saved;
+            }
+            
+            // Save selection when changed
+            targetAccount.addEventListener('change', () => {
+                try {
+                    localStorage.setItem('tfd-targetAccount', targetAccount.value);
+                } catch (error) {
+                    console.error('Error saving account selection:', error);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading account selection:', error);
+    }
 }
 
 initialize();

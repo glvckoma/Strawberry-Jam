@@ -120,11 +120,27 @@ try {
 
   // Expose sendRemoteMessage
   if (!window.jam.dispatch.sendRemoteMessage) {
-    window.jam.dispatch.sendRemoteMessage = function(message) {
+    window.jam.dispatch.sendRemoteMessage = function(message, options) {
       try {
-        ipcRenderer.send('plugin-remote-message', message);
+        if (options && (options.targetUsername || options.targetClientId)) {
+          ipcRenderer.send('send-remote-message', { message, options });
+        } else {
+          ipcRenderer.send('plugin-remote-message', message);
+        }
       } catch (e) {
         console.error("[Preload] Error in jam.dispatch.sendRemoteMessage:", e);
+      }
+    };
+  }
+
+  // Expose getConnectedClients
+  if (!window.jam.dispatch.getConnectedClients) {
+    window.jam.dispatch.getConnectedClients = async function() {
+      try {
+        return await ipcRenderer.invoke('dispatch-get-connected-clients');
+      } catch (e) {
+        console.error("[Preload] Error in jam.dispatch.getConnectedClients:", e);
+        return [];
       }
     };
   }

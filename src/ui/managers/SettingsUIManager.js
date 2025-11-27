@@ -132,6 +132,27 @@ class SettingsUIManager {
     }
   }
 
+  async refreshActiveSwfInfo($modal) {
+    const $currentName = $modal.find('#currentSwfName');
+    const $currentSize = $modal.find('#currentSwfSize');
+    
+    try {
+      const activeInfo = await ipcRenderer.invoke('get-active-swf-info');
+      
+      if (activeInfo && activeInfo.active) {
+        $currentName.text(activeInfo.active);
+        $currentSize.text(formatBytes(activeInfo.size));
+      } else {
+        $currentName.text('Unknown');
+        $currentSize.text('Error loading');
+      }
+    } catch (error) {
+      console.error('Error refreshing active SWF info:', error);
+      $currentName.text('Error');
+      $currentSize.text('Error loading');
+    }
+  }
+
   async loadCacheSize($modal) {
     const $cacheSizeValue = $modal.find('#cacheSizeValue');
     const $cacheSizeDetails = $modal.find('#cacheSizeDetails');

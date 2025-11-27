@@ -41,7 +41,6 @@ class SettingsLoader {
       const enableAutoUpdates = await ipcRenderer.invoke('get-setting', 'updates.enableAutoUpdates');
 
       const selectedSwfFile = await ipcRenderer.invoke('get-setting', 'game.selectedSwfFile');
-      const autoReapplySwfOnLaunch = await ipcRenderer.invoke('get-setting', 'game.autoReapplySwfOnLaunch');
 
       const allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
 
@@ -70,8 +69,6 @@ class SettingsLoader {
       $modal.find('#performServerCheckOnLaunchToggle').prop('checked', performServerCheckOnLaunch === true);
 
       $modal.find('#enableAutoUpdatesToggle').prop('checked', enableAutoUpdates === true);
-
-      $modal.find('#autoReapplySwfOnLaunchToggle').prop('checked', autoReapplySwfOnLaunch === true);
 
       $modal.find('#allowMultipleInstancesToggle').prop('checked', allowMultipleInstances === true);
 

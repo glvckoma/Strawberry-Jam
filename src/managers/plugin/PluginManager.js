@@ -361,6 +361,67 @@ class PluginManager {
     }
   }
 
+  _clearPluginCacheForDirectory(directory) {
+    const normalizedDir = path.resolve(directory)
+    let clearedCount = 0
+
+    for (const cacheKey in require.cache) {
+      try {
+        const cachedModule = require.cache[cacheKey]
+        if (cachedModule && cachedModule.filename) {
+          const cachedPath = path.resolve(cachedModule.filename)
+          if (cachedPath.startsWith(normalizedDir + path.sep) || cachedPath === normalizedDir) {
+            delete require.cache[cacheKey]
+            clearedCount++
+          }
+        }
+      } catch (e) {
+      }
+    }
+
+    return clearedCount
+  }
+
+  async _clearAllPluginCache() {
+    if (!this.BASE_PATH) {
+      return 0
+    }
+
+    try {
+      await fs.access(this.BASE_PATH)
+    } catch (accessError) {
+      return 0
+    }
+
+    const files = await PluginManager.readdirRecursive(this.BASE_PATH)
+    const configFiles = files.filter(file => path.basename(file) === 'plugin.json')
+    
+    let totalCleared = 0
+    const clearedDirectories = new Set()
+
+    for (const configFile of configFiles) {
+      const filepath = path.dirname(configFile)
+      const normalizedPath = path.resolve(filepath)
+
+      if (!clearedDirectories.has(normalizedPath)) {
+        const cleared = this._clearPluginCacheForDirectory(normalizedPath)
+        totalCleared += cleared
+        clearedDirectories.add(normalizedPath)
+      }
+    }
+
+    for (const { filepath } of this.plugins.values()) {
+      const normalizedPath = path.resolve(filepath)
+      if (!clearedDirectories.has(normalizedPath)) {
+        const cleared = this._clearPluginCacheForDirectory(normalizedPath)
+        totalCleared += cleared
+        clearedDirectories.add(normalizedPath)
+      }
+    }
+
+    return totalCleared
+  }
+
   async refresh() {
     const openWindows = await this._getOpenPluginWindows()
 
@@ -379,26 +440,7 @@ class PluginManager {
 
     this._application.$pluginList.empty()
 
-    const pluginPaths = [...this.plugins.values()].map(({ filepath, configuration: { main } }) => ({
-      jsPath: path.resolve(filepath, main),
-      jsonPath: path.resolve(filepath, 'plugin.json')
-    }))
-
-    for (const { jsPath, jsonPath } of pluginPaths) {
-      try {
-        await fs.access(jsPath)
-        const jsCacheKey = require.resolve(jsPath)
-        if (require.cache[jsCacheKey]) delete require.cache[jsCacheKey]
-      } catch (e) {
-      }
-
-      try {
-        await fs.access(jsonPath)
-        const jsonCacheKey = require.resolve(jsonPath)
-        if (require.cache[jsonCacheKey]) delete require.cache[jsonCacheKey]
-      } catch (e) {
-      }
-    }
+    const clearedCount = await this._clearAllPluginCache()
 
     this.clearAllCallback()
     await this.load()

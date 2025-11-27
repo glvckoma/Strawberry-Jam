@@ -15,10 +15,16 @@
         user-select: none;
         cursor: default;
         background-color: #121212;
+        /* Show immediately when DOM is ready, not when all resources load */
+        transition: opacity 0.3s ease-out;
       }
 
       body.show {
-        transition: opacity 0.75s;
+        opacity: 1;
+      }
+
+      /* Show login screen immediately when DOM is ready */
+      body.dom-ready {
         opacity: 1;
       }
 
@@ -45,11 +51,18 @@
         background-color: rgba(0, 0, 0, 0.65);
       }
 
+      /* Load system fonts first as fallback */
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      }
+
+      /* Lazy load custom fonts after initial render */
       @font-face {
         font-family: 'Tiki-Island';
         src: url("fonts/tiki-island/Tiki-Island.woff");
         font-weight: normal;
         font-style: normal;
+        font-display: swap; /* Show fallback font until custom font loads */
       }
 
       @font-face {
@@ -57,6 +70,7 @@
         src: url("fonts/digital-delivery/CCDigitalDeliveryRegular.woff");
         font-weight: normal;
         font-style: normal;
+        font-display: swap;
       }
 
       @font-face {
@@ -64,6 +78,7 @@
         src: url("fonts/digital-delivery/CCDigitalDeliveryBold.woff");
         font-weight: bold;
         font-style: normal;
+        font-display: swap;
       }
 
       @font-face {
@@ -71,6 +86,7 @@
         src: url("fonts/digital-delivery/CCDigitalDeliveryBoldItalic.woff");
         font-weight: bold;
         font-style: italic;
+        font-display: swap;
       }
 
       @font-face {
@@ -78,19 +94,11 @@
         src: url("fonts/digital-delivery/CCDigitalDeliveryItalic.woff");
         font-weight: normal;
         font-style: italic;
+        font-display: swap;
       }
     </style>
     <script>
       "use strict";
-      (() => {
-        const head = document.querySelector("head");
-        window.addEventListener("preloadAssets", event => {
-          for (const url of event.detail.urls) {
-            head.innerHTML += `<link rel="preload" as="image" type="image/svg+xml" href=${url}>`;
-          }
-        });
-      })();
-      
 
       const globals = {
         config: {},
@@ -804,19 +812,22 @@
 
     <!-- Load Core Component Scripts (as regular scripts) -->
 
+    <!-- Critical components loaded synchronously -->
     <script src="components/Button.js"></script>
-    <script src="components/AccountManagementPanel.js"></script>
-    <script src="components/ImportButton.js"></script>
-    <script src="components/AutoWheelButton.js"></script>
     <script src="components/LoginScreen.utilities.js"></script>
     <script src="components/LoginScreen.themes.js"></script>
     <script src="components/LoginScreen.template.js"></script>
     <script src="components/LoginScreen.theme-manager.js"></script>
-    <script src="components/LoginScreen.auth-manager.js"></script>
     <script src="components/LoginScreen.ui-manager.js"></script>
+    <script src="components/LoginScreen.auth-manager.js"></script>
     <script src="components/LoginScreen.settings-initializer.js"></script>
     <script src="components/LoginScreen.event-handlers.js"></script>
     <script src="components/LoginScreen.js"></script>
+
+    <!-- Non-critical components loaded asynchronously to prevent blocking -->
+    <script async src="components/AccountManagementPanel.js"></script>
+    <script async src="components/ImportButton.js"></script>
+    <script async src="components/AutoWheelButton.js"></script>
     <script src="components/UserTray.js"></script> <!-- New tray - loaded before GameScreen -->
     <script src="components/GameScreen.js"></script>
     <script src="components/TextInput.js"></script>
@@ -831,9 +842,6 @@
     <script src="components/ForgotPasswordModal.js"></script>
     <script src="components/OtpModal.js"></script>
     <script src="components/ProgressRing.js"></script>
-    
-    <!-- YouTube Theater Integration Script -->
-    <script src="youtube-theater.js"></script>
     
     <!-- End Core Component Scripts -->
 
@@ -875,6 +883,12 @@
           loginScreen.rememberMe = true;
         });
 
+        // Show login screen immediately when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+          document.body.classList.add('dom-ready');
+        });
+
+        // Keep window.onload for full resource loading completion
         window.onload = () => {
           document.querySelector("body").classList.add("show");
 

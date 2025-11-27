@@ -108,12 +108,15 @@ class SettingsEventHandler {
         
         if (!selectedFile) {
           self.toastService.showInModal($modal, 'No SWF file selected.', 'error');
+          $button.html(originalText).prop('disabled', false);
           return;
         }
         
         const result = await ipcRenderer.invoke('reapply-swf-file', selectedFile);
 
         if (result.success) {
+          await uiManager.refreshActiveSwfInfo($modal);
+          
           self.toastService.showInModal($modal, 'SWF file reapplied successfully!', 'success');
           if (app && app.consoleMessage) {
               app.consoleMessage({

@@ -440,22 +440,61 @@ module.exports = class Dispatch {
   }
 
   /**
+   * Gets a list of all connected clients with their metadata.
+   * @returns {Array<Object>} Array of client objects with {clientId, username, userId, connected}
+   * @public
+   */
+  getConnectedClients () {
+    if (!this._application.server || !this._application.server.clients) {
+      return []
+    }
+
+    return [...this._application.server.clients].map(client => ({
+      clientId: client.clientId,
+      username: client.username || null,
+      userId: client.userId || null,
+      connected: client.connected || false
+    }))
+  }
+
+  /**
    * Sends a remote message.
-   * @param message
+   * @param {string} message - The message to send
+   * @param {Object} options - Optional filtering options
+   * @param {string} options.targetUsername - Filter by username (sends only to clients with this username)
+   * @param {string} options.targetClientId - Filter by client ID (sends only to client with this ID)
    * @returns {Promise<number>}
    * @public
    */
-  sendRemoteMessage (message) {
+  sendRemoteMessage (message, options = {}) {
     if (this._application.server.clients.size === 0) {
       console.warn('[Dispatch] No server clients connected to send remote message.');
       return Promise.resolve([]); // Return an empty resolved promise if no clients
     }
 
-    const promises = [...this._application.server.clients].map(client => {
+    // Filter clients based on options
+    let targetClients = [...this._application.server.clients];
+    
+    if (options.targetUsername) {
+      targetClients = targetClients.filter(client => 
+        client.username === options.targetUsername
+      );
+    } else if (options.targetClientId) {
+      targetClients = targetClients.filter(client => 
+        client.clientId === options.targetClientId
+      );
+    }
+
+    if (targetClients.length === 0) {
+      console.warn('[Dispatch] No matching clients found for the specified filter.');
+      return Promise.resolve([]);
+    }
+
+    const promises = targetClients.map(client => {
       try {
         return client.sendRemoteMessage(message);
       } catch (e) {
-        console.error(`[Dispatch] Error in client.sendRemoteMessage for client ${client.id}:`, e);
+        console.error(`[Dispatch] Error in client.sendRemoteMessage for client ${client.clientId}:`, e);
         return Promise.reject(e); // Propagate error for Promise.all
       }
     });

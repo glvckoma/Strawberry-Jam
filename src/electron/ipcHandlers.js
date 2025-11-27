@@ -624,6 +624,42 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
+  ipcMain.on('send-remote-message', (event, data) => {
+    const mainWindow = BrowserWindow.getAllWindows().find(win =>
+      win.webContents && !win.webContents.isDestroyed() && win.webContents.getURL().includes('renderer/index.html')
+    );
+    if (mainWindow && mainWindow.webContents) {
+      // Support both old format (string) and new format (object with message and options)
+      if (typeof data === 'string') {
+        mainWindow.webContents.send('plugin-remote-message', data);
+      } else if (data && data.message) {
+        mainWindow.webContents.send('plugin-remote-message-with-options', data);
+      }
+    }
+  });
+
+  ipcMain.handle('dispatch-get-connected-clients', async () => {
+    const mainWindow = BrowserWindow.getAllWindows().find(win =>
+      win.webContents && !win.webContents.isDestroyed() && win.webContents.getURL().includes('renderer/index.html')
+    );
+    if (mainWindow && mainWindow.webContents) {
+      try {
+        const result = await mainWindow.webContents.executeJavaScript(`
+          (window.jam && window.jam.application && window.jam.application.dispatch && 
+           typeof window.jam.application.dispatch.getConnectedClients === 'function')
+            ? window.jam.application.dispatch.getConnectedClients()
+            : []
+        `);
+        // Ensure result is an array
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('[IPC] Error getting connected clients:', error);
+        return [];
+      }
+    }
+    return [];
+  });
+
   ipcMain.on('send-connection-message', (event, msg) => {
     const mainWindow = BrowserWindow.getAllWindows().find(win =>
       win.webContents.getURL().includes('renderer/index.html')

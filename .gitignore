@@ -4,7 +4,6 @@ build/*
 temp_*/
 tmp_*/
 dev-app-update.yml
-.clinerules
 .DS_Store
 *.bak
 *.tmp
@@ -14,8 +13,5 @@ dev
 assets/flash/backups/*
 UsernameLogger
 .claude
-Multi-Client-Feature.md
 data/*
 scripts/
-MODULARIZATION_ANALYSIS.md
-FEATURE_IMPLEMENTATION_PLAN.md

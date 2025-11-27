@@ -97,6 +97,27 @@ module.exports = class Client {
      * @private
      */
     this._recentlyDisconnected = false
+
+    /**
+     * Unique client identifier
+     * @type {string}
+     * @public
+     */
+    this.clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    /**
+     * Username of the logged-in account
+     * @type {string|null}
+     * @public
+     */
+    this.username = null
+
+    /**
+     * User ID of the logged-in account
+     * @type {string|null}
+     * @public
+     */
+    this.userId = null
   }
 
   /**

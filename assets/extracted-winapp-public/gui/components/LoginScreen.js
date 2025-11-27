@@ -130,10 +130,22 @@
       this.themeManager.setupFruitRotation();
       this.eventHandler.setupEventListeners();
 
+      // Initialize settings immediately without artificial delay
+      this.settingsInitializer._initializeAllSettings().then(() => {
+        // Show login screen after theme is loaded to prevent FOUC
+        this.classList.add('theme-ready');
+      }).catch(() => {
+        // Show login screen even if settings fail to load
+        this.classList.add('theme-ready');
+      });
+
+      // Fallback: Show login screen after 2 seconds if settings haven't loaded yet
       setTimeout(() => {
-        this.settingsInitializer._initializeAsyncSettings();
-        this.settingsInitializer.initializeSettings();
-      }, 100);
+        if (!this.classList.contains('theme-ready')) {
+          console.warn('[LoginScreen] Settings loading timeout - showing with default theme');
+          this.classList.add('theme-ready');
+        }
+      }, 2000);
 
     }
 

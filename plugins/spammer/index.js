@@ -17,6 +17,7 @@ class Spammer {
     this.inputType = document.getElementById('inputType')
     this.inputDelay = document.getElementById('inputDelay')
     this.inputRunType = document.getElementById('inputRunType')
+    this.targetAccount = document.getElementById('targetAccount')
     this.stopButton = document.getElementById('stopButton')
     this.runButton = document.getElementById('runButton')
     this.table = document.getElementById('table')
@@ -37,8 +38,13 @@ class Spammer {
     this.renderHistory()
     this.initSortable()
     this.loadTemplates()
+    this.loadAccountSelection()
+    this.updateAccountDropdown()
 
     this.setupModalListeners()
+    
+    // Update account dropdown periodically
+    setInterval(() => this.updateAccountDropdown(), 5000)
     /**
      * Handles input events for tab support in textarea
      */
@@ -171,8 +177,17 @@ class Spammer {
     }
 
     try {
-      if (type === 'aj') dispatch.sendRemoteMessage(content)
-      else dispatch.sendConnectionMessage(content)
+      const options = {}
+      const selectedAccount = this.targetAccount.value
+      if (selectedAccount && selectedAccount !== '') {
+        options.targetUsername = selectedAccount
+      }
+      
+      if (type === 'aj') {
+        dispatch.sendRemoteMessage(content, options)
+      } else {
+        dispatch.sendConnectionMessage(content)
+      }
 
       this.addToHistory(content, type)
     } catch (error) {
@@ -698,6 +713,79 @@ class Spammer {
       console.error('Error exporting templates:', error)
       jam.showToast('Error exporting templates.', 'error')
     }
+  }
+
+  /**
+   * Populates the target account dropdown with connected clients
+   */
+  async updateAccountDropdown () {
+    try {
+      let clients = []
+      
+      if (dispatch && typeof dispatch.getConnectedClients === 'function') {
+        const result = dispatch.getConnectedClients()
+        if (result && typeof result.then === 'function') {
+          clients = await result
+        } else {
+          clients = result
+        }
+      }
+      
+      if (!Array.isArray(clients)) {
+        clients = []
+      }
+      
+      const currentValue = this.targetAccount.value
+      
+      this.targetAccount.innerHTML = '<option value="">All Accounts</option>'
+      
+      const uniqueUsernames = new Set()
+      clients.forEach(client => {
+        if (client && client.username && client.connected && !uniqueUsernames.has(client.username)) {
+          uniqueUsernames.add(client.username)
+          const option = document.createElement('option')
+          option.value = client.username
+          option.textContent = client.username
+          this.targetAccount.appendChild(option)
+        }
+      })
+      
+      if (currentValue) {
+        const optionExists = Array.from(this.targetAccount.options).some(
+          opt => opt.value === currentValue
+        )
+        if (optionExists) {
+          this.targetAccount.value = currentValue
+        } else {
+          this.targetAccount.value = ''
+        }
+      }
+    } catch (error) {
+      console.error('Error updating account dropdown:', error)
+    }
+  }
+
+  /**
+   * Loads the selected account from localStorage
+   */
+  loadAccountSelection () {
+    try {
+      const saved = localStorage.getItem('spammer-targetAccount')
+      if (saved) {
+        this.targetAccount.value = saved
+      }
+    } catch (error) {
+      console.error('Error loading account selection:', error)
+    }
+    
+    // Save selection when changed
+    this.targetAccount.addEventListener('change', () => {
+      try {
+        localStorage.setItem('spammer-targetAccount', this.targetAccount.value)
+      } catch (error) {
+        console.error('Error saving account selection:', error)
+      }
+    })
   }
 
   /**

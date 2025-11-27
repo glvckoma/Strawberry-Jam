@@ -289,6 +289,13 @@
                     </div>
                     <div class="space-y-4">
                         <div>
+                            <label for="targetAccount" class="block text-sm font-medium text-text-secondary mb-1">Target Account:</label>
+                            <select id="targetAccount" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                                <option value="">All Accounts</option>
+                            </select>
+                            <small class="text-xs text-gray-400">Select which account to send packets to (default: all accounts)</small>
+                        </div>
+                        <div>
                             <label for="maxRetries" class="block text-sm font-medium text-text-secondary mb-1">Max Retries:</label>
                             <select id="maxRetries" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
                                 <option value="1">1</option>
