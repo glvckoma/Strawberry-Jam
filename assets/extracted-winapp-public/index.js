@@ -690,6 +690,38 @@ ipcMain.on("systemCommand", (event, message) => {
   }
 });
 
+ipcMain.on("open-devtools-both", () => {
+  try {
+    if (win && win.webContents && !win.isDestroyed()) {
+      if (win.webContents.isDevToolsOpened()) {
+        win.webContents.closeDevTools();
+      } else {
+        win.webContents.openDevTools({ mode: 'detach' });
+      }
+    }
+    
+    if (win && win.webContents && !win.isDestroyed()) {
+      win.webContents.send('toggleDevTools');
+    }
+  } catch (error) {
+    log("error", `[DevTools] Error toggling devtools: ${error.message}`);
+  }
+});
+
+ipcMain.on("game-webview-console-error", (event) => {
+  try {
+    log("debug", "[DevTools] Received game-webview-console-error from renderer");
+    if (win && win.webContents && !win.isDestroyed()) {
+      log("debug", "[DevTools] Forwarding game-webview-console-error to main window");
+      win.webContents.send('game-webview-console-error');
+    } else {
+      log("warn", "[DevTools] Main window not available to forward error");
+    }
+  } catch (error) {
+    log("error", `[DevTools] Error forwarding game error: ${error.message}`);
+  }
+});
+
 ipcMain.handle("toggle-uuid-spoofing", async (event, enable) => {
   try {
     log("debug", `[UUID] Received toggle-uuid-spoofing: ${enable}`);
@@ -1339,4 +1371,53 @@ ipcMain.handle('set-setting', async (event, key, value) => {
     log('error', `[IPC] Error updating setting ${key}: ${error.message}`);
     return { success: false, error: error.message };
   }
+});
+
+ipcMain.handle('get-api-port', async () => {
+  const http = require('http')
+  const ports = [8080, 8081, 8082, 9080, 3000]
+  
+  for (const port of ports) {
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const req = http.get(`http://127.0.0.1:${port}/api/health`, { timeout: 500 }, (res) => {
+          let data = ''
+          res.on('data', chunk => { data += chunk })
+          res.on('end', () => {
+            try {
+              const json = JSON.parse(data)
+              if (json && json.service === 'strawberry-jam-api') {
+                resolve(port)
+              } else {
+                reject(new Error('Not Strawberry Jam API'))
+              }
+            } catch {
+              reject(new Error('Invalid response'))
+            }
+          })
+        })
+        
+        req.on('timeout', () => {
+          req.destroy()
+          reject(new Error('timeout'))
+        })
+        
+        req.on('error', reject)
+      })
+      
+      if (result) {
+        log('debug', `[IPC] Detected API port: ${result}`)
+        return result
+      }
+    } catch (err) {
+      continue
+    }
+  }
+  
+  log('warn', '[IPC] Could not detect API port, defaulting to 8080')
+  return 8080
+});
+
+ipcMain.handle('get-server-port', async () => {
+  return 443
 });

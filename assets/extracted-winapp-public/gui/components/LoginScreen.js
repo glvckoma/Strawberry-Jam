@@ -67,18 +67,26 @@
         this._currentFruitIndex = 0;
       }
 
-      // --- Settings Element References ---
       this.settingsBtn = this.shadowRoot.getElementById("settings-btn");
-      this.reportProblemBtn = this.shadowRoot.getElementById("report-problem-btn"); // Get report button
+      this.devtoolsBtn = this.shadowRoot.getElementById("devtools-btn");
+      this.devtoolsErrorBadge = this.shadowRoot.getElementById("devtools-error-badge");
       this.settingsPanel = this.shadowRoot.getElementById("settings-panel");
+      
+      this.errorCount = 0;
+      this.setupErrorTracking();
+      
       this.uuidSpooferToggle = this.shadowRoot.getElementById("uuid-spoofer-toggle");
       this.backgroundProcessingToggle = this.shadowRoot.getElementById("background-processing-toggle");
       this.darkModeToggle = this.shadowRoot.getElementById("dark-mode-toggle");
       this.showImportAccountsToggle = this.shadowRoot.getElementById("show-import-accounts-toggle");
       this.showWheelAutomationToggle = this.shadowRoot.getElementById("show-wheel-automation-toggle");
+      this.hideDevToolsBadgeToggle = this.shadowRoot.getElementById("hide-devtools-badge-toggle");
       
       // Track UI visibility state for hotkey toggle
       this._uiElementsHidden = false;
+      
+      // Store hideDevToolsBadge setting for performance
+      this._hideDevToolsBadge = false;
 
       // Listener for 'set-main-log-path' is removed as we are saving to Desktop.
       this.uuidSpoofingWarning = this.shadowRoot.getElementById("uuid-spoofing-warning");
@@ -234,6 +242,63 @@
     clearRefreshToken() {
       this.refreshToken = null;
       window.ipc.send("clearRefreshToken");
+    }
+
+    setupErrorTracking() {
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      const self = this;
+      
+      console.error = function(...args) {
+        self.errorCount++;
+        self.updateErrorBadge();
+        originalError.apply(console, args);
+      };
+      
+      console.warn = function(...args) {
+        self.errorCount++;
+        self.updateErrorBadge();
+        originalWarn.apply(console, args);
+      };
+      
+      window.addEventListener('error', (event) => {
+        self.errorCount++;
+        self.updateErrorBadge();
+      });
+      
+      window.addEventListener('unhandledrejection', (event) => {
+        self.errorCount++;
+        self.updateErrorBadge();
+      });
+      
+      if (window.ipc && window.ipc.on) {
+        console.log('[LoginScreen] Setting up game-webview-console-error listener');
+        window.ipc.on('game-webview-console-error', () => {
+          console.log('[LoginScreen] Received game-webview-console-error, incrementing badge');
+          self.errorCount++;
+          self.updateErrorBadge();
+        });
+      } else {
+        console.warn('[LoginScreen] window.ipc.on not available for error tracking');
+      }
+    }
+    
+    updateErrorBadge() {
+      if (this.devtoolsErrorBadge) {
+        this.devtoolsErrorBadge.textContent = this.errorCount;
+        // Only show badge if hideDevToolsBadge setting is false and there are errors
+        if (this.errorCount > 0 && !this._hideDevToolsBadge) {
+          this.devtoolsErrorBadge.classList.add('show');
+          this.devtoolsBtn.setAttribute('title', `Open DevTools (${this.errorCount} error${this.errorCount !== 1 ? 's' : ''} detected)`);
+        } else {
+          this.devtoolsErrorBadge.classList.remove('show');
+          if (this.errorCount > 0 && this._hideDevToolsBadge) {
+            this.devtoolsBtn.setAttribute('title', `Open DevTools (${this.errorCount} error${this.errorCount !== 1 ? 's' : ''} detected, badge hidden)`);
+          } else {
+            this.devtoolsBtn.setAttribute('title', 'Open DevTools (App & Game)');
+          }
+        }
+      }
     }
 
     async localize() {

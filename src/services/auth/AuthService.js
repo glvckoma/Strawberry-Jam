@@ -76,17 +76,31 @@ class AuthService {
       hasPassword: !!request.password,
       hasRefreshToken: !!request.refresh_token,
       hasOtp: !!request.otp,
+      hasDf: !!request.df,
       fullRequest: request
     })
+
+    // Build headers with Origin, Referer, User-Agent, and Accept to match server expectations
+    const authHeaders = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    }
+    
+    // Add Origin and Referer headers if config.origin is available
+    if (config.origin) {
+      authHeaders["Origin"] = config.origin
+      authHeaders["Referer"] = `${config.origin}/game/play`
+    }
+    
+    // Add User-Agent to match expected format
+    authHeaders["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AJClassic/1.5.7 Chrome/87.0.4280.141 Electron/11.5.0 Safari/537.36"
 
     const response = await fetch(`${config.authenticator}/authenticate`, {
       method: "POST",
       mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders,
       body: JSON.stringify(request),
-    }, [401, 422, 500])
+    }, [401, 403, 422, 500])
 
     if (response.status === 200) {
       const authenticateData = JSON.parse(await response.text())
@@ -156,6 +170,52 @@ class AuthService {
         throw new Error("LOGIN_ERROR")
       } catch (parseErr) {
         console.error("[AUTH] Error parsing 422 response:", parseErr)
+        throw new Error("LOGIN_ERROR")
+      }
+    }
+
+    if (response.status === 403) {
+      console.error("[AUTH] Received 403 Forbidden status")
+      
+      try {
+        const responseText = await response.text()
+        console.error("[AUTH] 403 response body:", responseText)
+        
+        // Check if response body contains rate limiting information
+        if (responseText) {
+          try {
+            const errorData = JSON.parse(responseText)
+            const errorText = (errorData.error || errorData.message || '').toLowerCase()
+            
+            // Check for rate limiting indicators
+            if (errorText.includes('rate') || errorText.includes('limit') || errorText.includes('too many')) {
+              console.log("[AUTH] Rate limiting detected in 403 response")
+              throw new Error("RATE_LIMITED")
+            }
+          } catch (parseErr) {
+            // If we can't parse, continue with generic 403 handling
+          }
+        }
+        
+        // Check for rate limit headers
+        const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
+        const rateLimitReset = response.headers.get('X-RateLimit-Reset')
+        
+        if (rateLimitRemaining === '0' || rateLimitRemaining === null) {
+          console.log("[AUTH] Rate limiting detected via headers")
+          throw new Error("RATE_LIMITED")
+        }
+        
+        // Generic 403 - could be IP blocked, missing permissions, etc.
+        console.error("[AUTH] 403 Forbidden - possible IP block or missing permissions")
+        throw new Error("LOGIN_ERROR")
+      } catch (err) {
+        // If error is already one we want to throw (RATE_LIMITED, LOGIN_ERROR), re-throw it
+        if (err.message === "RATE_LIMITED" || err.message === "LOGIN_ERROR") {
+          throw err
+        }
+        // Otherwise, generic 403 error
+        console.error("[AUTH] Could not parse 403 response:", err)
         throw new Error("LOGIN_ERROR")
       }
     }

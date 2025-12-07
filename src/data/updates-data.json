@@ -1066,7 +1066,7 @@
   "4.0.2": {
     "version": "4.0.2",
     "releaseDate": "2025-11-27",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -1107,6 +1107,124 @@
           "icon": "🔄",
           "title": "Reapply SWF Button Fix",
           "description": "Addressed 'Reapply swf' button not working appropriately.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "4.1.0": {
+    "version": "4.1.0",
+    "releaseDate": "2025-12-15",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "🛠️",
+          "title": "Dev Tools Button",
+          "description": "Changed the unused 'Bug Report' button on the login screen to 'Dev Tools'. This will notify users when there is an error and allows users to easily invoke and read the logs from the console to diagnose issues.",
+          "priority": "major"
+        },
+        {
+          "icon": "🎨",
+          "title": "Custom Color Nametags Popup",
+          "description": "Custom Color Nametags popup added into mod menu. This is basically the expanded color palette but for name tags. This only overlays the color over your original nametag selection, this is because the original name tag assets are pre-rendered MovieClips. Strawberry Jam users will see your custom colored name tag, please be aware if you don't want to be ratted out don't use it!",
+          "priority": "major"
+        },
+        {
+          "icon": "👑",
+          "title": "Bypass Membership Nametag Toggle",
+          "description": "Added a bypass membership nametag toggle in the mod menu.",
+          "priority": "major"
+        },
+        {
+          "icon": "📑",
+          "title": "New Tabbed System for Mod Menu",
+          "description": "New tabbed system for the mod menu for better organization and navigation.",
+          "priority": "major"
+        },
+        {
+          "icon": "🔘",
+          "title": "Master Toggle in Mod Menu",
+          "description": "Master toggle added to mod menu to easily turn all mods off easily.",
+          "priority": "major"
+        },
+        {
+          "icon": "📦",
+          "title": "Expanded Inventory Feature",
+          "description": "New 'Expanded Inventory' feature inside the mod menu enhancement tab.",
+          "priority": "major"
+        },
+        {
+          "icon": "👥",
+          "title": "Buddy Room/Server Display",
+          "description": "New 'Buddy Room/Server Display' feature inside the mod menu enhancement tab.",
+          "priority": "major"
+        },
+        {
+          "icon": "👻",
+          "title": "Phantom Mode Visibility",
+          "description": "Phantom mode now displays to other SJ users!",
+          "priority": "major"
+        },
+        {
+          "icon": "🎨",
+          "title": "Custom Theme Options",
+          "description": "Added new custom theme options inside the general settings of both the main network client and the login screen.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "🔄",
+          "title": "Auto Updated Polished",
+          "description": "Auto updated polished for better reliability and user experience.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "⚡",
+          "title": "Pet Inventory Animations Disabled",
+          "description": "Pet Inventory animations are now disabled to improve performance.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "📅",
+          "title": "Exact Days Display",
+          "description": "Exact # of days now shown instead of 'More than 30 days ago'.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🛍️",
+          "title": "Refined Personal Shop Item Selection",
+          "description": "Refined personal shop item selection, now knows how many items are in your shop to prevent over selection.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🔌",
+          "title": "Occupied Port System Issues",
+          "description": "Attempted to fix occupied port system issues.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🔍",
+          "title": "Zoom Fix and Toggle",
+          "description": "Fixed zoom and added a toggle in the mod menu for the zoom in/out feature.",
+          "priority": "fix"
+        },
+        {
+          "icon": "👤",
+          "title": "Own Name Bar Click Removal",
+          "description": "Removed the ability to click your own name bar due to user feedback.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🛒",
+          "title": "Bulk-Buy Item Equipping Fix",
+          "description": "Bulk-buy now won't equip any items purchased to prevent any bugs.",
           "priority": "fix"
         }
       ],

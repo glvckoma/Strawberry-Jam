@@ -55,11 +55,6 @@ class ServerHostChecker {
         }
       }
     } catch (error) {
-      this.application.consoleMessage({ 
-        type: 'warn', 
-        message: 'Could not check for server updates. Using saved server settings.'
-      })
-      
       try {
         const currentServer = this.application.settings.get('smartfoxServer')
         if (!currentServer || typeof currentServer !== 'string' || !currentServer.includes('animaljam')) {

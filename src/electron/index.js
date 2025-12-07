@@ -178,6 +178,7 @@ class Electron {
   constructor () {
     this._window = null
     this._apiProcess = null
+    this._apiPort = null
     this._store = new Store({ schema });
     this.keytar = require('keytar'); // Initialize keytar as an instance property
 
@@ -516,6 +517,13 @@ class Electron {
       if (process.platform !== 'darwin') app.quit()
     })
 
+    app.on('before-quit', () => {
+      this._isQuitting = true
+      if (this.autoUpdateService) {
+        this.autoUpdateService.dispose()
+      }
+    })
+
 
     return this
   }
@@ -638,11 +646,27 @@ class Electron {
       }
     }
     
-    // Fork API process with timeout and error handling
+    const PortChecker = require('../utils/PortChecker')
+    const port8080Busy = await PortChecker.isPortBusy(8080)
+    if (port8080Busy) {
+      const processInfo = await PortChecker.findProcessUsingPort(8080)
+      if (processInfo && processInfo.processName && processInfo.processName.toLowerCase() !== 'electron.exe') {
+        console.warn(`[Electron] Port 8080 is busy: ${processInfo.processName} (PID: ${processInfo.pid}). API server will attempt to use fallback ports.`)
+      }
+    }
+
+    const port443Busy = await PortChecker.isPortBusy(443)
+    if (port443Busy) {
+      const processInfo = await PortChecker.findProcessUsingPort(443)
+      if (processInfo && processInfo.processName && processInfo.processName.toLowerCase() !== 'electron.exe') {
+        console.warn(`[Electron] Port 443 is busy: ${processInfo.processName} (PID: ${processInfo.pid}). Networking server will attempt to use fallback ports.`)
+      }
+    }
+
     try {
       const assetsPath = getAssetsPath(app);
       this._apiProcess = fork(path.join(__dirname, '..', 'api', 'index.js'), [], {
-        silent: false, // Allow child process to log to console
+        silent: false,
         env: {
           ...process.env,
           STRAWBERRY_JAM_ASSETS_PATH: assetsPath
@@ -650,7 +674,13 @@ class Electron {
       });
       processManager.add(this._apiProcess);
 
-      // Set up API process event handlers
+      this._apiProcess.on('message', (msg) => {
+        if (msg && msg.type === 'api-port-ready' && typeof msg.port === 'number') {
+          this._apiPort = msg.port
+          console.log(`[Electron] Received API port from child process: ${msg.port}`)
+        }
+      })
+
       this._apiProcess.on('error', (error) => {
       });
 

@@ -96,27 +96,60 @@
             transform-origin: center;
           }
 
-          #report-problem-btn {
-            font-size: 16px; /* Slightly smaller for bug icon if needed */
+          #devtools-btn {
+            font-size: 16px;
+          }
+          
+          #devtools-btn-wrapper {
+            position: relative;
+            display: inline-block;
           }
 
-          /* Ensure precise hover boundaries for both buttons */
-          #settings-btn, #report-problem-btn {
-            /* Strict containment of hover area */
+          #devtools-error-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            line-height: 1;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            z-index: 1000;
+            animation: badge-pulse 2s ease-in-out infinite;
+          }
+
+          #devtools-error-badge.show {
+            display: flex;
+          }
+
+          @keyframes badge-pulse {
+            0%, 100% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.1);
+            }
+          }
+
+          #settings-btn, #devtools-btn {
             contain: layout style;
-            /* Prevent any accidental hover area extension */
             outline: none;
-            /* Ensure the button interaction area matches visual size exactly */
             min-width: 32px;
             max-width: 32px;
             min-height: 32px;
             max-height: 32px;
-            /* Remove any inherited styles that might extend hover area */
             line-height: 1;
             vertical-align: baseline;
-            /* Ensure cursor only changes when directly over the button */
             cursor: pointer;
-            /* Create a strict boundary for pointer events */
             clip-path: inset(0);
           }
 
@@ -706,10 +739,12 @@
           Made with 🤎 by <a href="https://github.com/glvckoma" target="_blank">Glockoma</a>
         </div>
 
-        <!-- Settings Button and Panel -->
         <div class="button-container-bottom-left">
           <button id="settings-btn" title="Settings" class="icon-button">⚙️</button>
-          <button id="report-problem-btn" title="Report a Problem" class="icon-button">🐛</button>
+          <div id="devtools-btn-wrapper">
+            <button id="devtools-btn" title="Open DevTools (App & Game)" class="icon-button">🔧</button>
+            <span id="devtools-error-badge">0</span>
+          </div>
         </div>
         <div id="settings-panel">
           <h3>Settings</h3>
@@ -719,21 +754,56 @@
               <input type="checkbox" id="uuid-spoofer-toggle" style="vertical-align: middle;">
               <label for="uuid-spoofer-toggle" style="vertical-align: middle;">Enable UUID Spoofing</label>
               <div id="uuid-spoofing-warning" class="hidden" style="margin-top: 5px; padding: 6px; background-color: rgba(255, 217, 0, 0.1); border-left: 3px solid rgba(255, 176, 0, 0.6); border-radius: 4px; font-size: 11px; line-height: 1.4;">
-                ⚠️ Warning: UUID spoofing will not work with accounts that have 2FA enabled.
+                Warning: UUID spoofing will not work with accounts that have 2FA enabled.
               </div>
             </div>
             <div class="settings-item">
               <input type="checkbox" id="background-processing-toggle" style="vertical-align: middle;">
               <label for="background-processing-toggle" style="vertical-align: middle;">Enable background processing</label>
               <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                💡 Allows plugins to continue running when the game window is minimized.
+                Allows plugins to continue running when the game window is minimized.
               </div>
             </div>
             <div class="settings-item">
               <input type="checkbox" id="dark-mode-toggle" style="vertical-align: middle;">
               <label for="dark-mode-toggle" style="vertical-align: middle;">Dark Mode</label>
               <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                🌙 Switches background colors to a darker theme for better nighttime viewing.
+                Switches background colors to a darker theme for better nighttime viewing.
+              </div>
+            </div>
+            <div class="settings-item" id="custom-theme-color-item">
+              <input type="checkbox" id="custom-theme-enabled-toggle" style="vertical-align: middle;">
+              <label for="custom-theme-enabled-toggle" style="vertical-align: middle;">Enable Custom Theme Color</label>
+              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                Tint the strawberry jam icon to match your selected color.
+              </div>
+              <div id="custom-theme-color-container" style="margin-top: 8px; padding: 8px; background-color: rgba(0,0,0,0.05); border-radius: 4px; opacity: 0.5; pointer-events: none;">
+                <div style="margin-bottom: 8px;">
+                  <label style="display: block; font-size: 11px; color: #6E4B37; margin-bottom: 4px; font-family: CCDigitalDelivery;">Custom Name:</label>
+                  <input type="text" id="custom-theme-name-input" placeholder="Custom Jam" maxlength="50" style="width: 100%; padding: 4px 8px; border: 1px solid var(--theme-settings-border); border-radius: 4px; background-color: white; color: #333; font-family: CCDigitalDelivery; font-size: 11px;">
+                </div>
+                <div style="margin-bottom: 8px;">
+                  <label style="display: block; font-size: 11px; color: #6E4B37; margin-bottom: 4px; font-family: CCDigitalDelivery;">Fruit Icon:</label>
+                  <select id="custom-theme-fruit-select" style="width: 100%; padding: 4px 8px; border: 1px solid var(--theme-settings-border); border-radius: 4px; background-color: white; color: #333; font-family: CCDigitalDelivery; font-size: 11px;">
+                    <option value="strawberry.png">Strawberry</option>
+                    <option value="banana.png">Banana</option>
+                    <option value="blueberry.png">Blueberry</option>
+                    <option value="cantaloupe.png">Cantaloupe</option>
+                    <option value="coconut.png">Coconut</option>
+                    <option value="dragonfruit.png">Dragonfruit</option>
+                    <option value="pineapple.png">Pineapple</option>
+                    <option value="pumpkin.png">Pumpkin</option>
+                  </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <input type="color" id="custom-theme-color-picker" style="width: 60px; height: 40px; border: 1px solid var(--theme-settings-border); border-radius: 4px; cursor: pointer; min-width: 60px;" value="#e83d52">
+                  <input type="text" id="custom-theme-color-input" placeholder="#e83d52" maxlength="7" style="flex: 1; padding: 4px 8px; border: 1px solid var(--theme-settings-border); border-radius: 4px; background-color: white; color: #333; font-family: CCDigitalDelivery; font-size: 11px;">
+                  <button id="reset-custom-theme-color-btn" style="padding: 4px 8px; border: 1px solid var(--theme-settings-border); border-radius: 4px; background-color: white; color: #333; font-family: CCDigitalDelivery; font-size: 10px; cursor: pointer;">Reset</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <img id="custom-theme-color-preview" src="images/strawberry.png" alt="Preview" style="width: 32px; height: 32px; border: 1px solid var(--theme-settings-border); border-radius: 4px;">
+                  <span style="font-size: 10px; color: #6E4B37; font-style: italic;">Preview</span>
+                </div>
               </div>
             </div>
             <div class="settings-item">
@@ -747,6 +817,13 @@
                 <option value="pt">Portuguese</option>
               </select>
             </div>
+            <div class="settings-item">
+              <input type="checkbox" id="hide-devtools-badge-toggle" style="vertical-align: middle;">
+              <label for="hide-devtools-badge-toggle" style="vertical-align: middle;">Hide DevTools Badge</label>
+              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                Hides the error badge on the DevTools button even when errors are detected.
+              </div>
+            </div>
           </div>
           <div class="settings-group">
             <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 10px; margin-bottom: 5px; text-align: left;">UI Components</h4>
@@ -754,14 +831,14 @@
               <input type="checkbox" id="show-import-accounts-toggle" style="vertical-align: middle;">
               <label for="show-import-accounts-toggle" style="vertical-align: middle;">Show Import Accounts</label>
               <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                📁 Shows the import button for uploading accounts from .txt files
+                Shows the import button for uploading accounts from .txt files
               </div>
             </div>
             <div class="settings-item">
               <input type="checkbox" id="show-wheel-automation-toggle" style="vertical-align: middle;">
               <label for="show-wheel-automation-toggle" style="vertical-align: middle;">Show Wheel Automation</label>
               <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                🎡 Shows the auto wheel component for automated account cycling
+                Shows the auto wheel component for automated account cycling
               </div>
             </div>
           </div>
@@ -769,7 +846,7 @@
             <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 10px; margin-bottom: 5px; text-align: left;">Shortcuts</h4>
             
             <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">General:</h5>
-            <div class="settings-item" style="font-size: 10px; padding-left: 10px; color: #8B6914; font-style: italic; margin-bottom: 6px;">ℹ️ Note: Click on the left or right side panels first to focus the window before using shortcuts</div>
+            <div class="settings-item" style="font-size: 10px; padding-left: 10px; color: #8B6914; font-style: italic; margin-bottom: 6px;">Note: Click on the left or right side panels first to focus the window before using shortcuts</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + I: Toggle Developer Tools</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + R: Reload / Logout (Return to Login Screen)</div>
             <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + H: Toggle Hide UI Elements (Settings/Report Buttons & User Tray)</div>

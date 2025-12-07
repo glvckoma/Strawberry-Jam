@@ -25,6 +25,10 @@ const sendWhitelist = new Set()
   // Settings channels
   .add("get-setting")        // Added for settings access
   .add("set-setting")        // Added for settings access
+  // Port channels
+  .add("get-api-port")       // Added for API port detection
+  .add("get-server-port")   // Added for server port detection
+  .add("terminate-port")    // Added for terminating processes using ports
   // App State channels
   .add("get-app-state")
   .add("set-app-state")
@@ -40,13 +44,15 @@ const sendWhitelist = new Set()
   .add('open-user-cache-file')
   .add('import-accounts')
   .add('delete-all-accounts')
-  .add('request-main-log-path') // CHANGED: For send/on pattern
-  .add('exit-confirmation-response'); // ADDED: For exit confirmation modal
+  .add('request-main-log-path')
+  .add('exit-confirmation-response')
+  .add('open-devtools-both')
+  .add('game-webview-console-error');
 
 // main -> renderer
 const receiveWhitelist = new Set()
-  .add("set-main-log-path") // Original channel, can be kept or removed if not used elsewhere
-  .add("response-main-log-path") // ADDED: For send/on pattern reply
+  .add("set-main-log-path")
+  .add("response-main-log-path")
   .add("autoUpdateStatus")
   .add("log")
   .add("loginInfoLoaded")
@@ -56,8 +62,9 @@ const receiveWhitelist = new Set()
   .add("signupCompleted")
   .add("toggleDevTools")
   .add("translate")
-  .add("request-toggle-game-client-devtools") // Added for game client devtools
-  .add("show-exit-confirmation"); // ADDED: For exit confirmation modal
+  .add("request-toggle-game-client-devtools")
+  .add("show-exit-confirmation")
+  .add("game-webview-console-error");
 
   // allow renderer process to safely communicate with main process
 contextBridge.exposeInMainWorld(

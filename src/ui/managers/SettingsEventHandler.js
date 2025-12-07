@@ -1,5 +1,6 @@
 const { ipcRenderer } = require('electron');
 const $ = require('jquery');
+const { hexToCssFilter, normalizeHexColor, isValidHexColor } = require('../../utils/ColorUtils');
 
 class SettingsEventHandler {
   constructor(toastService, settingsSaver) {
@@ -152,6 +153,137 @@ class SettingsEventHandler {
 
     $leakCheckAutoCheck.on('change', toggleThresholdVisibility);
 
+    const $customThemeEnabledToggle = $modal.find('#customThemeEnabledToggle');
+    const $customThemeColorPicker = $modal.find('#customThemeColorPicker');
+    const $customThemeColorInput = $modal.find('#customThemeColorInput');
+    const $customThemeNameInput = $modal.find('#customThemeNameInput');
+    const $customThemeFruitSelect = $modal.find('#customThemeFruitSelect');
+    const $customThemeColorContainer = $modal.find('#customThemeColorContainer');
+    const $customThemeColorPreview = $modal.find('#customThemeColorPreview');
+    const $resetCustomThemeColorBtn = $modal.find('#resetCustomThemeColorBtn');
+
+    const updateColorPreview = (color) => {
+      const normalizedColor = normalizeHexColor(color);
+      if (normalizedColor) {
+        const filter = hexToCssFilter(normalizedColor);
+        $customThemeColorPreview.css('filter', filter);
+      }
+    };
+
+    const syncColorInputs = (color) => {
+      const normalizedColor = normalizeHexColor(color);
+      if (normalizedColor) {
+        $customThemeColorPicker.val(normalizedColor);
+        $customThemeColorInput.val(normalizedColor);
+        updateColorPreview(normalizedColor);
+      }
+    };
+
+    const toggleCustomThemeVisibility = () => {
+      if ($customThemeEnabledToggle.is(':checked')) {
+        $customThemeColorContainer.css('opacity', '1').find('input').prop('disabled', false);
+        const currentColor = $customThemeColorPicker.val() || $customThemeColorInput.val() || '#e83d52';
+        updateColorPreview(currentColor);
+      } else {
+        $customThemeColorContainer.css('opacity', '0.5').find('input').prop('disabled', true);
+        $customThemeColorPreview.css('filter', 'none');
+      }
+    };
+
+    $customThemeEnabledToggle.on('change', async function() {
+      toggleCustomThemeVisibility();
+      
+      if (window.jam && window.jam.ipcRenderer && app && app.settings) {
+        const isEnabled = $(this).is(':checked');
+        const currentColor = $customThemeColorPicker.val() || $customThemeColorInput.val() || '#e83d52';
+        const currentName = $modal.find('#customThemeNameInput').val().trim() || 'Custom Jam';
+        const currentFruit = $modal.find('#customThemeFruitSelect').val() || 'strawberry.png';
+        
+        await app.settings.update('ui.customThemeEnabled', isEnabled);
+        if (isEnabled) {
+          await app.settings.update('ui.customThemeColor', currentColor);
+          await app.settings.update('ui.customThemeName', currentName);
+          await app.settings.update('ui.customThemeFruit', currentFruit);
+        }
+        
+        if (window.applyCustomColorTheme && window.restoreFruitTheme) {
+          if (isEnabled) {
+            window.applyCustomColorTheme(currentColor, currentName, currentFruit);
+          } else {
+            setTimeout(() => {
+              if (window.restoreFruitTheme) {
+                window.restoreFruitTheme();
+              }
+            }, 0);
+          }
+        }
+      }
+    });
+    
+    $customThemeFruitSelect.on('change', function() {
+      const selectedFruit = $(this).val();
+      const fruitPath = selectedFruit === 'strawberry-jam.png' ? 'app://assets/images/strawberry-jam.png' : `app://assets/images/${selectedFruit}`;
+      $customThemeColorPreview.attr('src', fruitPath);
+      const currentColor = $customThemeColorPicker.val() || $customThemeColorInput.val() || '#e83d52';
+      updateColorPreview(currentColor);
+      
+      if (window.jam && window.jam.ipcRenderer && app && app.settings && $customThemeEnabledToggle.is(':checked')) {
+        app.settings.update('ui.customThemeFruit', selectedFruit);
+        const currentName = $customThemeNameInput.val().trim() || 'Custom Jam';
+        if (window.applyCustomColorTheme) {
+          window.applyCustomColorTheme(currentColor, currentName, selectedFruit);
+        }
+      }
+    });
+    
+    $customThemeNameInput.on('input', function() {
+      if (window.jam && window.jam.ipcRenderer && app && app.settings && $customThemeEnabledToggle.is(':checked')) {
+        const currentName = $(this).val().trim() || 'Custom Jam';
+        app.settings.update('ui.customThemeName', currentName);
+        const currentColor = $customThemeColorPicker.val() || $customThemeColorInput.val() || '#e83d52';
+        const currentFruit = $customThemeFruitSelect.val() || 'strawberry.png';
+        if (window.applyCustomColorTheme) {
+          window.applyCustomColorTheme(currentColor, currentName, currentFruit);
+        }
+      }
+    });
+    
+    $customThemeColorPicker.on('input', function() {
+      const color = $(this).val();
+      syncColorInputs(color);
+    });
+
+    $customThemeColorInput.on('input', function() {
+      const color = $(this).val();
+      const normalizedColor = normalizeHexColor(color);
+      if (normalizedColor) {
+        $customThemeColorPicker.val(normalizedColor);
+        updateColorPreview(normalizedColor);
+      }
+    });
+
+    $customThemeColorInput.on('blur', function() {
+      const color = $(this).val();
+      const normalizedColor = normalizeHexColor(color);
+      if (normalizedColor) {
+        $(this).val(normalizedColor);
+      } else if (color.trim() !== '') {
+        $(this).val('#e83d52');
+        syncColorInputs('#e83d52');
+      }
+    });
+
+    $resetCustomThemeColorBtn.on('click', function() {
+      syncColorInputs('#e83d52');
+      $customThemeNameInput.val('Custom Jam');
+      $customThemeFruitSelect.val('strawberry.png');
+      const fruitPath = 'app://assets/images/strawberry.png';
+      $customThemeColorPreview.attr('src', fruitPath);
+      updateColorPreview('#e83d52');
+    });
+
+    toggleCustomThemeVisibility();
+
     $openOutputDirButton.on('click', async () => {
       try {
         const customOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir');
@@ -252,6 +384,36 @@ class SettingsEventHandler {
     const $downloadProgressContainer = $modal.find('#downloadProgressContainer');
     const $downloadProgressBar = $modal.find('#downloadProgressBar');
 
+    const $autoUpdateDiagnosticsText = $('<p id="autoUpdateDiagnosticsText" class="mt-1 text-xs text-gray-400"></p>');
+    $manualUpdateStatusText.after($autoUpdateDiagnosticsText);
+
+    const refreshAutoUpdateDiagnostics = async () => {
+      try {
+        const enableAutoUpdates = await ipcRenderer.invoke('get-setting', 'updates.enableAutoUpdates');
+        const lastAutoCheckAt = await ipcRenderer.invoke('get-setting', 'updates.lastAutoCheckAt');
+        const lastAutoCheckStatus = await ipcRenderer.invoke('get-setting', 'updates.lastAutoCheckStatus');
+
+        const parts = [];
+        parts.push(enableAutoUpdates === false ? 'Automatic updates are disabled.' : 'Automatic updates are enabled.');
+
+        if (lastAutoCheckAt) {
+          parts.push(`Last background check: ${lastAutoCheckAt}.`);
+        } else {
+          parts.push('No background check has been recorded yet.');
+        }
+
+        if (lastAutoCheckStatus) {
+          parts.push(`Last check result: ${lastAutoCheckStatus}.`);
+        }
+
+        $autoUpdateDiagnosticsText.text(parts.join(' '));
+      } catch (error) {
+        $autoUpdateDiagnosticsText.text('Unable to load auto-update diagnostics.');
+      }
+    };
+
+    refreshAutoUpdateDiagnostics();
+
     const $viewUpdatesBtn = $modal.find('#viewUpdatesBtn');
     $viewUpdatesBtn.on('click', async () => {
       app.modals.close();
@@ -330,6 +492,11 @@ class SettingsEventHandler {
           $checkForUpdatesBtn.html('<i class="fas fa-search mr-2"></i>Check for Updates').prop('disabled', false).removeClass('hidden');
           $downloadUpdateBtn.addClass('hidden');
           $downloadProgressContainer.addClass('hidden');
+      }
+
+      try {
+        refreshAutoUpdateDiagnostics();
+      } catch (e) {
       }
     });
   }

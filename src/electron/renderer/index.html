@@ -55,9 +55,9 @@
         </li>
         <!-- Settings -->
         <li>
-          <a href="#"
+          <a href="#" id="settingsLink"
             class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
-            onclick="jam.application.openSettings()">
+            onclick="return false;">
             <i class="fas fa-wrench text-gray-400 text-xl transition-colors"></i>
             <span class="font-medium">Settings</span>
           </a>
@@ -66,16 +66,16 @@
         <li class="relative">
           <a href="#" id="openLinksSection"
             class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
-            onclick="jam.application.openLinksModal()">
+            onclick="return false;">
             <i class="fas fa-link text-sidebar-text/80 text-xl transition-colors"></i>
             <span class="font-medium">Links</span>
           </a>
         </li>
         <!-- ADDED Plugin Library -->
         <li>
-          <a href="#"
+          <a href="#" id="openPluginHubLink"
             class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
-            onclick="jam.application.openPluginHub()">
+            onclick="return false;">
             <i class="fas fa-puzzle-piece text-sidebar-text/80 text-xl transition-colors"></i>
             <span class="font-medium">Plugin Library</span>
           </a>
@@ -742,8 +742,67 @@
         $('#appVersionDisplay').css('color', color);
       };
       
+      const { hexToCssFilter } = require('../../utils/ColorUtils');
+      
       // Apply theme styles immediately on initial load to ensure icons are colored
       applySynchronizedElements(getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim() || '#e83d52');
+      
+      // Function to apply custom color theme
+      const applyCustomColorTheme = async (color, customName, customFruit) => {
+        if (!color) return false;
+        
+        if (!customName) {
+          if (window.jam && window.jam.ipcRenderer) {
+            customName = await window.jam.ipcRenderer.invoke('get-setting', 'ui.customThemeName').catch(() => 'Custom Jam');
+          }
+          customName = customName || 'Custom Jam';
+        }
+        
+        if (!customFruit) {
+          if (window.jam && window.jam.ipcRenderer) {
+            customFruit = await window.jam.ipcRenderer.invoke('get-setting', 'ui.customThemeFruit').catch(() => 'strawberry.png');
+          }
+          customFruit = customFruit || 'strawberry.png';
+        }
+        
+        const fruitPath = customFruit === 'strawberry-jam.png' ? 'app://assets/images/strawberry-jam.png' : `app://assets/images/${customFruit}`;
+        $fruitIcon.attr('src', fruitPath);
+        const filter = hexToCssFilter(color);
+        $fruitIcon.css('filter', filter);
+        
+        updateThemeColors(color);
+        applySynchronizedElements(color);
+        
+        document.title = customName;
+        $('#playButtonText').text(customName);
+        
+        return true;
+      };
+      
+      // Make function globally accessible for settings modal (will be set after fruitImages is defined)
+      window.applyCustomColorTheme = applyCustomColorTheme;
+      
+      // Function to load and apply custom color if enabled
+      const loadCustomColorTheme = async () => {
+        if (window.jam && window.jam.ipcRenderer) {
+          try {
+            const [customColor, customEnabled, customName, customFruit] = await Promise.all([
+              window.jam.ipcRenderer.invoke('get-setting', 'ui.customThemeColor'),
+              window.jam.ipcRenderer.invoke('get-setting', 'ui.customThemeEnabled'),
+              window.jam.ipcRenderer.invoke('get-setting', 'ui.customThemeName'),
+              window.jam.ipcRenderer.invoke('get-setting', 'ui.customThemeFruit')
+            ]);
+            
+            if (customEnabled === true && customColor) {
+              applyCustomColorTheme(customColor, customName, customFruit);
+              return true;
+            }
+          } catch (error) {
+            console.error('Error loading custom color theme:', error);
+          }
+        }
+        return false;
+      };
       
       // jQuery fruit icon click handler
       const $fruitIcon = $('#fruitIcon');
@@ -771,9 +830,62 @@
           'strawberry.png': { primary: '#e83d52' }
         };
         
-        // Load saved fruit theme from settings (after jam is initialized)
-        const loadSavedTheme = () => {
+        // Function to restore fruit theme (defined here so it has access to fruitImages, fruitThemes, and applyGlobalTheme)
+        const restoreFruitTheme = async () => {
+          if (!$fruitIcon.length) {
+            console.warn('Fruit icon not found, cannot restore theme');
+            return;
+          }
+          
           if (window.jam && window.jam.ipcRenderer) {
+            try {
+              const savedTheme = await window.jam.ipcRenderer.invoke('get-setting', 'ui.fruitTheme');
+              let correctedTheme = savedTheme;
+              
+              if (savedTheme) {
+                if (savedTheme.includes('app://assets/') && !savedTheme.includes('app://assets/images/')) {
+                  const fruitName = savedTheme.split('/').pop();
+                  correctedTheme = `app://assets/images/${fruitName}`;
+                }
+                
+                $fruitIcon.attr('src', correctedTheme);
+                $fruitIcon.css('filter', 'none');
+                
+                const newIndex = fruitImages.findIndex(src => correctedTheme === src);
+                if (newIndex !== -1) {
+                  currentFruitIndex = newIndex;
+                }
+                
+                applyGlobalTheme(correctedTheme);
+              } else {
+                const defaultTheme = fruitImages[fruitImages.length - 1];
+                $fruitIcon.attr('src', defaultTheme);
+                $fruitIcon.css('filter', 'none');
+                currentFruitIndex = fruitImages.length - 1;
+                applyGlobalTheme(defaultTheme);
+              }
+            } catch (error) {
+              console.error('Error restoring fruit theme:', error);
+              const defaultTheme = fruitImages[fruitImages.length - 1];
+              $fruitIcon.attr('src', defaultTheme);
+              $fruitIcon.css('filter', 'none');
+              currentFruitIndex = fruitImages.length - 1;
+              applyGlobalTheme(defaultTheme);
+            }
+          }
+        };
+        
+        // Make restoreFruitTheme globally accessible for settings modal
+        window.restoreFruitTheme = restoreFruitTheme;
+        
+        // Load saved fruit theme from settings (after jam is initialized)
+        const loadSavedTheme = async () => {
+          if (window.jam && window.jam.ipcRenderer) {
+            const customColorApplied = await loadCustomColorTheme();
+            if (customColorApplied) {
+              return;
+            }
+            
             window.jam.ipcRenderer.invoke('get-setting', 'ui.fruitTheme')
               .then(savedTheme => {
             if (savedTheme) {
@@ -788,6 +900,7 @@
               
               // Set the fruit icon to the corrected theme
               $fruitIcon.attr('src', correctedTheme);
+              $fruitIcon.css('filter', 'none');
               
               // Update current index based on corrected theme
               const newIndex = fruitImages.findIndex(src => correctedTheme === src);
@@ -803,6 +916,8 @@
                 window.jam.ipcRenderer.invoke('set-setting', 'ui.fruitTheme', correctedTheme)
                   .catch(err => console.warn('Failed to update theme path:', err));
               }
+            } else {
+              currentFruitIndex = fruitImages.length - 1; // Default to strawberry
             }
               })
               .catch(error => {
@@ -875,10 +990,18 @@
         $fruitIcon.css('cursor', 'pointer');
         
         // Attach click handler with jQuery
-        $fruitIcon.on('click', function() {
+        $fruitIcon.on('click', async function() {
+          if (window.jam && window.jam.ipcRenderer) {
+            const customEnabled = await window.jam.ipcRenderer.invoke('get-setting', 'ui.customThemeEnabled');
+            if (customEnabled === true) {
+              return;
+            }
+          }
+          
           currentFruitIndex = (currentFruitIndex + 1) % fruitImages.length;
           const nextFruitSrc = fruitImages[currentFruitIndex];
           $fruitIcon.attr('src', nextFruitSrc);
+          $fruitIcon.css('filter', 'none');
           
           // Apply the global theme variable
           applyGlobalTheme(nextFruitSrc);
@@ -1035,6 +1158,37 @@
           
           if (reportButton2) {
             reportButton2.addEventListener('click', handleReportClick);
+          }
+          
+          // Set up safe onclick handlers for navigation links
+          const settingsLink = document.getElementById('settingsLink');
+          if (settingsLink) {
+            settingsLink.addEventListener('click', (e) => {
+              e.preventDefault();
+              if (window.jam && window.jam.application && window.jam.application.openSettings) {
+                window.jam.application.openSettings();
+              }
+            });
+          }
+          
+          const linksModalLink = document.getElementById('openLinksSection');
+          if (linksModalLink) {
+            linksModalLink.addEventListener('click', (e) => {
+              e.preventDefault();
+              if (window.jam && window.jam.application && window.jam.application.openLinksModal) {
+                window.jam.application.openLinksModal();
+              }
+            });
+          }
+          
+          const pluginHubLink = document.getElementById('openPluginHubLink');
+          if (pluginHubLink) {
+            pluginHubLink.addEventListener('click', (e) => {
+              e.preventDefault();
+              if (window.jam && window.jam.application && window.jam.application.openPluginHub) {
+                window.jam.application.openPluginHub();
+              }
+            });
           }
         } else {
           // If jam object not ready yet, check again in a moment

@@ -447,15 +447,25 @@
         if (!window.gameClientConsoleLogs) {
           window.gameClientConsoleLogs = [];
         }
-        // Limit the number of stored logs to prevent memory issues
         if (window.gameClientConsoleLogs.length > 500) {
           window.gameClientConsoleLogs.splice(0, window.gameClientConsoleLogs.length - 400);
         }
+        const logLevel = event.level === 0 ? 'INFO' : event.level === 1 ? 'WARN' : 'ERROR';
         window.gameClientConsoleLogs.push({
-          level: event.level === 0 ? 'INFO' : event.level === 1 ? 'WARN' : 'ERROR',
+          level: logLevel,
           message: sanitizeLogMessage(event.message),
           timestamp: new Date().toISOString(),
         });
+        
+        if (event.level >= 2) {
+          console.log('[GameScreen] Game webview error detected, forwarding to badge tracker');
+          if (window.ipc && window.ipc.send) {
+            window.ipc.send('game-webview-console-error');
+            console.log('[GameScreen] Sent game-webview-console-error IPC');
+          } else {
+            console.warn('[GameScreen] window.ipc.send not available');
+          }
+        }
       });
 
       this.webViewElem.addEventListener("ipc-message", async event => {

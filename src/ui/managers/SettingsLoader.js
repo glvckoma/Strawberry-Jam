@@ -44,6 +44,11 @@ class SettingsLoader {
 
       const allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
 
+      const customThemeColor = await ipcRenderer.invoke('get-setting', 'ui.customThemeColor');
+      const customThemeEnabled = await ipcRenderer.invoke('get-setting', 'ui.customThemeEnabled');
+      const customThemeName = await ipcRenderer.invoke('get-setting', 'ui.customThemeName');
+      const customThemeFruit = await ipcRenderer.invoke('get-setting', 'ui.customThemeFruit');
+
       $modal.data('initialSwfFile', selectedSwfFile || 'ajclient-prod.swf');
 
       $modal.find('#advancedSmartfoxServer').val(smartfoxServer || '');
@@ -71,6 +76,32 @@ class SettingsLoader {
       $modal.find('#enableAutoUpdatesToggle').prop('checked', enableAutoUpdates === true);
 
       $modal.find('#allowMultipleInstancesToggle').prop('checked', allowMultipleInstances === true);
+
+      $modal.find('#customThemeColorPicker').val(customThemeColor || '#e83d52');
+      $modal.find('#customThemeColorInput').val(customThemeColor || '#e83d52');
+      $modal.find('#customThemeNameInput').val(customThemeName || 'Custom Jam');
+      $modal.find('#customThemeFruitSelect').val(customThemeFruit || 'strawberry.png');
+      $modal.find('#customThemeEnabledToggle').prop('checked', customThemeEnabled === true);
+      
+      const selectedFruit = customThemeFruit || 'strawberry.png';
+      const fruitPath = selectedFruit === 'strawberry-jam.png' ? 'app://assets/images/strawberry-jam.png' : `app://assets/images/${selectedFruit}`;
+      $modal.find('#customThemeColorPreview').attr('src', fruitPath);
+      
+      if (customThemeEnabled === true && customThemeColor) {
+        const { hexToCssFilter, normalizeHexColor } = require('../../utils/ColorUtils');
+        const normalizedColor = normalizeHexColor(customThemeColor);
+        if (normalizedColor) {
+          const filter = hexToCssFilter(normalizedColor);
+          $modal.find('#customThemeColorPreview').css('filter', filter);
+        }
+      }
+
+      const $customThemeColorContainer = $modal.find('#customThemeColorContainer');
+      if ($modal.find('#customThemeEnabledToggle').is(':checked')) {
+        $customThemeColorContainer.css('opacity', '1').find('input').prop('disabled', false);
+      } else {
+        $customThemeColorContainer.css('opacity', '0.5').find('input').prop('disabled', true);
+      }
 
       if ($leakCheckAutoCheck.length) {
         if ($leakCheckAutoCheck.is(':checked')) {

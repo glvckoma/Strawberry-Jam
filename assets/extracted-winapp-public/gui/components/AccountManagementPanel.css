@@ -11,24 +11,30 @@
 #panel-container {
   grid-area: panel; /* This ID is internal to the component, grid-area is illustrative here */
   background-color: var(--theme-box-background, rgba(255, 245, 230, 0.9)); /* Fallback if var not defined */
-  border-right: 1px solid var(--theme-secondary, rgba(232, 61, 82, 0.3));
-  border-radius: 15px 0 0 15px; /* Rounded corners on the left side */
+  border: 1px solid var(--theme-secondary, rgba(232, 61, 82, 0.3));
+  border-right: none; /* Remove right border since it connects to #box */
+  border-radius: 20px 0 0 20px; /* Rounded corners on the left side, matching #box-background */
   padding: 15px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   height: 100%; /* Fill the height of its host */
   box-sizing: border-box;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.05); /* Subtle shadow to the left */
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 8px 32px var(--theme-shadow, rgba(252, 93, 93, 0.1)); /* Match #box-background shadow */
+  transition: opacity 0.2s, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease, background-image 0.3s ease; /* Match #box-background transitions */
   overflow-y: auto;
   padding-right: 5px; /* Add some space for the scrollbar */
+  
+  /* Themed radial accents matching #box */
+  background-image: 
+    radial-gradient(circle at 10% 20%, var(--theme-radial-1, rgba(255, 180, 180, 0.05)) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, var(--theme-radial-2, rgba(255, 200, 200, 0.07)) 0%, transparent 50%);
 }
 
 /* Dark mode styles for the panel container */
 :host(.dark-mode) #panel-container {
-  background-color: rgba(45, 45, 45, 0.9);
-  box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+  background-color: var(--theme-box-background-dark, rgba(45, 45, 45, 0.95));
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4); /* Match dark mode shadow from #box-background */
 }
 
 /* Custom Scrollbar Styles */

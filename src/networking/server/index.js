@@ -120,37 +120,47 @@ module.exports = class Server {
     let lastError = null
 
     for (const port of this._fallbackPorts) {
+      let attemptServer = null
       try {
-        this.server = net.createServer(this._onConnection.bind(this))
+        attemptServer = net.createServer(this._onConnection.bind(this))
 
         await new Promise((resolve, reject) => {
-          this.server.once('listening', () => {
+          attemptServer.once('listening', () => {
             this.actualPort = port
-            this.application.consoleMessage({
-              message: `Server listening on port ${port}`,
-              type: 'notify'
-            })
+            this.server = attemptServer
             resolve()
           })
-          this.server.once('error', reject)
+          attemptServer.once('error', (err) => {
+            if (attemptServer) {
+              attemptServer.close()
+              attemptServer = null
+            }
+            reject(err)
+          })
 
-          this.server.listen(port, '127.0.0.1')
+          attemptServer.listen(port, '127.0.0.1')
         })
 
-        // Success! Break out of loop
         break
 
       } catch (error) {
         lastError = error
+        if (attemptServer) {
+          try {
+            attemptServer.close()
+          } catch (closeErr) {
+          }
+          attemptServer = null
+        }
+        this.server = null
+        
         if (error.code === 'EADDRINUSE') {
           this.application.consoleMessage({
             message: `Port ${port} is busy, trying next port...`,
             type: 'warn'
           })
-          this.server = null // Reset for next attempt
           continue
         } else {
-          // Re-throw non-port-busy errors immediately
           throw error
         }
       }

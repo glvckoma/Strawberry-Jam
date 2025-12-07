@@ -27,7 +27,18 @@ let actualApiPort = null
 
 /**
  * Middleware
+ * Handle raw body for multipart/form-data requests to preserve binary data
  */
+app.use((req, res, next) => {
+  if (req.path.toLowerCase().startsWith('/game/mp')) {
+    // Use raw body parser for /game/mp requests to get binary data as buffer
+    // This handles multipart/form-data and preserves the boundary information
+    express.raw({ type: '*/*', limit: '50mb' })(req, res, next);
+  } else {
+    next();
+  }
+});
+
 app.use(urlencoded({ extended: true }))
 app.use(json())
 
@@ -50,32 +61,86 @@ async function startServer() {
   let lastError = null
 
   for (const port of FALLBACK_PORTS) {
+    let server = null
+    let resolved = false
+    
     try {
       await new Promise((resolve, reject) => {
-        const server = app.listen(port, '127.0.0.1', () => {
-          actualApiPort = port
-          console.log(`[API Server] Successfully started on port ${port}`)
-          
-          // Store reference for cleanup
-          global.apiServer = server
-          
-          resolve()
+        const timeout = setTimeout(() => {
+          if (!resolved) {
+            resolved = true
+            reject(new Error(`Timeout waiting for server to start on port ${port}`))
+          }
+        }, 5000)
+
+        server = app.listen(port, '127.0.0.1', () => {
+          if (!resolved) {
+            resolved = true
+            clearTimeout(timeout)
+            actualApiPort = port
+            console.log(`[API Server] Successfully started on port ${port}`)
+            
+            if (process.send) {
+              process.send({ type: 'api-port-ready', port: actualApiPort })
+            }
+            
+            global.apiServer = server
+            
+            resolve()
+          }
         })
 
-        server.on('error', reject)
+        server.on('error', (err) => {
+          if (!resolved) {
+            resolved = true
+            clearTimeout(timeout)
+            
+            if (server) {
+              try {
+                server.close()
+              } catch (closeErr) {
+              }
+              server = null
+            }
+            
+            if (err.code === 'EADDRINUSE') {
+              console.warn(`[API Server] Port ${port} is busy, trying next port...`)
+              resolve('EADDRINUSE')
+            } else {
+              reject(err)
+            }
+          }
+        })
       })
 
-      // Success! Break out of loop
-      break
+      if (actualApiPort) {
+        break
+      }
+
+      if (server) {
+        try {
+          server.close()
+        } catch (closeErr) {
+        }
+        server = null
+      }
 
     } catch (error) {
       lastError = error
-      if (error.code === 'EADDRINUSE') {
+      if (server) {
+        try {
+          server.close()
+        } catch (closeErr) {
+        }
+        server = null
+      }
+      
+      if (error.code === 'EADDRINUSE' || error === 'EADDRINUSE') {
         console.warn(`[API Server] Port ${port} is busy, trying next port...`)
         continue
       } else {
-        // Re-throw non-port-busy errors immediately
-        throw error
+        console.error(`[API Server] Error starting on port ${port}:`, error.message)
+        continue
       }
     }
   }

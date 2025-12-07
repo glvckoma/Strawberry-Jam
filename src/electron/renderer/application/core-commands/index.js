@@ -10,7 +10,6 @@
  */
 function registerCoreCommands(dispatch, application) {
   
-  // Clear command - clears the console logs
   dispatch.onCommand({
     name: 'clear',
     description: 'Clears the console logs',
@@ -57,7 +56,7 @@ function registerCoreCommands(dispatch, application) {
       
       // Group commands by type (core, game plugins, etc.)
       const coreCommands = commands.filter(cmd => 
-        ['clear', 'help', 'servers', 'end'].includes(cmd.name)
+        ['clear', 'help', 'servers', 'end', 'terminate'].includes(cmd.name)
       );
       
       const gameCommands = commands.filter(cmd => 

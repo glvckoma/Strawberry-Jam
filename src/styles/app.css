@@ -172,17 +172,17 @@ input:focus-visible {
 }
 
 /* Navigation hover effects */
-#sidebar a[onclick*="openSettings"]:hover i.fa-wrench {
+#sidebar a#settingsLink:hover i.fa-wrench {
   color: #FFD700 !important; /* Yellow color for settings wrench */
   transition: color 0.3s ease;
 }
 
-#sidebar a[onclick*="openLinksModal"]:hover i.fa-link {
+#sidebar a#openLinksSection:hover i.fa-link {
   color: #00FFFF !important; /* Cyan color for links */
   transition: color 0.3s ease;
 }
 
-#sidebar a[onclick*="openPluginHub"]:hover i.fa-puzzle-piece {
+#sidebar a#openPluginHubLink:hover i.fa-puzzle-piece {
   color: #00FF00 !important; /* Green color for plugin library */
   transition: color 0.3s ease;
 }

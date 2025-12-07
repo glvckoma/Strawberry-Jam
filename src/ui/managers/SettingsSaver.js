@@ -20,6 +20,12 @@ class SettingsSaver {
       const selectedSwfFile = $modal.find('#selectedSwfFile').val();
       const swfFileChanged = initialSwfFile !== selectedSwfFile;
 
+      const { normalizeHexColor } = require('../../utils/ColorUtils');
+      const customThemeColorInput = $modal.find('#customThemeColorInput').val().trim();
+      const normalizedColor = normalizeHexColor(customThemeColorInput) || '#e83d52';
+      const customThemeName = $modal.find('#customThemeNameInput').val().trim() || 'Custom Jam';
+      const customThemeFruit = $modal.find('#customThemeFruitSelect').val() || 'strawberry.png';
+
       const settingsToSave = [
         { key: 'network.smartfoxServer', value: $modal.find('#advancedSmartfoxServer').val() },
         { key: 'network.secureConnection', value: $modal.find('#advancedSecureConnection').is(':checked') },
@@ -39,7 +45,11 @@ class SettingsSaver {
         { key: 'dev-log.performServerCheckOnLaunch', value: $modal.find('#performServerCheckOnLaunchToggle').is(':checked') },
         { key: 'updates.enableAutoUpdates', value: $modal.find('#enableAutoUpdatesToggle').is(':checked') },
         { key: 'game.selectedSwfFile', value: selectedSwfFile },
-        { key: 'ui.allowMultipleInstances', value: $modal.find('#allowMultipleInstancesToggle').is(':checked') }
+        { key: 'ui.allowMultipleInstances', value: $modal.find('#allowMultipleInstancesToggle').is(':checked') },
+        { key: 'ui.customThemeColor', value: normalizedColor },
+        { key: 'ui.customThemeEnabled', value: $modal.find('#customThemeEnabledToggle').is(':checked') },
+        { key: 'ui.customThemeName', value: customThemeName },
+        { key: 'ui.customThemeFruit', value: customThemeFruit }
       ];
 
       for (const setting of settingsToSave) {
@@ -85,6 +95,19 @@ class SettingsSaver {
           this.toastService.showInModal($modal, `Settings saved, but SWF switch failed: ${swfErrorMessage}`, 'warning');
         } else {
           this.toastService.showInModal($modal, 'Settings saved successfully!', 'success');
+        }
+        
+        const customThemeEnabled = $modal.find('#customThemeEnabledToggle').is(':checked');
+        const customThemeColor = normalizeHexColor($modal.find('#customThemeColorInput').val().trim()) || '#e83d52';
+        const customThemeName = $modal.find('#customThemeNameInput').val().trim() || 'Custom Jam';
+        const customThemeFruit = $modal.find('#customThemeFruitSelect').val() || 'strawberry.png';
+        
+        if (window.applyCustomColorTheme && window.restoreFruitTheme) {
+          if (customThemeEnabled) {
+            window.applyCustomColorTheme(customThemeColor, customThemeName, customThemeFruit);
+          } else {
+            window.restoreFruitTheme();
+          }
         }
         
         app.modals.close();

@@ -209,7 +209,22 @@ class Spammer {
       delay = 1
     }
 
-    this.createRow(type, content, delay.toString())
+    // Detect multiple packets separated by newlines
+    const packets = content.match(/[^\r\n]+/g)
+    
+    if (packets && packets.length > 1) {
+      // Multiple packets detected - create individual queue items
+      packets.forEach(packet => {
+        const trimmedPacket = packet.trim()
+        // Skip empty/whitespace-only lines
+        if (trimmedPacket) {
+          this.createRow(type, trimmedPacket, delay.toString())
+        }
+      })
+    } else {
+      // Single packet - create one queue item (preserve original behavior)
+      this.createRow(type, content.trim(), delay.toString())
+    }
   }
 
   /**

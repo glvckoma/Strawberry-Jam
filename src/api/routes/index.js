@@ -13,6 +13,18 @@ const FilesController = require('../controllers/FilesController')
 const router = Router()
 
 /**
+ * Health check endpoint for port verification.
+ * @public
+ */
+router.get('/api/health', (request, response) => {
+  response.status(200).json({ 
+    success: true, 
+    service: 'strawberry-jam-api',
+    timestamp: Date.now()
+  })
+})
+
+/**
  * AJ Classic close notification route.
  * @public
  */
@@ -40,6 +52,6 @@ router.post('/api/aj-classic-close', (request, response) => {
  * @public
  */
 router.get(/^\/(\d{4})\/ajclient\.swf$/, (request, response) => FilesController.game(request, response))
-router.get('*', (request, response) => FilesController.index(request, response))
+router.all('*', (request, response) => FilesController.index(request, response))
 
 module.exports = router

@@ -142,6 +142,59 @@
             </div>
             <!-- End Startup Behavior Section -->
 
+            <!-- Custom Theme Color Section -->
+            <div class="space-y-4 pt-4">
+              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
+                <i class="fas fa-palette mr-2 text-highlight-yellow"></i>Custom Theme Color
+              </h4>
+              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
+                <label for="customThemeEnabledToggle" class="text-sm text-text-primary">Enable Custom Color</label>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="customThemeEnabledToggle" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
+                    <span class="toggle-text-off">OFF</span>
+                    <span class="toggle-text-on">ON</span>
+                  </div>
+                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                </label>
+              </div>
+              <p class="mt-1 text-xs text-gray-400 -mt-3">When enabled, the strawberry jam icon will be tinted to match your selected color.</p>
+              
+              <div id="customThemeColorContainer" class="transition-opacity duration-300">
+                <label for="customThemeNameInput" class="block mb-2 text-sm font-medium text-text-primary">Custom Name</label>
+                <input id="customThemeNameInput" type="text" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full mb-3" placeholder="Custom Jam" maxlength="50">
+                <p class="mt-1 text-xs text-gray-400 -mt-2 mb-3">Customize the display name shown in the application.</p>
+                
+                <label for="customThemeFruitSelect" class="block mb-2 text-sm font-medium text-text-primary">Fruit Icon</label>
+                <select id="customThemeFruitSelect" class="bg-tertiary-bg text-text-primary focus:outline-none rounded px-3 py-2 w-full mb-3">
+                  <option value="strawberry.png">Strawberry</option>
+                  <option value="banana.png">Banana</option>
+                  <option value="blueberry.png">Blueberry</option>
+                  <option value="cantaloupe.png">Cantaloupe</option>
+                  <option value="coconut.png">Coconut</option>
+                  <option value="dragonfruit.png">Dragonfruit</option>
+                  <option value="pineapple.png">Pineapple</option>
+                  <option value="pumpkin.png">Pumpkin</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-400 -mt-2 mb-3">Select which fruit icon to tint with your custom color.</p>
+                
+                <label for="customThemeColorPicker" class="block mb-2 text-sm font-medium text-text-primary">Theme Color</label>
+                <div class="flex items-center space-x-3">
+                  <input id="customThemeColorPicker" type="color" class="h-10 w-20 rounded cursor-pointer border border-sidebar-border" value="#e83d52">
+                  <input id="customThemeColorInput" type="text" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 flex-1" placeholder="#e83d52" maxlength="7">
+                </div>
+                <p class="mt-1 text-xs text-gray-400">Pick a color to tint the fruit icon throughout the application.</p>
+                
+                <div class="mt-3 flex items-center space-x-2">
+                  <img id="customThemeColorPreview" src="app://assets/images/strawberry.png" alt="Color Preview" class="h-6 w-6 rounded border border-sidebar-border">
+                  <button type="button" id="resetCustomThemeColorBtn" class="bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition text-sm">
+                    <i class="fas fa-undo mr-1"></i>Reset to Default
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- End Custom Theme Color Section -->
+
             <!-- Log Management Section -->
             <div class="space-y-4 pt-4">
               <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">

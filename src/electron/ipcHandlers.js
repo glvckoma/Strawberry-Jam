@@ -388,53 +388,111 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.handle('get-api-port', async () => {
-    // Get the API server port from the forked process
-    try {
-      // Try to get the port from the API process if it's running
-      if (electronInstance && electronInstance._apiProcess && !electronInstance._apiProcess.killed) {
-        // Since the API server runs in a separate process, we need to communicate with it
-        // For now, we'll check if common ports are available by trying to connect
-        const net = require('net');
-        const ports = [8080, 8081, 8082, 9080, 3000];
+    if (electronInstance && electronInstance._apiPort) {
+      return electronInstance._apiPort
+    }
+
+    if (electronInstance && electronInstance._apiProcess && !electronInstance._apiProcess.killed) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 200))
         
-        for (const port of ports) {
-          try {
-            // Try to connect to the port to see if our API server is running there
-            await new Promise((resolve, reject) => {
-              const socket = new net.Socket();
-              socket.setTimeout(100); // Very short timeout
-              
-              socket.on('connect', () => {
-                socket.destroy();
-                resolve(port);
-              });
-              
-              socket.on('timeout', () => {
-                socket.destroy();
-                reject(new Error('timeout'));
-              });
-              
-              socket.on('error', () => {
-                socket.destroy();
-                reject(new Error('connection failed'));
-              });
-              
-              socket.connect(port, '127.0.0.1');
-            });
-            
-            // If we get here, the port is responding
-            return port;
-          } catch (err) {
-            // Port not responding, try next
-            continue;
-          }
+        if (electronInstance._apiPort) {
+          return electronInstance._apiPort
         }
       }
-    } catch (error) {
-      // Fall through to default
+
+      const http = require('http')
+      const ports = [8080, 8081, 8082, 9080, 3000]
+      
+      for (const port of ports) {
+        try {
+          const result = await new Promise((resolve, reject) => {
+            const req = http.get(`http://127.0.0.1:${port}/api/health`, { timeout: 500 }, (res) => {
+              let data = ''
+              res.on('data', chunk => { data += chunk })
+              res.on('end', () => {
+                try {
+                  const json = JSON.parse(data)
+                  if (json && json.service === 'strawberry-jam-api') {
+                    resolve(port)
+                  } else {
+                    reject(new Error('Not Strawberry Jam API'))
+                  }
+                } catch {
+                  reject(new Error('Invalid response'))
+                }
+              })
+            })
+            
+            req.on('timeout', () => {
+              req.destroy()
+              reject(new Error('timeout'))
+            })
+            
+            req.on('error', reject)
+          })
+          
+          if (result) {
+            return result
+          }
+        } catch (err) {
+          continue
+        }
+      }
     }
     
-    return 8080; // Default fallback
+    return 8080
+  });
+
+  ipcMain.handle('terminate-port', async (event, port) => {
+    const { exec } = require('child_process')
+    const { promisify } = require('util')
+    const execAsync = promisify(exec)
+    const platform = process.platform
+    
+    try {
+      if (platform === 'win32') {
+        const { stdout } = await execAsync(`netstat -ano | findstr :${port}`)
+        const lines = stdout.trim().split('\n').filter(line => line.trim())
+        
+        for (const line of lines) {
+          const parts = line.trim().split(/\s+/)
+          const pid = parts[parts.length - 1]
+          
+          if (pid && !isNaN(pid)) {
+            try {
+              await execAsync(`taskkill /PID ${pid} /F`)
+              return { success: true, message: `Terminated process ${pid} using port ${port}` }
+            } catch (killError) {
+              return { success: false, message: `Failed to terminate process ${pid}: ${killError.message}` }
+            }
+          }
+        }
+        
+        return { success: false, message: `No process found using port ${port}` }
+      } else if (platform === 'darwin' || platform === 'linux') {
+        const { stdout } = await execAsync(`lsof -ti:${port}`)
+        const pids = stdout.trim().split('\n').filter(pid => pid.trim())
+        
+        if (pids.length === 0) {
+          return { success: false, message: `No process found using port ${port}` }
+        }
+        
+        for (const pid of pids) {
+          try {
+            await execAsync(`kill -9 ${pid}`)
+          } catch (killError) {
+            return { success: false, message: `Failed to terminate process ${pid}: ${killError.message}` }
+          }
+        }
+        
+        return { success: true, message: `Terminated ${pids.length} process(es) using port ${port}` }
+      }
+      
+      return { success: false, message: 'Unsupported platform' }
+    } catch (error) {
+      return { success: false, message: `Error checking port ${port}: ${error.message}` }
+    }
   });
 
   ipcMain.handle('get-enabled-plugins', async () => {
@@ -578,8 +636,9 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.on('check-for-updates', () => {
     electronInstance.manualCheckInProgress = true;
     autoUpdater.checkForUpdates().catch(err => {
+      const message = err && err.message ? err.message : String(err);
       if (electronInstance._window && electronInstance._window.webContents && !electronInstance._window.isDestroyed()) {
-        electronInstance._window.webContents.send('manual-update-check-status', { status: 'error', message: `Manual update check failed: ${err.message}` });
+        electronInstance._window.webContents.send('manual-update-check-status', { status: 'error', message: `Manual update check failed: ${message}` });
       }
       electronInstance.manualCheckInProgress = false;
     });

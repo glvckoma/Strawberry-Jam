@@ -20,11 +20,34 @@
         root.style.setProperty('--theme-box-background', 'rgba(255, 245, 230, 0.95)');
       }
 
+      this._syncDarkModeToChildComponents(isDarkMode);
+    }
+
+    _syncDarkModeToChildComponents(isDarkMode) {
       if (this.loginScreen.accountPanelInstance && typeof this.loginScreen.accountPanelInstance.setDarkMode === 'function') {
-        this.loginScreen.accountPanelInstance.setDarkMode(isDarkMode);
+        try {
+          this.loginScreen.accountPanelInstance.setDarkMode(isDarkMode);
+        } catch (error) {
+          console.warn('[LoginScreenUIManager] Failed to set dark mode on accountPanelInstance:', error);
+        }
+      } else {
+        setTimeout(() => {
+          if (this.loginScreen.accountPanelInstance && typeof this.loginScreen.accountPanelInstance.setDarkMode === 'function') {
+            try {
+              this.loginScreen.accountPanelInstance.setDarkMode(isDarkMode);
+            } catch (error) {
+              console.warn('[LoginScreenUIManager] Failed to set dark mode on accountPanelInstance (retry):', error);
+            }
+          }
+        }, 100);
       }
+
       if (this.loginScreen.autoWheelButtonInstance && typeof this.loginScreen.autoWheelButtonInstance.setDarkMode === 'function') {
-        this.loginScreen.autoWheelButtonInstance.setDarkMode(isDarkMode);
+        try {
+          this.loginScreen.autoWheelButtonInstance.setDarkMode(isDarkMode);
+        } catch (error) {
+          console.warn('[LoginScreenUIManager] Failed to set dark mode on autoWheelButtonInstance:', error);
+        }
       }
     }
 
@@ -34,8 +57,8 @@
       if (this.loginScreen.settingsBtn) {
         this.loginScreen.settingsBtn.style.display = this.loginScreen._uiElementsHidden ? 'none' : 'flex';
       }
-      if (this.loginScreen.reportProblemBtn) {
-        this.loginScreen.reportProblemBtn.style.display = this.loginScreen._uiElementsHidden ? 'none' : 'flex';
+      if (this.loginScreen.devtoolsBtn) {
+        this.loginScreen.devtoolsBtn.style.display = this.loginScreen._uiElementsHidden ? 'none' : 'flex';
       }
       
       if (window.UserTrayManager && window.UserTrayManager.instance) {

@@ -35,16 +35,14 @@ exports.render = async function (app, data = {}) {
         return 0;
     });
 
-    // Calculate responsive modal height based on window size
     const windowHeight = window.innerHeight;
-    const modalMaxHeight = Math.min(windowHeight * 0.85, 600); // Max 85% of window or 600px
-    const headerFooterHeight = 140; // Approximate height of header + footer
+    const modalMaxHeight = Math.min(windowHeight * 0.85, 600);
+    const headerFooterHeight = 140;
     const contentHeight = modalMaxHeight - headerFooterHeight;
 
     const $modal = $(`
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm" id="updatesModalOverlay">
             <div class="bg-primary-bg rounded-xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden transform" style="max-height: ${modalMaxHeight}px;">
-                <!-- Header -->
                 <div class="px-6 py-4 bg-secondary-bg border-b border-sidebar-border">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
@@ -71,9 +69,7 @@ exports.render = async function (app, data = {}) {
                     </div>
                 </div>
 
-                <!-- Content -->
                 <div class="flex" style="height: ${contentHeight}px;">
-                    <!-- Tab Navigation -->
                     <div class="w-48 bg-secondary-bg border-r border-sidebar-border p-4 overflow-y-auto">
                         <div class="space-y-2">
                             ${Object.entries(versionData.categories).filter(([key, items]) => items.length > 0).map(([key, items]) => {
@@ -89,7 +85,6 @@ exports.render = async function (app, data = {}) {
                         </div>
                     </div>
 
-                    <!-- Tab Content -->
                     <div class="flex-1 bg-primary-bg overflow-y-auto p-6 min-h-0" style="max-height: ${contentHeight}px;">
                         <div id="tabContent" class="tab-content animate-fade-in-up">
                             ${generateTabContent(versionData.categories)}
@@ -97,14 +92,13 @@ exports.render = async function (app, data = {}) {
                     </div>
                 </div>
 
-                <!-- Footer -->
                 <div class="px-6 py-4 bg-secondary-bg border-t border-sidebar-border">
                     <div class="flex justify-between items-center">
                         <div class="text-sm text-sidebar-text flex items-center">
                             <i class="fas fa-lightbulb mr-2 text-highlight-green"></i>
                             <span>Access via Settings → Application Updates → Check for Updates</span>
                         </div>
-                        <div class="flex space-x-3">
+                        <div class="flex space-x-3 items-center">
                             <button id="markAsRead" class="px-4 py-2 bg-highlight-green/20 text-highlight-green hover:bg-highlight-green/30 rounded-lg transition-colors text-sm font-medium">
                                 <i class="fas fa-check mr-2"></i>Mark as Read
                             </button>
@@ -115,12 +109,10 @@ exports.render = async function (app, data = {}) {
         </div>
     `);
 
-    // Tab switching logic
     const categoryKeys = Object.keys(versionData.categories);
     
     let activeTab = categoryKeys.find(key => versionData.categories[key] && versionData.categories[key].length > 0) || 'features';
     
-    // Safety check - if no valid tab found, use features and ensure it exists
     if (!versionData.categories[activeTab]) {
         versionData.categories.features = [{
             icon: '🎉',
@@ -134,19 +126,15 @@ exports.render = async function (app, data = {}) {
     function switchTab(tabName) {
         activeTab = tabName;
         
-        // Safety check - ensure the tab exists
         if (!versionData.categories[tabName]) {
             tabName = 'features';
         }
         
-        // Update tab buttons with fruit-themed styling and smooth transitions
         $modal.find('.tab-button').removeClass('text-text-primary bg-tertiary-bg').addClass('text-sidebar-text');
         $modal.find(`[data-tab="${tabName}"]`).removeClass('text-sidebar-text').addClass('text-text-primary bg-tertiary-bg');
         
-        // Smooth content transition with staggered fade animations
         const $content = $modal.find('#tabContent');
         
-        // Fade out current content
         $content.css({
             'opacity': '1',
             'transform': 'translateY(0px)',
@@ -162,7 +150,6 @@ exports.render = async function (app, data = {}) {
                 }
             },
             complete: function() {
-                // Update content after fade out
                 try {
                     $content.html(generateTabContentForCategory(tabName, versionData.categories[tabName]));
                 } catch (error) {
@@ -170,7 +157,6 @@ exports.render = async function (app, data = {}) {
                     $content.html('<div class="text-center py-8 text-sidebar-text">Error loading content</div>');
                 }
                 
-                // Fade in new content with staggered animation
                 $content.css({
                     'opacity': '0',
                     'transform': 'translateY(10px)'
@@ -185,12 +171,10 @@ exports.render = async function (app, data = {}) {
                         }
                     },
                     complete: function() {
-                        // Clear animation styles to prevent scroll interference
                         $content.css({
                             'transition': '',
                             'transform': ''
                         });
-                        // Add staggered animation to content items
                         $content.find('.space-y-4 > div').each(function(index) {
                             const $item = $(this);
                             $item.css({
@@ -205,7 +189,6 @@ exports.render = async function (app, data = {}) {
                                     'transform': 'translateY(0px)'
                                 });
                                 
-                                // Clear transitions after animation completes to prevent scroll interference
                                 setTimeout(() => {
                                     $item.css({
                                         'transition': '',
@@ -215,7 +198,6 @@ exports.render = async function (app, data = {}) {
                             }, index * 50); // Stagger by 50ms per item
                         });
                         
-                        // Force scroll container to recalculate after all animations
                         setTimeout(() => {
                             const $scrollContainer = $modal.find('.overflow-y-auto').last();
                             $scrollContainer[0].scrollTop = $scrollContainer[0].scrollTop;
@@ -226,10 +208,8 @@ exports.render = async function (app, data = {}) {
         });
     }
 
-    // Initialize first tab
     switchTab(activeTab);
 
-    // Event listeners
     $modal.find('.tab-button').click(function() {
         const tabName = $(this).data('tab');
         switchTab(tabName);
@@ -238,7 +218,6 @@ exports.render = async function (app, data = {}) {
     $modal.find('#versionSelector').change(function() {
         const selectedVersion = $(this).val();
         
-        // Add smooth transition for version change
         const $modalContent = $modal.find('.transform');
         
         $modalContent.css({
@@ -259,14 +238,12 @@ exports.render = async function (app, data = {}) {
                 }
             },
             complete: function() {
-                // Reload modal with new version after fade out
                 app.modals.show('updatesModal', '#modalContainer', { version: selectedVersion });
             }
         });
     });
 
     const closeModal = function() {
-        // Enhanced smooth exit animation
         $modal.find('.transform').css({
             'opacity': '1',
             'transform': 'scale(1) translateY(0px)',
@@ -309,7 +286,6 @@ exports.render = async function (app, data = {}) {
             await ipcRenderer.invoke('set-setting', 'lastSeenVersion', targetVersion);
             ToastService.showInModal($modal, 'Updates marked as read!', 'success', 3000, true);
             
-            // Delay close to show toast
             setTimeout(() => {
                 closeModal();
             }, 1500);
@@ -319,7 +295,6 @@ exports.render = async function (app, data = {}) {
         }
     });
 
-    // Enhanced entrance animation with app.css patterns
     $modal.css({ 'opacity': '0' });
     $modal.find('.transform').css({
         'opacity': '0',
@@ -340,7 +315,6 @@ exports.render = async function (app, data = {}) {
             'transition': 'opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.3s ease-out'
         });
         
-        // Staggered animation for header elements
         setTimeout(() => {
             $modal.find('.tab-button').each(function(index) {
                 const $tab = $(this);
@@ -358,7 +332,6 @@ exports.render = async function (app, data = {}) {
                 }, index * 50);
             });
             
-            // Animate initial content
             $modal.find('#tabContent .space-y-4 > div').each(function(index) {
                 const $item = $(this);
                 $item.css({
@@ -373,20 +346,17 @@ exports.render = async function (app, data = {}) {
                         'transform': 'translateY(0px)'
                     });
                     
-                    // Clear transitions and transforms after animation to prevent scroll interference
                     setTimeout(() => {
                         $item.css({
                             'transition': '',
                             'transform': ''
                         });
                         
-                        // Force scroll recalculation on the last item
                         if (index === $modal.find('#tabContent .space-y-4 > div').length - 1) {
                             setTimeout(() => {
                                 const $scrollContainer = $modal.find('.overflow-y-auto').last();
                                 if ($scrollContainer.length) {
                                     $scrollContainer[0].scrollTop = $scrollContainer[0].scrollTop;
-                                    // Also trigger a resize event to ensure proper scroll calculation
                                     $scrollContainer.trigger('scroll');
                                 }
                             }, 100);
@@ -397,7 +367,6 @@ exports.render = async function (app, data = {}) {
         }, 100);
     }, 10);
 
-    // Add window resize handler for responsiveness
     const handleResize = () => {
         const newWindowHeight = window.innerHeight;
         const newModalMaxHeight = Math.min(newWindowHeight * 0.85, 600);

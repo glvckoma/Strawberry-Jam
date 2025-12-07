@@ -31,7 +31,13 @@ const DEFAULT_SETTINGS = {
 
   // Log limiting settings
   'logs.consoleLimit': 1000,
-  'logs.networkLimit': 1000
+  'logs.networkLimit': 1000,
+
+  // Custom theme color settings
+  'ui.customThemeColor': null,
+  'ui.customThemeEnabled': false,
+  'ui.customThemeName': null,
+  'ui.customThemeFruit': null
 }
 
 // Development mode check (safer than process.env which may be undefined in packaged app)
@@ -81,7 +87,11 @@ module.exports = class Settings {
         
         // Log limiting settings
         { key: 'logs.consoleLimit', defaultValue: DEFAULT_SETTINGS['logs.consoleLimit'] },
-        { key: 'logs.networkLimit', defaultValue: DEFAULT_SETTINGS['logs.networkLimit'] }
+        { key: 'logs.networkLimit', defaultValue: DEFAULT_SETTINGS['logs.networkLimit'] },
+        { key: 'ui.customThemeColor', defaultValue: DEFAULT_SETTINGS['ui.customThemeColor'] },
+        { key: 'ui.customThemeEnabled', defaultValue: DEFAULT_SETTINGS['ui.customThemeEnabled'] },
+        { key: 'ui.customThemeName', defaultValue: DEFAULT_SETTINGS['ui.customThemeName'] },
+        { key: 'ui.customThemeFruit', defaultValue: DEFAULT_SETTINGS['ui.customThemeFruit'] }
       ]
 
       for (const {key, defaultValue} of settingsToLoad) {

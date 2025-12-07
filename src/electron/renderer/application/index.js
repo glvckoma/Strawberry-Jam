@@ -594,8 +594,6 @@ module.exports = class Application extends EventEmitter {
     
     registerCoreCommands(this.dispatch, this)
     
-    this.refreshAutoComplete()
-    
     await this.settings.load()
     await this._loadLogLimitSettings()
     
@@ -626,9 +624,42 @@ module.exports = class Application extends EventEmitter {
       type: 'success'
     })
 
+    this.refreshAutoComplete()
+
     const secureConnection = this.settings.get('secureConnection')
     if (secureConnection) {
       await this._checkForHostChanges()
+    }
+
+    const PortChecker = require('../../../utils/PortChecker')
+    const port443Busy = await PortChecker.isPortBusy(443)
+    const port8080Busy = await PortChecker.isPortBusy(8080)
+
+    const busyPorts = []
+    const portDetails = []
+    
+    if (port443Busy) {
+      const processInfo = await PortChecker.findProcessUsingPort(443)
+      if (processInfo && processInfo.processName && processInfo.processName.toLowerCase() !== 'electron.exe') {
+        busyPorts.push('443')
+        portDetails.push(`Port 443: ${processInfo.processName} (PID: ${processInfo.pid})`)
+      }
+    }
+    
+    if (port8080Busy) {
+      const processInfo = await PortChecker.findProcessUsingPort(8080)
+      if (processInfo && processInfo.processName && processInfo.processName.toLowerCase() !== 'electron.exe') {
+        busyPorts.push('8080')
+        portDetails.push(`Port 8080: ${processInfo.processName} (PID: ${processInfo.pid})`)
+      }
+    }
+
+    if (busyPorts.length > 0) {
+      const message = `Port${busyPorts.length > 1 ? 's' : ''} ${busyPorts.join(' and ')} ${busyPorts.length > 1 ? 'are' : 'is'} already in use. ${portDetails.join(' ')} Use the "terminate" command to close processes using these ports, then restart the application.`
+      this.consoleMessage({
+        type: 'warn',
+        message: message
+      })
     }
 
     await this.server.serve()
@@ -642,7 +673,7 @@ module.exports = class Application extends EventEmitter {
     }
     
     this.consoleMessage({
-      message: 'Server started!',
+      message: `Server started on port ${this.server.actualPort}!`,
       type: 'success'
     })
     

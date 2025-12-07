@@ -133,59 +133,13 @@
         this.loginScreen.settingsPanel.classList.toggle('show');
       });
 
-      if (this.loginScreen.reportProblemBtn) {
-        this.loginScreen.reportProblemBtn.addEventListener('click', () => {
-          const logsToReport = [...getConsoleLogs()];
-          
-          if (window.ipc && window.ipc.electronOs && window.ipc.electronOs.homedir &&
-              window.ipc.electronPath && window.ipc.electronPath.join &&
-              window.ipc.electronFs && window.ipc.electronFs.writeFileSync) {
-            try {
-              const fsOps = window.ipc.electronFs;
-              const pathOps = window.ipc.electronPath;
-              const osOps = window.ipc.electronOs;
-
-              if (!osOps || typeof osOps.homedir !== 'function') {
-                throw new Error("osOps or osOps.homedir is not available via preload.");
-              }
-
-              const homeDir = osOps.homedir();
-              if (!homeDir) {
-                throw new Error("Could not determine user's home directory via osOps.homedir().");
-              }
-              const desktopPath = pathOps.join(homeDir, 'Desktop');
-              
-              const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-              const filename = `winapp-desktop-report-${timestamp}.log`;
-              const filePath = pathOps.join(desktopPath, filename);
-              
-              let logContent = `## Login Screen UI Logs (Report a Problem - Saved to Desktop)\n`;
-              logContent += `Timestamp: ${new Date().toISOString()}\n`;
-              logContent += `URL: ${window.location.href}\n`;
-              logContent += `User Agent: ${navigator.userAgent}\n\n`;
-              
-              logsToReport.forEach(log => {
-                logContent += `[${log.timestamp}] [${log.level}] ${log.message}\n`;
-              });
-
-              if (window.gameClientConsoleLogs && window.gameClientConsoleLogs.length > 0) {
-                logContent += `\n\n## Game Client Logs\n`;
-                window.gameClientConsoleLogs.forEach(log => {
-                  logContent += `[${log.timestamp}] [${log.level}] ${log.message}\n`;
-                });
-              }
-              
-              fsOps.writeFileSync(filePath, logContent, 'utf8');
-              alert(`Logs saved to your Desktop: ${filename}\nSubmit the logs in #tickets channel to recieve help`);
-            } catch (err) {
-              console.error('[LoginScreen] Error saving logs to Desktop:', err);
-              alert(`Error saving logs to Desktop: ${err.message}\nPlease check the console for details.`);
-            }
-          } else {
-            let reason = "Required modules (os, path, or fs) are not properly exposed from the preload script to save logs to Desktop.";
-            console.warn(`[LoginScreen] Cannot save logs to Desktop: ${reason}`);
-            alert(`Could not save logs to Desktop.\nReason: ${reason}\n\nPlease check the developer console for more detailed error messages.`);
+      if (this.loginScreen.devtoolsBtn) {
+        this.loginScreen.devtoolsBtn.addEventListener('click', () => {
+          if (window.ipc && window.ipc.send) {
+            window.ipc.send('open-devtools-both');
           }
+          this.loginScreen.errorCount = 0;
+          this.loginScreen.updateErrorBadge();
         });
       }
       
@@ -272,6 +226,19 @@
             this.uiManager._updateComponentVisibility();
           } catch (err) {
             console.error('Failed to save show wheel automation setting:', err);
+          }
+        });
+      }
+
+      if (this.loginScreen.hideDevToolsBadgeToggle) {
+        this.loginScreen.hideDevToolsBadgeToggle.addEventListener('change', async () => {
+          try {
+            const isHidden = this.loginScreen.hideDevToolsBadgeToggle.checked;
+            await window.ipc.invoke('set-setting', 'ui.hideDevToolsBadge', isHidden);
+            this.loginScreen._hideDevToolsBadge = isHidden;
+            this.loginScreen.updateErrorBadge();
+          } catch (err) {
+            console.error('Failed to save hide devtools badge setting:', err);
           }
         });
       }

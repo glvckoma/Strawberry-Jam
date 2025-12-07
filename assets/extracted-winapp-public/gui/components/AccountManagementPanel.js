@@ -32,6 +32,10 @@
       if (this.addAccountButtonElem) {
         this.addAccountButtonElem.addEventListener('click', () => this._handleAddAccountClick());
       }
+      
+      this._syncDarkModeFromParent();
+      this._setupDarkModeObserver();
+      
       // Initial data loading
       this.loadAndDisplaySavedAccounts();
 
@@ -41,7 +45,10 @@
     }
 
     disconnectedCallback() {
-      // Cleanup logic if needed
+      if (this._darkModeObserver) {
+        this._darkModeObserver.disconnect();
+        this._darkModeObserver = null;
+      }
     }
 
     // --- Public methods / Attribute handling ---
@@ -58,6 +65,67 @@
       } else {
         this.classList.remove('dark-mode');
       }
+    }
+
+    _findParentLoginScreen() {
+      const rootNode = this.getRootNode();
+      if (rootNode instanceof ShadowRoot && rootNode.host) {
+        if (rootNode.host.tagName === 'AJD-LOGIN-SCREEN') {
+          return rootNode.host;
+        }
+      }
+      
+      let current = this.parentNode;
+      while (current) {
+        if (current.tagName === 'AJD-LOGIN-SCREEN') {
+          return current;
+        }
+        if (current.getRootNode) {
+          const currentRoot = current.getRootNode();
+          if (currentRoot instanceof ShadowRoot && currentRoot.host && currentRoot.host.tagName === 'AJD-LOGIN-SCREEN') {
+            return currentRoot.host;
+          }
+        }
+        if (current === document || current === document.body || current === document.documentElement) {
+          break;
+        }
+        current = current.parentNode;
+      }
+      
+      return null;
+    }
+
+    _syncDarkModeFromParent() {
+      const loginScreen = this._findParentLoginScreen();
+      if (loginScreen) {
+        const isDarkMode = loginScreen.classList.contains('dark-mode');
+        this.setDarkMode(isDarkMode);
+      }
+    }
+
+    _setupDarkModeObserver() {
+      const loginScreen = this._findParentLoginScreen();
+      if (!loginScreen) {
+        return;
+      }
+
+      if (this._darkModeObserver) {
+        this._darkModeObserver.disconnect();
+      }
+
+      this._darkModeObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const isDarkMode = loginScreen.classList.contains('dark-mode');
+            this.setDarkMode(isDarkMode);
+          }
+        });
+      });
+
+      this._darkModeObserver.observe(loginScreen, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
     }
 
     saveAccountWithCredentials(credentials) {

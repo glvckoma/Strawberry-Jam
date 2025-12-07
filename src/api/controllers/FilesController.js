@@ -279,6 +279,131 @@ class FilesController {
       }
     }
     
+    // Handle wall requests - proxy to prod-wall.animaljam.com instead of ajcontent.akamaized.net
+    if (requestPath.startsWith('/wall')) {
+      const wallBaseUrl = 'https://prod-wall.animaljam.com';
+      const requestLib = require('request');
+      
+      const wallHeaders = {
+        Host: 'prod-wall.animaljam.com',
+        Referer: 'https://desktop.animaljam.com/gameClient/game/index.html'
+      };
+      
+      // Copy relevant headers from incoming request
+      if (request.headers['content-type']) {
+        wallHeaders['Content-Type'] = request.headers['content-type'];
+      }
+      if (request.headers['user-agent']) {
+        wallHeaders['User-Agent'] = request.headers['user-agent'];
+      }
+      
+      // Use request library directly to properly handle POST requests with body
+      const proxyOptions = {
+        method: request.method,
+        url: `${wallBaseUrl}${request.path}`,
+        headers: wallHeaders
+      };
+      
+      // Handle request body - body-parser may have parsed it or it might be raw
+      if (request.body !== undefined && request.body !== null) {
+        if (typeof request.body === 'object' && !Buffer.isBuffer(request.body)) {
+          // Parsed JSON object - send as JSON
+          proxyOptions.json = true;
+          proxyOptions.body = request.body;
+        } else {
+          // Raw string or buffer - send as-is
+          proxyOptions.body = request.body;
+          if (typeof request.body === 'string' && request.body.trim().startsWith('{')) {
+            // Looks like JSON string, ensure Content-Type is set
+            if (!wallHeaders['Content-Type']) {
+              wallHeaders['Content-Type'] = 'application/json';
+            }
+          }
+        }
+      }
+      
+      return requestLib(proxyOptions).pipe(response);
+    }
+    
+    // Handle masterpiece submission requests - proxy to jammercentral.animaljam.com
+    if (requestPath.startsWith('/game/mp')) {
+      const masterpieceBaseUrl = 'https://jammercentral.animaljam.com';
+      const requestLib = require('request');
+      
+      const masterpieceHeaders = {
+        Host: 'jammercentral.animaljam.com',
+        Referer: 'https://desktop.animaljam.com/gameClient/game/index.html'
+      };
+      
+      // Copy relevant headers from incoming request
+      if (request.headers['content-type']) {
+        masterpieceHeaders['Content-Type'] = request.headers['content-type'];
+      }
+      if (request.headers['user-agent']) {
+        masterpieceHeaders['User-Agent'] = request.headers['user-agent'];
+      }
+      if (request.headers['content-length']) {
+        masterpieceHeaders['Content-Length'] = request.headers['content-length'];
+      }
+      
+      console.log(`[Masterpiece Proxy] Proxying masterpiece request: ${request.method} ${request.path} to ${masterpieceBaseUrl}${request.path}`);
+      
+      // For multipart/form-data, use the raw body buffer
+      const proxyOptions = {
+        method: request.method,
+        url: `${masterpieceBaseUrl}${request.path}`,
+        headers: masterpieceHeaders
+      };
+      
+      // Handle request body - should be a Buffer for multipart requests (from express.raw())
+      if (request.body !== undefined && request.body !== null) {
+        if (Buffer.isBuffer(request.body)) {
+          // Raw buffer (multipart form data) - send as-is
+          proxyOptions.body = request.body;
+          console.log(`[Masterpiece Proxy] Using buffer body, size: ${request.body.length} bytes`);
+        } else if (typeof request.body === 'string') {
+          // String data - send as-is
+          proxyOptions.body = request.body;
+          console.log(`[Masterpiece Proxy] Using string body, length: ${request.body.length}`);
+        } else if (typeof request.body === 'object') {
+          // Parsed object - send as JSON
+          proxyOptions.json = true;
+          proxyOptions.body = request.body;
+          console.log(`[Masterpiece Proxy] Using JSON body`);
+        }
+      } else {
+        // No body - might be a GET request or empty POST
+        console.warn(`[Masterpiece Proxy] No request body found for ${request.method} ${request.path}`);
+      }
+      
+      // Create the proxy request with error handling
+      const proxyRequest = requestLib(proxyOptions);
+      
+      // Handle proxy errors
+      proxyRequest.on('error', (error) => {
+        console.error(`[Masterpiece Proxy] Error proxying request:`, error);
+        if (!response.headersSent) {
+          response.status(500).json({ 
+            error: 'Proxy error', 
+            message: error.message 
+          });
+        }
+      });
+      
+      // Handle response errors
+      proxyRequest.on('response', (proxyResponse) => {
+        console.log(`[Masterpiece Proxy] Received response: ${proxyResponse.statusCode}`);
+        if (proxyResponse.statusCode >= 400) {
+          console.error(`[Masterpiece Proxy] Error response from server: ${proxyResponse.statusCode}`);
+        }
+      });
+      
+      // Pipe the response
+      proxyRequest.pipe(response);
+      
+      return proxyRequest;
+    }
+    
     return request.pipe(
       HTTPClient.proxy({
         url: `${this.baseUrl}/${request.path}`,
