@@ -1,7 +1,8 @@
 const path = require('path')
 const os = require('os')
-const { rename, copyFile, rm, mkdir, cp } = require('fs/promises') // Keep only one declaration
-const { existsSync } = require('fs') // Keep only one declaration
+const fs = require('fs')
+const { rename, copyFile, rm, mkdir, cp } = fs.promises // Use fs.promises for compatibility
+const { existsSync } = fs // Keep only one declaration
 const { spawn } = require('child_process')
 const { ipcRenderer } = require('electron')
 // Removed treeKill as it's not used in the restore logic directly

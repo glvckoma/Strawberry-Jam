@@ -29,6 +29,7 @@ const crystalDelay = document.getElementById('crystalDelay');
 const maxRetries = document.getElementById('maxRetries');
 const loopMode = document.getElementById('loopMode');
 const targetAccount = document.getElementById('targetAccount');
+const rewardWaitTime = document.getElementById('rewardWaitTime');
 
 // Modal Elements
 const educationalModal = document.getElementById('educationalModal');
@@ -77,7 +78,33 @@ let knownDenInvIds = new Set();
 let isFirstDiPacket = true;
 let hasCapturedInitialDenState = false; // New state for den inventory
 const QUEST_DURATION_MS = 17 * 60 * 1000; // 17 minutes in milliseconds
-const MIN_WAIT_TIME_MS = 4 * 60 * 1000; // Must wait at least 4 minutes (17:00 - 13:00)
+
+// Function to get wait time based on user selection
+function getWaitTimeMs() {
+    const waitTimeSetting = rewardWaitTime ? rewardWaitTime.value : '13:00';
+    
+    if (waitTimeSetting === 'randomized') {
+        // Random between 2-4 minutes (11:00 to 13:00)
+        const randomMinutes = 2 + Math.random() * 2; // 2.0 to 4.0 minutes
+        return Math.floor(randomMinutes * 60 * 1000);
+    } else if (waitTimeSetting === '11:00') {
+        return 2 * 60 * 1000; // 2 minutes
+    } else if (waitTimeSetting === '12:00') {
+        return 3 * 60 * 1000; // 3 minutes
+    } else {
+        // Default to 13:00 (4 minutes)
+        return 4 * 60 * 1000; // 4 minutes
+    }
+}
+
+// Function to get wait time label for display
+function getWaitTimeLabel() {
+    const waitTimeSetting = rewardWaitTime ? rewardWaitTime.value : '13:00';
+    if (waitTimeSetting === 'randomized') {
+        return 'randomized time';
+    }
+    return waitTimeSetting;
+}
 
 // Efficient Mode Variables
 let isEfficientMode = false;
@@ -899,15 +926,17 @@ async function runSingleAutomation() {
 
         // Calculate how long we need to wait before collecting rewards
         const elapsedTime = Date.now() - questStartTime;
-        const timeUntilSafeReward = MIN_WAIT_TIME_MS - elapsedTime;
+        const minWaitTimeMs = getWaitTimeMs();
+        const timeUntilSafeReward = minWaitTimeMs - elapsedTime;
+        const waitTimeLabel = getWaitTimeLabel();
         
         if (timeUntilSafeReward > 0) {
             const totalSeconds = Math.ceil(timeUntilSafeReward / 1000);
             const minutesLeft = Math.floor(totalSeconds / 60);
             const secondsLeft = totalSeconds % 60;
-            console.log(`[TFD Automation] === WAITING FOR 13:00 RULE ===`);
+            console.log(`[TFD Automation] === WAITING FOR ${waitTimeLabel.toUpperCase()} RULE ===`);
             console.log(`[TFD Automation] Time until safe reward: ${timeUntilSafeReward}ms (${minutesLeft}m ${secondsLeft}s)`);
-            updateStatus(`Waiting ${minutesLeft}m ${secondsLeft}s for safe reward collection (13:00 rule)...`, 'info');
+            updateStatus(`Waiting ${minutesLeft}m ${secondsLeft}s for safe reward collection (${waitTimeLabel} rule)...`, 'info');
             
             // Special mode enhancement: collect additional crystals during wait if available
             if (isSpecialMode && waitPeriodCrystalPackets.length > 0) {
@@ -967,13 +996,13 @@ async function runSingleAutomation() {
                     console.log(`[TFD Automation] New gift detection completed`);
                     
                     // Wait remaining time after crystal collection and gift detection
-                    const remainingWaitTime = Math.max(0, MIN_WAIT_TIME_MS - (Date.now() - questStartTime));
+                    const remainingWaitTime = Math.max(0, minWaitTimeMs - (Date.now() - questStartTime));
                     if (remainingWaitTime > 0) {
                         const remainingSeconds = Math.ceil(remainingWaitTime / 1000);
                         const remainingMinutes = Math.floor(remainingSeconds / 60);
                         const remainingSecondsDisplay = remainingSeconds % 60;
                         console.log(`[TFD Automation] Crystal collection complete. Waiting additional ${remainingWaitTime}ms (${remainingMinutes}m ${remainingSecondsDisplay}s)`);
-                        updateStatus(`⏱️ Waiting ${remainingMinutes}m ${remainingSecondsDisplay}s more until 13:00...`, 'info');
+                        updateStatus(`⏱️ Waiting ${remainingMinutes}m ${remainingSecondsDisplay}s more until ${waitTimeLabel}...`, 'info');
                         
                         await new Promise(resolve => {
                             currentTimeout = setTimeout(resolve, remainingWaitTime);
@@ -1566,6 +1595,50 @@ function openFileInEditor(fileName) {
     }
 }
 
+// --- Collapsible Sections ---
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsContent = document.getElementById('settingsContent');
+const settingsChevron = document.getElementById('settingsChevron');
+const filterToggle = document.getElementById('filterToggle');
+const filterContent = document.getElementById('filterContent');
+const filterChevron = document.getElementById('filterChevron');
+
+function toggleSection(sectionContent, chevron, storageKey, defaultCollapsed = true) {
+    const isCollapsed = sectionContent.classList.contains('collapsed');
+    const shouldCollapse = !isCollapsed;
+    
+    if (shouldCollapse) {
+        sectionContent.classList.add('collapsed');
+        if (chevron) chevron.style.transform = 'rotate(-90deg)';
+    } else {
+        sectionContent.classList.remove('collapsed');
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+    }
+    
+    localStorage.setItem(storageKey, shouldCollapse);
+}
+
+function loadSectionState(sectionContent, chevron, storageKey, defaultCollapsed = true) {
+    const stored = localStorage.getItem(storageKey);
+    const shouldCollapse = stored !== null ? JSON.parse(stored) : defaultCollapsed;
+    
+    if (shouldCollapse) {
+        sectionContent.classList.add('collapsed');
+        if (chevron) chevron.style.transform = 'rotate(-90deg)';
+    } else {
+        sectionContent.classList.remove('collapsed');
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+    }
+}
+
+// Initialize collapsible sections on load
+if (settingsContent) {
+    loadSectionState(settingsContent, settingsChevron, 'tfd_settings_section_collapsed', true);
+}
+if (filterContent) {
+    loadSectionState(filterContent, filterChevron, 'tfd_filter_section_collapsed', true);
+}
+
 // --- Settings Persistence ---
 function saveSettings() {
     if (dontLogRecycledCheckbox) {
@@ -1658,6 +1731,13 @@ function loadSettings() {
             loopMode.value = loopModeValue;
         }
     }
+    
+    if (rewardWaitTime) {
+        const waitTimeValue = localStorage.getItem('tfd_reward_wait_time');
+        if (waitTimeValue !== null) {
+            rewardWaitTime.value = waitTimeValue;
+        }
+    }
 }
 
 // --- Event Listeners ---
@@ -1689,6 +1769,12 @@ if (crystalDelay) {
     crystalDelay.addEventListener('change', saveSettings);
 }
 
+if (rewardWaitTime) {
+    rewardWaitTime.addEventListener('change', () => {
+        localStorage.setItem('tfd_reward_wait_time', rewardWaitTime.value);
+    });
+}
+
 // Event Listeners for UI buttons
 if (startButton) startButton.addEventListener('click', startAutomation);
 if (stopButton) stopButton.addEventListener('click', stopAutomation);
@@ -1705,6 +1791,19 @@ if (toggleLogButton) {
 }
 if (openClothingJson) openClothingJson.addEventListener('click', () => openFileInEditor('1000-clothing.json'));
 if (openDenItemsJson) openDenItemsJson.addEventListener('click', () => openFileInEditor('1030-denitems.json'));
+
+// Collapsible section event listeners
+if (settingsToggle && settingsContent) {
+    settingsToggle.addEventListener('click', () => {
+        toggleSection(settingsContent, settingsChevron, 'tfd_settings_section_collapsed');
+    });
+}
+
+if (filterToggle && filterContent) {
+    filterToggle.addEventListener('click', () => {
+        toggleSection(filterContent, filterChevron, 'tfd_filter_section_collapsed');
+    });
+}
 
 // Add event listener for whitelist input changes to update status in real-time
 if (clothingWhitelist) clothingWhitelist.addEventListener('input', updateFilteringStatus);

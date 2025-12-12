@@ -3,14 +3,32 @@
     "productName": "AJ Classic",
     "version": "1.5.7",
     "author": "WildWorks",
-    "repository": "https://gitlab.wildworks.systems/ajdesktop/ajElectron.git",
+    "repository": {
+        "type": "git",
+        "url": "https://gitlab.wildworks.systems/ajdesktop/ajElectron.git"
+    },
     "license": "UNLICENSED",
     "description": "AJ Classic for Desktop",
     "dependencies": {
-      "electron-store": "^7.0.1",
-      "electron-updater": "^4.3.5",
-      "node-machine-id": "^1.1.12",
-      "tean": "^5.0.5",
-      "uuid": "^8.3.2"
-    }
-  }
+        "16": "^0.0.2",
+        "axios": "^1.8.1",
+        "cors": "^2.8.5",
+        "electron-store": "^7.0.1",
+        "electron-updater": "^4.3.5",
+        "express": "^4.22.1",
+        "got": "^14.4.6",
+        "net": "^1.0.2",
+        "node-fetch": "^3.3.2",
+        "node-machine-id": "^1.1.12",
+        "request": "^2.88.2",
+        "tean": "^5.0.5",
+        "tls": "^0.0.1",
+        "uuid": "^8.3.2",
+        "ws": "^8.18.3"
+    },
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": []
+}

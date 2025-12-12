@@ -18,10 +18,10 @@ const PluginManager = require('../../../../managers/plugin/PluginManager')
 const MessageDispatcher = require('../../../../managers/message/MessageDispatcher')
 
 /**
- * The path to the plugins folder.
+ * The path to the bundled plugins folder.
  * @constant
  */
-const BASE_PATH = process.platform === 'win32'
+const BUNDLED_PLUGINS_PATH = process.platform === 'win32'
   ? path.resolve('plugins/')
   : process.platform === 'darwin'
     ? path.join(__dirname, '..', '..', '..', '..', '..', '..', '..', 'plugins/')
@@ -151,7 +151,7 @@ module.exports = class Dispatch {
       dependencyManager: this.dependencyManager,
       dataPath: this.dataPath,
       consoleMessage: this._consoleMessage,
-      BASE_PATH: BASE_PATH,
+      BASE_PATH: BUNDLED_PLUGINS_PATH,
       clearAllCallback: () => this.clearAll(),
       initializeDefaultStateHandlersCallback: () => this._initializeDefaultStateHandlers(),
       shouldHideGamePluginsCallback: () => this._shouldHideGamePlugins(),
@@ -260,6 +260,18 @@ module.exports = class Dispatch {
    * @public
    */
   async load (filter = file => path.basename(file) === 'plugin.json') {
+    let userPluginsPath
+    try {
+      const electron = require('electron')
+      const ipcRenderer = electron.ipcRenderer
+      userPluginsPath = await ipcRenderer.invoke('get-user-plugins-path')
+    } catch (error) {
+      console.warn('[Dispatch] Could not get user plugins path:', error)
+    }
+
+    const pluginPaths = [BUNDLED_PLUGINS_PATH, userPluginsPath].filter(p => p !== undefined && p !== null)
+    this.pluginManager.BASE_PATH = pluginPaths.length > 0 ? pluginPaths : BUNDLED_PLUGINS_PATH
+
     return this.pluginManager.load(filter)
   }
 

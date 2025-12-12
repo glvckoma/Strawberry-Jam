@@ -31,6 +31,12 @@ exports.render = function (app) {
   ];
   const LOCAL_PLUGINS_DIR = path.resolve('plugins/')
 
+  const getUserPluginsPath = async () => {
+    const electron = require('electron')
+    const ipcRenderer = electron.ipcRenderer
+    return await ipcRenderer.invoke('get-user-plugins-path')
+  }
+
   const refreshPluginsWithAnimation = async () => {
     if (!app || !app.dispatch || typeof app.dispatch.load !== 'function') {
       return
@@ -562,12 +568,18 @@ exports.render = function (app) {
   /**
    * Check if a plugin is installed locally
    * @param {string} pluginName - Name of the plugin to check
-   * @returns {boolean} - True if installed
+   * @returns {Promise<boolean>} - True if installed
    */
-  const isPluginInstalled = (pluginName) => {
+  const isPluginInstalled = async (pluginName) => {
     try {
-      const pluginPath = path.join(LOCAL_PLUGINS_DIR, pluginName)
-      return fs.existsSync(pluginPath)
+      const bundledPluginPath = path.join(LOCAL_PLUGINS_DIR, pluginName)
+      if (fs.existsSync(bundledPluginPath)) {
+        return true
+      }
+      
+      const userPluginsPath = await getUserPluginsPath()
+      const userPluginPath = path.join(userPluginsPath, pluginName)
+      return fs.existsSync(userPluginPath)
     } catch (error) {
       console.error('Error checking if plugin is installed:', error)
       return false
@@ -676,10 +688,24 @@ exports.render = function (app) {
         type: 'wait'
       })
 
-      const pluginDir = path.join(LOCAL_PLUGINS_DIR, pluginName)
+      const userPluginsPath = await getUserPluginsPath()
+      const userPluginDir = path.join(userPluginsPath, pluginName)
+      const bundledPluginDir = path.join(LOCAL_PLUGINS_DIR, pluginName)
 
-      if (!fs.existsSync(pluginDir)) {
+      let pluginDir = null
+      let isBundled = false
+
+      if (fs.existsSync(userPluginDir)) {
+        pluginDir = userPluginDir
+      } else if (fs.existsSync(bundledPluginDir)) {
+        pluginDir = bundledPluginDir
+        isBundled = true
+      } else {
         throw new Error(`Plugin "${pluginName}" is not installed`)
+      }
+
+      if (isBundled) {
+        throw new Error(`Plugin "${pluginName}" is a bundled plugin and cannot be uninstalled. Only user-installed plugins can be removed.`)
       }
 
       const deleteDirectory = (dirPath) => {
@@ -758,7 +784,11 @@ exports.render = function (app) {
         type: 'wait'
       })
 
-      const pluginDir = path.join(LOCAL_PLUGINS_DIR, plugin.name)
+      const userPluginsPath = await getUserPluginsPath()
+      if (!fs.existsSync(userPluginsPath)) {
+        fs.mkdirSync(userPluginsPath, { recursive: true })
+      }
+      const pluginDir = path.join(userPluginsPath, plugin.name)
       if (!fs.existsSync(pluginDir)) {
         fs.mkdirSync(pluginDir, { recursive: true })
       }
@@ -948,7 +978,7 @@ exports.render = function (app) {
     const pluginPromises = plugins
       .filter(plugin => plugin.type === 'dir')
       .map(async plugin => {
-        const installed = isPluginInstalled(plugin.name)
+        const installed = await isPluginInstalled(plugin.name)
         const metadata = await fetchPluginMetadata(plugin)
 
         return {
@@ -1121,7 +1151,11 @@ exports.render = function (app) {
         type: 'wait'
       });
 
-      const pluginDir = path.join(LOCAL_PLUGINS_DIR, plugin.name);
+      const userPluginsPath = await getUserPluginsPath()
+      if (!fs.existsSync(userPluginsPath)) {
+        fs.mkdirSync(userPluginsPath, { recursive: true })
+      }
+      const pluginDir = path.join(userPluginsPath, plugin.name);
       if (!fs.existsSync(pluginDir)) {
         fs.mkdirSync(pluginDir, { recursive: true });
       }
@@ -1447,23 +1481,34 @@ exports.render = function (app) {
     `);
     
     try {
-      // Read the plugins directory
-      const pluginsDir = LOCAL_PLUGINS_DIR;
+      const userPluginsPath = await getUserPluginsPath()
+      const bundledPluginsPath = LOCAL_PLUGINS_DIR
       
-      if (!fs.existsSync(pluginsDir)) {
-        $pluginsList.html(`
-          <div class="col-span-full text-center text-gray-400">
-            Plugins directory not found.
-          </div>
-        `);
-        return;
+      const allPlugins = new Map()
+      
+      if (fs.existsSync(userPluginsPath)) {
+        const userPluginFolders = fs.readdirSync(userPluginsPath, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory())
+          .map(dirent => dirent.name)
+        
+        for (const pluginName of userPluginFolders) {
+          allPlugins.set(pluginName, { path: userPluginsPath, isBundled: false })
+        }
       }
       
-      const pluginFolders = fs.readdirSync(pluginsDir, { withFileTypes: true })
+      if (fs.existsSync(bundledPluginsPath)) {
+        const bundledPluginFolders = fs.readdirSync(bundledPluginsPath, { withFileTypes: true })
         .filter(dirent => dirent.isDirectory())
-        .map(dirent => dirent.name);
+          .map(dirent => dirent.name)
+        
+        for (const pluginName of bundledPluginFolders) {
+          if (!allPlugins.has(pluginName)) {
+            allPlugins.set(pluginName, { path: bundledPluginsPath, isBundled: true })
+          }
+        }
+      }
       
-      if (pluginFolders.length === 0) {
+      if (allPlugins.size === 0) {
         $pluginsList.html(`
           <div class="col-span-full text-center text-gray-400">
             <p>No plugins installed.</p>
@@ -1475,7 +1520,10 @@ exports.render = function (app) {
       
       $pluginsList.empty();
       
-      for (const pluginName of pluginFolders) {
+      for (const [pluginName, pluginInfo] of allPlugins) {
+        const pluginsDir = pluginInfo.path
+        const isBundled = pluginInfo.isBundled
+        
         // Try to read plugin.json for metadata
         const pluginJsonPath = path.join(pluginsDir, pluginName, 'plugin.json');
         let metadata = {
@@ -1552,8 +1600,20 @@ exports.render = function (app) {
           ? `<div class="mt-2 text-xs text-error-red flex items-center"><i class="fas fa-exclamation-circle mr-1"></i>May not be fully compatible with Strawberry Jam</div>` 
           : '';
         
+        const bundledBadgeHtml = isBundled
+          ? `<span class="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400">Bundled</span>`
+          : '';
+        
+        const uninstallButtonHtml = isBundled
+          ? `<button disabled title="Bundled plugins cannot be uninstalled" data-plugin-name="${pluginName}" class="uninstall-plugin-btn px-3 py-1 text-xs bg-gray-500/20 text-gray-500 rounded cursor-not-allowed opacity-50" style="pointer-events: none;">
+              <i class="fas fa-lock mr-1"></i> Bundled
+            </button>`
+          : `<button data-plugin-name="${pluginName}" class="uninstall-plugin-btn px-3 py-1 text-xs bg-error-red/20 text-error-red rounded hover:bg-error-red/30 transition">
+              <i class="fas fa-trash-alt mr-1"></i> Uninstall
+            </button>`;
+        
         $pluginsList.append(`
-          <div class="bg-tertiary-bg/30 rounded-lg p-4 border border-sidebar-border hover:border-highlight-green transition-colors" data-plugin-name="${pluginName.toLowerCase()}">
+          <div class="bg-tertiary-bg/30 rounded-lg p-4 border border-sidebar-border hover:border-highlight-green transition-colors" data-plugin-name="${pluginName.toLowerCase()}" data-plugin-path="${pluginsDir}" data-is-bundled="${isBundled}">
             <div class="flex justify-between items-start mb-3">
               <div>
                 <div class="flex items-center">
@@ -1562,6 +1622,7 @@ exports.render = function (app) {
                   ${metadata.version ? `<span class="ml-2 text-xs text-gray-400">v${metadata.version}</span>` : ''}
                   ${badgeHtml}
                   ${betaTagHtml}
+                  ${bundledBadgeHtml}
                 </div>
                 <div class="mt-1 text-xs text-gray-400">
                   <i class="fas fa-user mr-1"></i> ${metadata.author}
@@ -1582,12 +1643,10 @@ exports.render = function (app) {
             
             <div class="flex justify-end items-center mt-4 pt-2 border-t border-sidebar-border/30">
               <div class="flex gap-2">
-                <button type="button" data-plugin-dir="${pluginName}" class="open-plugin-folder-btn text-xs text-gray-400 hover:text-highlight-green transition px-2 py-1 rounded">
+                <button type="button" data-plugin-dir="${pluginName}" data-plugin-path="${pluginsDir}" class="open-plugin-folder-btn text-xs text-gray-400 hover:text-highlight-green transition px-2 py-1 rounded">
                   <i class="fas fa-folder-open mr-1"></i> Open Folder
                 </button>
-                <button data-plugin-name="${pluginName}" class="uninstall-plugin-btn px-3 py-1 text-xs bg-error-red/20 text-error-red rounded hover:bg-error-red/30 transition">
-                  <i class="fas fa-trash-alt mr-1"></i> Uninstall
-                </button>
+                ${uninstallButtonHtml}
               </div>
             </div>
           </div>
@@ -1597,7 +1656,8 @@ exports.render = function (app) {
       // Add event handlers for installed plugins
       $pluginsList.find('.open-plugin-folder-btn').on('click', function() {
         const pluginDir = $(this).data('plugin-dir');
-        const fullPath = path.join(LOCAL_PLUGINS_DIR, pluginDir);
+        const pluginPath = $(this).data('plugin-path');
+        const fullPath = path.join(pluginPath, pluginDir);
         app.invoke('open-directory', fullPath);
       });
       

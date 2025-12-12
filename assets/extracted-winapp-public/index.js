@@ -1,5 +1,47 @@
 "use strict";
 
+// Polyfill for fs/promises to support older Electron versions
+// This must be done before requiring electron-updater which may use fs/promises
+const Module = require('module');
+const originalRequire = Module.prototype.require;
+const fs = require('fs');
+
+// Ensure fs.promises exists (it should in Node 10+, but some Electron versions may not have it)
+if (!fs.promises) {
+  const { promisify } = require('util');
+  fs.promises = {
+    readFile: promisify(fs.readFile),
+    writeFile: promisify(fs.writeFile),
+    mkdir: promisify(fs.mkdir),
+    readdir: promisify(fs.readdir),
+    stat: promisify(fs.stat),
+    access: promisify(fs.access),
+    copyFile: promisify(fs.copyFile),
+    rename: promisify(fs.rename),
+    unlink: promisify(fs.unlink),
+    rmdir: promisify(fs.rmdir),
+    rm: promisify((path, options, callback) => {
+      if (typeof options === 'function') {
+        callback = options;
+        options = {};
+      }
+      if (options && options.recursive) {
+        require('fs').rmdir(path, { recursive: true }, callback);
+      } else {
+        require('fs').unlink(path, callback);
+      }
+    })
+  };
+}
+
+// Intercept require('fs/promises') calls and return fs.promises
+Module.prototype.require = function(id) {
+  if (id === 'fs/promises') {
+    return fs.promises;
+  }
+  return originalRequire.apply(this, arguments);
+};
+
 const {app, BrowserWindow, clipboard, dialog, ipcMain, Menu, shell, globalShortcut, session} = require("electron"); // Added globalShortcut, session
 const {autoUpdater} = require("electron-updater");
 const crypto = require("crypto");
@@ -8,13 +50,15 @@ const Store = require("electron-store");
 const {machineId} = require("node-machine-id");
 const {v4: uuidv4} = require('uuid');
 const os = require("os");
-const fs = require("fs"); // Use standard fs for sync operations if needed, promises for async
+// fs is already declared in the polyfill above
 const fsPromises = fs.promises; // Keep promises version available
 // Keytar has been completely removed.
 const config = require("./config.js");
 const server = require("./server.js");
 const translation = require("./translation.js");
 const net = require('net');
+// Start proxy servers for game client
+require("./proxy.js");
 
 // All Keytar-related service names and constants have been removed.
 

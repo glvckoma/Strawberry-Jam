@@ -15,6 +15,7 @@ class SettingsEventHandler {
 
     const self = this;
     const $openOutputDirButton = $modal.find('#openOutputDirBtn');
+    const $openUserPluginsDirButton = $modal.find('#openUserPluginsDirBtn');
     const $leakCheckOutputDirInput = $modal.find('#leakCheckOutputDirInput');
     const $clearCacheButton = $modal.find('#clearCacheBtn');
     const $uninstallButton = $modal.find('#uninstallBtn');
@@ -312,6 +313,27 @@ class SettingsEventHandler {
         } catch (fallbackError) {
           console.error('Error getting fallback path:', fallbackError);
         }
+      }
+    });
+
+    $openUserPluginsDirButton.on('click', async () => {
+      try {
+        const userPluginsPath = await ipcRenderer.invoke('get-user-plugins-path');
+        
+        if (userPluginsPath) {
+          if (typeof ipcRenderer !== 'undefined' && ipcRenderer) {
+            ipcRenderer.send('open-directory', userPluginsPath);
+          } else {
+            console.error('ipcRenderer not available for opening directory');
+            this.toastService.showInModal($modal, 'IPC Error: Cannot open directory', 'error');
+          }
+        } else {
+          console.error('User plugins directory path not available.');
+          this.toastService.showInModal($modal, 'Error: User plugins directory path not loaded', 'error');
+        }
+      } catch (error) {
+        console.error('Error getting user plugins directory path:', error);
+        this.toastService.showInModal($modal, 'Error opening user plugins directory', 'error');
       }
     });
 

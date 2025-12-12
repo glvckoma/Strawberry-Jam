@@ -139,7 +139,22 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.handle('replace-swf-file', async (event, selectedFile) => {
     try {
       const FilesController = require('../api/controllers/FilesController');
-      return await FilesController.replaceSwfFile(selectedFile);
+      const result = await FilesController.replaceSwfFile(selectedFile);
+      
+      // Update stored modification time after successful replacement
+      if (result.success) {
+        const fs = require('fs');
+        const path = require('path');
+        const sourceFilePath = path.join(FilesController.optionsDir, selectedFile);
+        
+        if (fs.existsSync(sourceFilePath)) {
+          const stats = fs.statSync(sourceFilePath);
+          const currentModifiedTime = stats.mtime.getTime();
+          electronInstance._store.set('game.selectedSwfFileLastModified', currentModifiedTime);
+        }
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error replacing SWF file:', error);
       return { success: false, error: error.message };
@@ -150,8 +165,22 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.handle('reapply-swf-file', async (event, selectedFile) => {
     try {
       const FilesController = require('../api/controllers/FilesController');
-      // Re-use the same logic as replacing the SWF file
-      return await FilesController.replaceSwfFile(selectedFile);
+      const result = await FilesController.replaceSwfFile(selectedFile);
+      
+      // Update stored modification time after successful reapplication
+      if (result.success) {
+        const fs = require('fs');
+        const path = require('path');
+        const sourceFilePath = path.join(FilesController.optionsDir, selectedFile);
+        
+        if (fs.existsSync(sourceFilePath)) {
+          const stats = fs.statSync(sourceFilePath);
+          const currentModifiedTime = stats.mtime.getTime();
+          electronInstance._store.set('game.selectedSwfFileLastModified', currentModifiedTime);
+        }
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error reapplying SWF file:', error);
       return { success: false, error: error.message };
@@ -537,6 +566,14 @@ function setupIpcHandlers(electronInstance) {
       }
       return [];
     }
+  });
+
+  ipcMain.handle('get-user-plugins-path', () => {
+    const userPluginsPath = path.join(app.getPath('userData'), 'plugins');
+    if (!fs.existsSync(userPluginsPath)) {
+      fs.mkdirSync(userPluginsPath, { recursive: true });
+    }
+    return userPluginsPath;
   });
 
   ipcMain.handle('get-cache-size', async () => {

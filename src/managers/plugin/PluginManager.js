@@ -178,32 +178,43 @@ class PluginManager {
     this.clearAllCallback()
     this._application.$pluginList.empty()
 
-    if (!this.BASE_PATH) {
+    const pluginPaths = Array.isArray(this.BASE_PATH) ? this.BASE_PATH : (this.BASE_PATH ? [this.BASE_PATH] : [])
+    const validPaths = pluginPaths.filter(p => p !== undefined && p !== null)
+
+    if (validPaths.length === 0) {
       this._consoleMessage({ type: 'error', message: 'Plugin base path (BASE_PATH) could not be determined. Cannot load plugins.' })
       this._application._updateEmptyPluginMessage()
       return
     }
 
     try {
+      const allConfigFiles = []
+
+      for (let i = 0; i < validPaths.length; i++) {
+        const basePath = validPaths[i]
+        const isPrimaryPath = i === 0
+
       try {
-        await fs.access(this.BASE_PATH)
+          await fs.access(basePath)
+          const files = await PluginManager.readdirRecursive(basePath)
+          const configFiles = files.filter(filter)
+          allConfigFiles.push(...configFiles)
       } catch (accessError) {
-        this._consoleMessage({ type: 'error', message: `Plugins directory not found at ${this.BASE_PATH}. Cannot load plugins.` })
+          if (isPrimaryPath) {
+            this._consoleMessage({ type: 'error', message: `Plugins directory not found at ${basePath}. Cannot load plugins.` })
+        this._application._updateEmptyPluginMessage()
+        return
+      }
+        }
+      }
+
+      if (allConfigFiles.length === 0) {
+        this._consoleMessage({ type: 'notify', message: 'No plugins found in the plugins directories.' })
         this._application._updateEmptyPluginMessage()
         return
       }
 
-      const files = await PluginManager.readdirRecursive(this.BASE_PATH)
-
-      const configFiles = files.filter(filter)
-
-      if (configFiles.length === 0) {
-        this._consoleMessage({ type: 'notify', message: 'No plugins found in the plugins directory.' })
-        this._application._updateEmptyPluginMessage()
-        return
-      }
-
-      const pluginPromises = configFiles.map(async configFile => {
+      const pluginPromises = allConfigFiles.map(async configFile => {
         try {
           const configuration = JSON.parse(await fs.readFile(configFile, 'utf8'))
           const filepath = path.dirname(configFile)
@@ -383,23 +394,29 @@ class PluginManager {
   }
 
   async _clearAllPluginCache() {
-    if (!this.BASE_PATH) {
+    const pluginPaths = Array.isArray(this.BASE_PATH) ? this.BASE_PATH : (this.BASE_PATH ? [this.BASE_PATH] : [])
+    const validPaths = pluginPaths.filter(p => p !== undefined && p !== null)
+
+    if (validPaths.length === 0) {
       return 0
     }
 
+    const allConfigFiles = []
+
+    for (const basePath of validPaths) {
     try {
-      await fs.access(this.BASE_PATH)
+        await fs.access(basePath)
+        const files = await PluginManager.readdirRecursive(basePath)
+        const configFiles = files.filter(file => path.basename(file) === 'plugin.json')
+        allConfigFiles.push(...configFiles)
     } catch (accessError) {
-      return 0
+      }
     }
-
-    const files = await PluginManager.readdirRecursive(this.BASE_PATH)
-    const configFiles = files.filter(file => path.basename(file) === 'plugin.json')
     
     let totalCleared = 0
     const clearedDirectories = new Set()
 
-    for (const configFile of configFiles) {
+    for (const configFile of allConfigFiles) {
       const filepath = path.dirname(configFile)
       const normalizedPath = path.resolve(filepath)
 

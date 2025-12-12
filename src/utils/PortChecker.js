@@ -1,4 +1,5 @@
 const net = require('net')
+const path = require('path')
 
 class PortChecker {
   static async isPortBusy(port, host = '127.0.0.1') {
@@ -82,6 +83,27 @@ class PortChecker {
     }
     
     return null
+  }
+
+  /**
+   * Checks if a process name matches the current application's process.
+   * Handles both development (electron.exe) and production (strawberry-jam.exe) builds.
+   * @param {string} processName - The process name to check
+   * @returns {boolean} True if the process name matches the current application
+   */
+  static isOwnProcess(processName) {
+    if (!processName) return false
+    
+    const detectedProcess = processName.toLowerCase()
+    
+    // Get current executable filename
+    const currentProcess = path.basename(process.execPath).toLowerCase()
+    
+    // Check if detected process matches current process
+    // Also check for common names (electron.exe for dev, strawberry-jam.exe for prod)
+    return detectedProcess === currentProcess || 
+           detectedProcess === 'electron.exe' || 
+           detectedProcess === 'strawberry-jam.exe'
   }
 }
 

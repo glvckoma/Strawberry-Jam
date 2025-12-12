@@ -311,6 +311,17 @@
         },
 
         async getFlashVarsFromWeb() {
+          // Check for locked deploy_version to prevent SWF updates
+          let lockedDeployVersion = null;
+          try {
+            lockedDeployVersion = await window.ipc.invoke('get-setting', 'swf.deploy_version_locked');
+            if (lockedDeployVersion) {
+              console.log(`[SWF VERSION] Found locked deploy_version: ${lockedDeployVersion}`);
+            }
+          } catch (err) {
+            console.log(`[SWF VERSION] Error getting locked deploy_version:`, err);
+          }
+
           console.log(`[ANIMAL JAM] Requesting FlashVars from Animal Jam web: ${globals.config.web}/flashvars`);
           const response = await globals.fetch(`${globals.config.web}/flashvars`, {
             method: "GET",
@@ -318,6 +329,36 @@
             credentials: "include",
           });
           const flashVars = JSON.parse(await response.text());
+          const serverDeployVersion = flashVars.deploy_version;
+          
+          // Always update cache with latest from server (for tracking and connection compatibility)
+          if (serverDeployVersion) {
+            try {
+              await window.ipc.invoke('set-setting', 'swf.deploy_version', serverDeployVersion);
+              console.log(`[SWF VERSION] Updated cache with latest deploy_version from server: ${serverDeployVersion}`);
+            } catch (err) {
+              console.log(`[SWF VERSION] Error updating deploy_version cache:`, err);
+            }
+          }
+          
+          // Use locked deploy_version for SWF path (prevents SWF updates)
+          if (lockedDeployVersion) {
+            flashVars.deploy_version = lockedDeployVersion;
+            if (serverDeployVersion !== lockedDeployVersion) {
+              console.log(`[SWF VERSION] Using locked deploy_version: ${lockedDeployVersion} (server has: ${serverDeployVersion}, SWF will not be updated)`);
+            }
+          } else {
+            // Lock the deploy_version on first fetch (this becomes the permanent locked version)
+            if (flashVars.deploy_version) {
+              try {
+                await window.ipc.invoke('set-setting', 'swf.deploy_version_locked', flashVars.deploy_version);
+                console.log(`[SWF VERSION] Locked deploy_version to: ${flashVars.deploy_version}`);
+              } catch (err) {
+                console.log(`[SWF VERSION] Error locking deploy_version:`, err);
+              }
+            }
+          }
+          
           console.log(`[ANIMAL JAM] FlashVars received:`, {
             deploy_version: flashVars.deploy_version,
             smartfoxServer: flashVars.smartfoxServer,

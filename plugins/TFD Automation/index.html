@@ -46,6 +46,28 @@
             max-height: 180px; /* Approx 5 items */
         }
         
+        /* Collapsible sections */
+        .collapsible-content {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+            overflow: hidden;
+            max-height: 5000px; /* Large enough for content */
+            opacity: 1;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+        .collapse-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+        .collapse-toggle:hover {
+            opacity: 0.8;
+        }
+        
         /* Custom Button Colors */
         #startButton {
             background: linear-gradient(to right, #10b981, #059669) !important;
@@ -151,11 +173,10 @@
                             <i class="fas fa-info-circle mr-2"></i>How It Works
                         </h3>
                         <ul class="space-y-1 text-blue-200">
-                            <li>• <strong>Items won't appear visually</strong> but will be added to your inventory (like Phantoms plugin)</li>
-                            <li>• <strong>Start in your den</strong> for best results and stability</li>
-                            <li>• <strong>4-minute minimum wait</strong> enforced to avoid reward blocking (13:00 countdown rule)</li>
-                            <li>• <strong>Randomized gem delays</strong> (500-1000ms) to avoid bot detection</li>
-                            <li>• <strong>Smart item filtering</strong> automatically recycles unwanted items based on your whitelist</li>
+                            <li>• Items go straight to your inventory (you won't see them appear)</li>
+                            <li>• Start in your den for best results</li>
+                            <li>• Choose how long to wait before collecting rewards</li>
+                            <li>• Automatically recycles items you don't want</li>
                         </ul>
                     </div>
 
@@ -164,11 +185,10 @@
                             <i class="fas fa-check-circle mr-2"></i>Best Practices
                         </h3>
                         <ul class="space-y-1 text-green-200">
-                            <li>• <strong>Stay in your den</strong> - most reliable location for automation</li>
-                            <li>• <strong>Don't switch rooms</strong> during automation to avoid packet errors</li>
-                            <li>• <strong>Check your inventory</strong> after completion to see collected items</li>
-                            <li>• <strong>Use loop mode</strong> for farming multiple runs automatically</li>
-                            <li>• <strong>Configure item filtering</strong> to automatically keep only valuable items</li>
+                            <li>• Stay in your den while it runs</li>
+                            <li>• Don't switch rooms during automation</li>
+                            <li>• Check your inventory when done to see your items</li>
+                            <li>• Use loop mode to run multiple times</li>
                         </ul>
                     </div>
 
@@ -177,11 +197,9 @@
                             <i class="fas fa-magic mr-2"></i>Efficient Mode (🚀)
                         </h3>
                         <ul class="space-y-1 text-purple-200">
-                            <li>• <strong>Smart Crystal Detection:</strong> Dynamically generates optimized crystal collection packets</li>
-                            <li>• <strong>Gift Pre-Analysis:</strong> Detects valuable items before collection to skip unwanted gifts</li>
-                            <li>• <strong>Configurable Delay:</strong> Adjust crystal packet timing (10ms default for maximum speed)</li>
-                            <li>• <strong>Special Mode:</strong> 8x faster crystal collection for experienced users</li>
-                            <li>• <strong>Auto-Skip Empty Runs:</strong> Leaves quest immediately if no valuable items detected</li>
+                            <li>• Finds crystals faster and smarter</li>
+                            <li>• Skips items you don't want before collecting</li>
+                            <li>• Special Mode makes it 8x faster</li>
                         </ul>
                     </div>
 
@@ -190,11 +208,10 @@
                             <i class="fas fa-filter mr-2"></i>Item Filtering System
                         </h3>
                         <ul class="space-y-1 text-yellow-200">
-                            <li>• <strong>Whitelist Setup:</strong> Add clothing and den item IDs you want to keep (comma-separated)</li>
-                            <li>• <strong>Auto-Recycle:</strong> Items not in your whitelist are automatically recycled</li>
-                            <li>• <strong>Smart Detection:</strong> System identifies item types automatically</li>
-                            <li>• <strong>Sound Alerts:</strong> Get notified when valuable whitelisted items are found</li>
-                            <li>• <strong>Find Item IDs:</strong> Use the ID browser buttons to explore available items</li>
+                            <li>• Add item IDs you want to keep</li>
+                            <li>• Items you don't want get recycled automatically</li>
+                            <li>• You'll hear a sound when good items are found</li>
+                            <li>• Use the "Find IDs" buttons to see what items are available</li>
                         </ul>
                     </div>
 
@@ -203,11 +220,10 @@
                             <i class="fas fa-exclamation-triangle mr-2"></i>Important Notes
                         </h3>
                         <ul class="space-y-1 text-red-200">
-                            <li>• <strong>Quest timer starts</strong> when automation begins - wait time is calculated automatically</li>
-                            <li>• <strong>Auto-retry enabled</strong> by default - failed runs will retry up to your max retry setting</li>
-                            <li>• <strong>Statistics are saved</strong> and persist between plugin sessions</li>
-                            <li>• <strong>Connection monitoring</strong> stops automation if connection is lost</li>
-                            <li>• <strong>Loop mode</strong> supports 1-100 runs or infinite looping</li>
+                            <li>• Wait time is calculated automatically</li>
+                            <li>• Failed runs will retry automatically</li>
+                            <li>• Your stats are saved between sessions</li>
+                            <li>• Stops if you lose connection</li>
                         </ul>
                     </div>
 
@@ -216,11 +232,10 @@
                             <i class="fas fa-cogs mr-2"></i>Settings Overview
                         </h3>
                         <ul class="space-y-1 text-gray-200">
-                            <li>• <strong>Max Retries:</strong> How many times to retry failed runs (1-10)</li>
-                            <li>• <strong>Loop Mode:</strong> Run once, multiple times, or infinite loops</li>
-                            <li>• <strong>Auto-retry & Sound:</strong> Enable/disable automatic retries and valuable item notifications</li>
-                            <li>• <strong>Log Settings:</strong> Choose whether to log recycled items in the received items list</li>
-                            <li>• <strong>Efficient Mode:</strong> Enable advanced crystal detection and smart gift collection</li>
+                            <li>• Max Retries: How many times to retry if it fails</li>
+                            <li>• Loop Mode: Run once or many times</li>
+                            <li>• Sound alerts: Get notified when good items are found</li>
+                            <li>• Efficient Mode: Makes crystal collection faster and smarter</li>
                         </ul>
                     </div>
                 </div>
@@ -244,22 +259,26 @@
                 <h1 class="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                     <i class="fas fa-map-marked-alt mr-2"></i>The Forgotten Desert
                 </h1>
-                <p class="text-text-secondary">
+                <p class="text-text-secondary mb-2">
                     Automated completion of TFD quest
-                    <button id="infoButton" class="jam-plugin-info text-blue-400 hover:text-blue-300 transition-colors" aria-label="Info">
-                        <i class="fas fa-info-circle"></i>
-                    </button>
                 </p>
-                <p class="text-xs mt-2" style="color: #f87171 !important;">
+                <p class="text-xs mb-3" style="color: #f87171 !important;">
                     Efficient Mode algorithm by <a href="https://github.com/Secretmimi" target="_blank" class="font-medium" style="color: #f87171 !important; text-decoration: none;" onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='#f87171'">NoSmile</a>
                 </p>
+                <button id="infoButton" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 font-medium shadow-lg border-2 border-green-400">
+                    <i class="fas fa-book mr-2"></i>Guide
+                </button>
             </div>
 
             <!-- Settings Panel -->
             <div class="setting-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center">
-                    <i class="fas fa-cogs mr-2 text-blue-400"></i>Settings
+                <h2 class="text-lg font-semibold mb-4 flex items-center justify-between collapse-toggle" id="settingsToggle">
+                    <span class="flex items-center">
+                        <i class="fas fa-cogs mr-2 text-blue-400"></i>Settings
+                    </span>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="settingsChevron"></i>
                 </h2>
+                <div class="collapsible-content" id="settingsContent">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-2">
                         <label class="flex items-center space-x-2">
@@ -277,14 +296,6 @@
                         <label class="flex items-center space-x-2">
                             <input type="checkbox" id="autoRetryCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
                             <span class="text-sm">Auto-retry failed runs</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="efficientModeCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Efficient Mode 🚀</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="specialModeCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Special Mode (8x speed)</span>
                         </label>
                     </div>
                     <div class="space-y-4">
@@ -318,20 +329,66 @@
                                 <option value="infinite" selected>Loop Forever</option>
                             </select>
                         </div>
-                        <div id="crystalDelayContainer" style="display: none;">
-                            <label for="crystalDelay" class="block text-sm font-medium text-text-secondary mb-1">Crystal Delay (ms) - Efficient Mode Only:</label>
-                            <input type="number" id="crystalDelay" value="10" min="5" max="1000" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                            <small class="text-xs text-gray-400">Delay between crystal packets in efficient mode. Recommended: 10ms (fastest), 50ms (safe), 100ms (stable)</small>
+                        <div>
+                            <label for="rewardWaitTime" class="block text-sm font-medium text-text-secondary mb-1">Reward Wait Time:</label>
+                            <select id="rewardWaitTime" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                                <option value="11:00">11:00 (2 minutes)</option>
+                                <option value="12:00">12:00 (3 minutes)</option>
+                                <option value="13:00" selected>13:00 (4 minutes)</option>
+                                <option value="randomized">Randomized</option>
+                            </select>
+                            <small class="text-xs text-gray-400">Time to wait before collecting rewards to avoid blocking</small>
                         </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- Advanced Modes Section -->
+            <div class="setting-card rounded-lg p-4 mb-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-rocket mr-2 text-purple-400"></i>Advanced Modes
+                </h2>
+                <div class="space-y-4">
+                    <div class="p-3 rounded-lg bg-blue-900/20 border border-blue-500/30">
+                        <label class="flex items-start space-x-2 mb-2">
+                            <input type="checkbox" id="efficientModeCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded mt-0.5">
+                            <div class="flex-1">
+                                <span class="text-sm font-semibold text-blue-300">Efficient Mode 🚀</span>
+                                <p class="text-xs text-blue-200 mt-1">
+                                    Collects crystals faster and smarter. Skips items you don't want.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="p-3 rounded-lg bg-purple-900/20 border border-purple-500/30" id="specialModeContainer" style="display: none;">
+                        <label class="flex items-start space-x-2 mb-2">
+                            <input type="checkbox" id="specialModeCheckbox" class="form-checkbox h-4 w-4 text-purple-600 rounded mt-0.5">
+                            <div class="flex-1">
+                                <span class="text-sm font-semibold text-purple-300">Special Mode (8x speed)</span>
+                                <p class="text-xs text-purple-200 mt-1">
+                                    Super fast mode! Only works with Efficient Mode on. For advanced users.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                    <div id="crystalDelayContainer" style="display: none;">
+                        <label for="crystalDelay" class="block text-sm font-medium text-text-secondary mb-1">Crystal Delay (ms) - Efficient Mode Only:</label>
+                        <input type="number" id="crystalDelay" value="10" min="5" max="1000" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                        <small class="text-xs text-gray-400">Delay between crystal packets in efficient mode. Recommended: 10ms (fastest), 50ms (safe), 100ms (stable)</small>
                     </div>
                 </div>
             </div>
 
             <!-- Item Filter Whitelist -->
             <div class="setting-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center">
-                    <i class="fas fa-filter mr-2 text-purple-400"></i>Item Filter & Recycling
+                <h2 class="text-lg font-semibold mb-4 flex items-center justify-between collapse-toggle" id="filterToggle">
+                    <span class="flex items-center">
+                        <i class="fas fa-filter mr-2 text-purple-400"></i>Item Filter & Recycling
+                    </span>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="filterChevron"></i>
                 </h2>
+                <div class="collapsible-content" id="filterContent">
                 
                 <!-- Filter Status Indicator -->
                 <div id="filterStatus" class="mb-4 p-3 rounded-lg bg-gray-800 border border-gray-600">
@@ -377,6 +434,7 @@
                         </button>
                     </div>
                     
+                </div>
                 </div>
             </div>
 

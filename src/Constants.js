@@ -69,6 +69,24 @@ const getUsernameLoggerPath = (app) => {
 };
 
 /**
+ * Returns the user plugins directory path.
+ * In production, returns '%LOCALAPPDATA%\strawberry-jam\plugins'.
+ * In development, returns the 'plugins' folder in the project root.
+ * @param {import('electron').App} app - The Electron app object.
+ * @returns {string} The user plugins directory path.
+ */
+const getPluginsPath = (app) => {
+  if (!app) {
+    throw new Error("getPluginsPath requires the Electron app object as an argument.");
+  }
+  if (app.isPackaged) {
+    return path.join(app.getPath('userData'), 'plugins');
+  } else {
+    return path.join(app.getAppPath(), 'plugins');
+  }
+};
+
+/**
  * Plugin types.
  * @enum
  */
@@ -77,4 +95,4 @@ const PluginTypes = Object.freeze({
   game: 'game'
 })
 
-module.exports = { ConnectionMessageTypes, PluginTypes, getDataPath, getAssetsPath, getUsernameLoggerPath }
+module.exports = { ConnectionMessageTypes, PluginTypes, getDataPath, getAssetsPath, getUsernameLoggerPath, getPluginsPath }
