@@ -150,6 +150,15 @@ class IPCManager {
           this.application.gameLauncher.handleGameProcessExit()
         })
 
+        ipcRenderer.on('swf-auto-reapplied', () => {
+          if (this.application.consoleMessage) {
+            this.application.consoleMessage({
+              type: 'notify',
+              message: 'Strawberry Jam detected modification to your .swf, it has been automatically reapplied.'
+            })
+          }
+        })
+
       } catch (e) {
       }
     }

@@ -650,7 +650,7 @@ class Electron {
     const port8080Busy = await PortChecker.isPortBusy(8080)
     if (port8080Busy) {
       const processInfo = await PortChecker.findProcessUsingPort(8080)
-      if (processInfo && processInfo.processName && processInfo.processName.toLowerCase() !== 'electron.exe') {
+      if (processInfo && processInfo.processName && !PortChecker.isOwnProcess(processInfo.processName)) {
         console.warn(`[Electron] Port 8080 is busy: ${processInfo.processName} (PID: ${processInfo.pid}). API server will attempt to use fallback ports.`)
       }
     }
@@ -658,7 +658,7 @@ class Electron {
     const port443Busy = await PortChecker.isPortBusy(443)
     if (port443Busy) {
       const processInfo = await PortChecker.findProcessUsingPort(443)
-      if (processInfo && processInfo.processName && processInfo.processName.toLowerCase() !== 'electron.exe') {
+      if (processInfo && processInfo.processName && !PortChecker.isOwnProcess(processInfo.processName)) {
         console.warn(`[Electron] Port 443 is busy: ${processInfo.processName} (PID: ${processInfo.pid}). Networking server will attempt to use fallback ports.`)
       }
     }
@@ -710,14 +710,52 @@ class Electron {
     this.autoUpdateService.initialize();
 
     try {
-      const selectedFile = this._store.get('game.selectedSwfFile');
-      if (selectedFile) {
-        logManager.log(`[Auto Reapply] Auto-reapplying SWF file: ${selectedFile}`, 'main', logManager.logLevels.INFO);
-        const FilesController = require('../api/controllers/FilesController');
-        FilesController.replaceSwfFile(selectedFile);
+      const FilesController = require('../api/controllers/FilesController');
+      
+      if (!fs.existsSync(FilesController.optionsDir)) {
+        return;
+      }
+      
+      const activeSwfInfo = FilesController.getActiveSwfInfo();
+      
+      if (!activeSwfInfo || !activeSwfInfo.active) {
+        return;
+      }
+      
+      let activeFile = activeSwfInfo.active;
+      
+      if (activeFile === 'ajclient.swf') {
+        const availableFiles = FilesController.getAvailableSwfFiles();
+        
+        if (availableFiles.length > 0) {
+          activeFile = availableFiles[0];
+        } else {
+          return;
+        }
+      }
+      
+      const sourceFilePath = path.join(FilesController.optionsDir, activeFile);
+      
+      if (fs.existsSync(sourceFilePath)) {
+        const stats = fs.statSync(sourceFilePath);
+        const currentModifiedTime = stats.mtime.getTime();
+        const lastModifiedKey = `game.swfLastModified.${activeFile}`;
+        const lastModifiedTime = this._store.get(lastModifiedKey);
+        
+        if (!lastModifiedTime || currentModifiedTime > lastModifiedTime) {
+          const result = await FilesController.replaceSwfFile(activeFile);
+          
+          if (result.success) {
+            this._store.set(lastModifiedKey, currentModifiedTime);
+            
+            if (this._window && this._window.webContents && !this._window.webContents.isDestroyed()) {
+              this._window.webContents.send('swf-auto-reapplied');
+            }
+          }
+        }
       }
     } catch (error) {
-      console.error('Error applying SWF on launch:', error);
+      logManager.log(`[Auto Reapply] Error: ${error.message}`, 'main', logManager.logLevels.ERROR);
     }
   }
 

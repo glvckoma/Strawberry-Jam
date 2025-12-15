@@ -141,7 +141,6 @@ function setupIpcHandlers(electronInstance) {
       const FilesController = require('../api/controllers/FilesController');
       const result = await FilesController.replaceSwfFile(selectedFile);
       
-      // Update stored modification time after successful replacement
       if (result.success) {
         const fs = require('fs');
         const path = require('path');
@@ -150,7 +149,8 @@ function setupIpcHandlers(electronInstance) {
         if (fs.existsSync(sourceFilePath)) {
           const stats = fs.statSync(sourceFilePath);
           const currentModifiedTime = stats.mtime.getTime();
-          electronInstance._store.set('game.selectedSwfFileLastModified', currentModifiedTime);
+          const lastModifiedKey = `game.swfLastModified.${selectedFile}`;
+          electronInstance._store.set(lastModifiedKey, currentModifiedTime);
         }
       }
       
@@ -167,7 +167,6 @@ function setupIpcHandlers(electronInstance) {
       const FilesController = require('../api/controllers/FilesController');
       const result = await FilesController.replaceSwfFile(selectedFile);
       
-      // Update stored modification time after successful reapplication
       if (result.success) {
         const fs = require('fs');
         const path = require('path');
@@ -176,7 +175,8 @@ function setupIpcHandlers(electronInstance) {
         if (fs.existsSync(sourceFilePath)) {
           const stats = fs.statSync(sourceFilePath);
           const currentModifiedTime = stats.mtime.getTime();
-          electronInstance._store.set('game.selectedSwfFileLastModified', currentModifiedTime);
+          const lastModifiedKey = `game.swfLastModified.${selectedFile}`;
+          electronInstance._store.set(lastModifiedKey, currentModifiedTime);
         }
       }
       

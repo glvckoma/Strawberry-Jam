@@ -95,15 +95,21 @@ class PortChecker {
     if (!processName) return false
     
     const detectedProcess = processName.toLowerCase()
-    
-    // Get current executable filename
     const currentProcess = path.basename(process.execPath).toLowerCase()
     
-    // Check if detected process matches current process
-    // Also check for common names (electron.exe for dev, strawberry-jam.exe for prod)
-    return detectedProcess === currentProcess || 
-           detectedProcess === 'electron.exe' || 
-           detectedProcess === 'strawberry-jam.exe'
+    if (detectedProcess === currentProcess) {
+      return true
+    }
+    
+    if (currentProcess.includes('electron') && detectedProcess === 'electron.exe') {
+      return true
+    }
+    
+    if (currentProcess.includes('strawberry-jam') && detectedProcess === 'strawberry-jam.exe') {
+      return true
+    }
+    
+    return false
   }
 }
 

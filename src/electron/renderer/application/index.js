@@ -640,7 +640,7 @@ module.exports = class Application extends EventEmitter {
     
     if (port443Busy) {
       const processInfo = await PortChecker.findProcessUsingPort(443)
-      if (processInfo && processInfo.processName && processInfo.processName.toLowerCase() !== 'electron.exe') {
+      if (processInfo && processInfo.processName && !PortChecker.isOwnProcess(processInfo.processName)) {
         busyPorts.push('443')
         portDetails.push(`Port 443: ${processInfo.processName} (PID: ${processInfo.pid})`)
       }
@@ -648,7 +648,7 @@ module.exports = class Application extends EventEmitter {
     
     if (port8080Busy) {
       const processInfo = await PortChecker.findProcessUsingPort(8080)
-      if (processInfo && processInfo.processName && processInfo.processName.toLowerCase() !== 'electron.exe') {
+      if (processInfo && processInfo.processName && !PortChecker.isOwnProcess(processInfo.processName)) {
         busyPorts.push('8080')
         portDetails.push(`Port 8080: ${processInfo.processName} (PID: ${processInfo.pid})`)
       }
