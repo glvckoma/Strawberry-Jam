@@ -1118,7 +1118,7 @@
   "4.1.0": {
     "version": "4.1.0",
     "releaseDate": "2025-12-15",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -1225,6 +1225,154 @@
           "icon": "🛒",
           "title": "Bulk-Buy Item Equipping Fix",
           "description": "Bulk-buy now won't equip any items purchased to prevent any bugs.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "4.2.0": {
+    "version": "4.2.0",
+    "releaseDate": "2025-12-14",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "👆",
+          "title": "Allow Own Nametag Clicking",
+          "description": "Added 'Allow Own Nametag Clicking' as an enhancement option in the mod menu.",
+          "priority": "major"
+        },
+        {
+          "icon": "📦",
+          "title": "Expanded Inventory to Shop Selection",
+          "description": "Expanded inventory now expands to the 'Add to my shop' selection.",
+          "priority": "major"
+        },
+        {
+          "icon": "🧱",
+          "title": "Jammer Wall Functionality",
+          "description": "Jammer Wall is now mostly functional.",
+          "priority": "major"
+        },
+        {
+          "icon": "🎨",
+          "title": "Art Studio Submission",
+          "description": "You can now submit art from Art Studio Painting inside of strawberry jam no need to save and use AJC to submit.",
+          "priority": "major"
+        },
+        {
+          "icon": "🛒",
+          "title": "Bulk Buy All Colors",
+          "description": "New option in Bulk Buy pop up to 'Buy all colors'.",
+          "priority": "major"
+        },
+        {
+          "icon": "🐾",
+          "title": "Latest Pet Additions",
+          "description": "Added latest 'fawn' and 'exclusive phantom' pets.",
+          "priority": "major"
+        },
+        {
+          "icon": "🔄",
+          "title": "Auto SWF Modification Detection",
+          "description": "SJ will now auto detect when .swf modifications have been made an automatically reapply on start up.",
+          "priority": "major"
+        },
+        {
+          "icon": "😀",
+          "title": "Custom Emoji Implementation",
+          "description": "Added Custom Emoji implementation made by @ham & @doc.",
+          "priority": "major"
+        },
+        {
+          "icon": "🔐",
+          "title": "Encrypted Private Chat",
+          "description": "Added encrypted private chat message system by @doc.",
+          "priority": "major"
+        },
+        {
+          "icon": "🛡️",
+          "title": "Plugin Protection",
+          "description": "Added logic to prevent downloaded/created plugins from being uninstalled on new updates.",
+          "priority": "major"
+        },
+        {
+          "icon": "👕",
+          "title": "Display Clothes in HUD",
+          "description": "Added enhancement toggle 'Display clothes in HUD' toggle.",
+          "priority": "major"
+        },
+        {
+          "icon": "📁",
+          "title": "User Plugins Directory Button",
+          "description": "Added 'User Plugins Directory' button inside of settings to quickly access the folder to store plugins in. Make sure to use this for custom plugins!",
+          "priority": "major"
+        },
+        {
+          "icon": "📨",
+          "title": "Packet Spammer Auto Separation",
+          "description": "You can now input all packets and they will automatically separate in the Packet Spammer plugin.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "🤖",
+          "title": "TFD Auto Enhancements",
+          "description": "Added a few enhancements to TFD Auto to help with detection. Slight UI polishing.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🎨",
+          "title": "Custom Nametag Colors Fix",
+          "description": "Fixed Custom Nametag colors not displaying to other users.",
+          "priority": "fix"
+        },
+        {
+          "icon": "⏸️",
+          "title": "Art Studio AFK Kick Fix",
+          "description": "Addressed the issue where being AFK in art studio would eventually kick you.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🚪",
+          "title": "Art Studio Exit Fix",
+          "description": "Fixed leaving Art Studio Painting.",
+          "priority": "fix"
+        },
+        {
+          "icon": "👤",
+          "title": "Jag Name Clicking Fix",
+          "description": "Fixed clicking on names in jags.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐾",
+          "title": "All Pets Available Removal",
+          "description": "Removed all pets available as this never let you purchase.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🧱",
+          "title": "Jammer Wall Pet Rendering Fix",
+          "description": "Fixed Jammer wall pet rendering.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🚫",
+          "title": "Anti-AFK System Improvement",
+          "description": "Fixed Anti-AFK with improved system.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🔌",
+          "title": "Port 8080 False Positive Fix",
+          "description": "Addressed false positive for occupied 8080 ports.",
           "priority": "fix"
         }
       ],
