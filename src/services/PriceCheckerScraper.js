@@ -1,36 +1,184 @@
-// src/services/PriceCheckerScraper.js
 const axios = require('axios');
 const cheerio = require('cheerio');
 const url = require('url');
 
-// Constants
 const BASE_URL = "https://aj-item-worth.fandom.com";
 const SEARCH_PATH = "/wiki/Special:Search";
-const HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+const REQUEST_TIMEOUT = 30000;
+
+let puppeteerBrowser = null;
+let puppeteerPage = null;
+
+const ENHANCED_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Cache-Control': 'max-age=0',
+    'DNT': '1',
+    'Referer': BASE_URL
 };
-const REQUEST_TIMEOUT = 25000; // Milliseconds
+
+async function initPuppeteer() {
+    if (puppeteerBrowser && puppeteerPage) {
+        try {
+            await puppeteerBrowser.version();
+            return puppeteerPage;
+        } catch (error) {
+            if (puppeteerPage) {
+                try {
+                    await puppeteerPage.close();
+                } catch (closeError) {
+                }
+            }
+            if (puppeteerBrowser) {
+                try {
+                    await puppeteerBrowser.close();
+                } catch (closeError) {
+                }
+            }
+            puppeteerBrowser = null;
+            puppeteerPage = null;
+        }
+    }
+
+    let browser = null;
+    let page = null;
+    try {
+        const puppeteer = require('puppeteer-extra');
+        const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+        puppeteer.use(StealthPlugin());
+
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--window-size=1920,1080'
+            ]
+        });
+
+        page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
+        await page.setUserAgent(ENHANCED_HEADERS['User-Agent']);
+        await page.setExtraHTTPHeaders({
+            'Accept-Language': ENHANCED_HEADERS['Accept-Language'],
+            'Accept-Encoding': ENHANCED_HEADERS['Accept-Encoding']
+        });
+
+        puppeteerBrowser = browser;
+        puppeteerPage = page;
+        return page;
+    } catch (error) {
+        if (page) {
+            try {
+                await page.close();
+            } catch (closeError) {
+            }
+        }
+        if (browser) {
+            try {
+                await browser.close();
+            } catch (closeError) {
+            }
+        }
+        puppeteerBrowser = null;
+        puppeteerPage = null;
+        throw new Error(`Puppeteer initialization failed: ${error.message}`);
+    }
+}
+
+async function fetchWithPuppeteer(targetUrl) {
+    let page = null;
+    try {
+        page = await initPuppeteer();
+        
+        await page.goto(targetUrl, {
+            waitUntil: 'domcontentloaded',
+            timeout: REQUEST_TIMEOUT
+        });
+        
+        if (targetUrl.includes('/Special:Search')) {
+            try {
+                await page.waitForSelector('ul.unified-search__results', { timeout: 10000 });
+            } catch (selectorError) {
+                await page.waitForTimeout(2000);
+            }
+        } else {
+            await page.waitForTimeout(500);
+        }
+        
+        const content = await page.content();
+        return content;
+    } catch (error) {
+        if (page && page === puppeteerPage) {
+            try {
+                await page.close();
+                puppeteerPage = null;
+            } catch (closeError) {
+            }
+        }
+        throw new Error(`Puppeteer fetch failed: ${error.message}`);
+    }
+}
+
+async function fetchWithEnhancedAxios(targetUrl) {
+    try {
+        const axiosInstance = axios.create({
+            timeout: REQUEST_TIMEOUT,
+            maxRedirects: 5,
+            validateStatus: (status) => status < 500
+        });
+
+        const response = await axiosInstance.get(targetUrl, {
+            headers: ENHANCED_HEADERS,
+            withCredentials: false
+        });
+
+        if (response.status === 403 || response.status === 429) {
+            throw new Error(`Blocked by server (${response.status}). Try using puppeteer method.`);
+        }
+
+        if (response.status !== 200) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`);
+        }
+        throw new Error(`Network error: ${error.message}`);
+    }
+}
 
 async function fetchPageContent(targetUrl) {
     try {
-        const response = await axios.get(targetUrl, {
-            headers: HEADERS,
-            timeout: REQUEST_TIMEOUT,
-            maxRedirects: 5,
-        });
-        return response.data;
-    } catch (error) {
-        console.error(`[PriceCheckerScraper] Error fetching ${targetUrl}:`, error.message);
-        throw new Error(`Network Error fetching page: ${error.message}`);
+        return await fetchWithPuppeteer(targetUrl);
+    } catch (puppeteerError) {
+        try {
+            return await fetchWithEnhancedAxios(targetUrl);
+        } catch (axiosError) {
+            throw new Error(`All scraping methods failed. Last error: ${axiosError.message}`);
+        }
     }
 }
 
 function parseSearchResults(htmlContent) {
     const $ = cheerio.load(htmlContent);
     const results = [];
-    $('ul.unified-search__results li.unified-search__result').slice(0, 15).each((index, element) => {
+    const resultItems = $('ul.unified-search__results li.unified-search__result');
+    
+    resultItems.slice(0, 15).each((index, element) => {
         const linkTag = $(element).find('article h3.unified-search__result__header a.unified-search__result__title');
         const title = linkTag.text().trim();
         const relativeUrl = linkTag.attr('href');
@@ -40,6 +188,7 @@ function parseSearchResults(htmlContent) {
             results.push({ title: title, url: absoluteUrl });
         }
     });
+    
     return results;
 }
 
@@ -200,8 +349,14 @@ function extractWorthDetails(htmlContent, pageUrl) {
 
 async function searchForItems(searchTerm) {
     const searchUrl = `${BASE_URL}${SEARCH_PATH}?query=${encodeURIComponent(searchTerm)}&scope=internal&navigationSearch=true`;
-    const htmlContent = await fetchPageContent(searchUrl);
-    return parseSearchResults(htmlContent);
+    
+    try {
+        const htmlContent = await fetchPageContent(searchUrl);
+        const results = parseSearchResults(htmlContent);
+        return results;
+    } catch (error) {
+        throw error;
+    }
 }
 
 async function getItemDetails(pageUrl) {
@@ -212,6 +367,12 @@ async function getItemDetails(pageUrl) {
     const sections = extractWorthDetails(htmlContent, pageUrl);
     return { sections: sections, source_url: pageUrl };
 }
+
+process.on('exit', () => {
+    if (puppeteerBrowser) {
+        puppeteerBrowser.close().catch(() => {});
+    }
+});
 
 module.exports = {
   searchForItems,

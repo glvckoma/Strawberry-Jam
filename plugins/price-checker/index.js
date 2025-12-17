@@ -1,8 +1,6 @@
 const { ipcRenderer } = require('electron')
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('[PriceCheckerPlugin] Initialized')
-
   const searchInput = document.getElementById('searchInput')
   const searchButton = document.getElementById('searchButton')
   const statusBar = document.getElementById('statusBar')
@@ -178,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const statusMessage = results.length > 0 ? `Found ${results.length} results.` : 'No results found.'
       updateStatus(statusMessage, statusState)
     } catch (error) {
-      console.error('Search Error:', error)
       updateStatus(`Search failed: ${error.message}`, 'error')
     } finally {
       setControlsEnabled(true)
@@ -208,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('Invalid data structure received from main process.')
       }
     } catch (error) {
-      console.error('Details Fetch Error:', error)
       const errorMessage = `Failed to fetch details: ${error.message}`
       updateStatus(errorMessage, 'error')
       detailsArea.textContent = errorMessage
