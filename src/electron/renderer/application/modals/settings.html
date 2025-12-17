@@ -562,12 +562,79 @@
                 </div>
               </div>
 
+              <!-- Cache Type Selection -->
+              <div class="mb-4 space-y-3">
+                <h5 class="text-sm font-semibold text-text-primary mb-2">Select Cache Types to Clear:</h5>
+                
+                <div class="bg-tertiary-bg/30 p-3 rounded space-y-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <input type="checkbox" id="cacheSelectAll" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer" checked>
+                      <label for="cacheSelectAll" class="ml-2 text-sm font-medium text-text-primary cursor-pointer">All Cache</label>
+                    </div>
+                  </div>
+                  <p class="text-xs text-gray-400 -mt-2 ml-6">Select or deselect all cache types at once.</p>
+                  
+                  <div class="border-t border-sidebar-border pt-3 space-y-3">
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start flex-1">
+                        <input type="checkbox" id="cacheGameSession" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <div class="ml-2 flex-1">
+                          <label for="cacheGameSession" class="text-sm text-text-primary cursor-pointer font-medium">Game Session Cache</label>
+                          <p class="text-xs text-gray-400 mt-0.5">Game assets, session data, and Flash cache from AJ Classic.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start flex-1">
+                        <input type="checkbox" id="cacheAuth" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <div class="ml-2 flex-1">
+                          <label for="cacheAuth" class="text-sm text-text-primary cursor-pointer font-medium">Authentication Cache</label>
+                          <p class="text-xs text-red-400 mt-0.5">Saved accounts and authentication tokens. Clearing this will require re-login.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start flex-1">
+                        <input type="checkbox" id="cachePlugins" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <div class="ml-2 flex-1">
+                          <label for="cachePlugins" class="text-sm text-text-primary cursor-pointer font-medium">Plugin Data Cache</label>
+                          <p class="text-xs text-gray-400 mt-0.5">User-installed plugins and plugin settings.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start flex-1">
+                        <input type="checkbox" id="cacheLogs" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <div class="ml-2 flex-1">
+                          <label for="cacheLogs" class="text-sm text-text-primary cursor-pointer font-medium">Log Files</label>
+                          <p class="text-xs text-gray-400 mt-0.5">Application logs and error logs.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start flex-1">
+                        <input type="checkbox" id="cacheTemp" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <div class="ml-2 flex-1">
+                          <label for="cacheTemp" class="text-sm text-text-primary cursor-pointer font-medium">Temporary Files</label>
+                          <p class="text-xs text-gray-400 mt-0.5">Temporary downloads and cached files.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Clear Cache Button -->
               <div>
                 <button type="button" id="clearCacheBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
                   Clear Cache Now
                 </button>
-                <p class="mt-1 text-xs text-gray-400">Deletes all cache data including AJ Classic and Strawberry Jam directories. Requires app restart.</p>
+                <p class="mt-1 text-xs text-gray-400">Clears selected cache types. Requires app restart.</p>
               </div>
 
               <!-- Uninstall Button -->

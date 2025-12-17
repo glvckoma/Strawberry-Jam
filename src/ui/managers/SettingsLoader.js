@@ -138,6 +138,39 @@ class SettingsLoader {
               
               $cacheSizeDetails.html('<p class="font-medium mb-1">Cache breakdown:</p>').append($detailsList).removeClass('hidden');
             }
+
+            if (sizes.byType) {
+              const updateCacheTypeSize = (checkboxId, size) => {
+                const $checkbox = $modal.find(`#${checkboxId}`);
+                const $label = $checkbox.next('label') || $checkbox.closest('div').find('label');
+                const $container = $checkbox.closest('div.flex');
+                if ($container.length) {
+                  const existingSize = $container.find('.cache-size-badge');
+                  if (existingSize.length) {
+                    existingSize.text(formatBytes(size));
+                  } else {
+                    const $sizeBadge = $(`<span class="cache-size-badge text-xs text-highlight-yellow ml-2">${formatBytes(size)}</span>`);
+                    $label.after($sizeBadge);
+                  }
+                }
+              };
+
+              if (sizes.byType.gameSession !== undefined) {
+                updateCacheTypeSize('cacheGameSession', sizes.byType.gameSession);
+              }
+              if (sizes.byType.auth !== undefined) {
+                updateCacheTypeSize('cacheAuth', sizes.byType.auth);
+              }
+              if (sizes.byType.plugins !== undefined) {
+                updateCacheTypeSize('cachePlugins', sizes.byType.plugins);
+              }
+              if (sizes.byType.logs !== undefined) {
+                updateCacheTypeSize('cacheLogs', sizes.byType.logs);
+              }
+              if (sizes.byType.temp !== undefined) {
+                updateCacheTypeSize('cacheTemp', sizes.byType.temp);
+              }
+            }
           } else {
             $cacheSizeValue.text('Not available');
           }

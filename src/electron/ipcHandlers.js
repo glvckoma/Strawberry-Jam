@@ -281,7 +281,7 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.once('renderer-ready', (async () => {
   }).bind(electronInstance));
 
-  ipcMain.handle('danger-zone:clear-cache', async () => {
+  ipcMain.handle('danger-zone:clear-cache', async (event, options = {}) => {
     const continueClear = await electronInstance._confirmNoOtherInstances('clear the cache');
     if (!continueClear) {
       return { success: false, message: 'Cache clearing cancelled by user.' };
@@ -291,10 +291,105 @@ function setupIpcHandlers(electronInstance) {
       await session.defaultSession.clearCache();
       await session.defaultSession.clearStorageData({ storages: ['cookies', 'localstorage'] });
 
-      const cachePaths = electronInstance._getCachePaths();
-      if (!cachePaths || cachePaths.length === 0) {
-        console.warn('[Clear Cache] No cache paths found to clear');
+      const cacheService = electronInstance.cacheService;
+      const pathsToDelete = [];
+
+      if (options.all || (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp)) {
+        const cachePaths = electronInstance._getCachePaths();
+        pathsToDelete.push(...cachePaths);
       } else {
+        if (options.gameSession) {
+          const ajClassicPath = cacheService.getAJClassicPath();
+          if (ajClassicPath) {
+            pathsToDelete.push(path.join(ajClassicPath, 'Cache'));
+          }
+        }
+
+        if (options.plugins) {
+          const strawberryJamPath = cacheService.getStrawberryJamPath();
+          const userDataPath = app.getPath('userData');
+          
+          for (const basePath of [strawberryJamPath, userDataPath].filter(Boolean)) {
+            const pluginsPath = path.join(basePath, 'plugins');
+            try {
+              if (await fsPromises.access(pluginsPath).then(() => true).catch(() => false)) {
+                const entries = await fsPromises.readdir(pluginsPath, { withFileTypes: true });
+                for (const entry of entries) {
+                  if (entry.isDirectory()) {
+                    const entryPath = path.join(pluginsPath, entry.name);
+                    const pluginConfigPath = path.join(entryPath, 'plugin.json');
+                    try {
+                      if (await fsPromises.access(pluginConfigPath).then(() => true).catch(() => false)) {
+                        pathsToDelete.push(entryPath);
+                      }
+                    } catch (error) {
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+            }
+          }
+        }
+
+        if (options.logs) {
+          const strawberryJamPath = cacheService.getStrawberryJamPath();
+          const userDataPath = app.getPath('userData');
+          
+          for (const basePath of [strawberryJamPath, userDataPath].filter(Boolean)) {
+            const logsPath = path.join(basePath, 'logs');
+            try {
+              if (await fsPromises.access(logsPath).then(() => true).catch(() => false)) {
+                const entries = await fsPromises.readdir(logsPath, { withFileTypes: true });
+                for (const entry of entries) {
+                  const entryPath = path.join(logsPath, entry.name);
+                  if (entry.isFile() && entry.name.endsWith('.log')) {
+                    pathsToDelete.push(entryPath);
+                  } else if (entry.isDirectory()) {
+                    pathsToDelete.push(entryPath);
+                  }
+                }
+              }
+            } catch (error) {
+            }
+          }
+        }
+
+        if (options.temp) {
+          const strawberryJamPath = cacheService.getStrawberryJamPath();
+          const ajClassicPath = cacheService.getAJClassicPath();
+          const tempPatterns = ['temp', 'tmp', 'cache', 'downloads'];
+          
+          for (const basePath of [strawberryJamPath, ajClassicPath].filter(Boolean)) {
+            try {
+              if (await fsPromises.access(basePath).then(() => true).catch(() => false)) {
+                const entries = await fsPromises.readdir(basePath, { withFileTypes: true });
+                for (const entry of entries) {
+                  const entryName = entry.name.toLowerCase();
+                  if (tempPatterns.some(pattern => entryName.includes(pattern))) {
+                    const entryPath = path.join(basePath, entry.name);
+                    pathsToDelete.push(entryPath);
+                  }
+                }
+              }
+            } catch (error) {
+            }
+          }
+        }
+
+        if (options.auth) {
+          const strawberryJamPath = cacheService.getStrawberryJamPath();
+          if (strawberryJamPath) {
+            pathsToDelete.push(path.join(strawberryJamPath, 'accounts'));
+            pathsToDelete.push(path.join(strawberryJamPath, 'auth'));
+            pathsToDelete.push(path.join(strawberryJamPath, 'tokens'));
+          }
+        }
+      }
+
+      const clearResults = await cacheService.clearAppCache(options);
+
+      if (pathsToDelete.length > 0) {
         const possiblePaths = [];
         
         if (app.isPackaged) {
@@ -331,7 +426,7 @@ function setupIpcHandlers(electronInstance) {
         } else {
           try {
             const nodeExecutable = process.execPath;
-            const scriptArgs = [resolvedHelperPath, ...cachePaths];
+            const scriptArgs = [resolvedHelperPath, ...pathsToDelete];
 
             const child = spawn(nodeExecutable, scriptArgs, {
               detached: true,
@@ -356,9 +451,62 @@ function setupIpcHandlers(electronInstance) {
         }
       }
 
+      let hasFailures = clearResults.errors && clearResults.errors.length > 0;
+      const failedOperations = [];
+      
+      if (clearResults.all && !clearResults.all.success) {
+        hasFailures = true;
+        failedOperations.push('all cache');
+      }
+      if (clearResults.gameSession && !clearResults.gameSession.success) {
+        hasFailures = true;
+        failedOperations.push('game session');
+      }
+      if (clearResults.auth && !clearResults.auth.success) {
+        hasFailures = true;
+        failedOperations.push('authentication');
+      }
+      if (clearResults.plugins && !clearResults.plugins.success) {
+        hasFailures = true;
+        failedOperations.push('plugins');
+      }
+      if (clearResults.logs && !clearResults.logs.success) {
+        hasFailures = true;
+        failedOperations.push('logs');
+      }
+      if (clearResults.temp && !clearResults.temp.success) {
+        hasFailures = true;
+        failedOperations.push('temp files');
+      }
+
+      const clearedTypes = [];
+      if (options.all || (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp)) {
+        clearedTypes.push('all cache');
+      } else {
+        if (options.gameSession) clearedTypes.push('game session');
+        if (options.auth) clearedTypes.push('authentication');
+        if (options.plugins) clearedTypes.push('plugins');
+        if (options.logs) clearedTypes.push('logs');
+        if (options.temp) clearedTypes.push('temp files');
+      }
+
       electronInstance._isClearingCacheAndQuitting = true;
       app.quit();
-      return { success: true, message: 'Internal cache cleared. External cache clearing scheduled. Application will close.' };
+      
+      if (hasFailures) {
+        return { 
+          success: false, 
+          message: `Cache clearing completed with errors. Failed operations: ${failedOperations.join(', ')}. Application will close.`,
+          results: clearResults,
+          failedOperations: failedOperations
+        };
+      }
+      
+      return { 
+        success: true, 
+        message: `Cache cleared: ${clearedTypes.join(', ')}. Application will close.`,
+        results: clearResults
+      };
 
     } catch (error) {
       console.error('[Clear Cache] Error during cache clearing:', error);
@@ -618,7 +766,8 @@ function setupIpcHandlers(electronInstance) {
 
   ipcMain.handle('get-cache-size', async () => {
     const cachePaths = electronInstance._getCachePaths();
-    const sizes = { total: 0, directories: {} };
+    const cacheService = electronInstance.cacheService;
+    const sizes = { total: 0, directories: {}, byType: {} };
 
     try {
       const calculateDirSize = async (dirPath) => {
@@ -660,9 +809,98 @@ function setupIpcHandlers(electronInstance) {
         }
       }
 
+      const ajClassicPath = cacheService.getAJClassicPath();
+      if (ajClassicPath) {
+        const gameSessionPath = path.join(ajClassicPath, 'Cache');
+        try {
+          sizes.byType.gameSession = await calculateDirSize(gameSessionPath);
+        } catch (error) {
+          sizes.byType.gameSession = 0;
+        }
+      } else {
+        sizes.byType.gameSession = 0;
+      }
+
+      const strawberryJamPath = cacheService.getStrawberryJamPath();
+      const userDataPath = app.getPath('userData');
+      
+      if (strawberryJamPath) {
+        const authPaths = [
+          path.join(strawberryJamPath, 'accounts'),
+          path.join(strawberryJamPath, 'auth'),
+          path.join(strawberryJamPath, 'tokens')
+        ];
+        let authSize = 0;
+        for (const authPath of authPaths) {
+          try {
+            authSize += await calculateDirSize(authPath);
+          } catch (error) {
+          }
+        }
+        sizes.byType.auth = authSize;
+
+        try {
+          sizes.byType.plugins = await calculateDirSize(path.join(strawberryJamPath, 'plugins'));
+        } catch (error) {
+          sizes.byType.plugins = 0;
+        }
+
+        try {
+          sizes.byType.logs = await calculateDirSize(path.join(strawberryJamPath, 'logs'));
+        } catch (error) {
+          sizes.byType.logs = 0;
+        }
+      } else {
+        sizes.byType.auth = 0;
+        sizes.byType.plugins = 0;
+        sizes.byType.logs = 0;
+      }
+
+      if (userDataPath) {
+        try {
+          const userPluginsPath = path.join(userDataPath, 'plugins');
+          const userPluginsSize = await calculateDirSize(userPluginsPath);
+          sizes.byType.plugins = (sizes.byType.plugins || 0) + userPluginsSize;
+        } catch (error) {
+        }
+
+        try {
+          const userLogsPath = path.join(userDataPath, 'logs');
+          const userLogsSize = await calculateDirSize(userLogsPath);
+          sizes.byType.logs = (sizes.byType.logs || 0) + userLogsSize;
+        } catch (error) {
+        }
+      }
+
+      let tempSize = 0;
+      if (strawberryJamPath && ajClassicPath) {
+        const pathsToCheck = [strawberryJamPath, ajClassicPath];
+        const tempPatterns = ['temp', 'tmp', 'cache', 'downloads'];
+
+        for (const basePath of pathsToCheck) {
+          try {
+            await fsPromises.access(basePath);
+            const entries = await fsPromises.readdir(basePath, { withFileTypes: true });
+            for (const entry of entries) {
+              const entryName = entry.name.toLowerCase();
+              const entryPath = path.join(basePath, entry.name);
+
+              if (tempPatterns.some(pattern => entryName.includes(pattern))) {
+                try {
+                  tempSize += await calculateDirSize(entryPath);
+                } catch (error) {
+                }
+              }
+            }
+          } catch (error) {
+          }
+        }
+      }
+      sizes.byType.temp = tempSize;
+
       return sizes;
     } catch (error) {
-      return { total: 0, directories: {} };
+      return { total: 0, directories: {}, byType: {} };
     }
   });
 

@@ -356,18 +356,85 @@ class SettingsEventHandler {
       }
     });
 
+    const $cacheSelectAll = $modal.find('#cacheSelectAll');
+    const $cacheGameSession = $modal.find('#cacheGameSession');
+    const $cacheAuth = $modal.find('#cacheAuth');
+    const $cachePlugins = $modal.find('#cachePlugins');
+    const $cacheLogs = $modal.find('#cacheLogs');
+    const $cacheTemp = $modal.find('#cacheTemp');
+    const $cacheTypeCheckboxes = $modal.find('input[name="cacheType"]');
+
+    const updateSelectAllState = () => {
+      const allChecked = $cacheTypeCheckboxes.length === $cacheTypeCheckboxes.filter(':checked').length;
+      $cacheSelectAll.prop('checked', allChecked);
+    };
+
+    $cacheSelectAll.on('change', function() {
+      const isChecked = $(this).is(':checked');
+      $cacheTypeCheckboxes.prop('checked', isChecked);
+    });
+
+    $cacheTypeCheckboxes.on('change', updateSelectAllState);
+
     $clearCacheButton.on('click', async () => {
+      const options = {
+        gameSession: $cacheGameSession.is(':checked'),
+        auth: $cacheAuth.is(':checked'),
+        plugins: $cachePlugins.is(':checked'),
+        logs: $cacheLogs.is(':checked'),
+        temp: $cacheTemp.is(':checked'),
+        all: $cacheSelectAll.is(':checked') && $cacheTypeCheckboxes.filter(':checked').length === $cacheTypeCheckboxes.length
+      };
+
+      if (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp) {
+        this.toastService.showInModal($modal, 'Please select at least one cache type to clear.', 'warning');
+        return;
+      }
+
+      let totalSize = 0;
+      try {
+        const sizes = await ipcRenderer.invoke('get-cache-size');
+        if (sizes && sizes.byType) {
+          if (options.all || (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp)) {
+            totalSize = sizes.total || 0;
+          } else {
+            if (options.gameSession && sizes.byType.gameSession !== undefined) {
+              totalSize += sizes.byType.gameSession;
+            }
+            if (options.auth && sizes.byType.auth !== undefined) {
+              totalSize += sizes.byType.auth;
+            }
+            if (options.plugins && sizes.byType.plugins !== undefined) {
+              totalSize += sizes.byType.plugins;
+            }
+            if (options.logs && sizes.byType.logs !== undefined) {
+              totalSize += sizes.byType.logs;
+            }
+            if (options.temp && sizes.byType.temp !== undefined) {
+              totalSize += sizes.byType.temp;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error getting cache sizes:', error);
+      }
+
+      const message = 'Are you sure you want to clear the selected cache types? Strawberry Jam will close to complete the process.';
+
       const confirmed = await uiManager.showConfirmationModal(
         'Clear Cache Confirmation',
-        'Are you sure you want to clear all application cache? This will delete both the AJ Classic and Strawberry Jam data directories from your AppData folder. Your saved usernames and settings may be preserved, but all other cache data will be removed. Strawberry Jam will close to complete the process.',
+        message,
         'Close App & Clear Cache',
-        'Cancel'
+        'Cancel',
+        {
+          totalSize: totalSize
+        }
       );
 
       if (confirmed) {
         this.toastService.showInModal($modal, 'Attempting to clear cache...', 'warning');
         try {
-          const result = await ipcRenderer.invoke('danger-zone:clear-cache');
+          const result = await ipcRenderer.invoke('danger-zone:clear-cache', options);
           if (!result.success) {
             this.toastService.showInModal($modal, `Failed to clear cache: ${result.error || result.message || 'Unknown error'}`, 'error');
           }

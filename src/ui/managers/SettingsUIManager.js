@@ -180,6 +180,39 @@ class SettingsUIManager {
           
           $cacheSizeDetails.html('<p class="font-medium mb-1">Cache breakdown:</p>').append($detailsList).removeClass('hidden');
         }
+
+        if (sizes.byType) {
+          const updateCacheTypeSize = (checkboxId, size) => {
+            const $checkbox = $modal.find(`#${checkboxId}`);
+            const $label = $checkbox.next('label') || $checkbox.closest('div').find('label');
+            const $container = $checkbox.closest('div.flex');
+            if ($container.length) {
+              const existingSize = $container.find('.cache-size-badge');
+              if (existingSize.length) {
+                existingSize.text(formatBytes(size));
+              } else {
+                const $sizeBadge = $(`<span class="cache-size-badge text-xs text-highlight-yellow ml-2">${formatBytes(size)}</span>`);
+                $label.after($sizeBadge);
+              }
+            }
+          };
+
+          if (sizes.byType.gameSession !== undefined) {
+            updateCacheTypeSize('cacheGameSession', sizes.byType.gameSession);
+          }
+          if (sizes.byType.auth !== undefined) {
+            updateCacheTypeSize('cacheAuth', sizes.byType.auth);
+          }
+          if (sizes.byType.plugins !== undefined) {
+            updateCacheTypeSize('cachePlugins', sizes.byType.plugins);
+          }
+          if (sizes.byType.logs !== undefined) {
+            updateCacheTypeSize('cacheLogs', sizes.byType.logs);
+          }
+          if (sizes.byType.temp !== undefined) {
+            updateCacheTypeSize('cacheTemp', sizes.byType.temp);
+          }
+        }
       } else {
         $cacheSizeValue.text('Not available');
       }
@@ -189,15 +222,27 @@ class SettingsUIManager {
     }
   }
 
-  showConfirmationModal(title, message, confirmText = 'Confirm', cancelText = 'Cancel') {
+  showConfirmationModal(title, message, confirmText = 'Confirm', cancelText = 'Cancel', options = {}) {
     return new Promise((resolve) => {
+      let messageHtml = `<p class="text-sm text-gray-400 mb-4">${message}</p>`;
+      
+      if (options.totalSize !== undefined && options.totalSize > 0) {
+        messageHtml += `<div class="bg-tertiary-bg/30 p-3 rounded mb-4 text-center">`;
+        messageHtml += `<p class="text-sm font-medium text-text-primary">Total size to clear: <span class="text-highlight-yellow">${formatBytes(options.totalSize)}</span></p>`;
+        messageHtml += `</div>`;
+      }
+
       const $confirmModal = $(`
         <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 confirmation-modal">
-          <div class="relative bg-secondary-bg rounded-lg shadow-xl max-w-sm w-full">
-            <div class="p-5 text-center">
-              <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
-              <h3 class="text-lg font-semibold text-text-primary mb-2">${title}</h3>
-              <p class="text-sm text-gray-400 mb-6">${message}</p>
+          <div class="relative bg-secondary-bg rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-5">
+              <div class="text-center mb-4">
+                <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                <h3 class="text-lg font-semibold text-text-primary mb-2">${title}</h3>
+              </div>
+              <div class="text-center mb-6">
+                ${messageHtml}
+              </div>
               <div class="flex justify-center gap-4">
                 <button type="button" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition" id="confirmCancelBtn">${cancelText}</button>
                 <button type="button" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition" id="confirmActionBtn">${confirmText}</button>
