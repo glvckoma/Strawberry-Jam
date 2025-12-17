@@ -8,8 +8,6 @@ class SettingsLoader {
   }
 
   async loadSettings($modal, app, uiManager) {
-    const $leakCheckAutoCheck = $modal.find('#leakCheckAutoCheck');
-    const $leakCheckThresholdContainer = $modal.find('#leakCheckThresholdContainer');
 
     if (typeof ipcRenderer === 'undefined' || !ipcRenderer) {
       console.error('[Settings Load] ipcRenderer not available.');
@@ -25,7 +23,6 @@ class SettingsLoader {
       const pluginRefreshBehavior = await ipcRenderer.invoke('get-setting', 'plugins.refreshBehavior');
 
       const leakCheckApiKey = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.apiKey');
-      const leakCheckAutoCheck = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.autoCheck.enabled');
       const leakCheckThreshold = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.autoCheck.threshold');
       const leakCheckEnableLogging = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.collection.enabled');
       const leakCheckOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir');
@@ -63,16 +60,21 @@ class SettingsLoader {
       $modal.find('#pluginRefreshBehavior').val(pluginRefreshBehavior || 'ask');
 
       $modal.find('#leakCheckApiKey').val(leakCheckApiKey || '');
-      $modal.find('#leakCheckAutoCheck').prop('checked', leakCheckAutoCheck === true);
-      $modal.find('#leakCheckThreshold').val(leakCheckThreshold || 100);
+      const thresholdValue = leakCheckThreshold !== undefined && leakCheckThreshold !== null ? leakCheckThreshold : 0;
+      $modal.find('#leakCheckThreshold').val(thresholdValue);
+      const $leakCheckThresholdContainer = $modal.find('#leakCheckThresholdContainer');
+      if ($leakCheckThresholdContainer.length) {
+        $leakCheckThresholdContainer.css('opacity', '1').find('input').prop('disabled', false);
+      }
       $modal.find('#leakCheckEnableLogging').prop('checked', leakCheckEnableLogging === true);
+      $modal.find('#leakCheckEnableLogging').trigger('change');
       $modal.find('#leakCheckCollectNearby').prop('checked', usernameLoggerCollectNearby === true);
       $modal.find('#leakCheckCollectBuddies').prop('checked', usernameLoggerCollectBuddies === true);
       $modal.find('#leakCheckOutputDirInput').val(leakCheckOutputDir || '');
       $modal.find('#leakCheckMaxPasswords').val(leakCheckMaxPasswords || 0);
 
-      $modal.find('#consoleLogLimit').val(consoleLogLimit || 1000);
-      $modal.find('#networkLogLimit').val(networkLogLimit || 1000);
+      $modal.find('#consoleLogLimit').val(consoleLogLimit || 500);
+      $modal.find('#networkLogLimit').val(networkLogLimit || 500);
 
       $modal.find('#performServerCheckOnLaunchToggle').prop('checked', performServerCheckOnLaunch === true);
 
@@ -106,13 +108,6 @@ class SettingsLoader {
         $customThemeColorContainer.css('opacity', '0.5').find('input').prop('disabled', true);
       }
 
-      if ($leakCheckAutoCheck.length) {
-        if ($leakCheckAutoCheck.is(':checked')) {
-          $leakCheckThresholdContainer.css('opacity', '1').find('input').prop('disabled', false);
-        } else {
-          $leakCheckThresholdContainer.css('opacity', '0.5').find('input').prop('disabled', true);
-        }
-      }
 
       if ($modal.find('#advancedTabContent').is(':visible')) {
         const $cacheSizeValue = $modal.find('#cacheSizeValue');

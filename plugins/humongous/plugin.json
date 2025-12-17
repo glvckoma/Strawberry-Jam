@@ -8,7 +8,7 @@
   "commands": [
     {
       "name": "humongous",
-      "description": "Toggles a size hack to make your avatar huge."
+      "description": "Toggles a size packet to make your avatar huge."
     }
   ]
 }

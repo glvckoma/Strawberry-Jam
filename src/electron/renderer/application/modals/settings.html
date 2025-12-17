@@ -64,6 +64,10 @@
             General
             <span class="tab-underline absolute bottom-0 left-0 w-full h-[2px]" style="background-color: var(--theme-primary); box-shadow: 0 0 6px 0 var(--theme-primary);"></span>
           </button>
+          <button type="button" class="settings-tab relative px-4 py-2 text-sm font-medium text-sidebar-text hover:text-text-primary focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary focus:ring-offset-secondary-bg" data-tab="theme">
+            Theme
+            <span class="tab-underline absolute bottom-0 left-0 w-full h-[2px]" style="background-color: transparent; box-shadow: none;"></span>
+          </button>
           <button type="button" class="settings-tab relative px-4 py-2 text-sm font-medium text-sidebar-text hover:text-text-primary focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary focus:ring-offset-secondary-bg" data-tab="plugins">
             Plugins
             <span class="tab-underline absolute bottom-0 left-0 w-full h-[2px]" style="background-color: transparent; box-shadow: none;"></span>
@@ -88,6 +92,18 @@
               <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
                 <i class="fas fa-sync-alt mr-2 text-highlight-yellow"></i>Application Updates
               </h4>
+              <!-- Auto Update Toggle -->
+              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
+                <label for="enableAutoUpdatesToggle" class="text-sm text-text-primary">Enable Automatic Updates</label>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="enableAutoUpdatesToggle" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
+                    <span class="toggle-text-off">OFF</span>
+                    <span class="toggle-text-on">ON</span>
+                  </div>
+                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                </label>
+              </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button type="button" id="viewUpdatesBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
                   <i class="fas fa-list mr-2"></i>View Updates
@@ -101,34 +117,20 @@
                   <i class="fas fa-download mr-2"></i>Download Now
                 </button>
               </div>
-              <p class="mt-1 text-xs text-gray-400">Manually check for new versions of Strawberry Jam.</p>
               <p id="manualUpdateStatusText" class="mt-2 text-xs text-gray-400"></p>
               <div id="downloadProgressContainer" class="hidden w-full bg-tertiary-bg rounded-full h-2.5 mt-2">
                 <div id="downloadProgressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
               </div>
-              <!-- Auto Update Toggle -->
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded mt-4">
-                <label for="enableAutoUpdatesToggle" class="text-sm text-text-primary">Enable Automatic Updates</label>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="enableAutoUpdatesToggle" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
-                </label>
-              </div>
-              <p class="mt-1 text-xs text-gray-400 -mt-3">If enabled, the application will automatically download and prompt to install updates when available.</p>
             </div>
             <!-- End Update Section -->
 
-            <!-- Startup Behavior Section -->
+            <!-- Server Status Section -->
             <div class="space-y-4 pt-4">
               <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-rocket mr-2 text-highlight-yellow"></i>Startup Behavior
+                <i class="fas fa-server mr-2 text-highlight-yellow"></i>Server Status
               </h4>
               <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
-                <label for="performServerCheckOnLaunchToggle" class="text-sm text-text-primary">Enable Server Check on Launch</label>
+                <label for="performServerCheckOnLaunchToggle" class="text-sm text-text-primary">Check AJC Server status on launch</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="performServerCheckOnLaunchToggle" class="sr-only peer">
                   <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
@@ -138,12 +140,62 @@
                   <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
                 </label>
               </div>
-              <p class="mt-1 text-xs text-gray-400 -mt-3">If unchecked, the app won't verify server status or check for updates at startup.</p>
+              <p class="mt-1 text-xs text-gray-400 -mt-3">If unchecked, the app won't verify Animal Jam Classic server status at startup.</p>
             </div>
-            <!-- End Startup Behavior Section -->
+            <!-- End Server Status Section -->
 
-            <!-- Custom Theme Color Section -->
+
+            <!-- Log Management Section -->
             <div class="space-y-4 pt-4">
+              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
+                <i class="fas fa-chart-line mr-2 text-highlight-yellow"></i>Log Management
+              </h4>
+              
+              <!-- Console Log Limit -->
+              <div>
+                <label for="consoleLogLimit" class="block mb-2 text-sm font-medium text-text-primary">Console Log Limit</label>
+                <input id="consoleLogLimit" type="number" min="100" max="10000" step="100" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="500">
+              </div>
+
+              <!-- Network Log Limit -->
+              <div>
+                <label for="networkLogLimit" class="block mb-2 text-sm font-medium text-text-primary">Network Log Limit</label>
+                <input id="networkLogLimit" type="number" min="100" max="10000" step="100" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="500">
+              </div>
+
+              <!-- Log Cleanup Info Box -->
+              <div class="bg-tertiary-bg/30 p-3 rounded">
+                <div class="flex items-start">
+                  <i class="fas fa-info-circle text-highlight-yellow mt-0.5 mr-2"></i>
+                  <div>
+                    <p class="text-sm text-text-primary mb-2">When logs reach the limit, older entries (about 40%) are automatically removed.</p>
+                    <p class="text-xs text-gray-400">This prevents performance issues from excessive memory usage.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tutorial Section -->
+              <div class="space-y-4 pt-4">
+                <h5 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
+                  <i class="fas fa-graduation-cap mr-2 text-highlight-yellow"></i>Tutorial
+                </h5>
+                <div>
+                  <button type="button" id="restartTutorialBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
+                    <i class="fas fa-redo mr-2"></i>Restart Tutorial
+                  </button>
+                  <p class="mt-1 text-xs text-gray-400">Restart the onboarding tutorial to learn about Strawberry Jam's features.</p>
+                </div>
+              </div>
+
+            </div>
+            <!-- End Log Management Section -->
+          </div>
+          <!-- End General Tab Content -->
+
+          <!-- Theme Tab Content -->
+          <div id="themeTabContent" class="settings-tab-content space-y-4 hidden">
+            <!-- Custom Theme Color Section -->
+            <div class="space-y-4">
               <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
                 <i class="fas fa-palette mr-2 text-highlight-yellow"></i>Custom Theme Color
               </h4>
@@ -194,78 +246,31 @@
               </div>
             </div>
             <!-- End Custom Theme Color Section -->
-
-            <!-- Log Management Section -->
-            <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-chart-line mr-2 text-highlight-yellow"></i>Log Management
-              </h4>
-              
-              <!-- Console Log Limit -->
-              <div>
-                <label for="consoleLogLimit" class="block mb-2 text-sm font-medium text-text-primary">Console Log Limit</label>
-                <input id="consoleLogLimit" type="number" min="100" max="10000" step="100" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="1000">
-                <p class="mt-1 text-xs text-gray-400">Maximum number of console log entries (default: 1000).</p>
-              </div>
-
-              <!-- Network Log Limit -->
-              <div>
-                <label for="networkLogLimit" class="block mb-2 text-sm font-medium text-text-primary">Network Log Limit</label>
-                <input id="networkLogLimit" type="number" min="100" max="10000" step="100" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="1000">
-                <p class="mt-1 text-xs text-gray-400">Maximum number of network log entries (default: 1000).</p>
-              </div>
-
-              <!-- Log Cleanup Info Box -->
-              <div class="bg-tertiary-bg/30 p-3 rounded">
-                <div class="flex items-start">
-                  <i class="fas fa-info-circle text-highlight-yellow mt-0.5 mr-2"></i>
-                  <div>
-                    <p class="text-sm text-text-primary mb-2">When logs reach the limit, older entries (about 40%) are automatically removed.</p>
-                    <p class="text-xs text-gray-400">This prevents performance issues from excessive memory usage.</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tutorial Section -->
-              <div class="space-y-4 pt-4">
-                <h5 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                  <i class="fas fa-graduation-cap mr-2 text-highlight-yellow"></i>Tutorial
-                </h5>
-                <div>
-                  <button type="button" id="restartTutorialBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
-                    <i class="fas fa-redo mr-2"></i>Restart Tutorial
-                  </button>
-                  <p class="mt-1 text-xs text-gray-400">Restart the onboarding tutorial to learn about Strawberry Jam's features.</p>
-                </div>
-              </div>
-
-              <!-- Other Section -->
-              <div class="space-y-4 pt-4">
-                <h5 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                  <i class="fas fa-cog mr-2 text-highlight-yellow"></i>Other
-                </h5>
-                <div>
-                  <button type="button" id="resetGameTimeBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
-                    <i class="fas fa-undo mr-2"></i>Reset Game Time & Uptime
-                  </button>
-                  <p class="mt-1 text-xs text-gray-400">Resets the total game time and uptime counters to zero. This cannot be undone.</p>
-                </div>
-              </div>
-
-            </div>
-            <!-- End Log Management Section -->
           </div>
-          <!-- End General Tab Content -->
+          <!-- End Theme Tab Content -->
 
           <!-- Plugins Tab Content -->
           <div id="pluginsTabContent" class="settings-tab-content space-y-4 hidden">
-            <!-- Hide Game-Specific Plugins -->
+            <!-- User Plugins Directory -->
             <div class="space-y-4">
+              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
+                <i class="fas fa-folder-open mr-2 text-highlight-yellow"></i>User Plugins Directory
+              </h4>
+              <div>
+                <button type="button" id="openUserPluginsDirBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
+                  <i class="fas fa-folder-open mr-2"></i>Open User Plugins Folder
+                </button>
+                <p class="mt-1 text-xs text-gray-400">Opens the directory where user-installed plugins are stored. Plugins placed here will persist across application updates.</p>
+              </div>
+            </div>
+
+            <!-- Hide Game-Specific Plugins -->
+            <div class="space-y-4 pt-4">
               <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
                 <i class="fas fa-eye-slash mr-2 text-highlight-yellow"></i>Plugin Visibility
               </h4>
               <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
-                <label for="hideGamePlugins" class="text-sm text-text-primary">Hide game-specific plugins in the UI</label>
+                <label for="hideGamePlugins" class="text-sm text-text-primary">Hide game-specific plugins in plugin list.</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="hideGamePlugins" class="sr-only peer">
                   <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
@@ -275,7 +280,7 @@
                   <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
                 </label>
               </div>
-              <p class="mt-1 text-xs text-gray-400 -mt-3">If checked, game-specific plugins will not be shown in the sidebar or plugin lists.</p>
+              <p class="mt-1 text-xs text-gray-400 -mt-3">If checked, only UI plugins will be visible in the plugin list.</p>
             </div>
             
             <!-- Plugin Refresh Behavior -->
@@ -289,31 +294,6 @@
                   <option value="ask">Ask before closing windows</option>
                   <option value="alwaysClose">Always close windows automatically</option>
                 </select>
-                <p class="mt-1 text-xs text-gray-400">Plugin windows are always closed during refresh to prevent instability. This setting controls whether to ask for confirmation first.</p>
-              </div>
-              
-              <!-- Info Box -->
-              <div class="bg-tertiary-bg/30 p-3 rounded">
-                <div class="flex items-start">
-                  <i class="fas fa-info-circle text-highlight-yellow mt-0.5 mr-2"></i>
-                  <div>
-                    <p class="text-sm text-text-primary mb-2">Plugin windows are automatically closed during refresh</p>
-                    <p class="text-xs text-gray-400">This prevents instability since open windows would become disconnected from the refreshed plugin code.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- User Plugins Directory -->
-            <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-folder-open mr-2 text-highlight-yellow"></i>User Plugins Directory
-              </h4>
-              <div>
-                <button type="button" id="openUserPluginsDirBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
-                  <i class="fas fa-folder-open mr-2"></i>Open User Plugins Folder
-                </button>
-                <p class="mt-1 text-xs text-gray-400">Opens the directory where user-installed plugins are stored. Plugins placed here will persist across application updates.</p>
               </div>
             </div>
           </div>
@@ -338,24 +318,23 @@
                 <p class="mt-1 text-xs text-gray-400">Requires a <a href="https://leakcheck.io/" target="_blank" class="text-highlight-yellow hover:underline">LeakCheck.io</a> Pro subscription.</p>
               </div>
               <!-- Auto Leak Check Section -->
-              <div class="bg-tertiary-bg/30 p-4 rounded-lg space-y-3">
-                <div class="flex items-center justify-between">
-                  <label for="leakCheckAutoCheck" class="text-sm font-medium text-text-primary">Auto-check for leaks</label>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="leakCheckAutoCheck" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                      <span class="toggle-text-off">OFF</span>
-                      <span class="toggle-text-on">ON</span>
-                    </div>
-                    <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
-                  </label>
+              <div class="bg-tertiary-bg/30 p-2 rounded-lg space-y-2">
+                <div class="flex items-center justify-center mb-2">
+                  <label class="text-xs font-medium text-text-primary">Auto-check for leaks</label>
                 </div>
                 <div id="leakCheckThresholdContainer" class="transition-opacity duration-300">
-                  <label for="leakCheckThreshold" class="block mb-2 text-xs font-medium text-gray-400">Trigger after new usernames are collected:</label>
-                  <div class="flex items-center space-x-2">
-                    <input id="leakCheckThreshold" type="number" min="1" step="1" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-24 text-center" placeholder="100">
-                    <span class="text-xs text-gray-400">usernames</span>
+                  <div class="flex items-center justify-center mb-1">
+                    <input id="leakCheckThreshold" type="number" min="0" step="1" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-1.5 py-1 w-14 text-center text-xs" placeholder="0">
                   </div>
+                  <p class="text-xs text-gray-400 text-center">Trigger after new usernames are collected: (0 = disabled)</p>
+                </div>
+              </div>
+              <!-- Max Passwords per Account -->
+              <div class="bg-tertiary-bg/30 p-2 rounded-lg space-y-2">
+                <div class="flex flex-col items-center">
+                  <label for="leakCheckMaxPasswords" class="block mb-1 text-xs font-medium text-text-primary text-center">Max Passwords per Account</label>
+                  <input id="leakCheckMaxPasswords" type="number" min="0" step="1" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-1.5 py-1 w-16 text-center text-xs" placeholder="0">
+                  <p class="mt-1 text-xs text-gray-400 text-center">General/found accounts exceeding this limit won't be saved. AJC accounts are always saved. Set to 0 for unlimited.</p>
                 </div>
               </div>
             </div>
@@ -379,7 +358,7 @@
               </div>
               <p class="mt-1 text-xs text-gray-400 -mt-3">Master toggle for the Username Logger plugin functionality.</p>
               <!-- Collection Scopes -->
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
+              <div id="leakCheckCollectionScopes" class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded opacity-50 pointer-events-none">
                 <label for="leakCheckCollectNearby" class="text-sm text-text-primary">Collect Usernames from Nearby Players</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="leakCheckCollectNearby" class="sr-only peer">
@@ -391,7 +370,7 @@
                 </label>
               </div>
               <p class="mt-1 text-xs text-gray-400 -mt-3">Log usernames of players in the same room.</p>
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
+              <div id="leakCheckCollectionBuddies" class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded opacity-50 pointer-events-none">
                 <label for="leakCheckCollectBuddies" class="text-sm text-text-primary">Collect Usernames from Buddy List</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="leakCheckCollectBuddies" class="sr-only peer">
@@ -423,12 +402,6 @@
                 </button>
                 <p class="mt-1 text-xs text-gray-400">Opens the directory where results and logs are saved.</p>
               </div>
-              <!-- Max Passwords per Account -->
-              <div>
-                <label for="leakCheckMaxPasswords" class="block mb-2 text-sm font-medium text-text-primary">Maximum Passwords per Account (General/Found Accounts Only)</label>
-                <input id="leakCheckMaxPasswords" type="number" min="0" step="1" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="0">
-                <p class="mt-1 text-xs text-gray-400">If a username has more than this many general/found account passwords, they will not be saved to found_accounts.txt. AJC accounts are always saved regardless of password count. Set to 0 for unlimited.</p>
-              </div>
             </div>
           </div>
           <!-- End LeakCheck Tab Content -->
@@ -453,20 +426,18 @@
                 <p class="mt-1 text-xs text-gray-400">Select which .swf file to serve for game sessions. Requires restarting the game to take effect.</p>
               </div>
 
-              <!-- SWF File Info Display -->
-              <div id="swfFileInfo" class="mt-3 py-2 px-3 bg-tertiary-bg/30 rounded">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="text-sm font-medium text-text-primary">Current File:</span>
-                  <span id="currentSwfName" class="text-sm text-highlight-yellow">ajclient.swf</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-xs text-gray-400">Size:</span>
-                  <span id="currentSwfSize" class="text-xs text-gray-400">Calculating...</span>
-                </div>
+              <!-- Action Buttons -->
+              <div class="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" id="refreshSwfListBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
+                  <i class="fas fa-sync-alt mr-2"></i>Refresh List
+                </button>
+                <button type="button" id="reapplySwfBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
+                  <i class="fas fa-copy mr-2"></i>Reapply SWF
+                </button>
               </div>
 
               <!-- Auto Reapply Toggle -->
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded mt-4">
+              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded mt-3">
                 <label for="autoReapplySwfToggle" class="text-sm text-text-primary">Auto-detect and reapply SWF changes</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="autoReapplySwfToggle" class="sr-only peer">
@@ -477,22 +448,6 @@
                   <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
                 </label>
               </div>
-              <p class="mt-1 text-xs text-gray-400 -mt-3">When enabled, automatically detects when the selected .swf file changes and reapplies it (similar to auto-detection on application open).</p>
-
-              <!-- Action Buttons -->
-              <div class="mt-3 grid grid-cols-2 gap-2">
-                <button type="button" id="refreshSwfListBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
-                  <i class="fas fa-sync-alt mr-2"></i>Refresh List
-                </button>
-                <button type="button" id="reapplySwfBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
-                  <i class="fas fa-copy mr-2"></i>Reapply SWF
-                </button>
-              </div>
-              <p class="mt-1 text-xs text-gray-400">
-                <b>Refresh List:</b> Scans for new .swf files.
-                <br>
-                <b>Reapply SWF:</b> Forces the selected .swf to be copied to ajclient.swf.
-              </p>
             </div>
 
             <!-- Server Connection Settings -->

@@ -13,8 +13,8 @@ class SettingsSaver {
     }
 
     try {
-      const consoleLogLimit = Math.max(100, Math.min(10000, parseInt($modal.find('#consoleLogLimit').val()) || 1000));
-      const networkLogLimit = Math.max(100, Math.min(10000, parseInt($modal.find('#networkLogLimit').val()) || 1000));
+      const consoleLogLimit = Math.max(100, Math.min(10000, parseInt($modal.find('#consoleLogLimit').val()) || 500));
+      const networkLogLimit = Math.max(100, Math.min(10000, parseInt($modal.find('#networkLogLimit').val()) || 500));
 
       const initialSwfFile = $modal.data('initialSwfFile');
       const selectedSwfFile = $modal.find('#selectedSwfFile').val();
@@ -32,8 +32,8 @@ class SettingsSaver {
         { key: 'ui.hideGamePlugins', value: $modal.find('#hideGamePlugins').is(':checked') },
         { key: 'plugins.refreshBehavior', value: $modal.find('#pluginRefreshBehavior').val() },
         { key: 'plugins.usernameLogger.apiKey', value: $modal.find('#leakCheckApiKey').val() },
-        { key: 'plugins.usernameLogger.autoCheck.enabled', value: $modal.find('#leakCheckAutoCheck').is(':checked') },
-        { key: 'plugins.usernameLogger.autoCheck.threshold', value: parseInt($modal.find('#leakCheckThreshold').val()) || 100 },
+        { key: 'plugins.usernameLogger.autoCheck.enabled', value: (parseInt($modal.find('#leakCheckThreshold').val()) || 0) > 0 },
+        { key: 'plugins.usernameLogger.autoCheck.threshold', value: parseInt($modal.find('#leakCheckThreshold').val()) || 0 },
         { key: 'plugins.usernameLogger.collection.enabled', value: $modal.find('#leakCheckEnableLogging').is(':checked') },
         { key: 'plugins.usernameLogger.collection.collectNearby', value: $modal.find('#leakCheckCollectNearby').is(':checked') },
         { key: 'plugins.usernameLogger.collection.collectBuddies', value: $modal.find('#leakCheckCollectBuddies').is(':checked') },

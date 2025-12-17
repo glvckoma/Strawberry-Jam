@@ -21,8 +21,10 @@ class SettingsEventHandler {
     const $uninstallButton = $modal.find('#uninstallBtn');
     const $cacheSizeValue = $modal.find('#cacheSizeValue');
     const $cacheSizeDetails = $modal.find('#cacheSizeDetails');
-    const $leakCheckAutoCheck = $modal.find('#leakCheckAutoCheck');
     const $leakCheckThresholdContainer = $modal.find('#leakCheckThresholdContainer');
+    const $leakCheckEnableLogging = $modal.find('#leakCheckEnableLogging');
+    const $leakCheckCollectionScopes = $modal.find('#leakCheckCollectionScopes');
+    const $leakCheckCollectionBuddies = $modal.find('#leakCheckCollectionBuddies');
     const $leakCheckApiKey = $modal.find('#leakCheckApiKey');
     const $leakCheckApiKeyToggle = $modal.find('#leakCheckApiKeyToggle');
 
@@ -59,12 +61,6 @@ class SettingsEventHandler {
 
     $modal.find('#selectedSwfFile').on('change', function() {
       const selectedFile = $(this).val();
-      const $currentName = $modal.find('#currentSwfName');
-      const $currentSize = $modal.find('#currentSwfSize');
-      
-      $currentName.text(selectedFile);
-      $currentSize.text('Updating...');
-      
       uiManager.updateSwfFileInfo($modal, selectedFile);
     });
 
@@ -163,15 +159,23 @@ class SettingsEventHandler {
       }
     });
 
-    const toggleThresholdVisibility = () => {
-     if ($leakCheckAutoCheck.is(':checked')) {
-       $leakCheckThresholdContainer.css('opacity', '1').find('input').prop('disabled', false);
-     } else {
-       $leakCheckThresholdContainer.css('opacity', '0.5').find('input').prop('disabled', true);
-     }
+
+    const toggleCollectionScopesVisibility = () => {
+      if ($leakCheckEnableLogging.is(':checked')) {
+        $leakCheckCollectionScopes.css('opacity', '1').removeClass('pointer-events-none').find('input').prop('disabled', false);
+        $leakCheckCollectionBuddies.css('opacity', '1').removeClass('pointer-events-none').find('input').prop('disabled', false);
+      } else {
+        $leakCheckCollectionScopes.css('opacity', '0.5').addClass('pointer-events-none').find('input').prop('disabled', true);
+        $leakCheckCollectionBuddies.css('opacity', '0.5').addClass('pointer-events-none').find('input').prop('disabled', true);
+      }
     };
 
-    $leakCheckAutoCheck.on('change', toggleThresholdVisibility);
+    $leakCheckEnableLogging.on('change', toggleCollectionScopesVisibility);
+    toggleCollectionScopesVisibility();
+
+    if ($leakCheckThresholdContainer.length) {
+      $leakCheckThresholdContainer.css('opacity', '1').find('input').prop('disabled', false);
+    }
 
     const $customThemeEnabledToggle = $modal.find('#customThemeEnabledToggle');
     const $customThemeColorPicker = $modal.find('#customThemeColorPicker');
@@ -493,60 +497,11 @@ class SettingsEventHandler {
       }
     })
 
-    $modal.find('#resetGameTimeBtn').on('click', async () => {
-      const confirmed = await uiManager.showConfirmationModal(
-        'Reset Time Counters',
-        'Are you sure you want to reset all game time and uptime counters to zero? This action cannot be undone.',
-        'Reset Counters',
-        'Cancel'
-      );
-
-      if (confirmed) {
-        try {
-          await ipcRenderer.invoke('reset-game-time');
-          this.toastService.showInModal($modal, 'Game time and uptime have been reset.', 'success');
-        } catch (error) {
-          console.error('Error resetting game time:', error);
-          this.toastService.showInModal($modal, `Failed to reset time counters: ${error.message}`, 'error');
-        }
-      }
-    });
-
     const $checkForUpdatesBtn = $modal.find('#checkForUpdatesBtn');
     const $downloadUpdateBtn = $modal.find('#downloadUpdateBtn');
     const $manualUpdateStatusText = $modal.find('#manualUpdateStatusText');
     const $downloadProgressContainer = $modal.find('#downloadProgressContainer');
     const $downloadProgressBar = $modal.find('#downloadProgressBar');
-
-    const $autoUpdateDiagnosticsText = $('<p id="autoUpdateDiagnosticsText" class="mt-1 text-xs text-gray-400"></p>');
-    $manualUpdateStatusText.after($autoUpdateDiagnosticsText);
-
-    const refreshAutoUpdateDiagnostics = async () => {
-      try {
-        const enableAutoUpdates = await ipcRenderer.invoke('get-setting', 'updates.enableAutoUpdates');
-        const lastAutoCheckAt = await ipcRenderer.invoke('get-setting', 'updates.lastAutoCheckAt');
-        const lastAutoCheckStatus = await ipcRenderer.invoke('get-setting', 'updates.lastAutoCheckStatus');
-
-        const parts = [];
-        parts.push(enableAutoUpdates === false ? 'Automatic updates are disabled.' : 'Automatic updates are enabled.');
-
-        if (lastAutoCheckAt) {
-          parts.push(`Last background check: ${lastAutoCheckAt}.`);
-        } else {
-          parts.push('No background check has been recorded yet.');
-        }
-
-        if (lastAutoCheckStatus) {
-          parts.push(`Last check result: ${lastAutoCheckStatus}.`);
-        }
-
-        $autoUpdateDiagnosticsText.text(parts.join(' '));
-      } catch (error) {
-        $autoUpdateDiagnosticsText.text('Unable to load auto-update diagnostics.');
-      }
-    };
-
-    refreshAutoUpdateDiagnostics();
 
     const $viewUpdatesBtn = $modal.find('#viewUpdatesBtn');
     $viewUpdatesBtn.on('click', async () => {

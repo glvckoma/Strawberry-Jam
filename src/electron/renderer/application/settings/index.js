@@ -10,9 +10,14 @@ const DEFAULT_SETTINGS = {
   autoReconnect: true,
   preventAutoLogin: false,
 
+  // Network settings
+  'network.smartfoxServer': 'lb-iss02-classic-prod.animaljam.com',
+  'network.secureConnection': true,
+
   // New keys matching electron-store structure for UI settings
   'ui.hideGamePlugins': false,
   'ui.performServerCheckOnLaunch': true,
+  'ui.allowMultipleInstances': false,
 
   // Update settings
   'updates.enableAutoUpdates': true,
@@ -21,18 +26,27 @@ const DEFAULT_SETTINGS = {
   'game.selectedSwfFile': 'ajclient.swf',
   'game.autoReapplySwf': false,
 
+  // Plugin settings
+  'plugins.refreshBehavior': 'ask',
+
   // UsernameLogger and LeakCheck specific settings
   'leakCheck.enableLogging': true,
   'leakCheck.autoLeakCheck': false,
   'leakCheck.autoLeakCheckThreshold': 100,
   'usernameLogger.collectNearbyPlayers': true,
   'usernameLogger.collectBuddies': true,
-  'plugins.usernameLogger.collection.enabled': true, // Added default for this key
+  'plugins.usernameLogger.apiKey': '',
+  'plugins.usernameLogger.outputDir': '',
+  'plugins.usernameLogger.autoCheck.enabled': false,
+  'plugins.usernameLogger.autoCheck.threshold': 0,
+  'plugins.usernameLogger.collection.enabled': true,
+  'plugins.usernameLogger.collection.collectNearby': true,
+  'plugins.usernameLogger.collection.collectBuddies': true,
   'plugins.usernameLogger.maxPasswordsPerAccount': 0,
 
   // Log limiting settings
-  'logs.consoleLimit': 1000,
-  'logs.networkLimit': 1000,
+  'logs.consoleLimit': 500,
+  'logs.networkLimit': 500,
 
   // Custom theme color settings
   'ui.customThemeColor': null,
@@ -76,21 +90,31 @@ module.exports = class Settings {
         { key: 'leakCheckOutputDir', defaultValue: DEFAULT_SETTINGS.leakCheckOutputDir },
         { key: 'autoReconnect', defaultValue: DEFAULT_SETTINGS.autoReconnect },
         { key: 'preventAutoLogin', defaultValue: DEFAULT_SETTINGS.preventAutoLogin },
+        { key: 'network.smartfoxServer', defaultValue: DEFAULT_SETTINGS['network.smartfoxServer'] },
+        { key: 'network.secureConnection', defaultValue: DEFAULT_SETTINGS['network.secureConnection'] },
         { key: 'ui.hideGamePlugins', defaultValue: DEFAULT_SETTINGS['ui.hideGamePlugins'] },
         { key: 'ui.performServerCheckOnLaunch', defaultValue: DEFAULT_SETTINGS['ui.performServerCheckOnLaunch'] },
+        { key: 'ui.allowMultipleInstances', defaultValue: DEFAULT_SETTINGS['ui.allowMultipleInstances'] },
         { key: 'updates.enableAutoUpdates', defaultValue: DEFAULT_SETTINGS['updates.enableAutoUpdates'] },
         // Game client settings
         { key: 'game.selectedSwfFile', defaultValue: DEFAULT_SETTINGS['game.selectedSwfFile'] },
         { key: 'game.autoReapplySwf', defaultValue: DEFAULT_SETTINGS['game.autoReapplySwf'] },
+        // Plugin settings
+        { key: 'plugins.refreshBehavior', defaultValue: DEFAULT_SETTINGS['plugins.refreshBehavior'] },
         // Added UsernameLogger and LeakCheck settings
         { key: 'leakCheck.enableLogging', defaultValue: DEFAULT_SETTINGS['leakCheck.enableLogging'] },
         { key: 'leakCheck.autoLeakCheck', defaultValue: DEFAULT_SETTINGS['leakCheck.autoLeakCheck'] },
         { key: 'leakCheck.autoLeakCheckThreshold', defaultValue: DEFAULT_SETTINGS['leakCheck.autoLeakCheckThreshold'] },
         { key: 'usernameLogger.collectNearbyPlayers', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectNearbyPlayers'] },
         { key: 'usernameLogger.collectBuddies', defaultValue: DEFAULT_SETTINGS['usernameLogger.collectBuddies'] },
-        { key: 'plugins.usernameLogger.collection.enabled', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.collection.enabled'] }, // Added to load list
+        { key: 'plugins.usernameLogger.apiKey', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.apiKey'] },
+        { key: 'plugins.usernameLogger.outputDir', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.outputDir'] },
+        { key: 'plugins.usernameLogger.autoCheck.enabled', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.autoCheck.enabled'] },
+        { key: 'plugins.usernameLogger.autoCheck.threshold', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.autoCheck.threshold'] },
+        { key: 'plugins.usernameLogger.collection.enabled', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.collection.enabled'] },
+        { key: 'plugins.usernameLogger.collection.collectNearby', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.collection.collectNearby'] },
+        { key: 'plugins.usernameLogger.collection.collectBuddies', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.collection.collectBuddies'] },
         { key: 'plugins.usernameLogger.maxPasswordsPerAccount', defaultValue: DEFAULT_SETTINGS['plugins.usernameLogger.maxPasswordsPerAccount'] },
-        
         // Log limiting settings
         { key: 'logs.consoleLimit', defaultValue: DEFAULT_SETTINGS['logs.consoleLimit'] },
         { key: 'logs.networkLimit', defaultValue: DEFAULT_SETTINGS['logs.networkLimit'] },

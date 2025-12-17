@@ -79,8 +79,6 @@ class SettingsUIManager {
 
   async loadSwfFileSettings($modal, selectedFile) {
     const $dropdown = $modal.find('#selectedSwfFile');
-    const $currentName = $modal.find('#currentSwfName');
-    const $currentSize = $modal.find('#currentSwfSize');
 
     try {
       const swfFiles = await ipcRenderer.invoke('get-swf-files');
@@ -88,68 +86,66 @@ class SettingsUIManager {
       $dropdown.empty();
 
       swfFiles.forEach(file => {
-        const option = new Option(file.displayName, file.filename);
+        const sizeText = formatBytes(file.size);
+        const optionText = `${file.displayName} (${sizeText})`;
+        const option = new Option(optionText, file.filename);
         option.selected = file.filename === selectedFile;
         $dropdown.append(option);
       });
 
       $dropdown.val(selectedFile);
-
-      const currentFile = swfFiles.find(f => f.filename === selectedFile);
-      if (currentFile) {
-        $currentName.text(currentFile.filename);
-        $currentSize.text(formatBytes(currentFile.size));
-      } else {
-        $currentName.text(selectedFile || 'N/A');
-        $currentSize.text('Unknown');
-      }
     } catch (error) {
       console.error('Error loading SWF files:', error);
       $dropdown.html(`
         <option value="ajclient-prod.swf">Production Client</option>
       `);
       $dropdown.val(selectedFile);
-      $currentName.text(selectedFile);
-      $currentSize.text('Error loading');
     }
   }
 
   async updateSwfFileInfo($modal, filename) {
-    const $currentSize = $modal.find('#currentSwfSize');
+    const $dropdown = $modal.find('#selectedSwfFile');
     
     try {
       const swfFiles = await ipcRenderer.invoke('get-swf-files');
-      const fileInfo = swfFiles.find(f => f.filename === filename);
       
-      if (fileInfo) {
-        $currentSize.text(formatBytes(fileInfo.size));
-      } else {
-        $currentSize.text('Unknown');
-      }
+      $dropdown.find('option').each(function() {
+        const $option = $(this);
+        if ($option.val() === filename) {
+          const fileInfo = swfFiles.find(f => f.filename === filename);
+          if (fileInfo) {
+            const sizeText = formatBytes(fileInfo.size);
+            $option.text(`${fileInfo.displayName} (${sizeText})`);
+          }
+        }
+      });
     } catch (error) {
       console.error('Error updating SWF file info:', error);
-      $currentSize.text('Error loading');
     }
   }
 
   async refreshActiveSwfInfo($modal) {
-    const $currentName = $modal.find('#currentSwfName');
-    const $currentSize = $modal.find('#currentSwfSize');
+    const $dropdown = $modal.find('#selectedSwfFile');
     
     try {
       const activeInfo = await ipcRenderer.invoke('get-active-swf-info');
       
       if (activeInfo && activeInfo.active) {
-        $currentName.text(activeInfo.active);
-        $currentSize.text(formatBytes(activeInfo.size));
-      } else {
-        $currentName.text('Unknown');
-        $currentSize.text('Error loading');
+        const swfFiles = await ipcRenderer.invoke('get-swf-files');
+        const fileInfo = swfFiles.find(f => f.filename === activeInfo.active);
+        
+        if (fileInfo) {
+          $dropdown.find('option').each(function() {
+            const $option = $(this);
+            if ($option.val() === activeInfo.active) {
+              const sizeText = formatBytes(activeInfo.size);
+              $option.text(`${fileInfo.displayName} (${sizeText})`);
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('Error refreshing active SWF info:', error);
-      $currentName.text('Error');
-      $currentSize.text('Error loading');
     }
   }
 

@@ -1,8 +1,8 @@
 {
   "name": "Advertising",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Auto Advertising for Animal Jam.",
-  "author": "sxip",
+  "author": "sxip x Glockoma",
   "main": "index.html",
   "type": "ui",
   "runInBackground": true

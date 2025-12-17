@@ -1,11 +1,9 @@
 {
   "name": "TFD Automation",
-  "description": "Automates The Forgotten Desert (TFD) quest creation, gem collection, reward collection, and quest exit.",
+  "description": "Automates The Forgotten Desert (TFD).",
   "main": "index.html",
   "author": "Glockoma",
   "type": "ui",
-  "tags": [
-    "beta"
-  ],
+  "version": "2.0.0",
   "runInBackground": true
 }

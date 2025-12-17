@@ -4,8 +4,6 @@
   "main": "index.html",
   "author": "Glockoma",
   "type": "ui",
-  "tags": [
-    "beta"
-  ],
+  "version": "1.0.0",
   "runInBackground": true
 }
