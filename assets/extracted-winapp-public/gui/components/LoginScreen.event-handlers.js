@@ -133,6 +133,26 @@
         this.loginScreen.settingsPanel.classList.toggle('show');
       });
 
+      const settingsTabs = this.loginScreen.shadowRoot.querySelectorAll('.settings-tab');
+      const settingsTabContents = this.loginScreen.shadowRoot.querySelectorAll('.settings-tab-content');
+      
+      if (settingsTabs.length > 0 && settingsTabContents.length > 0) {
+        settingsTabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            const targetTab = tab.getAttribute('data-tab');
+            
+            settingsTabs.forEach(t => t.classList.remove('active'));
+            settingsTabContents.forEach(content => content.classList.remove('active'));
+            
+            tab.classList.add('active');
+            const targetContent = this.loginScreen.shadowRoot.getElementById(`tab-${targetTab}`);
+            if (targetContent) {
+              targetContent.classList.add('active');
+            }
+          });
+        });
+      }
+
       if (this.loginScreen.devtoolsBtn) {
         this.loginScreen.devtoolsBtn.addEventListener('click', () => {
           if (window.ipc && window.ipc.send) {

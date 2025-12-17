@@ -345,9 +345,6 @@
             color: #E0E0E0;
           }
 
-          :host(.dark-mode) #settings-panel h3 {
-            color: #E0E0E0;
-          }
 
           :host(.dark-mode) #settings-panel h4 {
             color: #E0E0E0;
@@ -711,6 +708,106 @@
             opacity: 1;
             margin-top: 5px;
           }
+
+          .settings-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--theme-settings-border);
+          }
+
+          .settings-tab {
+            flex: 1;
+            padding: 8px 12px;
+            background-color: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #6E4B37;
+            font-family: CCDigitalDelivery;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: -2px;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+          }
+
+          .settings-tab:focus,
+          .settings-tab:focus-visible,
+          .settings-tab:active,
+          .settings-tab:focus-within {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent;
+          }
+
+          .settings-tab:hover {
+            color: var(--theme-primary);
+            background-color: var(--theme-settings-hover);
+          }
+
+          .settings-tab.active {
+            color: var(--theme-primary);
+            border-bottom-color: var(--theme-primary);
+            font-weight: bold;
+          }
+
+          .settings-tab-content {
+            display: none;
+          }
+
+          .settings-tab-content.active {
+            display: block;
+          }
+
+          .settings-subsection {
+            margin-bottom: 15px;
+          }
+
+          .settings-subsection h5 {
+            font-family: CCDigitalDelivery;
+            color: #805B47;
+            font-size: 12px;
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-weight: bold;
+          }
+
+          .shortcuts-note {
+            font-size: 10px;
+            padding: 8px;
+            color: #8B6914;
+            font-style: italic;
+            margin-bottom: 12px;
+            text-align: center;
+            background-color: rgba(255, 217, 0, 0.1);
+            border-radius: 4px;
+          }
+
+          :host(.dark-mode) .settings-tab {
+            color: #E0E0E0;
+          }
+
+          :host(.dark-mode) .settings-tab:hover {
+            color: var(--theme-primary);
+          }
+
+          :host(.dark-mode) .settings-tab.active {
+            color: var(--theme-primary);
+          }
+
+          :host(.dark-mode) .settings-subsection h5 {
+            color: #E0E0E0;
+          }
+
+          :host(.dark-mode) .shortcuts-note {
+            color: #E0E0E0;
+          }
           
         </style>
         <div id="box-background"></div>
@@ -751,29 +848,75 @@
         </div>
         <div id="settings-panel">
           <h3>Settings</h3>
-          <div class="settings-group">
-            <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 0; margin-bottom: 5px; text-align: left;">General</h4>
-            <div class="settings-item">
-              <input type="checkbox" id="uuid-spoofer-toggle" style="vertical-align: middle;">
-              <label for="uuid-spoofer-toggle" style="vertical-align: middle;">Enable UUID Spoofing</label>
-              <div id="uuid-spoofing-warning" class="hidden" style="margin-top: 5px; padding: 6px; background-color: rgba(255, 217, 0, 0.1); border-left: 3px solid rgba(255, 176, 0, 0.6); border-radius: 4px; font-size: 11px; line-height: 1.4;">
-                Warning: UUID spoofing will not work with accounts that have 2FA enabled.
+          <div class="settings-tabs">
+            <button class="settings-tab active" data-tab="general">General</button>
+            <button class="settings-tab" data-tab="theme">Theme</button>
+            <button class="settings-tab" data-tab="shortcuts">Shortcuts</button>
+          </div>
+
+          <div class="settings-tab-content active" id="tab-general">
+            <div class="settings-subsection">
+              <h5>Enhancements</h5>
+              <div class="settings-item">
+                <input type="checkbox" id="uuid-spoofer-toggle" style="vertical-align: middle;">
+                <label for="uuid-spoofer-toggle" style="vertical-align: middle;">Enable UUID Spoofing</label>
+                <div id="uuid-spoofing-warning" class="hidden" style="margin-top: 5px; padding: 6px; background-color: rgba(255, 217, 0, 0.1); border-left: 3px solid rgba(255, 176, 0, 0.6); border-radius: 4px; font-size: 11px; line-height: 1.4;">
+                  Warning: UUID spoofing will not work with accounts that have 2FA enabled.
+                </div>
+              </div>
+              <div class="settings-item">
+                <input type="checkbox" id="background-processing-toggle" style="vertical-align: middle;">
+                <label for="background-processing-toggle" style="vertical-align: middle;">Enable background processing</label>
+                <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                  Allows plugins to continue running when the game window is minimized.
+                </div>
+              </div>
+              <div class="settings-item">
+                <label for="server-swap-select" style="vertical-align: middle; margin-right: 8px;">Server Swap:</label>
+                <select id="server-swap-select" style="vertical-align: middle; padding: 2px 4px; border-radius: 4px; border: 1px solid var(--theme-settings-border); background-color: white; color: #333; font-family: CCDigitalDelivery; font-size: 11px;">
+                  <option value="">Default (US)</option>
+                  <option value="en">English (US)</option>
+                  <option value="fr">French</option>
+                  <option value="de">German</option>
+                  <option value="es">Spanish</option>
+                  <option value="pt">Portuguese</option>
+                </select>
               </div>
             </div>
-            <div class="settings-item">
-              <input type="checkbox" id="background-processing-toggle" style="vertical-align: middle;">
-              <label for="background-processing-toggle" style="vertical-align: middle;">Enable background processing</label>
-              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                Allows plugins to continue running when the game window is minimized.
+            <div class="settings-subsection">
+              <h5>UI Elements</h5>
+              <div class="settings-item">
+                <input type="checkbox" id="dark-mode-toggle" style="vertical-align: middle;">
+                <label for="dark-mode-toggle" style="vertical-align: middle;">Dark Mode</label>
+                <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                  Switches background colors to a darker theme for better nighttime viewing.
+                </div>
+              </div>
+              <div class="settings-item">
+                <input type="checkbox" id="show-import-accounts-toggle" style="vertical-align: middle;">
+                <label for="show-import-accounts-toggle" style="vertical-align: middle;">Show Import Accounts</label>
+                <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                  Shows the import button for uploading accounts from .txt files
+                </div>
+              </div>
+              <div class="settings-item">
+                <input type="checkbox" id="show-wheel-automation-toggle" style="vertical-align: middle;">
+                <label for="show-wheel-automation-toggle" style="vertical-align: middle;">Show Wheel Automation</label>
+                <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                  Shows the auto wheel component for automated account cycling
+                </div>
+              </div>
+              <div class="settings-item">
+                <input type="checkbox" id="hide-devtools-badge-toggle" style="vertical-align: middle;">
+                <label for="hide-devtools-badge-toggle" style="vertical-align: middle;">Hide DevTools Badge</label>
+                <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
+                  Hides the error badge on the DevTools button even when errors are detected.
+                </div>
               </div>
             </div>
-            <div class="settings-item">
-              <input type="checkbox" id="dark-mode-toggle" style="vertical-align: middle;">
-              <label for="dark-mode-toggle" style="vertical-align: middle;">Dark Mode</label>
-              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                Switches background colors to a darker theme for better nighttime viewing.
-              </div>
-            </div>
+          </div>
+
+          <div class="settings-tab-content" id="tab-theme">
             <div class="settings-item" id="custom-theme-color-item">
               <input type="checkbox" id="custom-theme-enabled-toggle" style="vertical-align: middle;">
               <label for="custom-theme-enabled-toggle" style="vertical-align: middle;">Enable Custom Theme Color</label>
@@ -809,78 +952,26 @@
                 </div>
               </div>
             </div>
-            <div class="settings-item">
-              <label for="server-swap-select" style="vertical-align: middle; margin-right: 8px;">Server Swap:</label>
-              <select id="server-swap-select" style="vertical-align: middle; padding: 2px 4px; border-radius: 4px; border: 1px solid var(--theme-settings-border); background-color: white; color: #333; font-family: CCDigitalDelivery; font-size: 11px;">
-                <option value="">Default (US)</option>
-                <option value="en">English (US)</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
-                <option value="es">Spanish</option>
-                <option value="pt">Portuguese</option>
-              </select>
-            </div>
-            <div class="settings-item">
-              <input type="checkbox" id="hide-devtools-badge-toggle" style="vertical-align: middle;">
-              <label for="hide-devtools-badge-toggle" style="vertical-align: middle;">Hide DevTools Badge</label>
-              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                Hides the error badge on the DevTools button even when errors are detected.
-              </div>
-            </div>
           </div>
-          <div class="settings-group">
-            <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 10px; margin-bottom: 5px; text-align: left;">UI Components</h4>
-            <div class="settings-item">
-              <input type="checkbox" id="show-import-accounts-toggle" style="vertical-align: middle;">
-              <label for="show-import-accounts-toggle" style="vertical-align: middle;">Show Import Accounts</label>
-              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                Shows the import button for uploading accounts from .txt files
-              </div>
-            </div>
-            <div class="settings-item">
-              <input type="checkbox" id="show-wheel-automation-toggle" style="vertical-align: middle;">
-              <label for="show-wheel-automation-toggle" style="vertical-align: middle;">Show Wheel Automation</label>
-              <div style="margin-top: 2px; padding: 4px; font-size: 10px; line-height: 1.3; color: #6E4B37; font-style: italic;">
-                Shows the auto wheel component for automated account cycling
-              </div>
-            </div>
-          </div>
-          <div class="settings-group">
-            <h4 style="font-family: CCDigitalDelivery; color: #6E4B37; font-size: 13px; margin-top: 10px; margin-bottom: 5px; text-align: left;">Shortcuts</h4>
-            
-            <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">General:</h5>
-            <div class="settings-item" style="font-size: 10px; padding-left: 10px; color: #8B6914; font-style: italic; margin-bottom: 6px;">Note: Click on the left or right side panels first to focus the window before using shortcuts</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + I: Toggle Developer Tools</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + R: Reload / Logout (Return to Login Screen)</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + H: Toggle Hide UI Elements (Settings/Report Buttons & User Tray)</div>
- 
-            <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">In-Game:</h5>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">F5: Toggle In-Game HUD</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">F10: Toggle Mod Menu</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Equals / Numpad Add: Zoom In</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Minus / Numpad Subtract: Zoom Out</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + P: Become a phantom (client side only) - On/Off</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + C: Clone A Friend - Open</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + T: Teleportation - Open</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + R: Room User Scan - Open</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + M: Trade Marketplace - Open</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + X: Headless mode - On/Off</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + N: No Clip - On/Off</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + W: WASD movement mode - On/Off</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + D: Den on Login - On/Off + Textbox for username</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + -: Disable Startup Popups On/Off</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + G: Always Open Currency On/Off</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + S: Wheel Auto Spin - On/Off</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + E: Shop Explorer - On/Off</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Shift + Enter: Private message system</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + U: Private message Toggle - On/Off</div>
-            <div class="settings-item" style="font-size: 10px; padding: 4px 8px; margin-top: -6px; background-color: rgba(0,0,0,0.4); border-radius: 4px; color: white; display: inline-block; margin-left: 10px;">Credits to&nbsp;<span style="color:purple; font-weight:bold;">Doc</span>&nbsp;&nbsp;<span style="color:pink; font-weight:bold;"></span></div>
 
-            <h5 style="font-family: CCDigitalDelivery; color: #805B47; font-size: 12px; margin-top: 8px; margin-bottom: 4px; font-weight: bold;">Windows/Linux:</h5>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Alt + Enter / F11: Toggle Fullscreen</div>
-            <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Q / Alt + F4: Quit Application</div>
- 
-            <!-- macOS shortcuts removed: application is Windows/Linux only -->
+          <div class="settings-tab-content" id="tab-shortcuts">
+            <div class="shortcuts-note">Note: Click on the left or right side panels first to focus the window before using shortcuts</div>
+            <div class="settings-subsection">
+              <h5>General:</h5>
+              <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + I: Toggle Developer Tools</div>
+              <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + R: Reload / Logout (Return to Login Screen)</div>
+              <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Shift + H: Toggle Hide UI Elements (Settings/Report Buttons & User Tray)</div>
+            </div>
+            <div class="settings-subsection">
+              <h5>In-Game:</h5>
+              <div class="settings-item" style="font-size: 11px; padding-left: 10px;">F5: Toggle In-Game HUD</div>
+              <div class="settings-item" style="font-size: 11px; padding-left: 10px;">F10: Toggle Mod Menu</div>
+            </div>
+            <div class="settings-subsection">
+              <h5>Windows/Linux:</h5>
+              <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Alt + Enter / F11: Toggle Fullscreen</div>
+              <div class="settings-item" style="font-size: 11px; padding-left: 10px;">Ctrl + Q / Alt + F4: Quit Application</div>
+            </div>
           </div>
         </div>
  
