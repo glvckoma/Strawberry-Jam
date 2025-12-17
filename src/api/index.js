@@ -103,11 +103,49 @@ function getActualApiPort() {
   return actualApiPort
 }
 
+/**
+ * Gracefully close the API server
+ * @returns {Promise<void>}
+ */
+function closeServer() {
+  return new Promise((resolve) => {
+    if (global.apiServer) {
+      global.apiServer.close(() => {
+        console.log('[API Server] Server closed successfully')
+        global.apiServer = null
+        actualApiPort = null
+        resolve()
+      })
+    } else {
+      resolve()
+    }
+  })
+}
+
+function setupGracefulShutdown() {
+  const shutdown = async (signal) => {
+    console.log(`[API Server] Received ${signal}, closing server...`)
+    await closeServer()
+    process.exit(0)
+  }
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
+  process.on('SIGINT', () => shutdown('SIGINT'))
+  
+  process.on('message', (message) => {
+    if (message && message.type === 'shutdown') {
+      shutdown('shutdown-message').catch(() => process.exit(0))
+    }
+  })
+}
+
 // Start the server
 startServer().catch(error => {
   console.error('[API Server] Failed to start:', error.message)
   process.exit(1)
 })
 
-// Export the port getter for IPC access
-module.exports = { getActualApiPort }
+setupGracefulShutdown()
+
+// Export the port getter and cleanup function for IPC access
+module.exports = { getActualApiPort, closeServer }

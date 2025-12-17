@@ -534,7 +534,7 @@ module.exports = class Dispatch {
    */
   clearInterval (interval) {
     clearInterval(interval)
-    this.intervals.clear(interval)
+    this.intervals.delete(interval)
   }
 
   /**

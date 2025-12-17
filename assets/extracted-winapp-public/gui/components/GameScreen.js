@@ -470,18 +470,12 @@
       });
 
       this.webViewElem.addEventListener("ipc-message", async event => {
-        // [Strawberry Jam Debug] Log all IPC messages from the webview to diagnose communication issues.
-        console.log('[GAME IPC] IPC Message Received from game webview:', event.channel, event.args);
-
         switch (event.channel) {
           case "signupCompleted": {
-            console.log(`[GAME IPC] Account signup completed`);
             const {username, password} = event.args[0];
-            console.log(`[GAME IPC] New account created: ${username}`);
             this.dispatchEvent(new CustomEvent("accountCreated", {detail: {username, password}}));
 
             try {
-              console.log(`[GAME IPC] Attempting to authenticate new account: ${username}`);
               const {flashVars, userData} = await globals.authenticateWithPassword(username, password);
 
               const data = {
@@ -493,9 +487,7 @@
                 rememberMe: false,
               };
 
-              console.log(`[GAME IPC] Sending loginSucceeded for new account: ${username}`);
               window.ipc.send("loginSucceeded", data);
-              console.log(`[GAME IPC] Loading game for new account`);
               this.loadGame(flashVars);
             }
             catch (err) {
@@ -505,26 +497,19 @@
             break;
           }
           case "initialized": {
-            console.log(`[GAME IPC] Game initialized successfully`);
+            console.log(`[GAME] Game initialized successfully`);
             setTimeout(() => {
               this.classList.add("no-transition-delays");
             }, 1000);
             this.gameFrameElem.classList.remove("logged-out");
-            // Show UserTray when game is loaded
             window.UserTrayManager.show();
-            console.log(`[GAME IPC] Dispatching gameLoaded event`);
             this.dispatchEvent(new CustomEvent("gameLoaded"));
           } break;
           case "reloadGame": {
             const reloadSwf = event.args[0];
-            console.log(`[GAME IPC] Game reload requested - reloadSwf: ${reloadSwf}`);
             if (reloadSwf) {
               if (event.args[1] && (event.args[1].ip || event.args[1].sessionId)) {
                 const reloadData = event.args[1];
-                console.log(`[GAME IPC] Reload with new server data:`, {
-                  ip: reloadData.ip,
-                  sessionId: reloadData.sessionId
-                });
                 globals.reloadFlashVars = {};
                 if (reloadData.ip) {
                   globals.reloadFlashVars.smartfoxServer = reloadData.ip;
@@ -534,25 +519,17 @@
                   globals.reloadFlashVars.gameSessionId = reloadData.sessionId;
                 }
               }
-              console.log(`[GAME IPC] Executing game reload`);
               this.reloadGame();
             }
             else {
-              console.log(`[GAME IPC] Closing game (no SWF reload)`);
               this.closeGame();
             }
           } break;
           case "reportError": {
-            console.log(`[GAME IPC] Error reported from game client:`, event.args[0]);
             globals.reportError("gameClient", event.args[0]);
           } break;
           case "printImage": {
             const imageData = event.args[0];
-            console.log(`[GAME IPC] Print image request:`, {
-              width: imageData.width,
-              height: imageData.height,
-              hasImage: !!imageData.image
-            });
             window.ipc.send("systemCommand", {command: "print", width: imageData.width, height: imageData.height, image: imageData.image});
           } break;
         }
@@ -564,28 +541,9 @@
     }
 
     loadGame(flashVars, theme) {
-      console.log(`[GAME LOADING] ============= Starting game loading process =============`);
-      console.log(`[GAME LOADING] Game web client URL: ${globals.config.gameWebClient}`);
-      console.log(`[GAME LOADING] FlashVars received for game loading:`, {
-        deploy_version: flashVars.deploy_version,
-        smoke_version: flashVars.smoke_version,
-        smartfoxServer: flashVars.smartfoxServer,
-        blueboxServer: flashVars.blueboxServer,
-        blueboxPort: flashVars.blueboxPort,
-        smartfoxPort: flashVars.smartfoxPort,
-        clientURL: flashVars.clientURL,
-        content: flashVars.content,
-        df: flashVars.df ? flashVars.df.substr(0, 8) + '...' : 'NOT SET',
-        locale: flashVars.locale,
-        username: flashVars.username,
-        auth_token: flashVars.auth_token ? '[SET]' : '[NOT SET]',
-        webRefPath: flashVars.webRefPath
-      });
-      
       if (!this.userTray) {
         this.userTray = window.UserTrayManager.create(theme);
       }
-      // prevent race condition with reloads
       if (this.closeGameTimeout) {
         clearTimeout(this.closeGameTimeout);
         this.closeGameTimeout = null;
@@ -593,18 +551,15 @@
       }
 
       this.webViewElem.classList.remove("hidden");
-      console.log(`[SWF LOADING] Loading game web client: ${globals.config.gameWebClient}`);
+      console.log(`[SWF] Loading game client`);
       this.webViewElem.src = globals.config.gameWebClient;
       this.webViewElem.addEventListener("dom-ready", () => {
-        console.log(`[GAME LOADING] WebView DOM ready, preparing to send FlashVars`);
         if (globals.config && globals.config.showTools) {
           if (this.webViewElem && !this.webViewElem.isDestroyed() && !this.webViewElem.isDevToolsOpened()) {
-            console.log(`[GAME LOADING] Opening DevTools for game webview`);
             this.webViewElem.openDevTools({ mode: 'detach' });
           }
         }
-        // Use the flashVars as-is without forcing locale to 'en'
-        console.log(`[SWF LOADING] Sending flashVarsReady event to webview with final FlashVars`);
+        console.log(`[SWF] FlashVars ready`);
         this.webViewElem.send("flashVarsReady", flashVars);
 
         // No longer sending 'game-webview-ready' for DevTools purposes, GameScreen handles its own.
@@ -613,9 +568,8 @@
         // console.log('[GameScreen] Sent game-webview-ready to main process with ID:', gameWebContentsId);
       }, {once: true});
 
-      // Sometimes loading the URL just fails, retry once then display an oops
       this.webViewElem.addEventListener("did-fail-load", event => {
-        console.error(`[SWF LOADING] WebView failed to load:`, {
+        console.error(`[SWF] WebView failed to load:`, {
           validatedURL: event.validatedURL,
           errorCode: event.errorCode,
           errorDescription: event.errorDescription,

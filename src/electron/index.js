@@ -46,6 +46,7 @@ const crypto = require('crypto');
 const { fork, spawn } = require('child_process');
 const Store = require('electron-store');
 const os = require('os');
+const chokidar = require('chokidar');
 const processManager = require('../utils/ProcessManager');
 const setupIpcHandlers = require('./ipcHandlers');
 // const keytar = require('keytar'); // Will be required in constructor
@@ -220,7 +221,8 @@ class Electron {
     this._apiProcess = null
     this._apiPort = null
     this._store = new Store({ schema });
-    this.keytar = require('keytar'); // Initialize keytar as an instance property
+    this.keytar = require('keytar');
+    this._swfFileWatcher = null;
 
     const appNameForKeytar = app.getName();
     KEYTAR_SERVICE_LEAK_CHECK_API_KEY = `${appNameForKeytar}-leak-check-api-key`;
@@ -239,7 +241,9 @@ class Electron {
     setupIpcHandlers(this); // Call the new IPC setup function
     this.pluginWindows = new Map();
     this._backgroundPlugins = new Set();
+    this._backgroundIntervals = new Map();
     this._setupFileOpeningIPC();
+    this._setupCleanupHandlers();
     this.manualCheckInProgressRef = { value: false };
     this.autoUpdateService = new AutoUpdateService(app, this._store, this._window, this.manualCheckInProgressRef);
     this.appStateService = new AppStateService(app, DEFAULT_APP_STATE);
@@ -424,6 +428,23 @@ class Electron {
           this._window.webContents.send('plugin-window-closed', name);
         }
       }
+
+      if (this._backgroundIntervals.has(name)) {
+        this._backgroundIntervals.delete(name);
+      }
+
+      try {
+        if (pluginWindow.webContents && !pluginWindow.webContents.isDestroyed()) {
+          pluginWindow.webContents.executeJavaScript(`
+            if (window._backgroundKeepAliveInterval) {
+              clearInterval(window._backgroundKeepAliveInterval);
+              window._backgroundKeepAliveInterval = null;
+            }
+          `).catch(() => {});
+        }
+      } catch (err) {
+      }
+
       this.pluginWindows.delete(name);
       this._backgroundPlugins.delete(name);
     });
@@ -644,15 +665,13 @@ class Electron {
     this._window.webContents.setWindowOpenHandler((details) => this._createWindow(details))
 
     this._window.on('closed', () => {
-      const mainWindowId = this._window ? this._window.id : -1; // Should be null here, but good for clarity
+      const mainWindowId = this._window ? this._window.id : -1;
 
       let closedCount = 0;
       BrowserWindow.getAllWindows().forEach(win => {
-        // Check if it's not the main window (which is already closing/closed)
-        // and ensure it's not already destroyed.
         if (win && typeof win.id === 'number' && win.id !== mainWindowId && !win.isDestroyed()) {
           try {
-            win.destroy(); // More forceful than close()
+            win.destroy();
             closedCount++;
           } catch (e) {
             console.error(`[Main Window Closed] Error destroying plugin window ${win.getTitle()}:`, e);
@@ -665,6 +684,15 @@ class Electron {
       }
       if (this._backgroundPlugins) {
         this._backgroundPlugins.clear();
+      }
+
+      if (this._swfFileWatcher) {
+        try {
+          this._swfFileWatcher.close();
+          this._swfFileWatcher = null;
+        } catch (error) {
+          console.error('[SWF Watcher] Error closing file watcher:', error);
+        }
       }
       
       this._window = null;
@@ -721,14 +749,112 @@ class Electron {
     this.autoUpdateService.initialize();
 
     try {
+      const autoReapplyEnabled = this._store.get('game.autoReapplySwf');
       const selectedFile = this._store.get('game.selectedSwfFile');
-      if (selectedFile) {
-        logManager.log(`[Auto Reapply] Auto-reapplying SWF file: ${selectedFile}`, 'main', logManager.logLevels.INFO);
+      
+      if (autoReapplyEnabled && selectedFile) {
         const FilesController = require('../api/controllers/FilesController');
-        await FilesController.replaceSwfFile(selectedFile);
+        const sourceFilePath = path.join(FilesController.optionsDir, selectedFile);
+        
+        if (fs.existsSync(sourceFilePath)) {
+          const stats = fs.statSync(sourceFilePath);
+          const currentModifiedTime = stats.mtime.getTime();
+          const lastModifiedKey = `game.swfLastModified.${selectedFile}`;
+          const lastModifiedTime = this._store.get(lastModifiedKey);
+          
+          if (!lastModifiedTime || currentModifiedTime > lastModifiedTime) {
+            logManager.log(`[Auto Reapply] Detected modification to ${selectedFile}, reapplying...`, 'main', logManager.logLevels.INFO);
+            const result = await FilesController.replaceSwfFile(selectedFile);
+            
+            if (result.success) {
+              this._store.set(lastModifiedKey, currentModifiedTime);
+              
+              if (this._window && this._window.webContents && !this._window.isDestroyed()) {
+                this._window.webContents.send('swf-auto-reapplied');
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Error applying SWF on launch:', error);
+    }
+
+    this._setupSwfFileWatcher();
+  }
+
+  _setupSwfFileWatcher() {
+    try {
+      const FilesController = require('../api/controllers/FilesController');
+      const optionsDir = FilesController.optionsDir;
+
+      if (!optionsDir || !fs.existsSync(optionsDir)) {
+        return;
+      }
+
+      if (this._swfFileWatcher) {
+        this._swfFileWatcher.close();
+      }
+
+      const autoReapplyEnabled = this._store.get('game.autoReapplySwf');
+      if (!autoReapplyEnabled) {
+        return;
+      }
+
+      this._swfFileWatcher = chokidar.watch(path.join(optionsDir, '*.swf'), {
+        ignored: /(^|[\/\\])\../,
+        persistent: true,
+        ignoreInitial: true,
+        awaitWriteFinish: {
+          stabilityThreshold: 500,
+          pollInterval: 100
+        }
+      });
+
+      this._swfFileWatcher.on('change', async (filePath) => {
+        try {
+          const autoReapplyEnabled = this._store.get('game.autoReapplySwf');
+          if (!autoReapplyEnabled) {
+            return;
+          }
+
+          const filename = path.basename(filePath);
+          const stats = fs.statSync(filePath);
+          const currentModifiedTime = stats.mtime.getTime();
+          const lastModifiedKey = `game.swfLastModified.${filename}`;
+          const lastModifiedTime = this._store.get(lastModifiedKey);
+
+          if (lastModifiedTime && currentModifiedTime <= lastModifiedTime) {
+            return;
+          }
+
+          const selectedFile = this._store.get('game.selectedSwfFile');
+          if (selectedFile === filename) {
+            logManager.log(`[SWF Watcher] Detected modification to ${filename}, reapplying...`, 'main', logManager.logLevels.INFO);
+            
+            const result = await FilesController.replaceSwfFile(filename);
+            if (result.success) {
+              this._store.set(lastModifiedKey, currentModifiedTime);
+              
+              if (this._window && this._window.webContents && !this._window.isDestroyed()) {
+                this._window.webContents.send('swf-auto-reapplied');
+              }
+            } else {
+              console.error(`[SWF Watcher] Failed to reapply ${filename}:`, result.error);
+            }
+          }
+        } catch (error) {
+          console.error('[SWF Watcher] Error handling file change:', error);
+        }
+      });
+
+      this._swfFileWatcher.on('error', (error) => {
+        console.error('[SWF Watcher] Watcher error:', error);
+      });
+
+      logManager.log('[SWF Watcher] File watcher initialized', 'main', logManager.logLevels.INFO);
+    } catch (error) {
+      console.error('[SWF Watcher] Failed to setup file watcher:', error);
     }
   }
 
@@ -751,7 +877,6 @@ class Electron {
   }
   
   _enableBackgroundProcessing(window, name) {
-    
     try {
       if (window.webContents && !window.webContents.isDestroyed()) {
         window.webContents.backgroundThrottling = false;
@@ -770,10 +895,14 @@ class Electron {
                 }
               }
             }, 1000);
-            
           }
+          return window._backgroundKeepAliveInterval;
         })();
-      `).catch(err => {
+      `).then((intervalId) => {
+        if (intervalId) {
+          this._backgroundIntervals.set(name, intervalId);
+        }
+      }).catch(err => {
       });
     } catch (err) {
     }
@@ -802,7 +931,6 @@ class Electron {
 
   _setupFileOpeningIPC() {
     ipcMain.on('open-file-in-editor', (event, relativePath) => {
-      // The event sender is a plugin window. We can find its path.
       const pluginWindow = BrowserWindow.fromWebContents(event.sender);
       if (!pluginWindow) return;
 
@@ -812,11 +940,6 @@ class Electron {
 
       for (const [name, window] of allWindows.entries()) {
         if (window === pluginWindow) {
-          // We need to get the original path from when it was opened.
-          // This requires a slight modification to how we store plugin data or window info.
-          // For now, let's assume a way to get the base path.
-          // A simple way is to find the plugin by its name in the main app's dispatch.
-          // This is a bit of a workaround. A better way would be to store the path with the window.
           const mainAppWebContents = this._window.webContents;
           mainAppWebContents.send('get-plugin-path', pluginName);
           
@@ -831,6 +954,99 @@ class Electron {
           return;
         }
       }
+    });
+  }
+
+  _setupCleanupHandlers() {
+    const performCleanup = async (signal) => {
+      if (this._isQuitting) {
+        return;
+      }
+      this._isQuitting = true;
+
+      if (signal) {
+        logManager.log(`[Electron] ${signal} received, starting cleanup`, 'main');
+      } else {
+        logManager.log('[Electron] will-quit event triggered, starting cleanup', 'main');
+      }
+
+      const cleanupPromises = [];
+
+      if (this._window && !this._window.isDestroyed() && this._window.webContents) {
+        cleanupPromises.push(
+          new Promise((resolve) => {
+            this._window.webContents.send('app-cleanup-request');
+            setTimeout(resolve, 500);
+          })
+        );
+      }
+
+      for (const [name, window] of this.pluginWindows.entries()) {
+        if (window && !window.isDestroyed() && window.webContents) {
+          try {
+            window.webContents.executeJavaScript(`
+              if (window._backgroundKeepAliveInterval) {
+                clearInterval(window._backgroundKeepAliveInterval);
+                window._backgroundKeepAliveInterval = null;
+              }
+            `).catch(() => {});
+          } catch (err) {
+          }
+        }
+      }
+
+      this._backgroundIntervals.clear();
+
+      if (this._swfFileWatcher) {
+        try {
+          this._swfFileWatcher.close();
+          this._swfFileWatcher = null;
+        } catch (error) {
+          logManager.error(`[Electron] Error closing SWF watcher: ${error.message}`);
+        }
+      }
+
+      await Promise.all(cleanupPromises);
+
+      await processManager.killAll(null);
+
+      if (signal) {
+        process.exit(0);
+      }
+    };
+
+    app.on('will-quit', async (event) => {
+      await performCleanup(null);
+    });
+
+    const handleSignal = (signal) => {
+      if (this._isQuitting) {
+        return;
+      }
+      logManager.log(`[Electron] Received ${signal}, initiating cleanup...`, 'main');
+      performCleanup(signal).catch((err) => {
+        logManager.error(`[Electron] Error during ${signal} cleanup: ${err.message}`);
+        process.exit(1);
+      });
+    };
+
+    process.on('SIGINT', () => {
+      handleSignal('SIGINT');
+    });
+
+    process.on('SIGTERM', () => {
+      handleSignal('SIGTERM');
+    });
+    
+    process.on('exit', (code) => {
+      if (!this._isQuitting) {
+        logManager.log(`[Electron] Process exiting with code ${code}, performing emergency cleanup`, 'main');
+        processManager._emergencyCleanup();
+      }
+    });
+
+    ipcMain.on('application-cleanup-complete', () => {
+      logManager.log('[Electron] Application cleanup completed', 'main');
     });
   }
 }

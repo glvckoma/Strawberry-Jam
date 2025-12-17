@@ -140,15 +140,6 @@
 
         fetch(url, options, validCodes) {
           return new Promise(async (resolve, reject) => {
-            
-            // Console log for server communication tracking
-            console.log(`[SERVER COMM] Starting fetch to: ${url}`, {
-              method: options.method || 'GET',
-              timeout: options.timeout || 10000,
-              attempt: (options.attempts || 0) + 1
-            });
-            
-            // track original call stack in an Error for helpful debugging of failures
             if (!options.error) options.error = new Error();
             if (!options.startTime) options.startTime = new Date().getTime();
             options.attempts = options.attempts ? options.attempts + 1 : 1;
@@ -163,44 +154,39 @@
             }
             try {
               const response = await window.fetch(url, options);
-              console.log(`[SERVER COMM] Response received from ${url}:`, {
-                status: response.status,
-                statusText: response.statusText,
-                duration: `${new Date().getTime() - options.startTime}ms`
-              });
+              const duration = new Date().getTime() - options.startTime;
+              const method = options.method || 'GET';
+              console.log(`[SERVER] ${method} ${url} → ${response.status} (${duration}ms)`);
               if ([200].concat(validCodes).includes(response.status)) {
                 resolve(response);
               }
               else {
-                console.error(`[SERVER COMM] Invalid response code ${response.status} for URL: ${url}`);
+                console.error(`[SERVER] Invalid response code ${response.status} for URL: ${url}`);
                 options.error.message = `Invalid response code: ${response.status} for URL: ${url}`;
                 reject(options.error);
               }
             }
             catch (err) {
-              console.error(`[SERVER COMM] Fetch error for ${url}:`, {
+              console.error(`[SERVER] Fetch error for ${url}:`, {
                 error: err.name,
                 message: err.message,
                 attempt: options.attempts
               });
               if (err instanceof DOMException) {
-                // DOMException is thrown for timeouts and abortions.
-                // Perform handling via timer to allow fetch to cleanup.
                 setTimeout(async () => {
                   if (options.userAbortController && options.userAbortController.signal.aborted) {
-                    console.warn(`[SERVER COMM] Fetch aborted by user after ${new Date().getTime() - options.startTime}ms for URL: ${url}`);
+                    console.warn(`[SERVER] Fetch aborted by user after ${new Date().getTime() - options.startTime}ms for URL: ${url}`);
                     options.error.name = "Aborted";
                     options.error.message = `Fetch aborted by user after ${new Date().getTime() - options.startTime}ms for URL: ${url}`;
                     reject(options.error);
                   }
                   else if (options.attempts >= options.maxAttempts) {
-                    console.error(`[SERVER COMM] Fetch timed out after ${options.attempts} attempts for URL: ${url}`);
+                    console.error(`[SERVER] Fetch timed out after ${options.attempts} attempts for URL: ${url}`);
                     options.error.name = "TimedOut"
                     options.error.message = `Fetch timed out (attempts:${options.attempts} timeout:${options.timeout}ms) for URL: ${url}`;
                     reject(options.error);
                   }
                   else {
-                    console.log(`[SERVER COMM] Retrying fetch (attempt ${options.attempts + 1}) for URL: ${url}`);
                     try {
                       const response = await globals.fetch(url, options, validCodes);
                       resolve(response);
@@ -212,9 +198,7 @@
                 }, 100);
               }
               else {
-                // Network failure (excluding timeout), bad request options, or server-side CORS issue.
-                // Retrying these situations are unlikely to succeed within any typical retry window.
-                console.error(`[SERVER COMM] Network failure for ${url}:`, err);
+                console.error(`[SERVER] Network failure for ${url}:`, err);
                 options.error.name = err.name;
                 options.error.message = `${err.message} for URL: ${url}`;
                 reject(options.error);
@@ -440,7 +424,6 @@
             throw new Error("AuthService: fetch or config not available");
           }
 
-          console.log(`[ANIMAL JAM] Starting authentication with Animal Jam authenticator: ${config.authenticator}/authenticate`);
           request.domain = "flash";
 
           try {
@@ -448,7 +431,6 @@
 
             if (freshDf && this.globals) {
               this.globals.df = freshDf;
-              console.log(`[ANIMAL JAM] Using fresh DF for authentication`);
             } else if (!freshDf) {
               console.warn("[AUTH] Failed to get fresh DF from main process");
             }
@@ -462,16 +444,6 @@
 
           const dfToUse = customDf || (this.globals ? this.globals.df : null);
           request.df = dfToUse;
-
-          console.log(`[ANIMAL JAM] Sending authentication request`, {
-            domain: request.domain,
-            hasUsername: !!request.username,
-            hasPassword: !!request.password,
-            hasRefreshToken: !!request.refresh_token,
-            hasOtp: !!request.otp,
-            hasDf: !!request.df,
-            fullRequest: request
-          });
 
           // Build headers with Origin, Referer, User-Agent, and Accept to match server expectations
           const authHeaders = {
@@ -497,14 +469,6 @@
 
           if (response.status === 200) {
             const authenticateData = JSON.parse(await response.text());
-            console.log("[AUTH] Authentication response data:", {
-              hasAuthToken: !!authenticateData.auth_token,
-              hasRefreshToken: !!authenticateData.refresh_token,
-              authTokenLength: authenticateData.auth_token ? authenticateData.auth_token.length : 0,
-              refreshTokenLength: authenticateData.refresh_token ? authenticateData.refresh_token.length : 0,
-              refreshTokenParts: authenticateData.refresh_token ? authenticateData.refresh_token.split('.').length : 0,
-              fullResponse: authenticateData
-            });
             const authenticatedByToken = (request.refresh_token !== undefined);
             if (getGameDataFunc) {
               return await getGameDataFunc(authenticateData, authenticatedByToken, dfToUse);
@@ -539,22 +503,15 @@
           }
 
           if (response.status === 422) {
-            console.log("[AUTH] Received 422 status - checking for OTP requirements");
-
             try {
               const responseText = await response.text();
-              console.log("[AUTH] 422 response body:", responseText);
-
               const authError = JSON.parse(responseText);
-              console.log("[AUTH] Parsed 422 error:", authError);
 
               if (authError.error == "invalid_otp" || authError.error == "pending_otp_confirmation") {
-                console.log("[AUTH] OTP requirement detected, showing modal");
                 if (showOtp) showOtp();
                 throw new Error("OTP_NEEDED");
               }
 
-              console.log("[AUTH] No OTP requirement found in 422 response, throwing LOGIN_ERROR");
               throw new Error("LOGIN_ERROR");
             } catch (parseErr) {
               console.error("[AUTH] Error parsing 422 response:", parseErr);
@@ -563,46 +520,33 @@
           }
 
           if (response.status === 403) {
-            console.error("[AUTH] Received 403 Forbidden status");
-            
             try {
               const responseText = await response.text();
-              console.error("[AUTH] 403 response body:", responseText);
               
-              // Check if response body contains rate limiting information
               if (responseText) {
                 try {
                   const errorData = JSON.parse(responseText);
                   const errorText = (errorData.error || errorData.message || '').toLowerCase();
                   
-                  // Check for rate limiting indicators
                   if (errorText.includes('rate') || errorText.includes('limit') || errorText.includes('too many')) {
-                    console.log("[AUTH] Rate limiting detected in 403 response");
                     throw new Error("RATE_LIMITED");
                   }
                 } catch (parseErr) {
-                  // If we can't parse, continue with generic 403 handling
                 }
               }
               
-              // Check for rate limit headers
               const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
-              const rateLimitReset = response.headers.get('X-RateLimit-Reset');
               
               if (rateLimitRemaining === '0' || rateLimitRemaining === null) {
-                console.log("[AUTH] Rate limiting detected via headers");
                 throw new Error("RATE_LIMITED");
               }
               
-              // Generic 403 - could be IP blocked, missing permissions, etc.
               console.error("[AUTH] 403 Forbidden - possible IP block or missing permissions");
               throw new Error("LOGIN_ERROR");
             } catch (err) {
-              // If error is already one we want to throw (RATE_LIMITED, LOGIN_ERROR), re-throw it
               if (err.message === "RATE_LIMITED" || err.message === "LOGIN_ERROR") {
                 throw err;
               }
-              // Otherwise, generic 403 error
               console.error("[AUTH] Could not parse 403 response:", err);
               throw new Error("LOGIN_ERROR");
             }
@@ -612,8 +556,6 @@
 
           try {
             const responseText = await response.text();
-            console.error("[AUTH] Response body:", responseText);
-
             const errorData = JSON.parse(responseText);
             const errorText = (errorData.error || errorData.message || '').toLowerCase();
 
@@ -621,7 +563,6 @@
                 errorText.includes('two') ||
                 errorText.includes('2fa') ||
                 errorText.includes('verification')) {
-              console.log("[AUTH] Found OTP requirement in unexpected response, showing OTP modal");
               if (showOtp) showOtp();
               throw new Error("OTP_NEEDED");
             }
@@ -633,12 +574,9 @@
         }
 
         async authenticateWithAuthToken(authToken, showOtpModalCallback) {
-          console.log("[AUTH] authenticateWithAuthToken called - validating token through authenticate function");
-          console.log("[AUTH] Token being validated:", authToken ? authToken.substring(0, 10) + '...' : 'null');
           const request = {auth_token: authToken};
           try {
             const result = await this.authenticate(request, null, showOtpModalCallback);
-            console.log("[AUTH] Token validation successful");
             return result;
           } catch (err) {
             console.error("[AUTH] Token validation failed:", err.message);
@@ -720,14 +658,7 @@
           authToken: authenticateData.auth_token,
         };
         if (authenticateData.refresh_token) {
-          console.log("[AUTH] Setting refresh token in userData:", {
-            token: authenticateData.refresh_token,
-            length: authenticateData.refresh_token.length,
-            parts: authenticateData.refresh_token.split('.').length
-          });
           userData.refreshToken = authenticateData.refresh_token;
-        } else {
-          console.log("[AUTH] No refresh token in authenticateData");
         }
 
         globals.authToken = userData.authToken;
@@ -740,14 +671,7 @@
         flashVars.playerWallHost = `http://localhost:${apiPort}/wall/`;
         flashVars.mdUrl = `http://localhost:${apiPort}/game/`;
         
-        console.log(`[SWF LOADING] Game client SWF URL configured:`, {
-          clientURL: flashVars.clientURL,
-          content: flashVars.content,
-          deploy_version: flashVars.deploy_version,
-          apiPort: apiPort,
-          playerWallHost: flashVars.playerWallHost,
-          mdUrl: flashVars.mdUrl
-        });
+        console.log(`[SWF] Client URL: ${flashVars.clientURL}`);
 
         // Don't wait for this call, it is purely informational
         // reportLogin({
@@ -822,19 +746,14 @@
         // Explicitly set the df value AFTER merging to ensure it's the correct one
         flashVars.df = finalDf;
         
-        // Ensure playerWallHost is set to use local proxy (override any value from Animal Jam servers)
         if (!flashVars.playerWallHost || flashVars.playerWallHost.includes('prod-wall.animaljam.com')) {
           const apiPort = await window.ipc.invoke('get-api-port').catch(() => '8080');
           flashVars.playerWallHost = `http://localhost:${apiPort}/wall/`;
-          console.log(`[FlashVars] Set playerWallHost to local proxy: ${flashVars.playerWallHost}`);
         }
         
-        // Ensure mdUrl is set to use local proxy for masterpiece/feedback submissions
-        // This overrides any value from Animal Jam servers (e.g., https://jammercentral.animaljam.com/game/)
         if (!flashVars.mdUrl || flashVars.mdUrl.includes('jammercentral.animaljam.com')) {
           const apiPort = await window.ipc.invoke('get-api-port').catch(() => '8080');
           flashVars.mdUrl = `http://localhost:${apiPort}/game/`;
-          console.log(`[FlashVars] Set mdUrl to local proxy: ${flashVars.mdUrl}`);
         }
         
         globals.reloadFlashVars = null;
@@ -847,8 +766,6 @@
         if (globals.rcToken) {
           params += "&rc_token=" + encodeURIComponent(globals.rcToken);
         }
-        
-        console.log(`[ANIMAL JAM] Requesting player session data from: ${globals.config.playerSessionData}/player?${params}`);
         
         const response = await globals.fetch(`${globals.config.playerSessionData}/player?${params}`, {
           method: "GET",
@@ -879,16 +796,7 @@
           throw new Error("AUTH_TOKEN_EXPIRED");
         }
         
-        console.log(`[ANIMAL JAM] Player session data received:`, {
-          screen_name: responseData.screen_name,
-          game_server: responseData.game_server,
-          game_account_type: responseData.game_account_type,
-          language: responseData.language,
-          rename_required: responseData.rename_required
-        });
-        
         if (responseData.rename_required) {
-          console.log(`[ANIMAL JAM] User rename required for: ${responseData.screen_name}`);
           showRenameUserModal(responseData.screen_name, responseData.rename_required_key);
           throw new Error("USER_RENAME_NEEDED");
         }

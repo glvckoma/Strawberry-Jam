@@ -34,16 +34,7 @@
     }
 
     async logIn() {
-      console.log(`[LOGIN PROCESS] ============= Starting login process =============`);
-      console.log(`[LOGIN PROCESS] Username: ${this.loginScreen.username ? '[SET]' : '[NOT SET]'}`);
-      console.log(`[LOGIN PROCESS] Has Auth Token: ${!!this.loginScreen.authToken}`);
-      console.log(`[LOGIN PROCESS] Has Refresh Token: ${!!this.loginScreen.refreshToken}`);
-      console.log(`[LOGIN PROCESS] Remember Me: ${this.loginScreen.rememberMeElem ? this.loginScreen.rememberMeElem.value : 'unknown'}`);
-      console.log(`[LOGIN PROCESS] Has OTP: ${!!this.loginScreen.otp}`);
-      console.log(`[LOGIN PROCESS] Login blocked state: ${this.loginScreen.loginBlocked}`);
-      
       if (this.loginScreen.loginBlocked) {
-        console.log(`[LOGIN PROCESS] Login blocked, returning early`);
         return;
       }
       this.loginScreen.loginBlocked = true;
@@ -53,9 +44,6 @@
       }
 
       try {
-        console.log(`[DEFPACKS] Current DF state: ${globals.df ? 'SET' : 'NULL'}`);
-        console.log(`[DEFPACKS] UUID spoofer active: ${this.loginScreen.uuidSpooferToggle && this.loginScreen.uuidSpooferToggle.checked ? 'YES' : 'NO'}`);
-        
         if (globals.df === null || (this.loginScreen.uuidSpooferToggle && this.loginScreen.uuidSpooferToggle.checked)) {
           console.log('[DEFPACKS] Refreshing DF before login...');
           try {
@@ -69,56 +57,34 @@
           } catch (dfErr) {
             console.error('[DEFPACKS] Error refreshing DF:', dfErr);
           }
-        } else {
-          console.log(`[DEFPACKS] Using existing DF: ${globals.df.substr(0, 8)}...`);
         }
 
         let authResult;
 
-        console.log("[ANIMAL JAM AUTH] ============= Starting authentication flow =============");
-        console.log("[ANIMAL JAM AUTH] Auth token present:", !!this.loginScreen.authToken);
-        console.log("[ANIMAL JAM AUTH] Refresh token present:", !!this.loginScreen.refreshToken);
-        console.log("[ANIMAL JAM AUTH] OTP present:", !!this.loginScreen.otp);
+        console.log("[AUTH] Starting authentication");
 
         let authTokenFailed = false;
         let authTokenOtpNeeded = false;
         let refreshTokenOtpNeeded = false;
         
         if (this.loginScreen.refreshToken) {
-          console.log("[ANIMAL JAM AUTH] Attempting refresh token authentication");
-          console.log("[ANIMAL JAM AUTH] Refresh token format check:", this.loginScreen.refreshToken ? this.loginScreen.refreshToken.split('.').length + ' parts' : 'null');
-          
           if (this._isTokenExpired(this.loginScreen.refreshToken)) {
-            console.warn("[ANIMAL JAM AUTH] Refresh token has expired (client-side check). Clearing all tokens.");
+            console.warn("[AUTH] Refresh token has expired (client-side check). Clearing all tokens.");
             this.loginScreen.clearAuthToken();
             this.loginScreen.clearRefreshToken();
             this.loginScreen.isFakePassword = false;
             throw new Error("REFRESH_TOKEN_EXPIRED");
           }
 
-          if (this.loginScreen.authToken) {
-            console.log("[ANIMAL JAM AUTH] Refresh token available. Prioritizing refresh token over auth token.");
-          } else {
-            console.log("[ANIMAL JAM AUTH] No auth token found. Attempting to use refresh token.");
-          }
           try {
-            console.log("[ANIMAL JAM AUTH] OTP for refresh token auth:", this.loginScreen.otp ? '[SET]' : '[NOT SET]');
             authResult = await globals.authenticateWithRefreshToken(this.loginScreen.refreshToken, this.loginScreen.otp);
-            console.log("[ANIMAL JAM AUTH] Successfully refreshed token.");
-            console.log("[ANIMAL JAM AUTH] Refresh token auth result:", {
-              hasResult: !!authResult,
-              hasUserData: !!authResult?.userData,
-              hasAuthToken: !!authResult?.userData?.authToken,
-              hasRefreshToken: !!authResult?.userData?.refreshToken
-            });
           } catch (err) {
             if (err.message === "REFRESH_TOKEN_EXPIRED") {
-              console.warn("[ANIMAL JAM AUTH] Refresh token has expired (server-side check). Clearing all tokens.");
+              console.warn("[AUTH] Refresh token has expired (server-side check). Clearing all tokens.");
               this.loginScreen.clearAuthToken();
               this.loginScreen.clearRefreshToken();
               this.loginScreen.isFakePassword = false;
             } else if (err.message === "OTP_NEEDED") {
-              console.log("[ANIMAL JAM AUTH] OTP needed for refresh token, will fall back to auth token or password login");
               refreshTokenOtpNeeded = true;
             } else {
               throw err;
@@ -127,15 +93,10 @@
         }
         
         if (!authResult && this.loginScreen.authToken && !this._isTokenExpired(this.loginScreen.authToken) && !refreshTokenOtpNeeded) {
-          console.log("[ANIMAL JAM AUTH] Refresh token not available or failed. Attempting authentication with auth token.");
           try {
             authResult = await globals.authenticateWithAuthToken(this.loginScreen.authToken);
-            console.log("[ANIMAL JAM AUTH] Auth token authentication successful");
           } catch (err) {
-            console.log("[ANIMAL JAM AUTH] Auth token authentication failed:", err.message);
-            
             if (err.message === "OTP_NEEDED") {
-              console.log("[ANIMAL JAM AUTH] OTP needed for auth token");
               authTokenFailed = true;
               authTokenOtpNeeded = true;
             } else {
@@ -143,14 +104,8 @@
             }
           }
         }
-        if (authResult) {
-          console.log("[ANIMAL JAM AUTH] Using successful token authentication result");
-        } else if ((!this.loginScreen.refreshToken || refreshTokenOtpNeeded) && (!this.loginScreen.authToken || this._isTokenExpired(this.loginScreen.authToken) || authTokenFailed)) {
-          console.log("[ANIMAL JAM AUTH] No valid tokens or OTP needed. Proceeding with password authentication.");
-          console.log("[ANIMAL JAM AUTH] OTP for password auth:", this.loginScreen.otp ? '[SET]' : '[NOT SET]');
-          
+        if (!authResult && ((!this.loginScreen.refreshToken || refreshTokenOtpNeeded) && (!this.loginScreen.authToken || this._isTokenExpired(this.loginScreen.authToken) || authTokenFailed))) {
           if ((authTokenOtpNeeded || refreshTokenOtpNeeded) && !this.loginScreen.otp) {
-            console.log("[ANIMAL JAM AUTH] Both tokens need OTP but no OTP provided, throwing OTP_NEEDED");
             throw new Error("OTP_NEEDED");
           }
           
@@ -159,7 +114,6 @@
           authResult = await globals.authenticateWithPassword(this.loginScreen.username, this.loginScreen.password, this.loginScreen.otp, null);
         }
 
-        console.log("[LOGIN PROCESS] Clearing OTP after successful authentication");
         this.loginScreen.otp = null;
         
         if (!authResult || !authResult.userData) {
@@ -168,47 +122,17 @@
         
         const { userData, flashVars } = authResult;
         
-        console.log(`[FLASHVARS] Raw FlashVars received from authentication:`, {
-          deploy_version: flashVars.deploy_version,
-          smoke_version: flashVars.smoke_version,
-          smartfoxServer: flashVars.smartfoxServer,
-          blueboxServer: flashVars.blueboxServer,
-          clientURL: flashVars.clientURL,
-          content: flashVars.content,
-          df: flashVars.df ? flashVars.df.substr(0, 8) + '...' : 'NOT SET',
-          locale: flashVars.locale,
-          username: flashVars.username
-        });
-        
         if (userData.authToken) {
-          console.log("[LOGIN PROCESS] Setting auth token:", {
-            length: userData.authToken.length,
-            parts: userData.authToken.split('.').length
-          });
           this.loginScreen.authToken = userData.authToken;
         }
         if (userData.refreshToken) {
-          console.log("[LOGIN PROCESS] Setting refresh token:", {
-            token: userData.refreshToken,
-            length: userData.refreshToken.length,
-            parts: userData.refreshToken.split('.').length
-          });
           this.loginScreen.refreshToken = userData.refreshToken;
-        } else {
-          console.log("[LOGIN PROCESS] No refresh token in userData");
         }
 
         this.loginScreen.usernameInputElem.error = "";
         this.loginScreen.passwordInputElem.error = "";
 
-        console.log('[LOGIN PROCESS] Login successful. Preparing to dispatch events.');
-        console.log(`[LOGIN PROCESS] User data:`, {
-          username: userData.username,
-          accountType: userData.accountType,
-          language: userData.language,
-          hasAuthToken: !!userData.authToken,
-          hasRefreshToken: !!userData.refreshToken
-        });
+        console.log("[AUTH] Authentication successful");
         
         const loginData = {
           username: userData.username,
@@ -217,34 +141,11 @@
           authToken: userData.authToken,
           refreshToken: userData.refreshToken,
         };
-        console.log(`[LOGIN PROCESS] Sending loginSucceeded to main process with data:`, {
-          username: loginData.username,
-          language: loginData.language,
-          rememberMe: loginData.rememberMe,
-          hasAuthToken: !!loginData.authToken,
-          hasRefreshToken: !!loginData.refreshToken
-        });
         window.ipc.send("loginSucceeded", loginData);
 
         const theme = this.loginScreen._fruitThemes[this.loginScreen._fruitImages[this.loginScreen._currentFruitIndex]];
         theme.boxBackground = getComputedStyle(this.loginScreen.shadowRoot.host).getPropertyValue('--theme-box-background');
         
-        console.log(`[FLASHVARS] Final FlashVars being sent to game screen:`, {
-          deploy_version: flashVars.deploy_version,
-          smoke_version: flashVars.smoke_version,
-          smartfoxServer: flashVars.smartfoxServer,
-          blueboxServer: flashVars.blueboxServer,
-          blueboxPort: flashVars.blueboxPort,
-          smartfoxPort: flashVars.smartfoxPort,
-          clientURL: flashVars.clientURL,
-          content: flashVars.content,
-          df: flashVars.df ? flashVars.df.substr(0, 8) + '...' : 'NOT SET',
-          locale: flashVars.locale,
-          username: flashVars.username,
-          auth_token: flashVars.auth_token ? '[SET]' : '[NOT SET]'
-        });
-        
-        console.log(`[LOGIN PROCESS] Dispatching loggedIn event to switch to game screen`);
         this.loginScreen.dispatchEvent(new CustomEvent("loggedIn", { detail: { flashVars, theme } }));
 
       } catch (err) {
@@ -268,8 +169,6 @@
               break;
             case "USER_RENAME_NEEDED":
             case "OTP_NEEDED":
-              console.log("[LOGIN PROCESS] OTP_NEEDED or USER_RENAME_NEEDED - keeping UI blocked for modal");
-              console.log("[LOGIN PROCESS] UI will be unblocked when OTP modal is submitted");
               return;
             default:
               globals.reportError("webClient", `Unhandled login error: ${err.stack || err.message}`);

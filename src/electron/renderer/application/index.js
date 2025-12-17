@@ -676,7 +676,35 @@ module.exports = class Application extends EventEmitter {
     ipcRenderer.on('plugins-closed-by-aj-classic', () => {
     })
 
+    ipcRenderer.on('app-cleanup-request', async () => {
+      try {
+        await this.cleanup();
+        ipcRenderer.send('application-cleanup-complete');
+      } catch (error) {
+        console.error('[Application] Error during cleanup:', error);
+        ipcRenderer.send('application-cleanup-complete');
+      }
+    })
+
     this.modalActionManager.initializeModalCloseButtonStyles()
+  }
+
+  /**
+   * Cleanup method to close servers and clear intervals
+   * @returns {Promise<void>}
+   * @public
+   */
+  async cleanup() {
+    if (this.dispatch && this.dispatch.intervals) {
+      for (const interval of this.dispatch.intervals) {
+        clearInterval(interval);
+      }
+      this.dispatch.intervals.clear();
+    }
+
+    if (this.server && typeof this.server.close === 'function') {
+      await this.server.close();
+    }
   }
   
   /**

@@ -182,4 +182,47 @@ module.exports = class Server {
       })
     })
   }
+
+  /**
+   * Closes the server and disconnects all clients.
+   * @returns {Promise<void>}
+   * @public
+   */
+  async close() {
+    if (!this.server) {
+      return
+    }
+
+    const disconnectPromises = []
+    
+    for (const client of this.clients) {
+      if (client && typeof client.disconnect === 'function') {
+        disconnectPromises.push(
+          Promise.resolve(client.disconnect(true)).catch(err => {
+            if (this.application && this.application.consoleMessage) {
+              this.application.consoleMessage({
+                message: `Error disconnecting client: ${err.message}`,
+                type: 'warn'
+              })
+            }
+          })
+        )
+      }
+    }
+
+    await Promise.all(disconnectPromises)
+    this.clients.clear()
+
+    return new Promise((resolve) => {
+      if (this.server) {
+        this.server.close(() => {
+          this.server = null
+          this.actualPort = null
+          resolve()
+        })
+      } else {
+        resolve()
+      }
+    })
+  }
 }
