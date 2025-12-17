@@ -121,7 +121,8 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.handle('set-setting', async (event, key, value) => {
-    return await settingsService.setSetting(key, value);
+    const result = await settingsService.setSetting(key, value);
+    return result;
   });
 
   // IPC handler for getting SWF files information
@@ -292,34 +293,75 @@ function setupIpcHandlers(electronInstance) {
 
       const cachePaths = electronInstance._getCachePaths();
       if (!cachePaths || cachePaths.length === 0) {
+        console.warn('[Clear Cache] No cache paths found to clear');
       } else {
-        const helperScriptPath = path.join(__dirname, 'clear-cache-helper.js');
+        const possiblePaths = [];
+        
+        if (app.isPackaged) {
+          possiblePaths.push(path.join(process.resourcesPath, 'clear-cache-helper.js'));
+          possiblePaths.push(path.join(__dirname, 'clear-cache-helper.js'));
+        } else {
+          possiblePaths.push(path.join(__dirname, 'clear-cache-helper.js'));
+          const altPath = path.resolve(__dirname, 'clear-cache-helper.js');
+          if (altPath !== possiblePaths[0]) {
+            possiblePaths.push(altPath);
+          }
+        }
 
-         let resolvedHelperPath;
-         if (app.isPackaged) {
-           resolvedHelperPath = path.join(process.resourcesPath, 'clear-cache-helper.js');
-         } else {
-           resolvedHelperPath = helperScriptPath;
-         }
+        let resolvedHelperPath = null;
+        for (const testPath of possiblePaths) {
+          try {
+            await fsPromises.access(testPath);
+            resolvedHelperPath = testPath;
+            break;
+          } catch (err) {
+            continue;
+          }
+        }
 
-         try {
-             await fsPromises.access(resolvedHelperPath);
+        if (!resolvedHelperPath) {
+          const errorMessage = `Helper script not found in any of these locations:\n${possiblePaths.map(p => `  - ${p}`).join('\n')}\n\n__dirname: ${__dirname}\nisPackaged: ${app.isPackaged}`;
+          console.error(`[Clear Cache] ${errorMessage}`);
+          dialog.showMessageBoxSync(electronInstance._window, {
+            type: 'error',
+            title: 'Clear Cache Error',
+            message: `Cannot clear external cache.\n\n${errorMessage}`,
+            buttons: ['OK']
+          });
+        } else {
+          try {
+            const nodeExecutable = process.execPath;
+            const scriptArgs = [resolvedHelperPath, ...cachePaths];
 
-             const child = spawn('node', [resolvedHelperPath, ...cachePaths], {
-               detached: true,
-               stdio: 'ignore'
-             });
-             processManager.add(child);
-             child.on('error', (err) => { });
-             child.unref();
-         } catch (accessError) {
-         }
+            const child = spawn(nodeExecutable, scriptArgs, {
+              detached: true,
+              stdio: ['ignore', 'ignore', 'ignore'],
+              windowsHide: true
+            });
+            
+            child.on('error', (err) => {
+              console.error('[Clear Cache] Failed to spawn helper script:', err);
+            });
+
+            child.unref();
+          } catch (spawnError) {
+            console.error('[Clear Cache] Error spawning helper script:', spawnError);
+            dialog.showMessageBoxSync(electronInstance._window, {
+              type: 'error',
+              title: 'Clear Cache Error',
+              message: `Failed to start cache clearing process.\n\nError: ${spawnError.message}`,
+              buttons: ['OK']
+            });
+          }
+        }
       }
 
+      electronInstance._isClearingCacheAndQuitting = true;
       app.quit();
       return { success: true, message: 'Internal cache cleared. External cache clearing scheduled. Application will close.' };
 
     } catch (error) {
+      console.error('[Clear Cache] Error during cache clearing:', error);
       dialog.showMessageBoxSync(electronInstance._window, {
         type: 'error',
         title: 'Clear Cache Error',
@@ -328,11 +370,6 @@ function setupIpcHandlers(electronInstance) {
       });
       return { success: false, error: error.message };
     }
-
-    electronInstance._isClearingCacheAndQuitting = true;
-    app.quit();
-    return { success: true, message: 'Cache clearing initiated. Application will close.' };
-
   });
 
   ipcMain.handle('danger-zone:uninstall', async () => {
@@ -462,6 +499,9 @@ function setupIpcHandlers(electronInstance) {
           })
           
           if (result) {
+            if (electronInstance) {
+              electronInstance._apiPort = result
+            }
             return result
           }
         } catch (err) {

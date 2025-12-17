@@ -87,24 +87,7 @@ module.exports = class PluginInfoModalManager {
       }
     );
     
-    // Close button with pulse effect
-    const $closeButton = $('<button>', {
-      class: 'text-gray-400 hover:text-highlight-red transition-colors duration-200 transform hover:scale-110 rounded-full p-1 hover:bg-highlight-red/10',
-      'aria-label': 'Close'
-    }).append(
-      $('<i>', { class: 'fas fa-times' })
-    ).on('click', () => {
-      // Fade out animation
-      $modal.css({
-        'opacity': '0',
-        'transform': 'scale(0.95)',
-        'transition': 'opacity 0.2s ease-in-out, transform 0.2s ease-in-out'
-      });
-      
-      setTimeout(() => $modal.remove(), 200);
-    });
-    
-    $header.append($title, $closeButton);
+    $header.append($title);
     
     // Modal body with colorful sections for kids
     const $body = $('<div>', {
@@ -397,12 +380,17 @@ module.exports = class PluginInfoModalManager {
       $footer.append($dirButton);
     }
     
-    // Got it button with bounce effect
+    const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim() || '#e83d52'
+    
     const $gotItButton = $('<button>', {
-      class: 'bg-highlight-blue hover:bg-highlight-blue/90 text-white px-5 py-2 rounded-lg transition-all duration-200 text-sm font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm',
-      text: 'Got it!'
+      class: 'text-white rounded-lg px-5 py-2.5 shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-100 focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-bg font-medium',
+      id: 'pluginInfoGotItButton',
+      html: '<i class="fas fa-check mr-1.5"></i> Got it!',
+      css: {
+        'background-color': themeColor,
+        'border-color': themeColor
+      }
     }).on('click', () => {
-      // Fade out animation
       $modal.css({
         'opacity': '0',
         'transform': 'scale(0.95)',
@@ -410,6 +398,12 @@ module.exports = class PluginInfoModalManager {
       });
       
       setTimeout(() => $modal.remove(), 200);
+    }).on('mouseenter', function() {
+      $(this).css('filter', 'brightness(1.1)')
+    }).on('mouseleave', function() {
+      $(this).css('filter', '')
+    }).on('focus', function() {
+      $(this).css('--tw-ring-color', themeColor)
     });
     
     $footer.append($gotItButton);

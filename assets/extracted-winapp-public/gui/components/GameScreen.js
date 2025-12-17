@@ -447,6 +447,7 @@
         if (!window.gameClientConsoleLogs) {
           window.gameClientConsoleLogs = [];
         }
+        // Limit the number of stored logs to prevent memory issues
         if (window.gameClientConsoleLogs.length > 500) {
           window.gameClientConsoleLogs.splice(0, window.gameClientConsoleLogs.length - 400);
         }

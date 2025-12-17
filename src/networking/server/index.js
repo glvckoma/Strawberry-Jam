@@ -128,19 +128,20 @@ module.exports = class Server {
           attemptServer.once('listening', () => {
             this.actualPort = port
             this.server = attemptServer
+            if (this.application && this.application.consoleMessage) {
+              this.application.consoleMessage({
+                message: `Server listening on port ${port}`,
+                type: 'notify'
+              })
+            }
             resolve()
           })
-          attemptServer.once('error', (err) => {
-            if (attemptServer) {
-              attemptServer.close()
-              attemptServer = null
-            }
-            reject(err)
-          })
+          attemptServer.once('error', reject)
 
           attemptServer.listen(port, '127.0.0.1')
         })
 
+        // Success! Break out of loop
         break
 
       } catch (error) {
@@ -148,12 +149,10 @@ module.exports = class Server {
         if (attemptServer) {
           try {
             attemptServer.close()
-          } catch (closeErr) {
+          } catch (closeError) {
           }
           attemptServer = null
         }
-        this.server = null
-        
         if (error.code === 'EADDRINUSE') {
           this.application.consoleMessage({
             message: `Port ${port} is busy, trying next port...`,
@@ -161,6 +160,7 @@ module.exports = class Server {
           })
           continue
         } else {
+          // Re-throw non-port-busy errors immediately
           throw error
         }
       }

@@ -623,43 +623,12 @@ module.exports = class Application extends EventEmitter {
       message: `Successfully loaded ${pluginCount} plugins.`,
       type: 'success'
     })
-
+    
     this.refreshAutoComplete()
 
     const secureConnection = this.settings.get('secureConnection')
     if (secureConnection) {
       await this._checkForHostChanges()
-    }
-
-    const PortChecker = require('../../../utils/PortChecker')
-    const port443Busy = await PortChecker.isPortBusy(443)
-    const port8080Busy = await PortChecker.isPortBusy(8080)
-
-    const busyPorts = []
-    const portDetails = []
-    
-    if (port443Busy) {
-      const processInfo = await PortChecker.findProcessUsingPort(443)
-      if (processInfo && processInfo.processName && !PortChecker.isOwnProcess(processInfo.processName)) {
-        busyPorts.push('443')
-        portDetails.push(`Port 443: ${processInfo.processName} (PID: ${processInfo.pid})`)
-      }
-    }
-    
-    if (port8080Busy) {
-      const processInfo = await PortChecker.findProcessUsingPort(8080)
-      if (processInfo && processInfo.processName && !PortChecker.isOwnProcess(processInfo.processName)) {
-        busyPorts.push('8080')
-        portDetails.push(`Port 8080: ${processInfo.processName} (PID: ${processInfo.pid})`)
-      }
-    }
-
-    if (busyPorts.length > 0) {
-      const message = `Port${busyPorts.length > 1 ? 's' : ''} ${busyPorts.join(' and ')} ${busyPorts.length > 1 ? 'are' : 'is'} already in use. ${portDetails.join(' ')} Use the "terminate" command to close processes using these ports, then restart the application.`
-      this.consoleMessage({
-        type: 'warn',
-        message: message
-      })
     }
 
     await this.server.serve()
@@ -671,11 +640,6 @@ module.exports = class Application extends EventEmitter {
       this._removeMessageById(this.initialStartupMessageId)
       this.initialStartupMessageId = null
     }
-    
-    this.consoleMessage({
-      message: `Server started on port ${this.server.actualPort}!`,
-      type: 'success'
-    })
     
     this.consoleMessage({
       message: 'Enjoy 33.33% off BerryBreach purchases using code "HOLIDAYS2025" until 12/31/2025.',
@@ -771,14 +735,6 @@ module.exports = class Application extends EventEmitter {
       return this.commandRegistry.register(name, callback, description)
     }
     return false
-  }
-
-  /**
-   * Opens the Report Problem modal.
-   * @public
-   */
-  openReportProblemModal () {
-    this.modalActionManager.openReportProblemModal()
   }
 
   /**

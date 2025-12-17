@@ -13,5 +13,7 @@ dev
 assets/flash/backups/*
 UsernameLogger
 .claude
+.cursor
 data/*
 scripts/
+FEATURE_INVESTIGATION_AND_PHASED_PLAN.md

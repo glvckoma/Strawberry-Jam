@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS = {
 
   // Game client settings
   'game.selectedSwfFile': 'ajclient.swf',
+  'game.autoReapplySwf': false,
 
   // UsernameLogger and LeakCheck specific settings
   'leakCheck.enableLogging': true,
@@ -37,7 +38,11 @@ const DEFAULT_SETTINGS = {
   'ui.customThemeColor': null,
   'ui.customThemeEnabled': false,
   'ui.customThemeName': null,
-  'ui.customThemeFruit': null
+  'ui.customThemeFruit': null,
+
+  // Tutorial settings
+  'ui.tutorialCompleted': false,
+  'ui.showTutorialOnFirstLaunch': true
 }
 
 // Development mode check (safer than process.env which may be undefined in packaged app)
@@ -76,6 +81,7 @@ module.exports = class Settings {
         { key: 'updates.enableAutoUpdates', defaultValue: DEFAULT_SETTINGS['updates.enableAutoUpdates'] },
         // Game client settings
         { key: 'game.selectedSwfFile', defaultValue: DEFAULT_SETTINGS['game.selectedSwfFile'] },
+        { key: 'game.autoReapplySwf', defaultValue: DEFAULT_SETTINGS['game.autoReapplySwf'] },
         // Added UsernameLogger and LeakCheck settings
         { key: 'leakCheck.enableLogging', defaultValue: DEFAULT_SETTINGS['leakCheck.enableLogging'] },
         { key: 'leakCheck.autoLeakCheck', defaultValue: DEFAULT_SETTINGS['leakCheck.autoLeakCheck'] },
@@ -91,7 +97,9 @@ module.exports = class Settings {
         { key: 'ui.customThemeColor', defaultValue: DEFAULT_SETTINGS['ui.customThemeColor'] },
         { key: 'ui.customThemeEnabled', defaultValue: DEFAULT_SETTINGS['ui.customThemeEnabled'] },
         { key: 'ui.customThemeName', defaultValue: DEFAULT_SETTINGS['ui.customThemeName'] },
-        { key: 'ui.customThemeFruit', defaultValue: DEFAULT_SETTINGS['ui.customThemeFruit'] }
+        { key: 'ui.customThemeFruit', defaultValue: DEFAULT_SETTINGS['ui.customThemeFruit'] },
+        { key: 'ui.tutorialCompleted', defaultValue: DEFAULT_SETTINGS['ui.tutorialCompleted'] },
+        { key: 'ui.showTutorialOnFirstLaunch', defaultValue: DEFAULT_SETTINGS['ui.showTutorialOnFirstLaunch'] }
       ]
 
       for (const {key, defaultValue} of settingsToLoad) {

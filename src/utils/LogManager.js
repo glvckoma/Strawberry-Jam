@@ -255,10 +255,6 @@ class LogManager {
       return this.getLogs(options);
     });
     
-    ipcMain.handle('log-manager-export', (event, options = {}) => {
-      return this.exportLogs(options);
-    });
-    
     ipcMain.handle('log-manager-get-devtools-logs', (event, options = {}) => {
       return this.getDevToolsLogs(options);
     });
@@ -416,80 +412,6 @@ class LogManager {
     }
     
     return filtered;
-  }
-  
-  /**
-   * Export logs to a file
-   * @param {Object} options Export options
-   * @param {String} options.outputPath Custom output path (optional)
-   * @param {Boolean} options.includeMemoryLogs Include in-memory logs
-   * @param {Boolean} options.includeDevToolsLogs Include devtools logs
-   * @param {String} options.format Export format (text, json)
-   * @returns {String} Path to exported log file
-   */
-  exportLogs(options = {}) {
-    try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const outputPath = options.outputPath || path.join(this.logPath, `export-${timestamp}.txt`);
-      const format = options.format || 'text';
-      
-      const includeDevToolsLogs = options.includeDevToolsLogs !== false;
-      
-      let content = '';
-      
-      if (format === 'json') {
-        const exportData = {
-          systemInfo: this.systemInfo,
-          logs: this.logs,
-          devToolsLogs: includeDevToolsLogs ? this.devToolsLogs : [],
-          gameClientLogs: this.gameClientLogs || []
-        };
-        content = JSON.stringify(exportData, null, 2);
-      } else {
-        content = '## System Information\n';
-        Object.entries(this.systemInfo).forEach(([key, value]) => {
-          content += `${key}: ${value}\n`;
-        });
-        content += '\n\n';
-        
-        if (this.sessionLogPath && fs.existsSync(this.sessionLogPath)) { // Check if sessionLogPath is valid
-          content += '## Session Logs (Main Process - if enabled)\n';
-          content += fs.readFileSync(this.sessionLogPath, 'utf8');
-          content += '\n\n';
-        }
-        
-        if (options.includeMemoryLogs) {
-          content += '## Memory Logs (Main Process)\n';
-          this.logs.forEach(entry => {
-            content += `[${entry.timestamp}] [${entry.levelName}] [${entry.context}] ${entry.message}\n`;
-          });
-          content += '\n\n';
-        }
-        
-        if (includeDevToolsLogs && this.devToolsLogs.length > 0) {
-          content += '## DevTools Logs (All Renderers)\n';
-          this.devToolsLogs.forEach(entry => {
-            content += `[${entry.timestamp}] [${entry.levelName}] [${entry.window}] ${entry.message} (${path.basename(entry.source || '')}:${entry.line || '?'})\n`;
-          });
-          content += '\n\n';
-        }
-
-        if (this.gameClientLogs && this.gameClientLogs.length > 0) {
-          content += '## Game Client Logs (winapp.asar - from memory)\n';
-          this.gameClientLogs.forEach(entry => {
-            content += `[${entry.timestamp}] [${entry.levelName}] [${entry.context || 'game-client'}] ${entry.message}\n`;
-          });
-          content += '\n\n';
-        }
-      }
-      
-      fs.writeFileSync(outputPath, content);
-      
-      return outputPath;
-    } catch (error) {
-      this.originalConsole.error('Error exporting logs:', error);
-      throw error;
-    }
   }
  
   /**

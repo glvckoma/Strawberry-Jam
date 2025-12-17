@@ -311,61 +311,21 @@
         },
 
         async getFlashVarsFromWeb() {
-          // Check for locked deploy_version to prevent SWF updates
-          let lockedDeployVersion = null;
-          try {
-            lockedDeployVersion = await window.ipc.invoke('get-setting', 'swf.deploy_version_locked');
-            if (lockedDeployVersion) {
-              console.log(`[SWF VERSION] Found locked deploy_version: ${lockedDeployVersion}`);
-            }
-          } catch (err) {
-            console.log(`[SWF VERSION] Error getting locked deploy_version:`, err);
-          }
-
-          console.log(`[ANIMAL JAM] Requesting FlashVars from Animal Jam web: ${globals.config.web}/flashvars`);
           const response = await globals.fetch(`${globals.config.web}/flashvars`, {
             method: "GET",
             mode: "cors",
             credentials: "include",
           });
-          const flashVars = JSON.parse(await response.text());
-          const serverDeployVersion = flashVars.deploy_version;
-          
-          // Always update cache with latest from server (for tracking and connection compatibility)
-          if (serverDeployVersion) {
-            try {
-              await window.ipc.invoke('set-setting', 'swf.deploy_version', serverDeployVersion);
-              console.log(`[SWF VERSION] Updated cache with latest deploy_version from server: ${serverDeployVersion}`);
-            } catch (err) {
-              console.log(`[SWF VERSION] Error updating deploy_version cache:`, err);
-            }
+          const responseText = await response.text();
+          if (!responseText) {
+            throw new Error("Empty response from flashvars endpoint");
           }
-          
-          // Use locked deploy_version for SWF path (prevents SWF updates)
-          if (lockedDeployVersion) {
-            flashVars.deploy_version = lockedDeployVersion;
-            if (serverDeployVersion !== lockedDeployVersion) {
-              console.log(`[SWF VERSION] Using locked deploy_version: ${lockedDeployVersion} (server has: ${serverDeployVersion}, SWF will not be updated)`);
-            }
-          } else {
-            // Lock the deploy_version on first fetch (this becomes the permanent locked version)
-            if (flashVars.deploy_version) {
-              try {
-                await window.ipc.invoke('set-setting', 'swf.deploy_version_locked', flashVars.deploy_version);
-                console.log(`[SWF VERSION] Locked deploy_version to: ${flashVars.deploy_version}`);
-              } catch (err) {
-                console.log(`[SWF VERSION] Error locking deploy_version:`, err);
-              }
-            }
+          try {
+            return JSON.parse(responseText);
+          } catch (parseError) {
+            console.error(`[ANIMAL JAM] Failed to parse flashvars response:`, parseError);
+            throw new Error("Invalid flashvars response format");
           }
-          
-          console.log(`[ANIMAL JAM] FlashVars received:`, {
-            deploy_version: flashVars.deploy_version,
-            smartfoxServer: flashVars.smartfoxServer,
-            blueboxServer: flashVars.blueboxServer,
-            clientURL: flashVars.clientURL
-          });
-          return flashVars;
         },
 
         localize() {
@@ -736,13 +696,17 @@
 
       getGameData = async (authenticateData, authenticatedByToken, customDf) => {
         let flashVars = await globals.getFlashVarsFromWeb();
-        const clientVersion = (globals.rcToken
-          && flashVars.smoke_version && flashVars.smoke_version != flashVars.deploy_version
-          ) ? flashVars.smoke_version : flashVars.deploy_version;
+        const requestedClientVersion = (globals.rcToken && flashVars.smoke_version)
+          ? flashVars.smoke_version : flashVars.deploy_version;
+
         const playerSessionData = await getPlayerSessionData(
           authenticateData.auth_token,
-          clientVersion
+          requestedClientVersion
         );
+
+        if (flashVars.deploy_version != requestedClientVersion) {
+          flashVars.deploy_version = requestedClientVersion;
+        }
 
         if (playerSessionData.game_server && playerSessionData.game_server != "NONE_AVAIL") {
           flashVars.smartfoxServer = playerSessionData.game_server;
@@ -770,7 +734,6 @@
         globals.currentUser = userData.username;
         globals.setLanguage(userData.language);
 
-        // Get the actual API server port, defaulting to 8080 if not available
         const apiPort = await window.ipc.invoke('get-api-port').catch(() => '8080');
         flashVars.content = `http://localhost:${apiPort}/`
         flashVars.clientURL = `http://localhost:${apiPort}/${flashVars.deploy_version}/ajclient.swf`
@@ -898,7 +861,23 @@
           console.error(`[ANIMAL JAM] Player session request failed with status: ${response.status}`);
           throw new Error("AUTH_TOKEN_EXPIRED");
         }
-        const responseData = JSON.parse(await response.text());
+        
+        let responseData;
+        try {
+          const responseText = await response.text();
+          if (!responseText) {
+            throw new Error("Empty response from player session data endpoint");
+          }
+          responseData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error(`[ANIMAL JAM] Failed to parse player session data response:`, parseError);
+          throw new Error("AUTH_TOKEN_EXPIRED");
+        }
+        
+        if (!responseData || typeof responseData !== 'object') {
+          console.error(`[ANIMAL JAM] Invalid player session data format:`, responseData);
+          throw new Error("AUTH_TOKEN_EXPIRED");
+        }
         
         console.log(`[ANIMAL JAM] Player session data received:`, {
           screen_name: responseData.screen_name,
@@ -988,12 +967,21 @@
         const gameScreen = document.getElementById("game-screen");
 
         loginScreen.addEventListener("loggedIn", event => {
+          if (loginScreen._loginTimeout) {
+            clearTimeout(loginScreen._loginTimeout);
+            loginScreen._loginTimeout = null;
+            loginScreen._loginTimeoutCleared = true;
+          }
           gameScreen.loadGame(event.detail.flashVars, event.detail.theme);
         });
         gameScreen.addEventListener("gameLoaded", event => {
+          if (loginScreen._loginTimeout) {
+            clearTimeout(loginScreen._loginTimeout);
+            loginScreen._loginTimeout = null;
+            loginScreen._loginTimeoutCleared = true;
+          }
           loginScreen.loginBlocked = false;
           gameScreen.classList.add("show");
-          // Give time for the transition animation to play
           setTimeout(() => {
             document.getElementById("login-screen").localize();
           }, 1000);

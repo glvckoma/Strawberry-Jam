@@ -47,8 +47,10 @@
         return;
       }
       this.loginScreen.loginBlocked = true;
-      this.loginScreen.logInButtonElem.disabled = true;
-      this.loginScreen.logInButtonElem.classList.add("loading");
+      if (this.loginScreen.logInButtonElem) {
+        this.loginScreen.logInButtonElem.disabled = true;
+        this.loginScreen.logInButtonElem.classList.add("loading");
+      }
 
       try {
         console.log(`[DEFPACKS] Current DF state: ${globals.df ? 'SET' : 'NULL'}`);
@@ -280,7 +282,10 @@
         this.loginScreen.passwordInputElem.error = userMessage;
 
         this.loginScreen.loginBlocked = false;
-        this.loginScreen.logInButtonElem.classList.remove("loading");
+        if (this.loginScreen.logInButtonElem) {
+          this.loginScreen.logInButtonElem.disabled = false;
+          this.loginScreen.logInButtonElem.classList.remove("loading");
+        }
       }
     }
 

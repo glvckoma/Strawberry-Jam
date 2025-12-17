@@ -120,7 +120,7 @@ class SettingsEventHandler {
           await uiManager.refreshActiveSwfInfo($modal);
           
           self.toastService.showInModal($modal, 'SWF file reapplied successfully!', 'success');
-          if (app && app.consoleMessage) {
+          if (app && app.consoleMessage && app.consoleManager && !app.consoleManager.getQuietMode()) {
               app.consoleMessage({
                 type: 'notify',
                 message: `Game client file '${selectedFile}' was reapplied. Changes will apply on next game launch.`
@@ -141,6 +141,25 @@ class SettingsEventHandler {
         self.toastService.showInModal($modal, 'Error reapplying SWF file', 'error');
       } finally {
         $button.html(originalText).prop('disabled', false);
+      }
+    });
+
+    $modal.find('#autoReapplySwfToggle').on('change', async function() {
+      const isEnabled = $(this).is(':checked');
+      
+      try {
+        await ipcRenderer.invoke('set-setting', 'game.autoReapplySwf', isEnabled);
+        
+        if (app && app.settings && typeof app.settings.update === 'function') {
+          await app.settings.update('game.autoReapplySwf', isEnabled);
+        }
+        
+        const statusText = isEnabled ? 'enabled' : 'disabled';
+        self.toastService.showInModal($modal, `Auto-reapply SWF ${statusText}`, 'success');
+      } catch (error) {
+        console.error('Error saving auto-reapply setting:', error);
+        self.toastService.showInModal($modal, 'Error saving auto-reapply setting', 'error');
+        $(this).prop('checked', !isEnabled);
       }
     });
 
@@ -380,6 +399,32 @@ class SettingsEventHandler {
         }
       }
     });
+
+    $modal.find('#restartTutorialBtn').on('click', async () => {
+      if (app) {
+        try {
+          const TutorialManager = require('./TutorialManager')
+          let tutorialManager = app.tutorialManager
+          
+          if (!tutorialManager) {
+            tutorialManager = new TutorialManager(app)
+            await tutorialManager.initialize()
+            app.tutorialManager = tutorialManager
+          }
+          
+          await tutorialManager.resetTutorial()
+          app.modals.close()
+          setTimeout(() => {
+            if (tutorialManager) {
+              tutorialManager.startTutorial()
+            }
+          }, 300)
+        } catch (error) {
+          console.error('Error restarting tutorial:', error)
+          this.toastService.showInModal($modal, `Failed to restart tutorial: ${error.message}`, 'error')
+        }
+      }
+    })
 
     $modal.find('#resetGameTimeBtn').on('click', async () => {
       const confirmed = await uiManager.showConfirmationModal(

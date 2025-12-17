@@ -41,6 +41,7 @@ class SettingsLoader {
       const enableAutoUpdates = await ipcRenderer.invoke('get-setting', 'updates.enableAutoUpdates');
 
       const selectedSwfFile = await ipcRenderer.invoke('get-setting', 'game.selectedSwfFile');
+      const autoReapplySwf = await ipcRenderer.invoke('get-setting', 'game.autoReapplySwf');
 
       const allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
 
@@ -55,6 +56,8 @@ class SettingsLoader {
       $modal.find('#advancedSecureConnection').prop('checked', secureConnection === true);
 
       await uiManager.loadSwfFileSettings($modal, selectedSwfFile || 'ajclient-prod.swf');
+
+      $modal.find('#autoReapplySwfToggle').prop('checked', autoReapplySwf === true);
 
       $modal.find('#hideGamePlugins').prop('checked', hideGamePlugins === true);
       $modal.find('#pluginRefreshBehavior').val(pluginRefreshBehavior || 'ask');

@@ -4,6 +4,7 @@ module.exports = function ({ dispatch, application }) {
   let active = true
   let membershipLevel = 2
   const SETTINGS_FILE = 'membership-settings.json'
+  const isDevelopment = process.env.NODE_ENV === 'development'
 
   /**
    * Load settings from the settings file.
@@ -54,9 +55,21 @@ module.exports = function ({ dispatch, application }) {
    * Handles the login message.
    */
   const handleLoginMessage = ({ message }) => {
-    if (!active) return // Only modify login when plugin is active
+    if (!active) return
 
     const { params } = message.value.b.o
+    const originalAccountType = params.accountType
+    
+    if (originalAccountType !== undefined && originalAccountType >= 2) {
+      if (isDevelopment) {
+        console.log(`[Membership] Account already has membership (accountType: ${originalAccountType}), skipping modification`)
+      }
+      return
+    }
+    
+    if (isDevelopment) {
+      console.log(`[Membership] Modifying accountType from ${originalAccountType} to ${membershipLevel}`)
+    }
     params.accountType = membershipLevel
   }
 

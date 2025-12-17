@@ -1,10 +1,11 @@
 const path = require('path')
 const os = require('os')
 const fs = require('fs')
-const { rename, copyFile, rm, mkdir, cp } = fs.promises // Use fs.promises for compatibility
-const { existsSync } = fs // Keep only one declaration
+const { rename, copyFile, rm, mkdir, cp } = fs.promises
+const { existsSync } = fs
 const { spawn } = require('child_process')
 const { ipcRenderer } = require('electron')
+const CacheCleaner = require('../../../../utils/CacheCleaner')
 // Removed treeKill as it's not used in the restore logic directly
 const { promisify } = require('util')
 // Removed execFileAsync as we'll use spawn and handle exit differently
@@ -47,7 +48,7 @@ const STRAWBERRY_JAM_CLASSIC_BASE_PATH = process.platform === 'win32'
  * @constant
  */
 const STRAWBERRY_JAM_CLASSIC_CACHE_PATH = process.platform === 'win32'
-  ? path.join(os.homedir(), 'AppData', 'Roaming', 'Strawberry Jam Classic', 'Cache')
+  ? path.join(os.homedir(), 'AppData', 'Roaming', 'strawberry-jam-classic', 'Cache')
   : process.platform === 'darwin'
     ? path.join(os.homedir(), 'Library', 'Application Support', 'Strawberry Jam Classic', 'Cache')
     : undefined
@@ -82,22 +83,33 @@ module.exports = class Patcher {
    */
   async killProcessAndPatch () {
     try {
-      // Ensure the Strawberry Jam version exists before patching
       await this.ensureStrawberryJamVersionExists()
       
-      // Clear the cache for the standalone installation
       if (existsSync(STRAWBERRY_JAM_CLASSIC_CACHE_PATH)) {
-        await rm(STRAWBERRY_JAM_CLASSIC_CACHE_PATH, { recursive: true })
+        try {
+          const cacheCleaner = new CacheCleaner()
+          const result = await cacheCleaner.clearSafeCacheFiles(STRAWBERRY_JAM_CLASSIC_CACHE_PATH)
+          
+          if (result.failed.length > 0 || result.skipped.length > 0) {
+            if (isDevelopment) {
+              console.warn(`[Cache Cleanup] Some files could not be deleted: ${result.failed.length} failed, ${result.skipped.length} skipped (locked)`)
+            }
+          }
+        } catch (cacheError) {
+          if (isDevelopment) {
+            console.warn(`[Cache Cleanup] Error during cache cleanup: ${cacheError.message}`)
+          }
+        }
+      }
+      
+      if (!existsSync(STRAWBERRY_JAM_CLASSIC_CACHE_PATH)) {
         await mkdir(STRAWBERRY_JAM_CLASSIC_CACHE_PATH, { recursive: true })
       }
       
-      // Patch the application (no need to mention ASAR patching)
       await this.patchApplication()
 
-      // Request the main process to launch the game client
       ipcRenderer.send('launch-game-client');
 
-      // No need for restoration on quit since we're using a separate installation
     } catch (error) {
       const errorMsg = `Failed to start Animal Jam Classic: ${error.message}`
       if (this._application) {

@@ -91,51 +91,6 @@ class LogManagerClient {
   getSystemInfo() {
     return ipcRenderer.invoke('log-manager-get-system-info');
   }
-
-  /**
-   * Export logs to a file
-   * @param {Object} options Export options
-   * @returns {Promise<String>} Path to exported log file
-   */
-  exportLogs(options = {}) {
-    return ipcRenderer.invoke('log-manager-export', options);
-  }
-  
-  /**
-   * Get all logs combined (standard, devtools) for comprehensive reporting
-   * @param {Object} options Options for filtering
-   * @param {Number} options.maxResults Maximum number of logs to include
-   * @returns {Promise<Object>} Combined logs and system info
-   */
-  async getAllLogs(options = {}) {
-    try {
-      // Get system info
-      const systemInfo = await this.getSystemInfo();
-      
-      // Get standard logs
-      const logs = await this.getLogs({
-        maxResults: options.maxResults || 200
-      });
-      
-      // Get devtools logs
-      const devToolsLogs = await this.getDevToolsLogs({
-        maxResults: options.maxResults || 100
-      });
-      
-      return {
-        systemInfo,
-        logs,
-        devToolsLogs
-      };
-    } catch (error) {
-      console.error('Error getting all logs:', error);
-      return {
-        systemInfo: {},
-        logs: [],
-        devToolsLogs: []
-      };
-    }
-  }
 }
 
 // Create and export singleton instance

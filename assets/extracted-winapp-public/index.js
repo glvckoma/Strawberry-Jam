@@ -1,43 +1,42 @@
 "use strict";
 
-// Polyfill for fs/promises to support older Electron versions
-// This must be done before requiring electron-updater which may use fs/promises
 const Module = require('module');
 const originalRequire = Module.prototype.require;
+const originalResolveFilename = Module._resolveFilename;
+
 const fs = require('fs');
-
-// Ensure fs.promises exists (it should in Node 10+, but some Electron versions may not have it)
-if (!fs.promises) {
+const fsPromisesValue = fs.promises || (() => {
   const { promisify } = require('util');
-  fs.promises = {
-    readFile: promisify(fs.readFile),
-    writeFile: promisify(fs.writeFile),
-    mkdir: promisify(fs.mkdir),
-    readdir: promisify(fs.readdir),
-    stat: promisify(fs.stat),
-    access: promisify(fs.access),
-    copyFile: promisify(fs.copyFile),
-    rename: promisify(fs.rename),
-    unlink: promisify(fs.unlink),
-    rmdir: promisify(fs.rmdir),
-    rm: promisify((path, options, callback) => {
-      if (typeof options === 'function') {
-        callback = options;
-        options = {};
-      }
-      if (options && options.recursive) {
-        require('fs').rmdir(path, { recursive: true }, callback);
-      } else {
-        require('fs').unlink(path, callback);
-      }
-    })
-  };
-}
+  const promises = {};
+  const fsMethods = ['access', 'appendFile', 'chmod', 'chown', 'copyFile', 'lchmod', 'lchown', 'link', 'lstat', 'mkdir', 'mkdtemp', 'open', 'readdir', 'readFile', 'readlink', 'realpath', 'rename', 'rmdir', 'stat', 'symlink', 'truncate', 'unlink', 'utimes', 'writeFile'];
+  fsMethods.forEach(method => {
+    if (typeof fs[method] === 'function') {
+      promises[method] = promisify(fs[method]);
+    }
+  });
+  return promises;
+})();
 
-// Intercept require('fs/promises') calls and return fs.promises
+Module._cache['fs/promises'] = {
+  id: 'fs/promises',
+  exports: fsPromisesValue,
+  loaded: true,
+  children: [],
+  parent: null,
+  filename: 'fs/promises',
+  paths: []
+};
+
+Module._resolveFilename = function(request, parent, isMain, options) {
+  if (request === 'fs/promises') {
+    return 'fs/promises';
+  }
+  return originalResolveFilename.call(this, request, parent, isMain, options);
+};
+
 Module.prototype.require = function(id) {
   if (id === 'fs/promises') {
-    return fs.promises;
+    return fsPromisesValue;
   }
   return originalRequire.apply(this, arguments);
 };
@@ -50,14 +49,12 @@ const Store = require("electron-store");
 const {machineId} = require("node-machine-id");
 const {v4: uuidv4} = require('uuid');
 const os = require("os");
-// fs is already declared in the polyfill above
-const fsPromises = fs.promises; // Keep promises version available
+const fsPromises = fsPromisesValue;
 // Keytar has been completely removed.
 const config = require("./config.js");
 const server = require("./server.js");
 const translation = require("./translation.js");
 const net = require('net');
-// Start proxy servers for game client
 require("./proxy.js");
 
 // All Keytar-related service names and constants have been removed.
@@ -752,20 +749,6 @@ ipcMain.on("open-devtools-both", () => {
   }
 });
 
-ipcMain.on("game-webview-console-error", (event) => {
-  try {
-    log("debug", "[DevTools] Received game-webview-console-error from renderer");
-    if (win && win.webContents && !win.isDestroyed()) {
-      log("debug", "[DevTools] Forwarding game-webview-console-error to main window");
-      win.webContents.send('game-webview-console-error');
-    } else {
-      log("warn", "[DevTools] Main window not available to forward error");
-    }
-  } catch (error) {
-    log("error", `[DevTools] Error forwarding game error: ${error.message}`);
-  }
-});
-
 ipcMain.handle("toggle-uuid-spoofing", async (event, enable) => {
   try {
     log("debug", `[UUID] Received toggle-uuid-spoofing: ${enable}`);
@@ -1415,53 +1398,4 @@ ipcMain.handle('set-setting', async (event, key, value) => {
     log('error', `[IPC] Error updating setting ${key}: ${error.message}`);
     return { success: false, error: error.message };
   }
-});
-
-ipcMain.handle('get-api-port', async () => {
-  const http = require('http')
-  const ports = [8080, 8081, 8082, 9080, 3000]
-  
-  for (const port of ports) {
-    try {
-      const result = await new Promise((resolve, reject) => {
-        const req = http.get(`http://127.0.0.1:${port}/api/health`, { timeout: 500 }, (res) => {
-          let data = ''
-          res.on('data', chunk => { data += chunk })
-          res.on('end', () => {
-            try {
-              const json = JSON.parse(data)
-              if (json && json.service === 'strawberry-jam-api') {
-                resolve(port)
-              } else {
-                reject(new Error('Not Strawberry Jam API'))
-              }
-            } catch {
-              reject(new Error('Invalid response'))
-            }
-          })
-        })
-        
-        req.on('timeout', () => {
-          req.destroy()
-          reject(new Error('timeout'))
-        })
-        
-        req.on('error', reject)
-      })
-      
-      if (result) {
-        log('debug', `[IPC] Detected API port: ${result}`)
-        return result
-      }
-    } catch (err) {
-      continue
-    }
-  }
-  
-  log('warn', '[IPC] Could not detect API port, defaulting to 8080')
-  return 8080
-});
-
-ipcMain.handle('get-server-port', async () => {
-  return 443
 });

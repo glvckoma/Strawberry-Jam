@@ -16,6 +16,15 @@ class ConsoleManager {
     this._networkLogLimit = 1000
     this._maxLogEntries = 1000
     this._cleanPercentage = 0.4
+    
+    this._suppressedTypes = new Set()
+    this._suppressedPatterns = []
+    this._quietMode = false
+    this._deduplicationCategories = {
+      reapplied: 'data-log-category-reapplied',
+      closed: 'data-log-category-closed',
+      started: 'data-log-category-started'
+    }
   }
 
   /**
@@ -32,6 +41,15 @@ class ConsoleManager {
    * @public
    */
   message({ message, type = 'success', withStatus = true, time = true, isPacket = false, isIncoming = false, details = null, style = '' } = {}) {
+    if (this._shouldSuppressMessage(message, type)) {
+      return
+    }
+
+    const logCategory = this._getLogCategory(message)
+    if (logCategory) {
+      this._removePreviousLogByCategory(logCategory)
+    }
+    
     const baseTypeClasses = {
       success: 'bg-highlight-green/10 border-l-4 border-highlight-green text-highlight-green',
       error: 'bg-error-red/10 border-l-4 border-error-red text-error-red',
@@ -126,6 +144,10 @@ class ConsoleManager {
     
     if (details && details.messageId) {
       $container.attr('data-message-id', details.messageId)
+    }
+
+    if (logCategory) {
+      $container.attr(this._deduplicationCategories[logCategory], 'true')
     }
 
     if (isPacket && details) {
@@ -413,6 +435,134 @@ class ConsoleManager {
    */
   setAppMessageCount(count) {
     this._appMessageCount = count
+  }
+
+  _shouldSuppressMessage(message, type) {
+    if (type === 'error' || type === 'warn') {
+      return false
+    }
+
+    if (this._suppressedTypes.has(type)) {
+      return true
+    }
+
+    for (const pattern of this._suppressedPatterns) {
+      if (pattern.test(message)) {
+        return true
+      }
+    }
+
+    if (this._quietMode) {
+      if (type === 'notify' && (message.includes('reapplied') || message.includes('closed') || message.includes('Console logs cleared'))) {
+        return true
+      }
+      if (type === 'success' && message.includes('Successfully launched Strawberry Jam Classic')) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  suppressMessageType(type) {
+    this._suppressedTypes.add(type)
+  }
+
+  allowMessageType(type) {
+    this._suppressedTypes.delete(type)
+  }
+
+  suppressMessagePattern(pattern) {
+    if (pattern instanceof RegExp) {
+      this._suppressedPatterns.push(pattern)
+    } else if (typeof pattern === 'string') {
+      this._suppressedPatterns.push(new RegExp(pattern, 'i'))
+    }
+  }
+
+  setQuietMode(enabled) {
+    this._quietMode = enabled
+    if (this.application && this.application.settings) {
+      this.application.settings.update('ui.quietMode', enabled).catch(() => {})
+    }
+  }
+
+  getQuietMode() {
+    return this._quietMode
+  }
+
+  clearFilters() {
+    this._suppressedTypes.clear()
+    this._suppressedPatterns = []
+    this._quietMode = false
+  }
+
+  _getLogCategory(message) {
+    if (!message || typeof message !== 'string') {
+      return null
+    }
+
+    const lowerMessage = message.toLowerCase()
+    
+    if (lowerMessage.includes('was reapplied') || lowerMessage.includes('reapplied')) {
+      return 'reapplied'
+    }
+    
+    if (lowerMessage.includes('has closed') || lowerMessage.includes('closed')) {
+      return 'closed'
+    }
+    
+    if (lowerMessage.includes('successfully launched') || lowerMessage.includes('started')) {
+      return 'started'
+    }
+
+    return null
+  }
+
+  _removePreviousLogByCategory(category) {
+    if (!category || !this._deduplicationCategories[category]) {
+      return
+    }
+
+    const $targetContainer = $('#messages')
+    const selector = `[${this._deduplicationCategories[category]}="true"]`
+    const $existingLogs = $targetContainer.find(selector)
+
+    if ($existingLogs.length > 0) {
+      const self = this
+      $existingLogs.each(function() {
+        const $log = $(this)
+        const wasIncoming = $log.hasClass('bg-tertiary-bg/20')
+        const wasOutgoing = $log.hasClass('bg-highlight-green/5')
+        
+        $log.remove()
+
+        if (wasIncoming || wasOutgoing) {
+          const $totalCount = $('#totalCount')
+          const $incomingCount = $('#incomingCount')
+          const $outgoingCount = $('#outgoingCount')
+
+          if ($totalCount.length) {
+            const currentTotal = parseInt($totalCount.text() || '0', 10)
+            $totalCount.text(Math.max(0, currentTotal - 1))
+          }
+
+          if (wasIncoming && $incomingCount.length) {
+            const currentIncoming = parseInt($incomingCount.text() || '0', 10)
+            $incomingCount.text(Math.max(0, currentIncoming - 1))
+          } else if (wasOutgoing && $outgoingCount.length) {
+            const currentOutgoing = parseInt($outgoingCount.text() || '0', 10)
+            $outgoingCount.text(Math.max(0, currentOutgoing - 1))
+          }
+
+          const currentPacketCount = self.getPacketLogCount()
+          self.setPacketLogCount(Math.max(0, currentPacketCount - 1))
+        } else {
+          const currentAppCount = self.getAppMessageCount()
+          self.setAppMessageCount(Math.max(0, currentAppCount - 1))
+        }
+      })
+    }
   }
 }
 

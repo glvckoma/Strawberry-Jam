@@ -103,6 +103,8 @@
           #devtools-btn-wrapper {
             position: relative;
             display: inline-block;
+            contain: layout style;
+            overflow: visible;
           }
 
           #devtools-error-badge {
@@ -124,6 +126,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
             pointer-events: none;
             z-index: 1000;
+            will-change: transform;
             animation: badge-pulse 2s ease-in-out infinite;
           }
 

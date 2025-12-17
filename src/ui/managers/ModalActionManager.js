@@ -33,14 +33,6 @@ class ModalActionManager {
   }
 
   /**
-   * Opens the Report Problem modal
-   * @public
-   */
-  openReportProblemModal() {
-    this.application.modals.show('reportProblem')
-  }
-
-  /**
    * Initializes the hover styles for standardized modal close buttons
    * @public
    */

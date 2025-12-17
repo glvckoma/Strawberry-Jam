@@ -1,24 +1,11 @@
-/**
- * Core commands for the application.
- * These are basic commands that are available in the console.
- */
-
-/**
- * Register core commands with the dispatch system.
- * @param {import('../dispatch')} dispatch - The dispatch instance.
- * @param {import('../')} application - The application instance.
- */
 function registerCoreCommands(dispatch, application) {
-  
   dispatch.onCommand({
     name: 'clear',
     description: 'Clears the console logs',
     callback: () => {
-      // Find and clear the message containers
       const $mainLogContainer = $('#messages');
       const $packetLogContainer = $('#packetMessages');
       
-      // Clear both message containers
       if ($mainLogContainer.length) {
         $mainLogContainer.empty();
       }
@@ -27,11 +14,9 @@ function registerCoreCommands(dispatch, application) {
         $packetLogContainer.empty();
       }
       
-      // Reset message counters
       application._packetLogCount = 0;
       application._appMessageCount = 0;
       
-      // Display confirmation
       application.consoleMessage({
         type: 'notify',
         message: 'Console logs cleared'
@@ -39,7 +24,6 @@ function registerCoreCommands(dispatch, application) {
     }
   });
 
-  // Help command - shows available commands
   dispatch.onCommand({
     name: 'help',
     description: 'Shows available commands',
@@ -54,7 +38,6 @@ function registerCoreCommands(dispatch, application) {
         return;
       }
       
-      // Group commands by type (core, game plugins, etc.)
       const coreCommands = commands.filter(cmd => 
         ['clear', 'help', 'servers', 'end', 'terminate'].includes(cmd.name)
       );
@@ -90,4 +73,4 @@ function registerCoreCommands(dispatch, application) {
   });
 }
 
-module.exports = registerCoreCommands; 
+module.exports = registerCoreCommands;

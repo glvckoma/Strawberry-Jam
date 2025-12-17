@@ -375,6 +375,11 @@
             console.log(`[LoginScreen] DEBUG: logIn() completed for "${account.username}"`);
           } catch (error) {
             console.error('[LoginScreen] Auto wheel login failed:', error);
+            this.loginScreen.loginBlocked = false;
+            if (this.loginScreen.logInButtonElem) {
+              this.loginScreen.logInButtonElem.disabled = false;
+              this.loginScreen.logInButtonElem.classList.remove("loading");
+            }
           }
         });
 

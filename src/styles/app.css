@@ -251,8 +251,6 @@ input:focus-visible {
 
 #message-log {
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #16171f #1C1E26;
 }
 
 .packet-header {

@@ -226,6 +226,19 @@
                 </div>
               </div>
 
+              <!-- Tutorial Section -->
+              <div class="space-y-4 pt-4">
+                <h5 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
+                  <i class="fas fa-graduation-cap mr-2 text-highlight-yellow"></i>Tutorial
+                </h5>
+                <div>
+                  <button type="button" id="restartTutorialBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
+                    <i class="fas fa-redo mr-2"></i>Restart Tutorial
+                  </button>
+                  <p class="mt-1 text-xs text-gray-400">Restart the onboarding tutorial to learn about Strawberry Jam's features.</p>
+                </div>
+              </div>
+
               <!-- Other Section -->
               <div class="space-y-4 pt-4">
                 <h5 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
@@ -451,6 +464,20 @@
                   <span id="currentSwfSize" class="text-xs text-gray-400">Calculating...</span>
                 </div>
               </div>
+
+              <!-- Auto Reapply Toggle -->
+              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded mt-4">
+                <label for="autoReapplySwfToggle" class="text-sm text-text-primary">Auto-detect and reapply SWF changes</label>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="autoReapplySwfToggle" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
+                    <span class="toggle-text-off">OFF</span>
+                    <span class="toggle-text-on">ON</span>
+                  </div>
+                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                </label>
+              </div>
+              <p class="mt-1 text-xs text-gray-400 -mt-3">When enabled, automatically detects when the selected .swf file changes and reapplies it (similar to auto-detection on application open).</p>
 
               <!-- Action Buttons -->
               <div class="mt-3 grid grid-cols-2 gap-2">

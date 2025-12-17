@@ -1,7 +1,47 @@
+const Module = require('module');
+const originalRequire = Module.prototype.require;
+const originalResolveFilename = Module._resolveFilename;
+
+const fs = require('fs');
+const fsPromisesValue = fs.promises || (() => {
+  const { promisify } = require('util');
+  const promises = {};
+  const fsMethods = ['access', 'appendFile', 'chmod', 'chown', 'copyFile', 'lchmod', 'lchown', 'link', 'lstat', 'mkdir', 'mkdtemp', 'open', 'readdir', 'readFile', 'readlink', 'realpath', 'rename', 'rm', 'rmdir', 'stat', 'symlink', 'truncate', 'unlink', 'utimes', 'writeFile'];
+  fsMethods.forEach(method => {
+    if (typeof fs[method] === 'function') {
+      promises[method] = promisify(fs[method]);
+    }
+  });
+  return promises;
+})();
+
+Module._cache['fs/promises'] = {
+  id: 'fs/promises',
+  exports: fsPromisesValue,
+  loaded: true,
+  children: [],
+  parent: null,
+  filename: 'fs/promises',
+  paths: []
+};
+
+Module._resolveFilename = function(request, parent, isMain, options) {
+  if (request === 'fs/promises') {
+    return 'fs/promises';
+  }
+  return originalResolveFilename.call(this, request, parent, isMain, options);
+};
+
+Module.prototype.require = function(id) {
+  if (id === 'fs/promises') {
+    return fsPromisesValue;
+  }
+  return originalRequire.apply(this, arguments);
+};
+
 const { app, BrowserWindow, shell, ipcMain, protocol, net, dialog, session } = require('electron');
 const path = require('path');
-const fs = require('fs'); // Changed to import standard fs module
-const fsPromises = fs.promises; // Alias for promises API
+const fsPromises = fsPromisesValue;
 const crypto = require('crypto');
 const { fork, spawn } = require('child_process');
 const Store = require('electron-store');
@@ -517,13 +557,6 @@ class Electron {
       if (process.platform !== 'darwin') app.quit()
     })
 
-    app.on('before-quit', () => {
-      this._isQuitting = true
-      if (this.autoUpdateService) {
-        this.autoUpdateService.dispose()
-      }
-    })
-
 
     return this
   }
@@ -646,27 +679,11 @@ class Electron {
       }
     }
     
-    const PortChecker = require('../utils/PortChecker')
-    const port8080Busy = await PortChecker.isPortBusy(8080)
-    if (port8080Busy) {
-      const processInfo = await PortChecker.findProcessUsingPort(8080)
-      if (processInfo && processInfo.processName && !PortChecker.isOwnProcess(processInfo.processName)) {
-        console.warn(`[Electron] Port 8080 is busy: ${processInfo.processName} (PID: ${processInfo.pid}). API server will attempt to use fallback ports.`)
-      }
-    }
-
-    const port443Busy = await PortChecker.isPortBusy(443)
-    if (port443Busy) {
-      const processInfo = await PortChecker.findProcessUsingPort(443)
-      if (processInfo && processInfo.processName && !PortChecker.isOwnProcess(processInfo.processName)) {
-        console.warn(`[Electron] Port 443 is busy: ${processInfo.processName} (PID: ${processInfo.pid}). Networking server will attempt to use fallback ports.`)
-      }
-    }
-
+    // Fork API process with timeout and error handling
     try {
       const assetsPath = getAssetsPath(app);
       this._apiProcess = fork(path.join(__dirname, '..', 'api', 'index.js'), [], {
-        silent: false,
+        silent: false, // Allow child process to log to console
         env: {
           ...process.env,
           STRAWBERRY_JAM_ASSETS_PATH: assetsPath
@@ -674,13 +691,7 @@ class Electron {
       });
       processManager.add(this._apiProcess);
 
-      this._apiProcess.on('message', (msg) => {
-        if (msg && msg.type === 'api-port-ready' && typeof msg.port === 'number') {
-          this._apiPort = msg.port
-          console.log(`[Electron] Received API port from child process: ${msg.port}`)
-        }
-      })
-
+      // Set up API process event handlers
       this._apiProcess.on('error', (error) => {
       });
 
@@ -710,52 +721,14 @@ class Electron {
     this.autoUpdateService.initialize();
 
     try {
-      const FilesController = require('../api/controllers/FilesController');
-      
-      if (!fs.existsSync(FilesController.optionsDir)) {
-        return;
-      }
-      
-      const activeSwfInfo = FilesController.getActiveSwfInfo();
-      
-      if (!activeSwfInfo || !activeSwfInfo.active) {
-        return;
-      }
-      
-      let activeFile = activeSwfInfo.active;
-      
-      if (activeFile === 'ajclient.swf') {
-        const availableFiles = FilesController.getAvailableSwfFiles();
-        
-        if (availableFiles.length > 0) {
-          activeFile = availableFiles[0];
-        } else {
-          return;
-        }
-      }
-      
-      const sourceFilePath = path.join(FilesController.optionsDir, activeFile);
-      
-      if (fs.existsSync(sourceFilePath)) {
-        const stats = fs.statSync(sourceFilePath);
-        const currentModifiedTime = stats.mtime.getTime();
-        const lastModifiedKey = `game.swfLastModified.${activeFile}`;
-        const lastModifiedTime = this._store.get(lastModifiedKey);
-        
-        if (!lastModifiedTime || currentModifiedTime > lastModifiedTime) {
-          const result = await FilesController.replaceSwfFile(activeFile);
-          
-          if (result.success) {
-            this._store.set(lastModifiedKey, currentModifiedTime);
-            
-            if (this._window && this._window.webContents && !this._window.webContents.isDestroyed()) {
-              this._window.webContents.send('swf-auto-reapplied');
-            }
-          }
-        }
+      const selectedFile = this._store.get('game.selectedSwfFile');
+      if (selectedFile) {
+        logManager.log(`[Auto Reapply] Auto-reapplying SWF file: ${selectedFile}`, 'main', logManager.logLevels.INFO);
+        const FilesController = require('../api/controllers/FilesController');
+        await FilesController.replaceSwfFile(selectedFile);
       }
     } catch (error) {
-      logManager.log(`[Auto Reapply] Error: ${error.message}`, 'main', logManager.logLevels.ERROR);
+      console.error('Error applying SWF on launch:', error);
     }
   }
 
