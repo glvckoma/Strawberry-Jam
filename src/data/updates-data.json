@@ -1236,7 +1236,7 @@
   "4.2.0": {
     "version": "4.2.0",
     "releaseDate": "2025-12-14",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -1379,6 +1379,162 @@
       "shortcuts": [],
       "commands": [],
       "messages": []
+    }
+  },
+  "4.2.1": {
+    "version": "4.2.1",
+    "releaseDate": "2025-12-17",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "🌐",
+          "title": "Global Toggles in Mod Menu",
+          "description": "Added Global toggles inside of mod menu. Left of the check box, mods/enhancements can now be toggled for all accounts or on a per account basis. Grey/Off = Per account; Blue/On = Applied to accounts on login.",
+          "priority": "major"
+        },
+        {
+          "icon": "📊",
+          "title": "Sales Log Popup",
+          "description": "Added Sales Log Popup for item sellers to auto keep track of buyer, price, item and more! Needs more testing and any suggestions for improvements.",
+          "priority": "major"
+        },
+        {
+          "icon": "📚",
+          "title": "Tutorial Walkthrough",
+          "description": "Added Tutorial walkthrough of Strawberry Jam.",
+          "priority": "major"
+        },
+        {
+          "icon": "🛍️",
+          "title": "Shop Tester Popup",
+          "description": "Added Shop Tester popup to the mod menu. Certain generic list ids from the defPacks are shop ids, these can be used to force open developer/out of season shops. Note most purchases won't work as they are verified server side but there is a chance.",
+          "priority": "major"
+        },
+        {
+          "icon": "🗑️",
+          "title": "Cache Type Selections",
+          "description": "Added Cache type selections, allowing users to specify what cache to delete.",
+          "priority": "major"
+        },
+        {
+          "icon": "📦",
+          "title": "Expanded Inventory to Recycle Popup",
+          "description": "Added expanded inventory to recycle item popup.",
+          "priority": "major"
+        },
+        {
+          "icon": "💎",
+          "title": "Gem Farm Plugin",
+          "description": "Added @luna Gem Farm plugin.",
+          "priority": "major"
+        },
+        {
+          "icon": "🏠",
+          "title": "Den Log Plugin",
+          "description": "Added Den Log plugin, this is enabled with 'denlog' command. This will track users as they enter/leave den. This is separate from username/buddy logging, this was just a user request.",
+          "priority": "major"
+        },
+        {
+          "icon": "🔢",
+          "title": "Den Item Counter Toggle",
+          "description": "New toggle in enhancements tab 'Den item counter' (# of den items placed/total allowed amount).",
+          "priority": "major"
+        },
+        {
+          "icon": "🔄",
+          "title": "Auto-Detect and Reapply SWF Changes",
+          "description": "New toggle 'Auto-detect and reapply SWF changes' this will know when the .swf has been modified and automatically reapply it at anytime.",
+          "priority": "major"
+        },
+        {
+          "icon": "💬",
+          "title": "Auto Send Red/Bad Messages",
+          "description": "New toggle that will automatically send red/bad messages via private chat.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "📝",
+          "title": "Refined Console Logs",
+          "description": "Refined certain logs in the console logs to prevent spamming during testing/normal usage.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🎨",
+          "title": "Unified Popup Styling",
+          "description": "Refined all popups to use same styling as the mod menu.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "🔧",
+          "title": "Price Checker Plugin Update",
+          "description": "Removed axios and replaced it with puppeteer in Price Checker plugin.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🐛",
+          "title": "Cache Clearing Fix",
+          "description": "Fix implemented to address broken cache clearing in SJ.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Login Issues Fix",
+          "description": "Fix issues with logging in for some users.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Nametag Loading Error Fix",
+          "description": "Fix loading error when opening nametags from jags.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Banned User Nametag Fix",
+          "description": "Fix clicking a banned users nametag in jags nows state they are banned.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Mods/Enhancements Reapply Fix",
+          "description": "Fix for when mods/enhancements were not reapplying on login.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Exact Days Since Last Login Fix",
+          "description": "Fix exact # of days since last logged in.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🐛",
+          "title": "Noclip Player Following Fix",
+          "description": "Fixed noclip not following the player when activated.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [
+        {
+          "icon": "💻",
+          "title": "'denlog' Command",
+          "description": "Enables Den Log plugin to track users as they enter/leave den.",
+          "command": "denlog"
+        }
+      ],
+      "messages": [
+        {
+          "icon": "🗑️",
+          "title": "Removed Features",
+          "description": "Removed 'Report a problem' as it was never used. Removed 'Packet-Editor' plugin (outdated and unused). Removed 'Humongous' plugin due to it being patched server side.",
+          "priority": "enhancement"
+        }
+      ]
     }
   }
 }
