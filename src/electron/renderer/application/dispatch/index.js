@@ -158,6 +158,20 @@ module.exports = class Dispatch {
       refreshPluginVisibilityCallback: () => this.refreshPluginVisibility()
     })
 
+    /**
+     * Connection message types.
+     * @type {Object}
+     * @public
+     */
+    this.ConnectionMessageTypes = ConnectionMessageTypes
+
+    /**
+     * Plugin types.
+     * @type {Object}
+     * @public
+     */
+    this.PluginTypes = PluginTypes
+
   }
 
   /**

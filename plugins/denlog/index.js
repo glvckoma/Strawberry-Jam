@@ -1,5 +1,3 @@
-const { ConnectionMessageTypes } = require('../../src/Constants');
-
 module.exports = function ({ dispatch, application }) {
   let isEnabled = false;
   const userStates = new Map();
@@ -8,7 +6,7 @@ module.exports = function ({ dispatch, application }) {
 
   const handleDrcPacket = ({ message, type }) => {
     if (!isEnabled) return;
-    if (type !== ConnectionMessageTypes.aj) return;
+    if (type !== dispatch.ConnectionMessageTypes.aj) return;
     if (!message || message.type !== 'drc') return;
 
     const parts = message.value;
@@ -49,7 +47,7 @@ module.exports = function ({ dispatch, application }) {
   });
 
   dispatch.onMessage({
-    type: ConnectionMessageTypes.any,
+    type: dispatch.ConnectionMessageTypes.any,
     callback: handleDrcPacket
   });
 };
