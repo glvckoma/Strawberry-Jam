@@ -47,9 +47,10 @@
       <div class="bg-secondary-bg rounded-md shadow p-4 space-y-3">
         <textarea id="inputTxt" class="w-full bg-tertiary-bg text-text-primary placeholder-gray-400 p-3 rounded-md focus:outline-none resize-y min-h-[80px] text-base" placeholder="Enter packet content here..."></textarea>
         <div class="flex items-center space-x-2">
+          <span class="text-sm text-text-primary whitespace-nowrap">Send to:</span>
           <select id="inputType" class="w-1/4 bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none text-sm">
             <option value="connection">Client</option>
-            <option value="aj">Animal Jam</option>
+            <option value="aj">Server</option>
           </select>
           <input type="number" id="inputDelay" step="0.1" min="0" class="w-1/4 bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none text-sm" placeholder="Delay (s)">
           <button type="button" onclick="spammer.addClick()" class="flex-1 px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">

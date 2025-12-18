@@ -247,7 +247,7 @@ class Spammer {
     delayCell.className = 'py-2 px-3 text-xs'
     actionCell.className = 'py-2 px-3 text-xs'
 
-    typeCell.innerHTML = `<select class="bg-tertiary-bg text-text-primary p-1 rounded-md focus:outline-none text-xs"><option value="connection" ${type === 'connection' ? 'selected' : ''}>Client</option><option value="aj" ${type === 'aj' ? 'selected' : ''}>Animal Jam</option></select>`
+    typeCell.innerHTML = `<select class="bg-tertiary-bg text-text-primary p-1 rounded-md focus:outline-none text-xs"><option value="connection" ${type === 'connection' ? 'selected' : ''}>Client</option><option value="aj" ${type === 'aj' ? 'selected' : ''}>Server</option></select>`
     contentCell.innerText = content
     delayCell.innerText = delay
 
