@@ -1,0 +1,14 @@
+{
+  "name": "Den Log",
+  "version": "1.0.0",
+  "description": "Logs when users enter your den via console messages.",
+  "author": "Strawberry Jam",
+  "main": "index.js",
+  "type": "game",
+  "commands": [
+    {
+      "name": "denlog",
+      "description": "Toggle den entry logging on/off"
+    }
+  ]
+}
