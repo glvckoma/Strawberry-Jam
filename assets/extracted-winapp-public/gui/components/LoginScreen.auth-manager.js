@@ -73,21 +73,21 @@
             this.loginScreen.clearAuthToken();
             this.loginScreen.clearRefreshToken();
             this.loginScreen.isFakePassword = false;
-            throw new Error("REFRESH_TOKEN_EXPIRED");
-          }
-
-          try {
-            authResult = await globals.authenticateWithRefreshToken(this.loginScreen.refreshToken, this.loginScreen.otp);
-          } catch (err) {
-            if (err.message === "REFRESH_TOKEN_EXPIRED") {
-              console.warn("[AUTH] Refresh token has expired (server-side check). Clearing all tokens.");
-              this.loginScreen.clearAuthToken();
-              this.loginScreen.clearRefreshToken();
-              this.loginScreen.isFakePassword = false;
-            } else if (err.message === "OTP_NEEDED") {
-              refreshTokenOtpNeeded = true;
-            } else {
-              throw err;
+          } else {
+            try {
+              authResult = await globals.authenticateWithRefreshToken(this.loginScreen.refreshToken, this.loginScreen.otp);
+            } catch (err) {
+              if (err.message === "REFRESH_TOKEN_EXPIRED") {
+                console.warn("[AUTH] Refresh token has expired (server-side check). Clearing all tokens.");
+                this.loginScreen.clearAuthToken();
+                this.loginScreen.clearRefreshToken();
+                this.loginScreen.isFakePassword = false;
+              } else if (err.message === "OTP_NEEDED") {
+                refreshTokenOtpNeeded = true;
+              } else {
+                console.warn("[AUTH] Refresh token authentication failed:", err.message);
+                this.loginScreen.clearRefreshToken();
+              }
             }
           }
         }
@@ -99,7 +99,13 @@
             if (err.message === "OTP_NEEDED") {
               authTokenFailed = true;
               authTokenOtpNeeded = true;
+            } else if (err.message === "LOGIN_ERROR" || err.message === "WRONG_CREDENTIALS") {
+              console.warn("[AUTH] Auth token failed server validation (likely expired). Clearing token.");
+              this.loginScreen.clearAuthToken();
+              authTokenFailed = true;
             } else {
+              console.warn("[AUTH] Auth token authentication failed:", err.message);
+              this.loginScreen.clearAuthToken();
               authTokenFailed = true;
             }
           }

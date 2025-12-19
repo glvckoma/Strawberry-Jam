@@ -67,8 +67,42 @@ const STORE_KEY_SAVED_ACCOUNTS = 'saved_accounts'; // For Account Management
 const AUTO_UPDATE_STARTUP_DELAY_MS = 2000;
 const AUTO_UPDATE_PERIODIC_DELAY_MS = 1 * 60 * 60 * 1000; 
 
+let isUserLoggedIn = false;
+
+const isTokenExpired = (token) => {
+  if (!token) return true;
+  
+  const tokenParts = token.split('.');
+  if (tokenParts.length !== 3) {
+    log("debug", `[Token Validation] Token does not have JWT format (3 parts): ${tokenParts.length} - treating as non-expiring`);
+    return false;
+  }
+  
+  try {
+    const payloadBase64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const decodedJson = Buffer.from(payloadBase64, 'base64').toString('utf-8');
+    const decoded = JSON.parse(decodedJson);
+    
+    if (typeof decoded.exp !== 'number') {
+      log("warn", `[Token Validation] Token expiration ('exp') is not a number: ${decoded.exp}`);
+      return true;
+    }
+    
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const isExpired = decoded.exp < (nowInSeconds + 5);
+    
+    if (isExpired) {
+      log("debug", `[Token Validation] Token expired. exp=${decoded.exp}, now=${nowInSeconds}, diff=${decoded.exp - nowInSeconds}s`);
+    }
+    
+    return isExpired;
+  } catch (e) {
+    log("error", `[Token Validation] Failed to decode or parse token: ${e.message}`);
+    return true;
+  }
+};
+
 let win = null;
-// let gameWebviewContentsId = null; // Main process will not directly manage game webview DevTools via ID.
 
 let printWindow = null;
 let isClosing = false;
@@ -330,19 +364,49 @@ if (!config.noUpdater) {
 ipcMain.on("loaded", async (event, message) => {
   webview = event.sender;
   const username = store.get("login.username") || "";
-  // Default remember me to true
   const rememberMe = store.get("login.rememberMe") !== false;
   let authToken = null;
   let refreshToken = null;
 
-  // Always retrieve tokens for the last user, regardless of rememberMe status.
-  // The renderer will decide whether to use them for auto-login.
   if (username) {
     authToken = store.get(`accounts.${username}.authToken`);
     refreshToken = store.get(`accounts.${username}.refreshToken`);
+    
+    if (!authToken && rememberMe) {
+      authToken = store.get("login.authToken");
+      if (authToken) {
+        log("debug", `[IPC] No account-specific authToken found, using legacy login.authToken`);
+      }
+    }
+    
+    if (!refreshToken && rememberMe) {
+      refreshToken = store.get("login.refreshToken");
+      if (refreshToken) {
+        log("debug", `[IPC] No account-specific refreshToken found, using legacy login.refreshToken`);
+      }
+    }
+    
     log("debug", `[IPC] Retrieved tokens for ${username}: authToken=${authToken ? 'present' : 'missing'}, refreshToken=${refreshToken ? 'present' : 'missing'}`);
+    
+    if (authToken) {
+      const isAuthTokenExpired = isTokenExpired(authToken);
+      if (isAuthTokenExpired) {
+        log("warn", `[IPC] Stored authToken for ${username} is expired, clearing it`);
+        store.delete("login.authToken");
+        store.delete(`accounts.${username}.authToken`);
+        authToken = null;
+      }
+    }
+    
     if (refreshToken) {
       log("debug", `[IPC] Refresh token details: length=${refreshToken.length}, parts=${refreshToken.split('.').length}`);
+      const isRefreshTokenExpired = isTokenExpired(refreshToken);
+      if (isRefreshTokenExpired) {
+        log("warn", `[IPC] Stored refreshToken for ${username} is expired, clearing it`);
+        store.delete("login.refreshToken");
+        store.delete(`accounts.${username}.refreshToken`);
+        refreshToken = null;
+      }
     }
   }
 
@@ -489,10 +553,19 @@ ipcMain.on("loginSucceeded", async (event, message) => {
   translation.setLanguage(message.language);
   store.set("login.rememberMe", message.rememberMe);
 
-  // Always store tokens for the account to allow for quick re-login,
-  // regardless of the "Remember Me" setting for auto-login.
   log("debug", `[IPC] Storing auth token for ${message.username}: ${message.authToken ? 'present' : 'missing'}`);
   store.set(`accounts.${message.username}.authToken`, message.authToken);
+  
+  if (message.rememberMe) {
+    store.set("login.authToken", message.authToken);
+    if (message.refreshToken) {
+      store.set("login.refreshToken", message.refreshToken);
+    }
+  } else {
+    store.delete("login.authToken");
+    store.delete("login.refreshToken");
+  }
+  
   if (message.refreshToken) {
     log("debug", `[IPC] Storing refresh token for ${message.username}: ${message.refreshToken ? 'present' : 'missing'}`);
     store.set(`accounts.${message.username}.refreshToken`, message.refreshToken);
