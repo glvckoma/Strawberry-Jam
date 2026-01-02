@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Chat Emoji Menu</title>
+  <link href="app://assets/css/style.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <script>window.jQuery = window.$ = require('jquery');</script>
+  <script src="app://assets/javascript/jquery-ui.js"></script>
+  <style>
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 6px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      height: auto;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    
+    .emoji-btn {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      background: rgba(60, 60, 60, 0.6);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+    
+    .emoji-btn:hover {
+      background: rgba(99, 102, 241, 0.3);
+      border-color: rgba(99, 102, 241, 0.6);
+      transform: scale(1.1);
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 4px 8px;
+      margin-bottom: 0;
+      background: rgba(40, 40, 40, 0.9);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      box-sizing: border-box;
+      line-height: 1.2;
+    }
+    
+    .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: rgba(99, 102, 241, 0.8);
+      background: rgba(40, 40, 40, 1);
+    }
+    
+    .jam-plugin-content {
+      display: flex;
+      flex-direction: column;
+      padding: 4px;
+      gap: 4px;
+      flex: 1;
+    }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Private Chat Emoji Menu</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize">
+        <i class="fas fa-minus"></i>
+      </button>
+      <button class="jam-plugin-close" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="jam-plugin-content">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search emojis...">
+    <div class="emoji-grid" id="emojiGrid"></div>
+  </div>
+
+  <script src="app://assets/javascript/plugin-utils.js"></script>
+  <script src="index.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      initializePluginUI();
+    });
+  </script>
+</body>
+</html>

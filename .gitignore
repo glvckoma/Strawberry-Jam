@@ -16,5 +16,5 @@ UsernameLogger
 .cursor
 data/*
 scripts/
-FEATURE_INVESTIGATION_AND_PHASED_PLAN.md
+FEATURE_IMPLEMENTATION_PLAN.md
 api-port.txt

@@ -1,0 +1,8 @@
+{
+  "name": "Private Chat Emojis",
+  "description": "Plugin to display and send Private Chat Emojis",
+  "main": "index.html",
+  "author": "DrEmoji",
+  "type": "ui",
+  "version": "1.0.0"
+}

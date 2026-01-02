@@ -1384,7 +1384,7 @@
   "4.2.1": {
     "version": "4.2.1",
     "releaseDate": "2025-12-17",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -1535,6 +1535,78 @@
           "priority": "enhancement"
         }
       ]
+    }
+  },
+  "4.2.2": {
+    "version": "4.2.2",
+    "releaseDate": "2025-12-18",
+    "isLatest": false,
+    "categories": {
+      "features": [],
+      "improvements": [],
+      "fixes": [
+        {
+          "icon": "🐛",
+          "title": "Den Log Plugin Fix",
+          "description": "Fixed Den Log plugin.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "4.2.3": {
+    "version": "4.2.3",
+    "releaseDate": "2025-12-19",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "🗑️",
+          "title": "Recycling Filters",
+          "description": "Added filters to recycling.",
+          "priority": "major"
+        },
+        {
+          "icon": "⚡",
+          "title": "Performance Mode Beta",
+          "description": "Added Performance Mode Beta enhancement to the mod menu. Should help with lag during longer sessions.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "🔢",
+          "title": "Den Items Placed Feature Refinement",
+          "description": "Refined # of Den items placed feature.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "🔐",
+          "title": "Private Chat Encryption Update",
+          "description": "Fixed & updated private chatting encryption. MUST update to see private chats.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🎨",
+          "title": "Custom Name Tag Stutter Fix",
+          "description": "Addressed stutters caused by the custom name tag feature.",
+          "priority": "fix"
+        },
+        {
+          "icon": "🔑",
+          "title": "Expired AuthToken Login Fix",
+          "description": "Fixed an issue during login where expired authTokens were being used.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": []
     }
   }
 }
