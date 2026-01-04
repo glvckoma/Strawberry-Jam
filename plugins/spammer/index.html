@@ -18,8 +18,9 @@
     <!-- Tab Navigation -->
     <div class="flex border-b border-tertiary-bg">
       <button class="tab-btn active-tab" onclick="spammer.switchTab('queue')">Queue</button>
+      <button class="tab-btn" onclick="spammer.switchTab('network')">Network</button>
       <button class="tab-btn" onclick="spammer.switchTab('history')">History</button>
-      <button class="tab-btn" onclick="spammer.switchTab('templates')">Templates</button>
+      <button class="tab-btn" onclick="spammer.switchTab('templates')">Template</button>
     </div>
 
     <!-- Tab Content -->
@@ -145,6 +146,62 @@
         </div>
       </div>
     </div>
+
+    <div id="network-tab" class="tab-content hidden flex-1 flex flex-col min-h-0">
+      <div class="bg-secondary-bg rounded-md shadow overflow-hidden flex-1 flex flex-col min-h-0">
+        <div class="p-4 bg-tertiary-bg flex justify-between items-center flex-shrink-0">
+          <div class="flex items-center space-x-4">
+            <h3 class="text-lg font-medium">Network Packets</h3>
+            <div class="flex items-center space-x-3">
+              <button id="filterAllButton" class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition active min-w-[40px]">
+                All
+              </button>
+              <button id="filterIncomingButton" class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px]">
+                Incoming
+              </button>
+              <button id="filterOutgoingButton" class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px]">
+                Outgoing
+              </button>
+            </div>
+            <div class="flex items-center space-x-3 text-xs text-text-primary">
+              <span>
+                <i class="fas fa-arrow-down text-highlight-green mr-1"></i>
+                <span id="networkIncomingCount">0</span> In
+              </span>
+              <span>
+                <i class="fas fa-arrow-up text-highlight-yellow mr-1"></i>
+                <span id="networkOutgoingCount">0</span> Out
+              </span>
+              <span>
+                <i class="fas fa-list mr-1"></i>
+                <span id="networkTotalCount">0</span> Total
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button id="copyNetworkLogsButton" class="px-3 py-1 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
+              <i class="fas fa-copy mr-1"></i> Copy
+            </button>
+            <button id="clearNetworkLogsButton" class="px-3 py-1 bg-error-red/20 hover:bg-error-red/30 text-error-red rounded-md transition text-sm">
+              <i class="fas fa-trash-alt mr-1"></i> Clear
+            </button>
+          </div>
+        </div>
+        <div class="overflow-y-auto flex-grow min-h-0">
+          <table class="w-full text-left">
+            <thead class="bg-tertiary-bg sticky top-0 z-10">
+              <tr>
+                <th class="text-base py-2 px-4 font-medium w-32">Actions</th>
+                <th class="text-base py-2 px-4 font-medium">Type</th>
+                <th class="text-base py-2 px-4 font-medium">Content</th>
+              </tr>
+            </thead>
+            <tbody id="packetNetworkLog">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Save Template Modal -->
@@ -163,6 +220,28 @@
   <script src="app://assets/javascript/Sortable.min.js"></script>
   <script src="./index.js"></script>
   <script src="app://assets/javascript/plugin-utils.js"></script>
+  <style>
+    #filterAllButton.active,
+    #filterIncomingButton.active,
+    #filterOutgoingButton.active {
+      background-color: var(--theme-primary, #e83d52);
+      color: white;
+    }
+    #packetNetworkLog {
+      table-layout: fixed;
+      width: 100%;
+    }
+    #packetNetworkLog td:nth-child(1) {
+      width: 140px;
+    }
+    #packetNetworkLog td:nth-child(2) {
+      width: 100px;
+    }
+    #packetNetworkLog td:nth-child(3) {
+      width: auto;
+      min-width: 0;
+    }
+  </style>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       initializePluginUI();

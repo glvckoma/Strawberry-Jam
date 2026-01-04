@@ -15,7 +15,7 @@ const GameTimeTracker = require('../services/game/GameTimeTracker');
 const GameProcessManager = require('../managers/game/GameProcessManager');
 const AccountManager = require('../services/account/AccountManager');
 const SystemInfoService = require('../services/system/SystemInfoService');
-const { getUsernameLoggerPath } = require('../Constants');
+const { getDataPath, getUsernameLoggerPath } = require('../Constants');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -294,7 +294,7 @@ function setupIpcHandlers(electronInstance) {
       const cacheService = electronInstance.cacheService;
       const pathsToDelete = [];
 
-      if (options.all || (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp)) {
+      if (options.all || (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp && !options.data && !options.usernameLogger)) {
         const cachePaths = electronInstance._getCachePaths();
         pathsToDelete.push(...cachePaths);
       } else {
@@ -383,6 +383,20 @@ function setupIpcHandlers(electronInstance) {
             pathsToDelete.push(path.join(strawberryJamPath, 'accounts'));
             pathsToDelete.push(path.join(strawberryJamPath, 'auth'));
             pathsToDelete.push(path.join(strawberryJamPath, 'tokens'));
+          }
+        }
+
+        if (options.data) {
+          const dataPath = getDataPath(app);
+          if (dataPath && fs.existsSync(dataPath)) {
+            pathsToDelete.push(dataPath);
+          }
+        }
+
+        if (options.usernameLogger) {
+          const usernameLoggerPath = getUsernameLoggerPath(app);
+          if (usernameLoggerPath && fs.existsSync(usernameLoggerPath)) {
+            pathsToDelete.push(usernameLoggerPath);
           }
         }
       }

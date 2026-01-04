@@ -9,6 +9,8 @@ let activeRow = null
 let packetHistory = []
 
 const MAX_HISTORY_ITEMS = 20
+const MAX_NETWORK_PACKETS = 500
+const NETWORK_CLEAN_PERCENTAGE = 0.4
 
 class Spammer {
   constructor () {
@@ -23,9 +25,24 @@ class Spammer {
     this.table = document.getElementById('table')
     this.historyTable = document.getElementById('historyTable')
     this.templatesTable = document.getElementById('templatesTable')
+    this.packetNetworkLog = document.getElementById('packetNetworkLog')
+    this.filterAllButton = document.getElementById('filterAllButton')
+    this.filterIncomingButton = document.getElementById('filterIncomingButton')
+    this.filterOutgoingButton = document.getElementById('filterOutgoingButton')
+    this.networkIncomingCount = document.getElementById('networkIncomingCount')
+    this.networkOutgoingCount = document.getElementById('networkOutgoingCount')
+    this.networkTotalCount = document.getElementById('networkTotalCount')
+    this.copyNetworkLogsButton = document.getElementById('copyNetworkLogsButton')
+    this.clearNetworkLogsButton = document.getElementById('clearNetworkLogsButton')
 
     this.tabs = document.querySelectorAll('.tab-btn')
     this.tabContents = document.querySelectorAll('.tab-content')
+
+    this.networkPackets = []
+    this.networkFilter = 'all'
+    this.networkIncomingCountValue = 0
+    this.networkOutgoingCountValue = 0
+    this.packetEventListener = null
 
     this.saveTemplateModal = document.getElementById('saveTemplateModal')
     this.templateNameInput = document.getElementById('templateNameInput')
@@ -42,6 +59,7 @@ class Spammer {
     this.updateAccountDropdown()
 
     this.setupModalListeners()
+    this.setupNetworkTab()
     
     // Update account dropdown periodically
     setInterval(() => this.updateAccountDropdown(), 5000)
@@ -305,6 +323,10 @@ class Spammer {
     this.tabContents.forEach(content => {
       content.classList.toggle('hidden', content.id !== `${tabName}-tab`)
     })
+
+    if (tabName === 'network') {
+      this.applyNetworkFilter()
+    }
   }
 
   /**
@@ -878,8 +900,336 @@ class Spammer {
 
     inputElement.click()
   }
+
+  /**
+   * Sets up the network tab functionality
+   */
+  setupNetworkTab () {
+    if (typeof require === 'function') {
+      try {
+        const { ipcRenderer } = require('electron')
+        
+        this.packetEventListener = (event, packetData) => {
+          this.addPacketToNetworkTab(packetData)
+        }
+        
+        ipcRenderer.on('packet-event', this.packetEventListener)
+      } catch (e) {
+        console.error('Error setting up packet event listener:', e)
+      }
+    }
+
+    if (this.filterAllButton) {
+      this.filterAllButton.addEventListener('click', () => {
+        this.setNetworkFilter('all')
+      })
+      this.filterAllButton.classList.add('active')
+    }
+
+    if (this.filterIncomingButton) {
+      this.filterIncomingButton.addEventListener('click', () => {
+        this.setNetworkFilter('incoming')
+      })
+    }
+
+    if (this.filterOutgoingButton) {
+      this.filterOutgoingButton.addEventListener('click', () => {
+        this.setNetworkFilter('outgoing')
+      })
+    }
+
+    if (this.copyNetworkLogsButton) {
+      this.copyNetworkLogsButton.addEventListener('click', () => {
+        this.copyNetworkLogs()
+      })
+    }
+
+    if (this.clearNetworkLogsButton) {
+      this.clearNetworkLogsButton.addEventListener('click', () => {
+        this.clearNetworkLogs()
+      })
+    }
+  }
+
+  /**
+   * Sets the network filter
+   * @param {string} filter - The filter type ('all', 'incoming', 'outgoing')
+   */
+  setNetworkFilter (filter) {
+    this.networkFilter = filter
+
+    if (this.filterAllButton) {
+      this.filterAllButton.classList.remove('active')
+      if (filter === 'all') {
+        this.filterAllButton.classList.add('active')
+      }
+    }
+    if (this.filterIncomingButton) {
+      this.filterIncomingButton.classList.remove('active')
+      if (filter === 'incoming') {
+        this.filterIncomingButton.classList.add('active')
+      }
+    }
+    if (this.filterOutgoingButton) {
+      this.filterOutgoingButton.classList.remove('active')
+      if (filter === 'outgoing') {
+        this.filterOutgoingButton.classList.add('active')
+      }
+    }
+
+    this.applyNetworkFilter()
+  }
+
+  /**
+   * Applies the current network filter
+   */
+  applyNetworkFilter () {
+    if (!this.packetNetworkLog) return
+
+    const rows = this.packetNetworkLog.querySelectorAll('tr')
+    rows.forEach(row => {
+      const direction = row.getAttribute('data-direction')
+      
+      const shouldShow = 
+        this.networkFilter === 'all' ||
+        (this.networkFilter === 'incoming' && direction === 'in') ||
+        (this.networkFilter === 'outgoing' && direction === 'out')
+      
+      row.style.display = shouldShow ? '' : 'none'
+    })
+  }
+
+  /**
+   * Adds a packet to the network tab
+   * @param {Object} packetData - The packet data { raw, direction, timestamp }
+   */
+  addPacketToNetworkTab (packetData) {
+    if (!this.packetNetworkLog || !packetData || !packetData.raw) return
+
+    const isIncoming = packetData.direction === 'in'
+    const packetType = isIncoming ? 'aj' : 'connection'
+    
+    if (isIncoming) {
+      this.networkIncomingCountValue++
+    } else {
+      this.networkOutgoingCountValue++
+    }
+
+    const packetEntry = {
+      raw: packetData.raw,
+      direction: packetData.direction,
+      type: packetType,
+      timestamp: packetData.timestamp || Date.now(),
+      element: null
+    }
+
+    this.networkPackets.push(packetEntry)
+
+    const row = this.packetNetworkLog.insertRow(-1)
+    row.className = 'hover:bg-tertiary-bg/20 transition'
+    row.setAttribute('data-direction', packetData.direction)
+    row.setAttribute('data-packet-index', this.networkPackets.length - 1)
+
+    const actionCell = row.insertCell(0)
+    const typeCell = row.insertCell(1)
+    const contentCell = row.insertCell(2)
+
+    actionCell.className = 'py-2 px-3 text-xs'
+    actionCell.className = 'py-2 px-3 text-xs'
+    typeCell.className = 'py-2 px-3 text-xs'
+    contentCell.className = 'py-2 px-3 text-xs'
+
+    const addButton = document.createElement('button')
+    addButton.type = 'button'
+    addButton.className = 'px-2 py-1 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition text-xs whitespace-nowrap'
+    addButton.innerHTML = '<i class="fas fa-plus mr-1"></i> Add to Queue'
+    addButton.setAttribute('data-packet-raw', packetData.raw)
+    addButton.setAttribute('data-packet-type', packetType)
+    addButton.onclick = () => {
+      const raw = addButton.getAttribute('data-packet-raw')
+      const type = addButton.getAttribute('data-packet-type')
+      const delay = parseFloat(this.inputDelay.value) || 1
+      this.createRow(type, raw, delay.toString())
+      this.switchTab('queue')
+      if (typeof jam !== 'undefined' && jam.showToast) {
+        jam.showToast('Packet added to queue', 'success')
+      }
+    }
+    actionCell.appendChild(addButton)
+
+    const typeLabel = isIncoming ? 'Server' : 'Client'
+    const typeColor = isIncoming ? 'text-highlight-green' : 'text-highlight-yellow'
+    const typeIcon = isIncoming ? 'fa-arrow-down' : 'fa-arrow-up'
+    
+    typeCell.innerHTML = `<span class="${typeColor} whitespace-nowrap"><i class="fas ${typeIcon} mr-1"></i>${typeLabel}</span>`
+    contentCell.textContent = packetData.raw
+    contentCell.title = packetData.raw
+    contentCell.style.cssText = 'word-break: break-word; white-space: normal; overflow-wrap: anywhere; max-width: 100%; font-mono;'
+
+    packetEntry.element = row
+    this.updateNetworkCounters()
+
+    if (this.networkPackets.length > MAX_NETWORK_PACKETS) {
+      this.cleanOldNetworkPackets()
+    }
+
+    this.applyNetworkFilter()
+
+    const tableContainer = this.packetNetworkLog.closest('.overflow-y-auto')
+    if (tableContainer) {
+      const isAtBottom = tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight - 30
+      if (isAtBottom) {
+        setTimeout(() => {
+          tableContainer.scrollTop = tableContainer.scrollHeight
+        }, 0)
+      }
+    }
+  }
+
+
+  /**
+   * Cleans old network packets when limit is exceeded
+   */
+  cleanOldNetworkPackets () {
+    const entriesToRemove = Math.floor(MAX_NETWORK_PACKETS * NETWORK_CLEAN_PERCENTAGE)
+    const packetsToRemove = this.networkPackets.slice(0, entriesToRemove)
+
+    let removedIncoming = 0
+    let removedOutgoing = 0
+
+    packetsToRemove.forEach(packet => {
+      if (packet.element && packet.element.parentNode) {
+        if (packet.direction === 'in') {
+          removedIncoming++
+        } else {
+          removedOutgoing++
+        }
+        packet.element.remove()
+      }
+    })
+
+    this.networkPackets = this.networkPackets.slice(entriesToRemove)
+    this.networkIncomingCountValue = Math.max(0, this.networkIncomingCountValue - removedIncoming)
+    this.networkOutgoingCountValue = Math.max(0, this.networkOutgoingCountValue - removedOutgoing)
+
+
+    this.updateNetworkCounters()
+  }
+
+  /**
+   * Updates the network packet counters
+   */
+  updateNetworkCounters () {
+    if (this.networkIncomingCount) {
+      this.networkIncomingCount.textContent = this.networkIncomingCountValue
+    }
+    if (this.networkOutgoingCount) {
+      this.networkOutgoingCount.textContent = this.networkOutgoingCountValue
+    }
+    if (this.networkTotalCount) {
+      this.networkTotalCount.textContent = this.networkPackets.length
+    }
+  }
+
+  /**
+   * Copies network logs to clipboard
+   */
+  async copyNetworkLogs () {
+    if (!this.packetNetworkLog) return
+
+    try {
+      const rows = this.packetNetworkLog.querySelectorAll('tr')
+      const logsToCopy = []
+
+      rows.forEach(row => {
+        const style = window.getComputedStyle(row)
+        const isHidden = style.display === 'none' || style.visibility === 'hidden' || row.classList.contains('hidden')
+        if (isHidden) return
+
+        const direction = row.getAttribute('data-direction')
+        const contentCell = row.cells[1]
+        const logText = contentCell ? contentCell.textContent.trim() : ''
+
+        if (logText) {
+          if (direction === 'in') {
+            logsToCopy.push(`In: ${logText}`)
+          } else if (direction === 'out') {
+            logsToCopy.push(`Out: ${logText}`)
+          } else {
+            logsToCopy.push(logText)
+          }
+        }
+      })
+
+      if (logsToCopy.length > 0) {
+        await navigator.clipboard.writeText(logsToCopy.join('\n'))
+        const originalText = this.copyNetworkLogsButton.innerHTML
+        this.copyNetworkLogsButton.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!'
+        this.copyNetworkLogsButton.className = 'px-3 py-1 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition text-sm'
+        setTimeout(() => {
+          this.copyNetworkLogsButton.innerHTML = originalText
+          this.copyNetworkLogsButton.className = 'px-3 py-1 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm'
+        }, 2000)
+      } else {
+        const originalText = this.copyNetworkLogsButton.innerHTML
+        this.copyNetworkLogsButton.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> No Logs'
+        this.copyNetworkLogsButton.className = 'px-3 py-1 bg-error-red/20 hover:bg-error-red/30 text-error-red rounded-md transition text-sm'
+        setTimeout(() => {
+          this.copyNetworkLogsButton.innerHTML = originalText
+          this.copyNetworkLogsButton.className = 'px-3 py-1 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm'
+        }, 2000)
+      }
+    } catch (err) {
+      console.error('Failed to copy network logs:', err)
+      const originalText = this.copyNetworkLogsButton.innerHTML
+      this.copyNetworkLogsButton.innerHTML = '<i class="fas fa-times mr-1"></i> Error'
+      this.copyNetworkLogsButton.className = 'px-3 py-1 bg-error-red/20 hover:bg-error-red/30 text-error-red rounded-md transition text-sm'
+      setTimeout(() => {
+        this.copyNetworkLogsButton.innerHTML = originalText
+        this.copyNetworkLogsButton.className = 'px-3 py-1 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm'
+      }, 2000)
+    }
+  }
+
+  /**
+   * Clears all network logs
+   */
+  clearNetworkLogs () {
+    if (!this.packetNetworkLog) return
+
+    while (this.packetNetworkLog.rows.length > 0) {
+      this.packetNetworkLog.deleteRow(0)
+    }
+    this.networkPackets = []
+    this.networkIncomingCountValue = 0
+    this.networkOutgoingCountValue = 0
+    this.updateNetworkCounters()
+  }
+
+  /**
+   * Cleanup method to remove event listeners
+   */
+  cleanup () {
+    if (typeof require === 'function') {
+      try {
+        const { ipcRenderer } = require('electron')
+        if (this.packetEventListener) {
+          ipcRenderer.removeListener('packet-event', this.packetEventListener)
+          this.packetEventListener = null
+        }
+      } catch (e) {
+        console.error('Error removing packet event listener:', e)
+      }
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   window.spammer = new Spammer()
+  
+  window.addEventListener('beforeunload', () => {
+    if (window.spammer && typeof window.spammer.cleanup === 'function') {
+      window.spammer.cleanup()
+    }
+  })
 })

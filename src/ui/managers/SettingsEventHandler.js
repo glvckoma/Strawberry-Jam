@@ -366,6 +366,8 @@ class SettingsEventHandler {
     const $cachePlugins = $modal.find('#cachePlugins');
     const $cacheLogs = $modal.find('#cacheLogs');
     const $cacheTemp = $modal.find('#cacheTemp');
+    const $cacheData = $modal.find('#cacheData');
+    const $cacheUsernameLogger = $modal.find('#cacheUsernameLogger');
     const $cacheTypeCheckboxes = $modal.find('input[name="cacheType"]');
 
     const updateSelectAllState = () => {
@@ -387,19 +389,43 @@ class SettingsEventHandler {
         plugins: $cachePlugins.is(':checked'),
         logs: $cacheLogs.is(':checked'),
         temp: $cacheTemp.is(':checked'),
+        data: $cacheData.is(':checked'),
+        usernameLogger: $cacheUsernameLogger.is(':checked'),
         all: $cacheSelectAll.is(':checked') && $cacheTypeCheckboxes.filter(':checked').length === $cacheTypeCheckboxes.length
       };
 
-      if (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp) {
+      if (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp && !options.data && !options.usernameLogger) {
         this.toastService.showInModal($modal, 'Please select at least one cache type to clear.', 'warning');
         return;
+      }
+
+      if (options.data || options.usernameLogger) {
+        let warningMessage = 'Warning: Clearing the following will permanently delete:\n\n';
+        if (options.data) {
+          warningMessage += '• Data Folder: All saved settings and application data\n';
+        }
+        if (options.usernameLogger) {
+          warningMessage += '• Username Logger: All logged usernames and collected data\n';
+        }
+        warningMessage += '\nThis action cannot be undone. Are you sure you want to continue?';
+        
+        const confirmed = await uiManager.showConfirmationModal(
+          'Data Loss Warning',
+          warningMessage,
+          'Yes, Clear Cache',
+          'Cancel'
+        );
+        
+        if (!confirmed) {
+          return;
+        }
       }
 
       let totalSize = 0;
       try {
         const sizes = await ipcRenderer.invoke('get-cache-size');
         if (sizes && sizes.byType) {
-          if (options.all || (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp)) {
+          if (options.all || (!options.gameSession && !options.auth && !options.plugins && !options.logs && !options.temp && !options.data && !options.usernameLogger)) {
             totalSize = sizes.total || 0;
           } else {
             if (options.gameSession && sizes.byType.gameSession !== undefined) {
@@ -416,6 +442,12 @@ class SettingsEventHandler {
             }
             if (options.temp && sizes.byType.temp !== undefined) {
               totalSize += sizes.byType.temp;
+            }
+            if (options.data && sizes.byType.data !== undefined) {
+              totalSize += sizes.byType.data;
+            }
+            if (options.usernameLogger && sizes.byType.usernameLogger !== undefined) {
+              totalSize += sizes.byType.usernameLogger;
             }
           }
         }

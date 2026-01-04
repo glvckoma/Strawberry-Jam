@@ -524,7 +524,7 @@
                 <div class="bg-tertiary-bg/30 p-3 rounded space-y-3">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                      <input type="checkbox" id="cacheSelectAll" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer" checked>
+                      <input type="checkbox" id="cacheSelectAll" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer" checked>
                       <label for="cacheSelectAll" class="ml-2 text-sm font-medium text-text-primary cursor-pointer">All Cache</label>
                     </div>
                   </div>
@@ -533,7 +533,7 @@
                   <div class="border-t border-sidebar-border pt-3 space-y-3">
                     <div class="flex items-start justify-between">
                       <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheGameSession" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <input type="checkbox" id="cacheGameSession" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
                         <div class="ml-2 flex-1">
                           <label for="cacheGameSession" class="text-sm text-text-primary cursor-pointer font-medium">Game Session Cache</label>
                           <p class="text-xs text-gray-400 mt-0.5">Game assets, session data, and Flash cache from AJ Classic.</p>
@@ -543,7 +543,7 @@
                     
                     <div class="flex items-start justify-between">
                       <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheAuth" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <input type="checkbox" id="cacheAuth" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
                         <div class="ml-2 flex-1">
                           <label for="cacheAuth" class="text-sm text-text-primary cursor-pointer font-medium">Authentication Cache</label>
                           <p class="text-xs text-red-400 mt-0.5">Saved accounts and authentication tokens. Clearing this will require re-login.</p>
@@ -553,7 +553,7 @@
                     
                     <div class="flex items-start justify-between">
                       <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cachePlugins" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <input type="checkbox" id="cachePlugins" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
                         <div class="ml-2 flex-1">
                           <label for="cachePlugins" class="text-sm text-text-primary cursor-pointer font-medium">Plugin Data Cache</label>
                           <p class="text-xs text-gray-400 mt-0.5">User-installed plugins and plugin settings.</p>
@@ -563,7 +563,7 @@
                     
                     <div class="flex items-start justify-between">
                       <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheLogs" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <input type="checkbox" id="cacheLogs" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
                         <div class="ml-2 flex-1">
                           <label for="cacheLogs" class="text-sm text-text-primary cursor-pointer font-medium">Log Files</label>
                           <p class="text-xs text-gray-400 mt-0.5">Application logs and error logs.</p>
@@ -573,10 +573,30 @@
                     
                     <div class="flex items-start justify-between">
                       <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheTemp" name="cacheType" class="w-4 h-4 text-red-600 bg-tertiary-bg border-gray-400 rounded focus:ring-red-500 focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <input type="checkbox" id="cacheTemp" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
                         <div class="ml-2 flex-1">
                           <label for="cacheTemp" class="text-sm text-text-primary cursor-pointer font-medium">Temporary Files</label>
                           <p class="text-xs text-gray-400 mt-0.5">Temporary downloads and cached files.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start flex-1">
+                        <input type="checkbox" id="cacheData" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <div class="ml-2 flex-1">
+                          <label for="cacheData" class="text-sm text-text-primary cursor-pointer font-medium">Data Folder Cache</label>
+                          <p class="text-xs text-red-400 mt-0.5">Saved settings and application data. Clearing this will delete your saved settings.</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start flex-1">
+                        <input type="checkbox" id="cacheUsernameLogger" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
+                        <div class="ml-2 flex-1">
+                          <label for="cacheUsernameLogger" class="text-sm text-text-primary cursor-pointer font-medium">Username Logger Cache</label>
+                          <p class="text-xs text-red-400 mt-0.5">Logged usernames and collected data. Clearing this will permanently delete all logged usernames.</p>
                         </div>
                       </div>
                     </div>
