@@ -57,7 +57,7 @@ jobs:
           retention-days: 30
 
   build-macos:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -81,6 +81,7 @@ jobs:
       - name: Build macOS DMG
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npx electron-builder build -m ${{ (github.event_name == 'push' || github.event.inputs.publish == 'true') && '-p always' || '' }}
 
       - name: Upload artifacts
