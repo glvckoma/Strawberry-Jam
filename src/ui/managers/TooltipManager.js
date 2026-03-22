@@ -5,7 +5,7 @@ class TooltipManager {
   constructor(application) {
     this.application = application;
     this.observer = null;
-    this.$playButton = null;
+    this.$playGameBtn = null;
   }
 
   initialize() {
@@ -49,10 +49,10 @@ class TooltipManager {
     }
   }
 
-  addGameRunningTooltip($playButton) {
-    this.$playButton = $playButton;
-    if (this.$playButton) {
-      this.addTooltip(this.$playButton, 'Strawberry Jam is already running', {
+  addGameRunningTooltip($playGameBtn) {
+    this.$playGameBtn = $playGameBtn;
+    if (this.$playGameBtn) {
+      this.addTooltip(this.$playGameBtn, 'Strawberry Jam is already running', {
         theme: 'error',
         position: 'top'
       });
@@ -60,8 +60,8 @@ class TooltipManager {
   }
 
   removeGameRunningTooltip() {
-    if (this.$playButton) {
-      Tooltip.remove(this.$playButton);
+    if (this.$playGameBtn) {
+      Tooltip.remove(this.$playGameBtn);
     }
   }
 
@@ -118,7 +118,7 @@ class TooltipManager {
     $('#minimizeButton').removeAttr('title');
     $('#fullscreenButton').removeAttr('title');
     $('#mainCloseButton').removeAttr('title');
-    $('#playButton').removeAttr('title');
+    $('#playGameBtn').removeAttr('title');
   }
 
   destroy() {

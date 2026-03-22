@@ -6,7 +6,7 @@
   },
   "win": {
     "icon": "./assets/images/icon.ico",
-    "asar": "true",
+    "asar": true,
     "target": [
       {
         "target": "nsis",
@@ -16,44 +16,70 @@
       }
     ]
   },
+  "mac": {
+    "icon": "./assets/images/icon.png",
+    "asar": true,
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      }
+    ],
+    "category": "public.app-category.games",
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
+  },
+  "linux": {
+    "icon": "./assets/images/icon.png",
+    "asar": true,
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "deb",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "category": "Game",
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
+  },
   "nsis": {
     "artifactName": "${productName}-Setup-${version}.${ext}",
-    "oneClick": true,
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
     "perMachine": false,
     "allowElevation": false,
     "installerIcon": "./assets/images/icon.ico",
     "uninstallerIcon": "./assets/images/icon.ico",
-    "createDesktopShortcut": true,
+    "createDesktopShortcut": "always",
     "createStartMenuShortcut": true,
     "shortcutName": "Strawberry Jam",
     "include": "build/installer.nsh",
     "warningsAsErrors": false,
-    "guid": "a2f8d7c4-6f3b-4c9e-9a2b-1c8f9e4d7a3c",
+    "guid": "a2f8d7c4-6f3b-4c9e-9a2b-1c8f9e4d7a3c"
+  },
+  "dmg": {
+    "artifactName": "${productName}-Setup-${version}.${ext}"
   },
   "files": [
     "**/*",
     "!**/*.{md,txt,pdf,docx}",
     "!dev/**/*",
     "!build/**/*",
-    "!assets/extracted-winapp-public/**/*",
-    "!assets/extracted-winapp-dev/**/*",
+    "!scripts/**/*",
+    "!plugins/**/*",
+    "!assets/client/**/*",
     "!*.{eslintignore,eslintrc,gitignore,gitattributes,editorconfig}"
   ],
   "extraFiles": [
-    {
-      "from": "plugins",
-      "to": "plugins",
-      "filter": [
-        "**/*",
-        "!**/*.bak",
-        "!**/*-backup*",
-        "!**/*.tmp",
-        "!**/*-copy*",
-        "!**/temp_*",
-        "!**/tmp_*"
-      ]
-    },
-    "public/**/*",
     "settings.json"
   ],
   "extraResources": [
@@ -63,10 +89,11 @@
       "filter": [
         "**/*",
         "!memory-bank/**/*",
-        "!extracted-winapp-dev/**/*",
-        "!extracted-winapp-public/**/*",
+        "!client/**/*",
         "!*-backup.asar",
         "!*-dev.asar",
+        "!winapp.asar",
+        "!osxapp.asar",
         "!**/*.bak",
         "!**/*-backup*",
         "!**/*.tmp",
@@ -75,7 +102,6 @@
         "!**/tmp_*"
       ]
     },
-    "public/",
     {
       "from": "src/electron/clear-cache-helper.js",
       "to": "clear-cache-helper.js"

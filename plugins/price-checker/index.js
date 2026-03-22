@@ -10,95 +10,81 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalImage = document.getElementById('modalImage')
   const closeModalButton = document.getElementById('closeModalButton')
 
-  const STATUS_STYLES = {
-    ready: 'text-gray-600 dark:text-gray-400',
-    searching: 'text-yellow-600 dark:text-yellow-400',
-    fetching: 'text-blue-600 dark:text-blue-400',
-    success: 'text-green-600 dark:text-green-400',
-    no_results: 'text-gray-500 dark:text-gray-500',
-    error: 'text-red-600 dark:text-red-400'
+  const STATUS_COLORS = {
+    ready: 'rgba(255,255,255,0.5)',
+    searching: '#eab308',
+    fetching: '#3b82f6',
+    success: '#10b981',
+    no_results: 'rgba(255,255,255,0.4)',
+    error: '#ef4444'
   }
 
   const updateStatus = (message, state = 'ready') => {
-    if (!STATUS_STYLES[state]) {
-      state = 'ready'
-    }
-    statusBar.textContent = `Status: ${message}`
-    Object.values(STATUS_STYLES).forEach(className => {
-      className.split(' ').forEach(cls => {
-        if (cls) statusBar.classList.remove(cls)
-      })
-    })
-    STATUS_STYLES[state].split(' ').forEach(cls => {
-      if (cls) statusBar.classList.add(cls)
-    })
+    statusBar.textContent = message
+    statusBar.style.color = STATUS_COLORS[state] || STATUS_COLORS.ready
   }
 
   const setControlsEnabled = (enabled) => {
     searchInput.disabled = !enabled
     searchButton.disabled = !enabled
-  }
-
-  const clearResultsAndDetails = () => {
-    resultsList.innerHTML = ''
-    detailsArea.innerHTML = ''
+    searchButton.style.opacity = enabled ? '1' : '0.5'
   }
 
   const displayResults = (results) => {
     resultsList.innerHTML = ''
-    if (!results || results.length === 0) {
-      return
-    }
+    if (!results || results.length === 0) return
     results.forEach(result => {
       const li = document.createElement('li')
       li.textContent = result.title
+      li.dataset.title = result.title
       li.dataset.url = result.url
-      li.title = `Click to view details for: ${result.title}\nURL: ${result.url}`
       resultsList.appendChild(li)
     })
+  }
+
+  const showImageModal = (imageUrl) => {
+    modalImage.src = imageUrl
+    imageModal.classList.add('show')
+  }
+
+  const hideImageModal = () => {
+    imageModal.classList.remove('show')
+    modalImage.src = ''
   }
 
   const displayDetails = (sections, sourceUrl) => {
     detailsArea.innerHTML = ''
     if (!Array.isArray(sections) || sections.length === 0) {
-      detailsArea.textContent = 'Error: Received no details data or invalid format.'
+      detailsArea.textContent = 'No details available.'
       return
     }
 
     sections.forEach(section => {
-      if (section.title && section.title !== 'Worth Details') {
-        const titleEl = document.createElement('h3')
-        titleEl.className = 'text-md font-semibold mt-4 mb-2 dark:text-gray-300 first:mt-0'
+      if (section.title) {
+        const titleEl = document.createElement('div')
+        titleEl.style.cssText = 'font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.3px; margin: 10px 0 6px 0;'
         titleEl.textContent = section.title
         detailsArea.appendChild(titleEl)
       }
 
       if (section.type === 'table' && section.headers && section.rows) {
         const table = document.createElement('table')
-        table.className = 'w-full border-collapse border border-gray-300 dark:border-gray-600 text-xs mb-2'
         const thead = document.createElement('thead')
         const tbody = document.createElement('tbody')
 
-        if (section.imageUrls && section.imageUrls.length > 0 && section.imageUrls.some(url => url !== null)) {
+        if (section.imageUrls && section.imageUrls.some(url => url !== null)) {
           const imageRow = document.createElement('tr')
-          imageRow.className = 'bg-white dark:bg-gray-700'
-          const imageCellsToAdd = section.headers.length > 0 ? section.headers.length : section.imageUrls.length
-          for (let i = 0; i < imageCellsToAdd; i++) {
+          const colCount = section.headers.length > 0 ? section.headers.length : section.imageUrls.length
+          for (let i = 0; i < colCount; i++) {
             const td = document.createElement('td')
-            td.className = 'p-1 border border-gray-300 dark:border-gray-600 text-center align-middle'
+            td.style.textAlign = 'center'
             const imageUrl = section.imageUrls[i]
             if (imageUrl) {
               const img = document.createElement('img')
               img.src = imageUrl
-              img.alt = section.headers[i] || 'Item Variant'
-              img.className = 'inline-block max-h-16 object-contain cursor-pointer hover:opacity-80 transition-opacity'
-              img.addEventListener('click', () => {
-                modalImage.src = imageUrl
-                imageModal.classList.remove('hidden')
-              })
+              img.alt = section.headers[i] || 'Item'
+              img.addEventListener('click', () => showImageModal(imageUrl))
               td.appendChild(img)
-            } else {
-              td.innerHTML = '&nbsp;'
             }
             imageRow.appendChild(td)
           }
@@ -106,12 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (section.headers.length > 0) {
-          thead.className = 'bg-gray-100 dark:bg-gray-600'
           const headerRow = document.createElement('tr')
           section.headers.forEach(headerText => {
             const th = document.createElement('th')
             th.textContent = headerText
-            th.className = 'border border-gray-300 dark:border-gray-600 p-2 text-left font-semibold'
             headerRow.appendChild(th)
           })
           thead.appendChild(headerRow)
@@ -120,11 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         section.rows.forEach(rowData => {
           const dataRow = document.createElement('tr')
-          dataRow.className = 'even:bg-white odd:bg-gray-50 dark:even:bg-gray-700 dark:odd:bg-gray-600'
           rowData.forEach(cellText => {
             const td = document.createElement('td')
             td.textContent = cellText
-            td.className = 'border border-gray-300 dark:border-gray-600 p-2 align-top'
             dataRow.appendChild(td)
           })
           tbody.appendChild(dataRow)
@@ -132,27 +114,23 @@ document.addEventListener('DOMContentLoaded', () => {
         table.appendChild(tbody)
         detailsArea.appendChild(table)
       } else if (section.type === 'text' && section.content) {
-        const pre = document.createElement('pre')
-        pre.className = 'whitespace-pre-wrap break-words text-sm'
-        pre.textContent = section.content
-        detailsArea.appendChild(pre)
+        const p = document.createElement('p')
+        p.style.cssText = 'font-size: 12px; color: rgba(255,255,255,0.6); padding: 8px 0;'
+        p.textContent = section.content
+        detailsArea.appendChild(p)
       }
     })
 
     if (sourceUrl) {
       const sourceP = document.createElement('p')
-      sourceP.className = 'source-url mt-4'
+      sourceP.style.cssText = 'margin-top: 10px; font-size: 11px;'
       const sourceLink = document.createElement('a')
       sourceLink.href = sourceUrl
-      sourceLink.textContent = sourceUrl
-      sourceLink.target = '_blank'
-      sourceLink.rel = 'noopener noreferrer'
-      sourceLink.className = 'text-blue-600 dark:text-blue-400 hover:underline cursor-pointer'
+      sourceLink.textContent = 'View on Wiki'
       sourceLink.addEventListener('click', (event) => {
         event.preventDefault()
         ipcRenderer.send('open-url', sourceUrl)
       })
-      sourceP.appendChild(document.createTextNode('Source: '))
       sourceP.appendChild(sourceLink)
       detailsArea.appendChild(sourceP)
     }
@@ -161,20 +139,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const handleSearch = async () => {
     const searchTerm = searchInput.value.trim()
     if (!searchTerm) {
-      updateStatus('Please enter an item name.', 'error')
+      updateStatus('Enter an item name to search.', 'error')
       return
     }
 
     updateStatus(`Searching for "${searchTerm}"...`, 'searching')
-    clearResultsAndDetails()
+    resultsList.innerHTML = ''
+    detailsArea.innerHTML = ''
     setControlsEnabled(false)
 
     try {
       const results = await ipcRenderer.invoke('search-wiki', searchTerm)
       displayResults(results)
-      const statusState = results.length > 0 ? 'success' : 'no_results'
-      const statusMessage = results.length > 0 ? `Found ${results.length} results.` : 'No results found.'
-      updateStatus(statusMessage, statusState)
+      if (results.length > 0) {
+        updateStatus(`Found ${results.length} result${results.length > 1 ? 's' : ''}.`, 'success')
+      } else {
+        updateStatus('No results found.', 'no_results')
+      }
     } catch (error) {
       updateStatus(`Search failed: ${error.message}`, 'error')
     } finally {
@@ -184,30 +165,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const handleResultClick = async (event) => {
     const listItem = event.target.closest('li')
-    if (!listItem || !listItem.dataset.url) {
-      return
-    }
+    if (!listItem || !listItem.dataset.title) return
 
-    const pageUrl = listItem.dataset.url
-    const pageTitle = listItem.textContent
-
-    updateStatus(`Fetching details for "${pageTitle}"...`, 'fetching')
+    const pageTitle = listItem.dataset.title
+    updateStatus(`Loading "${pageTitle}"...`, 'fetching')
     detailsArea.innerHTML = ''
     setControlsEnabled(false)
 
     try {
-      const response = await ipcRenderer.invoke('get-page-details', pageUrl)
+      const response = await ipcRenderer.invoke('get-page-details', pageTitle)
       if (response && Array.isArray(response.sections)) {
         displayDetails(response.sections, response.source_url)
         updateStatus('Details loaded.', 'success')
-        document.getElementById('detailsArea').scrollIntoView({ behavior: 'smooth' })
       } else {
-        throw new Error('Invalid data structure received from main process.')
+        throw new Error('Invalid response from server.')
       }
     } catch (error) {
-      const errorMessage = `Failed to fetch details: ${error.message}`
-      updateStatus(errorMessage, 'error')
-      detailsArea.textContent = errorMessage
+      updateStatus(`Failed: ${error.message}`, 'error')
+      detailsArea.textContent = error.message
     } finally {
       setControlsEnabled(true)
     }
@@ -215,21 +190,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   searchButton.addEventListener('click', handleSearch)
   searchInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-      handleSearch()
-    }
+    if (event.key === 'Enter') handleSearch()
   })
   resultsList.addEventListener('click', handleResultClick)
-  closeModalButton.addEventListener('click', () => {
-    imageModal.classList.add('hidden')
-    modalImage.src = ''
-  })
+  closeModalButton.addEventListener('click', hideImageModal)
   imageModal.addEventListener('click', (event) => {
-    if (event.target === imageModal) {
-      imageModal.classList.add('hidden')
-      modalImage.src = ''
-    }
+    if (event.target === imageModal) hideImageModal()
   })
 
-  updateStatus('Ready. Enter an item name.', 'ready')
+  updateStatus('Ready', 'ready')
 })

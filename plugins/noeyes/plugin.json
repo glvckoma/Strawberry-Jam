@@ -2,7 +2,7 @@
   "name": "No Eyes",
   "version": "1.0.0",
   "description": "Remove eyes from your avatar with a simple command",
-  "author": "Glockoma",
+  "author": "glvckoma",
   "main": "index.js",
   "type": "game",
   "commands": [

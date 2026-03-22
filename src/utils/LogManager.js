@@ -23,7 +23,7 @@ class LogManager {
     this.logPath = '';
     this.sessionLogPath = ''; // Will not be used to create files automatically
     this.devToolsLogs = [];
-    this.gameClientLogs = []; // For logs from winapp.asar
+    this.gameClientLogs = []; // For logs from app-client.asar
     this.maxGameClientLogs = 500; // Max game client logs to keep in memory
     this.systemInfo = {};
     this.logLevels = {
@@ -135,17 +135,17 @@ class LogManager {
     if (!webContents || webContents.isDestroyed()) return 'destroyed-webContents';
 
     let windowTitleContext = 'unknown-context';
-    let identifiedAsWinApp = false;
+    let identifiedAsGameClient = false;
 
     try {
       const rawWindowTitle = windowInstance ? (windowInstance.getTitle() || 'unknown-title') : 'unknown-window-instance';
       const currentUrl = webContents.getURL();
-      if (currentUrl.includes('winapp.asar')) {
-        windowTitleContext = 'winapp-url';
-        identifiedAsWinApp = true;
+      if (currentUrl.includes('app-client.asar')) {
+        windowTitleContext = 'game-client-url';
+        identifiedAsGameClient = true;
       } else if (rawWindowTitle.toLowerCase().includes('animal jam') || rawWindowTitle.toLowerCase().includes('aj classic')) {
-        windowTitleContext = 'winapp-title';
-        identifiedAsWinApp = true;
+        windowTitleContext = 'game-client-title';
+        identifiedAsGameClient = true;
       } else if (rawWindowTitle.includes('index.html') && !rawWindowTitle.includes('/plugins/')) {
         windowTitleContext = 'main-client-ui';
       } else if (rawWindowTitle.includes('/plugins/')) {
@@ -155,7 +155,7 @@ class LogManager {
         windowTitleContext = rawWindowTitle.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50) || 'other-window';
       }
 
-      if (identifiedAsWinApp) {
+      if (identifiedAsGameClient) {
         webContents.send('set-main-log-path', this.logPath);
       }
     } catch (e) {
@@ -265,7 +265,7 @@ class LogManager {
   }
  
   /**
-   * Add logs received from the game client (winapp.asar)
+   * Add logs received from the game client (app-client.asar)
    * @param {Array<Object>} logsArray Array of log entries from the game client
    */
   addGameClientLogs(logsArray) {

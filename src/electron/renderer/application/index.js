@@ -24,6 +24,10 @@ const WindowActionManager = require('../../../managers/window/WindowActionManage
 const ModalActionManager = require('../../../ui/managers/ModalActionManager')
 const ServerHostChecker = require('../../../services/network/ServerHostChecker')
 const CommandRegistry = require('../../../managers/command/CommandRegistry')
+const ConsoleDrawerManager = require('../../../ui/managers/ConsoleDrawerManager')
+const InlinePluginManager = require('../../../ui/managers/InlinePluginManager')
+const PacketFilterManager = require('../../../ui/managers/PacketFilterManager')
+
 
 /**
  * Message status icons (using FontAwesome).
@@ -244,7 +248,7 @@ module.exports = class Application extends EventEmitter {
           } else {
             this.consoleMessage({
               type: 'error',
-              message: `Unknown command: '${command}'. Type 'help' for available commands.`
+              message: `Unknown command: '${command}'. Commands are provided by plugins, check your installed plugins for available commands.`
             });
           }
         } else {
@@ -268,7 +272,7 @@ module.exports = class Application extends EventEmitter {
      * @type {HTMLElement | null}
      * @private
      */
-    this.$playButton = document.getElementById('playButton')
+    this.$playGameBtn = document.getElementById('playGameBtn')
 
     /**
      * Whether the game client is currently running.
@@ -382,14 +386,6 @@ module.exports = class Application extends EventEmitter {
    */
   openPluginHub () {
     this.modalActionManager.openPluginHub()
-  }
-
-  /**
-   * Opens the Links modal.
-   * @public
-   */
-  openLinksModal () {
-    this.modalActionManager.openLinksModal()
   }
 
   /**
@@ -524,17 +520,6 @@ module.exports = class Application extends EventEmitter {
   }
 
   /**
-   * Opens AJ Classic external installation
-   * @returns {Promise<void>}
-   * @public
-   */
-  async openAJClassic () {
-    if (this.gameLauncher) {
-      await this.gameLauncher.openAJClassic()
-    }
-  }
-
-  /**
    * Renders the plugin items within the list.
    * @param {object} plugin - The plugin details
    * @param {string} plugin.name - The name of the plugin
@@ -558,6 +543,7 @@ module.exports = class Application extends EventEmitter {
   _updateEmptyPluginMessage() {
     if (this.pluginUIManager) {
       this.pluginUIManager.updateEmptyPluginMessage()
+      this.pluginUIManager._updateHiddenButtonVisibility()
     }
   }
 
@@ -571,7 +557,10 @@ module.exports = class Application extends EventEmitter {
 
     this.patcher = new Patcher(this, this.assetsPath)
     
+    this.packetFilterManager = new PacketFilterManager(this)
+    window._packetFilterManager = this.packetFilterManager
     this.consoleManager = new ConsoleManager(this, messageIcons)
+    window._consoleManager = this.consoleManager
     this.dispatch = new Dispatch(
       this,
       this.dataPath,
@@ -580,6 +569,8 @@ module.exports = class Application extends EventEmitter {
 
     this.gameLauncher = new GameLauncher(this)
     this.pluginUIManager = new PluginUIManager(this)
+    this.consoleDrawerManager = new ConsoleDrawerManager(this)
+    this.inlinePluginManager = new InlinePluginManager(this)
     this.autoCompleteManager = new AutoCompleteManager(this)
     this.versionChecker = new VersionChecker(this)
     this.serverHostChecker = new ServerHostChecker(this)
@@ -596,10 +587,12 @@ module.exports = class Application extends EventEmitter {
     
     await this.settings.load()
     await this._loadLogLimitSettings()
+    await this.packetFilterManager.load()
     
     this.tooltipManager = new TooltipManager(this)
     this.tooltipManager.initialize()
-    
+    this.consoleDrawerManager.initialize()
+    this.inlinePluginManager.initialize()
     this.networkEventHandler = new NetworkEventHandler(this, this.dispatch)
     
     const startupMessageId = `startup-message-${Date.now()}`
@@ -631,8 +624,19 @@ module.exports = class Application extends EventEmitter {
       await this._checkForHostChanges()
     }
 
-    await this.server.serve()
-    
+    try {
+      await this.server.serve()
+    } catch (err) {
+      this.consoleMessage({
+        message: `Failed to start connection server: ${err.message}`,
+        type: 'error'
+      })
+      ipcRenderer.send('port-error', {
+        server: 'networking',
+        message: 'The connection server failed to start because all ports (443, 444, 445, 8443, 9443) are busy. Close other applications using these ports or use the /terminate command, then restart.'
+      })
+    }
+
     this._removeMessageById(startupMessageId)
     this._removeMessageById(loadingPluginsMessageId)
     
@@ -640,11 +644,6 @@ module.exports = class Application extends EventEmitter {
       this._removeMessageById(this.initialStartupMessageId)
       this.initialStartupMessageId = null
     }
-    
-    this.consoleMessage({
-      message: 'Enjoy 33.33% off BerryBreach purchases using code "HOLIDAYS2025" until 12/31/2025.',
-      type: 'welcome'
-    })
     
     this.emit('ready')
 
@@ -729,8 +728,8 @@ module.exports = class Application extends EventEmitter {
    * @private
    */
   _addGameRunningTooltip() {
-    if (this.tooltipManager && this.$playButton) {
-      this.tooltipManager.addGameRunningTooltip(this.$playButton)
+    if (this.tooltipManager && this.$playGameBtn) {
+      this.tooltipManager.addGameRunningTooltip(this.$playGameBtn)
     }
   }
 

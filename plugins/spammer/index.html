@@ -1,250 +1,167 @@
-<body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
+<head>
+  <meta charset="UTF-8">
+  <title>Packet Spammer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <style>
+    .sp-section { border-bottom: 1px solid rgba(156,163,175,0.1); }
+    .sp-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+    .sp-input { background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; }
+    .sp-input:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .sp-input::placeholder { color: rgba(255,255,255,0.4); }
+    .sp-select { background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 5px 8px; color: #fff; font-size: 12px; color-scheme: dark; }
+    .sp-textarea { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 8px 10px; color: #fff; font-size: 12px; resize: vertical; min-height: 60px; font-family: monospace; }
+    .sp-textarea:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .sp-textarea::placeholder { color: rgba(255,255,255,0.4); }
+    .sp-btn { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; }
+    .sp-btn-start { background: rgba(16,185,129,0.2); color: #10b981; }
+    .sp-btn-start:hover { background: rgba(16,185,129,0.3); }
+    .sp-btn-stop { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .sp-btn-stop:hover { background: rgba(239,68,68,0.3); }
+    .sp-btn-secondary { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid rgba(156,163,175,0.15); }
+    .sp-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    .sp-btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .sp-btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .tab-btn { padding: 6px 14px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s ease; }
+    .tab-btn:hover { color: rgba(255,255,255,0.8); }
+    .tab-btn.active-tab { color: var(--theme-primary, #e83d52); border-bottom-color: var(--theme-primary, #e83d52); }
+    .tab-content { display: flex; }
+    .tab-content.hidden { display: none; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: rgba(255,255,255,0.04); }
+    th { text-align: left; padding: 6px 10px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid rgba(156,163,175,0.15); }
+    td { padding: 6px 10px; font-size: 12px; border-bottom: 1px solid rgba(156,163,175,0.08); color: rgba(255,255,255,0.8); }
+    tr:hover { background: rgba(255,255,255,0.03); }
+    .filter-btn { padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); border: none; cursor: pointer; transition: all 0.15s ease; }
+    .filter-btn:hover { background: rgba(255,255,255,0.1); }
+    .filter-btn.active { background: var(--theme-primary, #e83d52); color: #fff; }
+    #packetNetworkLog { table-layout: fixed; width: 100%; }
+    #packetNetworkLog td:nth-child(1) { width: 120px; }
+    #packetNetworkLog td:nth-child(2) { width: 80px; }
+    #packetNetworkLog td:nth-child(3) { width: auto; min-width: 0; }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
 
-  <!-- Standardized Draggable Header -->
   <div class="jam-plugin-header">
     <span class="jam-plugin-title">Packet Spammer</span>
     <div class="jam-plugin-controls">
-      <button class="jam-plugin-minimize" aria-label="Minimize">
-        <i class="fas fa-minus"></i>
-      </button>
-      <button class="jam-plugin-close" aria-label="Close">
-        <i class="fas fa-times"></i>
-      </button>
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
   </div>
 
-  <!-- Main Content Area -->
-  <div class="jam-plugin-content p-4 flex-1 flex flex-col space-y-4">
-    <!-- Tab Navigation -->
-    <div class="flex border-b border-tertiary-bg">
+  <div class="jam-plugin-content" style="padding: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+
+    <div style="display: flex; border-bottom: 1px solid rgba(156,163,175,0.15); padding: 0 8px; flex-shrink: 0;">
       <button class="tab-btn active-tab" onclick="spammer.switchTab('queue')">Queue</button>
       <button class="tab-btn" onclick="spammer.switchTab('network')">Network</button>
       <button class="tab-btn" onclick="spammer.switchTab('history')">History</button>
-      <button class="tab-btn" onclick="spammer.switchTab('templates')">Template</button>
+      <button class="tab-btn" onclick="spammer.switchTab('templates')">Templates</button>
     </div>
 
-    <!-- Tab Content -->
-    <div id="queue-tab" class="tab-content flex-1 flex flex-col space-y-4 min-h-0">
-      <!-- Packet Queue Table -->
-      <div class="bg-secondary-bg rounded-md shadow overflow-hidden flex-1 flex flex-col min-h-0">
-        <div class="overflow-y-auto">
-          <table class="w-full text-left">
-            <thead class="bg-tertiary-bg sticky top-0 z-10">
-              <tr>
-                <th class="text-base py-3 px-4 font-medium">Type</th>
-                <th class="text-base py-3 px-4 font-medium">Content</th>
-                <th class="text-base py-3 px-4 font-medium">Delay</th>
-                <th class="text-base py-3 px-4 font-medium w-32">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="table">
-              <!-- Packets will be added here -->
-            </tbody>
-          </table>
-        </div>
+    <div id="queue-tab" class="tab-content" style="flex: 1; flex-direction: column; overflow: hidden;">
+      <div style="flex: 1; overflow-y: auto;">
+        <table>
+          <thead><tr><th>Type</th><th>Content</th><th>Delay</th><th style="width: 100px;">Actions</th></tr></thead>
+          <tbody id="table"></tbody>
+        </table>
       </div>
 
-      <!-- Input Area -->
-      <div class="bg-secondary-bg rounded-md shadow p-4 space-y-3">
-        <textarea id="inputTxt" class="w-full bg-tertiary-bg text-text-primary placeholder-gray-400 p-3 rounded-md focus:outline-none resize-y min-h-[80px] text-base" placeholder="Enter packet content here..."></textarea>
-        <div class="flex items-center space-x-2">
-          <span class="text-sm text-text-primary whitespace-nowrap">Send to:</span>
-          <select id="inputType" class="w-1/4 bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none text-sm">
+      <div class="sp-section" style="padding: 8px 10px;">
+        <textarea id="inputTxt" class="sp-textarea" placeholder="Enter packet content..."></textarea>
+        <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px;">
+          <select id="inputType" class="sp-select" style="width: auto;">
             <option value="connection">Client</option>
             <option value="aj">Server</option>
           </select>
-          <input type="number" id="inputDelay" step="0.1" min="0" class="w-1/4 bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none text-sm" placeholder="Delay (s)">
-          <button type="button" onclick="spammer.addClick()" class="flex-1 px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-            <i class="fas fa-plus mr-2"></i> Add to Queue
-          </button>
-          <button type="button" onclick="spammer.sendFromInput()" class="flex-1 px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-            <i class="fas fa-paper-plane mr-2"></i> Send
-          </button>
+          <input type="number" id="inputDelay" step="0.1" min="0" class="sp-input" style="width: 80px;" placeholder="Delay (s)">
+          <button type="button" onclick="spammer.addClick()" class="sp-btn sp-btn-secondary" style="flex: 1;"><i class="fas fa-plus mr-1"></i> Add</button>
+          <button type="button" onclick="spammer.sendFromInput()" class="sp-btn sp-btn-secondary" style="flex: 1;"><i class="fas fa-paper-plane mr-1"></i> Send</button>
         </div>
       </div>
 
-      <!-- Controls -->
-      <div class="bg-secondary-bg rounded-md shadow p-4">
-        <div class="flex flex-wrap gap-4 items-center">
-          <div class="flex gap-2">
-            <button type="button" onclick="spammer.saveTemplate()" class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-base">
-              <i class="fas fa-star mr-2"></i> Save as Template
-            </button>
-          </div>
-          <select id="targetAccount" class="min-w-[150px] bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none text-sm">
-            <option value="">All Accounts</option>
-          </select>
-          <select id="inputRunType" class="min-w-[120px] bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none text-base">
-            <option value="once">Once</option>
-            <option value="loop">Loop</option>
-          </select>
-          <div class="flex gap-2 ml-auto">
-            <button type="button" id="runButton" onclick="spammer.runClick()" class="px-4 py-2 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition text-base">
-              <i class="fas fa-paper-plane mr-2"></i> Start
-            </button>
-            <button type="button" id="stopButton" onclick="spammer.stopClick()" class="px-4 py-2 bg-error-red/20 hover:bg-error-red/30 text-error-red rounded-md transition text-base">
-              <i class="fas fa-stop mr-2"></i> Stop
-            </button>
-          </div>
+      <div class="sp-section" style="padding: 8px 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+        <select id="targetAccount" class="sp-select" style="width: auto; min-width: 120px;">
+          <option value="">All Accounts</option>
+        </select>
+        <select id="inputRunType" class="sp-select" style="width: auto;">
+          <option value="once">Once</option>
+          <option value="loop">Loop</option>
+        </select>
+        <button type="button" onclick="spammer.saveTemplate()" class="sp-btn sp-btn-secondary"><i class="fas fa-star mr-1"></i> Save Template</button>
+        <div style="margin-left: auto; display: flex; gap: 6px;">
+          <button type="button" id="runButton" onclick="spammer.runClick()" class="sp-btn sp-btn-start"><i class="fas fa-play mr-1"></i> Start</button>
+          <button type="button" id="stopButton" onclick="spammer.stopClick()" class="sp-btn sp-btn-stop"><i class="fas fa-stop mr-1"></i> Stop</button>
         </div>
       </div>
     </div>
 
-    <div id="history-tab" class="tab-content hidden flex-1 flex-col min-h-0">
-      <div class="bg-secondary-bg rounded-md shadow overflow-hidden flex-1 flex flex-col min-h-0">
-        <div class="p-4 bg-tertiary-bg flex justify-between items-center">
-          <h3 class="text-lg font-medium">Sent Packet History</h3>
-          <button type="button" onclick="spammer.clearHistory()" class="px-3 py-1 bg-error-red/20 hover:bg-error-red/30 text-error-red rounded-md transition text-sm">
-            <i class="fas fa-trash-alt mr-1"></i> Clear History
-          </button>
-        </div>
-        <div class="overflow-y-auto">
-          <table class="w-full text-left">
-            <thead class="bg-tertiary-bg sticky top-0 z-10">
-              <tr>
-                <th class="text-base py-2 px-4 font-medium">Type</th>
-                <th class="text-base py-2 px-4 font-medium">Content</th>
-                <th class="text-base py-2 px-4 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="historyTable">
-              <!-- History items will be added here -->
-            </tbody>
-          </table>
-        </div>
+    <div id="history-tab" class="tab-content hidden" style="flex: 1; flex-direction: column; overflow: hidden;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; flex-shrink: 0; border-bottom: 1px solid rgba(156,163,175,0.1);">
+        <span class="sp-label">Sent Packet History</span>
+        <button type="button" onclick="spammer.clearHistory()" class="sp-btn sp-btn-danger" style="font-size: 11px; padding: 3px 10px;"><i class="fas fa-trash-alt mr-1"></i> Clear</button>
+      </div>
+      <div style="flex: 1; overflow-y: auto;">
+        <table><thead><tr><th>Type</th><th>Content</th><th style="width: 80px;">Actions</th></tr></thead>
+        <tbody id="historyTable"></tbody></table>
       </div>
     </div>
 
-    <div id="templates-tab" class="tab-content hidden flex-1 flex-col min-h-0">
-      <div class="bg-secondary-bg rounded-md shadow overflow-hidden flex-1 flex flex-col min-h-0">
-        <div class="p-4 bg-tertiary-bg flex justify-between items-center">
-          <h3 class="text-lg font-medium">Packet Templates</h3>
-          <div class="flex items-center space-x-2">
-            <button type="button" onclick="spammer.importTemplates()" class="px-3 py-1 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-              <i class="fas fa-upload mr-1"></i> Import
-            </button>
-            <button type="button" onclick="spammer.exportTemplates()" class="px-3 py-1 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-              <i class="fas fa-download mr-1"></i> Export
-            </button>
-            <button type="button" onclick="spammer.loadTemplates()" class="px-3 py-1 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-              <i class="fas fa-sync-alt mr-1"></i> Reload
-            </button>
-          </div>
+    <div id="templates-tab" class="tab-content hidden" style="flex: 1; flex-direction: column; overflow: hidden;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; flex-shrink: 0; border-bottom: 1px solid rgba(156,163,175,0.1);">
+        <span class="sp-label">Templates</span>
+        <div style="display: flex; gap: 4px;">
+          <button type="button" onclick="spammer.importTemplates()" class="sp-btn sp-btn-secondary" style="font-size: 11px; padding: 3px 8px;"><i class="fas fa-upload mr-1"></i> Import</button>
+          <button type="button" onclick="spammer.exportTemplates()" class="sp-btn sp-btn-secondary" style="font-size: 11px; padding: 3px 8px;"><i class="fas fa-download mr-1"></i> Export</button>
+          <button type="button" onclick="spammer.loadTemplates()" class="sp-btn sp-btn-secondary" style="font-size: 11px; padding: 3px 8px;"><i class="fas fa-sync-alt mr-1"></i> Reload</button>
         </div>
-        <div class="overflow-y-auto">
-          <table class="w-full text-left">
-            <thead class="bg-tertiary-bg sticky top-0 z-10">
-              <tr>
-                <th class="text-base py-2 px-4 font-medium">Name</th>
-                <th class="text-base py-2 px-4 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="templatesTable">
-              <!-- Template items will be added here -->
-            </tbody>
-          </table>
-        </div>
+      </div>
+      <div style="flex: 1; overflow-y: auto;">
+        <table><thead><tr><th>Name</th><th style="width: 100px;">Actions</th></tr></thead>
+        <tbody id="templatesTable"></tbody></table>
       </div>
     </div>
 
-    <div id="network-tab" class="tab-content hidden flex-1 flex flex-col min-h-0">
-      <div class="bg-secondary-bg rounded-md shadow overflow-hidden flex-1 flex flex-col min-h-0">
-        <div class="p-4 bg-tertiary-bg flex justify-between items-center flex-shrink-0">
-          <div class="flex items-center space-x-4">
-            <h3 class="text-lg font-medium">Network Packets</h3>
-            <div class="flex items-center space-x-3">
-              <button id="filterAllButton" class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition active min-w-[40px]">
-                All
-              </button>
-              <button id="filterIncomingButton" class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px]">
-                Incoming
-              </button>
-              <button id="filterOutgoingButton" class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px]">
-                Outgoing
-              </button>
-            </div>
-            <div class="flex items-center space-x-3 text-xs text-text-primary">
-              <span>
-                <i class="fas fa-arrow-down text-highlight-green mr-1"></i>
-                <span id="networkIncomingCount">0</span> In
-              </span>
-              <span>
-                <i class="fas fa-arrow-up text-highlight-yellow mr-1"></i>
-                <span id="networkOutgoingCount">0</span> Out
-              </span>
-              <span>
-                <i class="fas fa-list mr-1"></i>
-                <span id="networkTotalCount">0</span> Total
-              </span>
-            </div>
+    <div id="network-tab" class="tab-content hidden" style="flex: 1; flex-direction: column; overflow: hidden;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; flex-shrink: 0; border-bottom: 1px solid rgba(156,163,175,0.1); flex-wrap: wrap; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; gap: 3px;">
+            <button id="filterAllButton" class="filter-btn active">All</button>
+            <button id="filterIncomingButton" class="filter-btn">In</button>
+            <button id="filterOutgoingButton" class="filter-btn">Out</button>
           </div>
-          <div class="flex items-center space-x-2">
-            <button id="copyNetworkLogsButton" class="px-3 py-1 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-              <i class="fas fa-copy mr-1"></i> Copy
-            </button>
-            <button id="clearNetworkLogsButton" class="px-3 py-1 bg-error-red/20 hover:bg-error-red/30 text-error-red rounded-md transition text-sm">
-              <i class="fas fa-trash-alt mr-1"></i> Clear
-            </button>
+          <div style="display: flex; gap: 8px; font-size: 11px; color: rgba(255,255,255,0.5);">
+            <span><span id="networkIncomingCount" style="color: #10b981;">0</span> in</span>
+            <span><span id="networkOutgoingCount" style="color: #eab308;">0</span> out</span>
+            <span><span id="networkTotalCount">0</span> total</span>
           </div>
         </div>
-        <div class="overflow-y-auto flex-grow min-h-0">
-          <table class="w-full text-left">
-            <thead class="bg-tertiary-bg sticky top-0 z-10">
-              <tr>
-                <th class="text-base py-2 px-4 font-medium w-32">Actions</th>
-                <th class="text-base py-2 px-4 font-medium">Type</th>
-                <th class="text-base py-2 px-4 font-medium">Content</th>
-              </tr>
-            </thead>
-            <tbody id="packetNetworkLog">
-            </tbody>
-          </table>
+        <div style="display: flex; gap: 4px;">
+          <button id="copyNetworkLogsButton" class="sp-btn sp-btn-secondary" style="font-size: 11px; padding: 3px 8px;"><i class="fas fa-copy mr-1"></i> Copy</button>
+          <button id="clearNetworkLogsButton" class="sp-btn sp-btn-danger" style="font-size: 11px; padding: 3px 8px;"><i class="fas fa-trash-alt mr-1"></i> Clear</button>
         </div>
+      </div>
+      <div style="flex: 1; overflow-y: auto;">
+        <table><thead><tr><th style="width: 120px;">Actions</th><th style="width: 80px;">Type</th><th>Content</th></tr></thead>
+        <tbody id="packetNetworkLog"></tbody></table>
       </div>
     </div>
   </div>
 
-  <!-- Save Template Modal -->
-  <div id="saveTemplateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-secondary-bg rounded-lg shadow-lg p-6 w-full max-w-sm">
-      <h3 class="text-lg font-medium mb-4">Save Template</h3>
-      <input type="text" id="templateNameInput" class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none" placeholder="Enter template name...">
-      <div class="flex justify-end space-x-4 mt-4">
-        <button id="cancelSaveTemplate" class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover rounded-md transition">Cancel</button>
-        <button id="confirmSaveTemplate" class="px-4 py-2 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition">Save</button>
+  <div id="saveTemplateModal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);">
+    <div style="background: #1e1f2e; border: 1px solid rgba(156,163,175,0.2); border-radius: 8px; padding: 16px; width: 100%; max-width: 320px;">
+      <div class="sp-label" style="margin-bottom: 8px;">Save Template</div>
+      <input type="text" id="templateNameInput" class="sp-input" style="width: 100%; margin-bottom: 12px;" placeholder="Template name...">
+      <div style="display: flex; justify-content: flex-end; gap: 6px;">
+        <button id="cancelSaveTemplate" class="sp-btn sp-btn-secondary">Cancel</button>
+        <button id="confirmSaveTemplate" class="sp-btn sp-btn-start">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="app://assets/javascript/Sortable.min.js"></script>
+  <script src="app://assets/scripts/Sortable.min.js"></script>
   <script src="./index.js"></script>
-  <script src="app://assets/javascript/plugin-utils.js"></script>
-  <style>
-    #filterAllButton.active,
-    #filterIncomingButton.active,
-    #filterOutgoingButton.active {
-      background-color: var(--theme-primary, #e83d52);
-      color: white;
-    }
-    #packetNetworkLog {
-      table-layout: fixed;
-      width: 100%;
-    }
-    #packetNetworkLog td:nth-child(1) {
-      width: 140px;
-    }
-    #packetNetworkLog td:nth-child(2) {
-      width: 100px;
-    }
-    #packetNetworkLog td:nth-child(3) {
-      width: auto;
-      min-width: 0;
-    }
-  </style>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      initializePluginUI();
-    });
-  </script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
 </body>

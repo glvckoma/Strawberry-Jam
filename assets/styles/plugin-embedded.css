@@ -1,0 +1,21 @@
+.jam-plugin-header,
+.window-controls,
+.titlebar,
+.title-bar,
+#window-controls,
+#titlebar,
+#title-bar,
+#app-titlebar,
+#appTitlebar,
+[data-window-control],
+.electron-titlebar,
+.app-header-controls,
+.drag-region,
+.titlebar-controls,
+.window-title-bar,
+.app-titlebar,
+#header-bar,
+.header-bar,
+[data-draggable="true"] {
+  display: none !important;
+}

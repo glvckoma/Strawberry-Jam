@@ -5,7 +5,6 @@ const path = require('path')
 const settingsModal = require('./settings')
 const confirmExitModal = require('./confirmExitModal')
 const pluginLibraryModal = require('./plugins') // Import the plugins.js modal
-const linksModal = require('./linksModal')
 const tutorialModal = require('./tutorial')
 
 class ModalSystem {
@@ -21,8 +20,7 @@ class ModalSystem {
     // Register available modals
     this.register('settings', settingsModal);
     this.register('confirmExitModal', confirmExitModal);
-    this.register('pluginHub', pluginLibraryModal); // Register the Plugin Library modal
-    this.register('links', linksModal);
+    this.register('pluginHub', pluginLibraryModal);
     this.register('tutorial', tutorialModal);
   }
 

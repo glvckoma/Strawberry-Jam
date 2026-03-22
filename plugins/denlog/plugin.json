@@ -2,7 +2,7 @@
   "name": "Den Log",
   "version": "1.0.0",
   "description": "Logs when users enter your den via console messages.",
-  "author": "Strawberry Jam",
+  "author": "glvckoma",
   "main": "index.js",
   "type": "game",
   "commands": [

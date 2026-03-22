@@ -12,6 +12,7 @@ module.exports = {
         'sidebar-border': '#16171f',
         'custom-pink': '#F10048',
         'sidebar-text': '#C3C3C3',
+        'tertiary-bg': '#2a2b3d',
         'sidebar-hover': '#2C2E34',
         'error-red': '#FF4D4F',
         'custom-blue': '#7785cc',

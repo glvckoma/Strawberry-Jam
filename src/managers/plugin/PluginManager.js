@@ -82,10 +82,16 @@ class PluginManager {
 
   waitForJQuery(window, callback) {
     return new Promise((resolve, reject) => {
-      const checkInterval = 100
-      const maxRetries = 100
+      if (typeof window.$ !== 'undefined') {
+        try {
+          callback()
+          resolve()
+        } catch (error) {
+          reject(error)
+        }
+        return
+      }
       let retries = 0
-
       const intervalId = setInterval(() => {
         if (typeof window.$ !== 'undefined') {
           clearInterval(intervalId)
@@ -95,13 +101,13 @@ class PluginManager {
           } catch (error) {
             reject(error)
           }
-        } else if (retries >= maxRetries) {
+        } else if (retries >= 20) {
           clearInterval(intervalId)
           reject(new Error('jQuery was not found within the expected time.'))
         } else {
           retries++
         }
-      }, checkInterval)
+      }, 250)
     })
   }
 
@@ -192,20 +198,13 @@ class PluginManager {
 
       for (let i = 0; i < validPaths.length; i++) {
         const basePath = validPaths[i]
-        const isPrimaryPath = i === 0
 
-      try {
+        try {
           await fs.access(basePath)
           const files = await PluginManager.readdirRecursive(basePath)
           const configFiles = files.filter(filter)
           allConfigFiles.push(...configFiles)
-      } catch (accessError) {
-          if (isPrimaryPath) {
-            this._consoleMessage({ type: 'error', message: `Plugins directory not found at ${basePath}. Cannot load plugins.` })
-        this._application._updateEmptyPluginMessage()
-        return
-      }
-        }
+        } catch (accessError) {}
       }
 
       if (allConfigFiles.length === 0) {

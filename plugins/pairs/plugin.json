@@ -1,0 +1,9 @@
+{
+  "name": "Pairs",
+  "description": "Always win at Pairs!",
+  "main": "index.html",
+  "author": "Nosmile",
+  "version": "1.0.0",
+  "type": "ui",
+  "game": "animal-jam-classic"
+}

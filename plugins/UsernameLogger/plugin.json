@@ -2,7 +2,7 @@
   "name": "Username Logger",
   "version": "3.0.0",
   "description": "Collects usernames from nearby players and buddies",
-  "author": "Glockoma",
+  "author": "glvckoma",
   "main": "index.js",
   "type": "game",
   "dependencies": {

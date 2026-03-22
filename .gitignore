@@ -14,7 +14,8 @@ assets/flash/backups/*
 UsernameLogger
 .claude
 .cursor
+CLAUDE.md
 data/*
-scripts/
-FEATURE_IMPLEMENTATION_PLAN.md
 api-port.txt
+plugin_packages/
+assets/extracted-winapp-public/

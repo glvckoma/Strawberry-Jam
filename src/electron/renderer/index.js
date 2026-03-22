@@ -9,6 +9,7 @@ const TabManager = require('../../ui/managers/TabManager')
 const TimestampUpdater = require('../../ui/managers/TimestampUpdater')
 const PluginListChecker = require('../../ui/managers/PluginListChecker')
 
+
 const application = new Application()
 
 const connectionStatusManager = new ConnectionStatusManager(application, ipcRenderer)
@@ -24,65 +25,55 @@ document.addEventListener('DOMContentLoaded', () => {
   connectionStatusManager.setCheckingState(true)
   connectionStatusManager.updateConnectionStatus(false)
 
-  // Copy Packet Logs functionality
-  const copyPacketLogsButton = document.getElementById('copyPacketLogsButton');
-  const messageLog = document.getElementById('message-log');
+  const copyPacketLogsButton = document.getElementById('copyPacketLogsButton')
+  const messageLog = document.getElementById('message-log')
 
   if (copyPacketLogsButton && messageLog) {
     copyPacketLogsButton.addEventListener('click', async () => {
-      const originalButtonText = copyPacketLogsButton.innerHTML;
-      const originalButtonClasses = copyPacketLogsButton.className;
+      const originalHTML = copyPacketLogsButton.innerHTML
+      const originalClass = copyPacketLogsButton.className
 
       try {
-        let logsToCopy = [];
-        // Only consider top-level packet entries (direct children)
-        const allEntries = messageLog.querySelectorAll(':scope > div');
-
-        // Only include entries that are currently visible (not filtered out)
+        const allEntries = messageLog.querySelectorAll(':scope > div')
         const logEntries = Array.from(allEntries).filter(entry => {
-          const style = window.getComputedStyle(entry);
-          const isHidden = style.display === 'none' || style.visibility === 'hidden' || entry.classList.contains('hidden');
-          return !isHidden;
-        });
+          const style = window.getComputedStyle(entry)
+          return style.display !== 'none' && style.visibility !== 'hidden' && !entry.classList.contains('hidden')
+        })
 
+        const logsToCopy = []
         logEntries.forEach(entry => {
-          const isIncoming = entry.querySelector('.fa-arrow-down');
-          const isOutgoing = entry.querySelector('.fa-arrow-up');
-          // Packet text is inside the second child div (message container)
-          const messageContainer = entry.querySelector(':scope > div:nth-child(2)');
-          const logText = (messageContainer ? messageContainer.textContent : entry.textContent).trim();
+          const isIncoming = entry.querySelector('.fa-arrow-down')
+          const isOutgoing = entry.querySelector('.fa-arrow-up')
+          const messageContainer = entry.querySelector(':scope > div:nth-child(2)')
+          const logText = (messageContainer ? messageContainer.textContent : entry.textContent).trim()
 
           if (logText) {
-            if (isIncoming) {
-              logsToCopy.push(`In: ${logText}`);
-            } else if (isOutgoing) {
-              logsToCopy.push(`Out: ${logText}`);
-            } else {
-              logsToCopy.push(logText);
-            }
+            if (isIncoming) logsToCopy.push(`In: ${logText}`)
+            else if (isOutgoing) logsToCopy.push(`Out: ${logText}`)
+            else logsToCopy.push(logText)
           }
-        });
+        })
 
         if (logsToCopy.length > 0) {
-          await navigator.clipboard.writeText(logsToCopy.join('\n'));
-          copyPacketLogsButton.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
-          copyPacketLogsButton.className = 'bg-highlight-green text-white px-2 py-1 rounded text-xs transition min-w-[40px] ml-2';
+          await navigator.clipboard.writeText(logsToCopy.join('\n'))
+          copyPacketLogsButton.innerHTML = '<i class="fas fa-check text-sm"></i>'
+          copyPacketLogsButton.className = 'text-highlight-green p-1.5 rounded transition-all'
         } else {
-          copyPacketLogsButton.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>No Logs';
-          copyPacketLogsButton.className = 'bg-error-red text-white px-2 py-1 rounded text-xs transition min-w-[40px] ml-2';
+          copyPacketLogsButton.innerHTML = '<i class="fas fa-exclamation-triangle text-sm"></i>'
+          copyPacketLogsButton.className = 'text-error-red p-1.5 rounded transition-all'
         }
       } catch (err) {
-        console.error('Failed to copy logs:', err);
-        copyPacketLogsButton.innerHTML = '<i class="fas fa-times mr-1"></i>Error';
-        copyPacketLogsButton.className = 'bg-error-red text-white px-2 py-1 rounded text-xs transition min-w-[40px] ml-2';
+        copyPacketLogsButton.innerHTML = '<i class="fas fa-times text-sm"></i>'
+        copyPacketLogsButton.className = 'text-error-red p-1.5 rounded transition-all'
       } finally {
         setTimeout(() => {
-          copyPacketLogsButton.innerHTML = originalButtonText;
-          copyPacketLogsButton.className = originalButtonClasses;
-        }, 2000);
+          copyPacketLogsButton.innerHTML = originalHTML
+          copyPacketLogsButton.className = originalClass
+        }, 2000)
       }
-    });
+    })
   }
+
 })
 
 const sessionStartTimeRef = { current: null }
@@ -130,7 +121,7 @@ const startPluginRefreshAnimation = () => {
     };
 
     plugin.classList.remove("refreshing-fade-in");
-    plugin.style.animationDelay = `${index * 60}ms`;
+    plugin.style.animationDelay = `${index * 40}ms`;
     plugin.classList.add("refreshing-fade-out");
     plugin.addEventListener("animationend", cleanup);
   });
@@ -159,7 +150,7 @@ const completePluginRefreshAnimation = () => {
         plugin.removeEventListener("animationend", cleanup);
       };
 
-      plugin.style.animationDelay = `${index * 70}ms`;
+      plugin.style.animationDelay = `${index * 50}ms`;
       plugin.classList.add("refreshing-fade-in");
       plugin.addEventListener("animationend", cleanup);
     });

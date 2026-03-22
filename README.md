@@ -33,29 +33,6 @@ Strawberry Jam is a fork of the original [Jam](https://github.com/Sxip/jam) proj
 
 Using tools like Strawberry Jam might break the game's rules and result in account termination. Please be careful and use it responsibly. Neither I nor Sxip are responsible for any loss of accounts.
 
-## Legal Notice
-
-**Disclaimer of Liability:**
-The author accepts no responsibility for any consequences arising from the use of this software, including but not limited to account suspensions, bans, data loss, or other damages. Users assume all risks associated with using this tool.
-
-**Software Warranty:**
-This software is provided "as is" without any warranties, express or implied. No guarantees are made regarding functionality, support, updates, or bug fixes. Any modifications or improvements are made solely at the author's discretion.
-
-**Affiliation and Trademarks:**
-Strawberry Jam is an independent project and is not affiliated with, endorsed by, or associated with WildWorks or any related entities. All game assets, trademarks, and service marks belong to their respective owners.
-
-**Redistribution Requirements:**
-Any redistribution, modification, or derivative work must include clear attribution to the original author with a direct link to the source repository. Commercial use, sale, or hosted services using this software are strictly prohibited without explicit written permission.
-
-**Prohibited Uses:**
-This software must not be used for unauthorized access attempts, credential validation, account checking, or any activities that violate terms of service or compromise user security. It is intended solely for educational purposes and understanding network protocols.
-
-**Licensing:**
-Strawberry Jam is licensed under the PolyForm Noncommercial License 1.0.0, which permits noncommercial use, modification, and sharing while prohibiting commercial, production, or hosted deployment. Review the LICENSE file for complete terms.
-
-**Takedown Procedure:**
-WildWorks or its authorized representatives may request project removal by opening an issue in this repository. Upon verification of authority, the project will be taken down promptly.
-
 ## 👩‍💻 For Developers
 
 Want to run Strawberry Jam from its source code, make your own changes, or create plugins? Here's how to get started:
@@ -87,3 +64,27 @@ Want to run Strawberry Jam from its source code, make your own changes, or creat
         npm run build
         ```
     *   This will create the distributable files in a `dist` or `release` folder (the exact location might vary based on configuration).
+
+
+## Legal Notice
+
+**Disclaimer of Liability:**
+The author accepts no responsibility for any consequences arising from the use of this software, including but not limited to account suspensions, bans, data loss, or other damages. Users assume all risks associated with using this tool.
+
+**Software Warranty:**
+This software is provided "as is" without any warranties, express or implied. No guarantees are made regarding functionality, support, updates, or bug fixes. Any modifications or improvements are made solely at the author's discretion.
+
+**Affiliation and Trademarks:**
+Strawberry Jam is an independent project and is not affiliated with, endorsed by, or associated with WildWorks or any related entities. All game assets, trademarks, and service marks belong to their respective owners.
+
+**Redistribution Requirements:**
+Any redistribution, modification, or derivative work must include clear attribution to the original author with a direct link to the source repository. Commercial use, sale, or hosted services using this software are strictly prohibited without explicit written permission.
+
+**Prohibited Uses:**
+This software must not be used for unauthorized access attempts, credential validation, account checking, or any activities that violate terms of service or compromise user security. It is intended solely for educational purposes and understanding network protocols.
+
+**Licensing:**
+Strawberry Jam is licensed under the PolyForm Noncommercial License 1.0.0, which permits noncommercial use, modification, and sharing while prohibiting commercial, production, or hosted deployment. Review the LICENSE file for complete terms.
+
+**Takedown Procedure:**
+WildWorks or its authorized representatives may request project removal by opening an issue in this repository. Upon verification of authority, the project will be taken down promptly.

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Glow</title>
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <script>window.jQuery = window.$ = require('jquery');</script>
+  <style>
+    .glow-preview {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      transition: background-color 0.2s ease, box-shadow 0.3s ease;
+    }
+    .glow-preview.active {
+      box-shadow: 0 0 12px 4px var(--preview-color, #e83d52);
+    }
+    .glow-section {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(156,163,175,0.1);
+    }
+    .glow-section:last-child {
+      border-bottom: none;
+    }
+    .glow-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .glow-btn {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .glow-btn-start {
+      background: rgba(16,185,129,0.2);
+      color: #10b981;
+    }
+    .glow-btn-start:hover {
+      background: rgba(16,185,129,0.3);
+    }
+    .glow-btn-stop {
+      background: rgba(239,68,68,0.2);
+      color: #ef4444;
+    }
+    .glow-btn-stop:hover {
+      background: rgba(239,68,68,0.3);
+    }
+    .speed-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.1);
+      outline: none;
+    }
+    .speed-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--theme-primary, #e83d52);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Glow</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div class="jam-plugin-content" style="padding: 0;">
+
+    <div class="glow-section">
+      <div class="glow-label">Color</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="color" id="colorPicker" value="#e83d52" style="width: 36px; height: 28px; border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; cursor: pointer; background: none; padding: 1px;">
+        <input type="text" id="colorHex" value="#e83d52" maxlength="7" style="flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 4px 8px; color: #fff; font-family: monospace; font-size: 12px;">
+      </div>
+    </div>
+
+    <div class="glow-section">
+      <div class="glow-label">Account</div>
+      <select id="targetAccount" style="width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 5px 8px; color: #fff; font-size: 12px; color-scheme: dark;">
+        <option value="">All Accounts</option>
+      </select>
+    </div>
+
+    <div class="glow-section">
+      <div style="display: flex; gap: 8px;">
+        <div style="flex: 1;">
+          <div class="glow-label">Color Mode</div>
+          <select id="colorMode" style="width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 5px 8px; color: #fff; font-size: 12px; color-scheme: dark;">
+            <option value="solid">Solid</option>
+            <option value="rainbow">Rainbow</option>
+            <option value="pulse">Pulse</option>
+          </select>
+        </div>
+        <div style="flex: 1;">
+          <div class="glow-label">Render</div>
+          <select id="renderMode" style="width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 5px 8px; color: #fff; font-size: 12px; color-scheme: dark;">
+            <option value="full">Full Tint</option>
+            <option value="outline">Outline Only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="glow-section">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="glow-label" style="margin-bottom: 0;">Speed</div>
+        <span id="speedLabel" style="font-size: 11px; color: rgba(255,255,255,0.4);">600ms</span>
+      </div>
+      <input type="range" id="speed" class="speed-slider" min="350" max="2000" value="600" step="50" style="margin-top: 6px;">
+    </div>
+
+    <div class="glow-section">
+      <button id="toggleBtn" class="glow-btn glow-btn-start">
+        <i class="fas fa-play mr-1"></i> Start Glow
+      </button>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px;">
+        <div class="glow-preview" id="preview" style="background-color: #e83d52; display: none;"></div>
+        <div id="status" style="font-size: 11px; color: rgba(255,255,255,0.35);">Stopped</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script src="index.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
+</body>
+</html>

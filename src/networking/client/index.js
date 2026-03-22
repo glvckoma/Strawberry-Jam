@@ -1,4 +1,4 @@
-const { ConnectionMessageTypes } = require('../../Constants')
+const { ConnectionMessageTypes, TCP_SERVER_PORTS } = require('../../Constants')
 const tls = require('tls')
 const DelimiterTransform = require('../transform')
 const { Socket } = require('net')
@@ -224,8 +224,7 @@ module.exports = class Client {
         return;
       }
       
-      // Use the server's actual port instead of hardcoded 443
-      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : 443
+      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : TCP_SERVER_PORTS[0]
 
       const secureConnection = this._server && this._server.application && this._server.application.settings
         ? this._server.application.settings.get('secureConnection') !== false
@@ -466,7 +465,20 @@ module.exports = class Client {
    * @returns {Promise<number>}
    * @public
    */
-  sendConnectionMessage (message, options = {}) { // From jam-master (passes options)
+  sendConnectionMessage (message, options = {}) {
+    if (!this._connection || !this._connection.writable || this._connection.destroyed) {
+      const state = this._connection
+        ? `writable=${this._connection.writable}, destroyed=${this._connection.destroyed}`
+        : 'null'
+      console.error(`[Client] sendConnectionMessage failed: connection socket ${state}`)
+      if (this._server && this._server.application) {
+        this._server.application.consoleMessage({
+          message: `Cannot send to client: connection socket ${state}`,
+          type: 'error'
+        })
+      }
+      return Promise.reject(new Error('Connection socket not writable or destroyed.'))
+    }
     return this._sendMessage(this._connection, message, options)
   }
 
@@ -617,9 +629,8 @@ module.exports = class Client {
     }
 
 
-    // Handle Flash security policy request coming from the local client
     if (type === ConnectionMessageTypes.connection && typeof packet === 'string' && packet.trim().startsWith('<policy-file-request')) {
-      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : 443
+      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : TCP_SERVER_PORTS[0]
       const crossDomainMessage = `<?xml version="1.0"?>\n        <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">\n        <cross-domain-policy>\n        <allow-access-from domain="*" to-ports="80,${serverPort}"/>\n        </cross-domain-policy>`
 
       await this.sendConnectionMessage(crossDomainMessage)
@@ -627,8 +638,7 @@ module.exports = class Client {
     }
 
     if (type === ConnectionMessageTypes.aj && packet.includes('cross-domain-policy')) {
-      // Use the server's actual port in cross-domain policy, with 443 as fallback
-      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : 443
+      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : TCP_SERVER_PORTS[0]
       const crossDomainMessage = `<?xml version="1.0"?>
         <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">
         <cross-domain-policy>

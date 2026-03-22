@@ -211,11 +211,11 @@ class ServerStatusChecker {
   /**
    * Fallback check that directly pings the game server
    * @param {string} serverHost - The server host to check
-   * @param {number} [port=8080] - The port to check on the server
+   * @param {number} [port=7680] - The port to check on the server
    * @returns {Promise<{isOnline: boolean, responseTime: number, timestamp: number, server: string, accessStatus: string, statusCode: number|null, details: string}>} Status result
    * @private
    */
-  static async fallbackServerCheck(serverHost, port = 8080) {
+  static async fallbackServerCheck(serverHost, port = 7680) {
     const result = {
       isOnline: false,
       responseTime: 0,

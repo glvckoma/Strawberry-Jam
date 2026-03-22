@@ -1,5 +1,40 @@
 const { ipcRenderer } = require('electron')
-const { debounce } = require('lodash')
+
+function debounce(fn, wait, options = {}) {
+  let timeout = null
+  let maxTimeout = null
+  let lastArgs = null
+  const maxWait = options.maxWait || 0
+
+  function invoke() {
+    clearTimeout(timeout)
+    clearTimeout(maxTimeout)
+    timeout = null
+    maxTimeout = null
+    const args = lastArgs
+    lastArgs = null
+    fn.apply(null, args)
+  }
+
+  function debounced(...args) {
+    lastArgs = args
+    clearTimeout(timeout)
+    timeout = setTimeout(invoke, wait)
+    if (maxWait && !maxTimeout) {
+      maxTimeout = setTimeout(invoke, maxWait)
+    }
+  }
+
+  debounced.cancel = () => {
+    clearTimeout(timeout)
+    clearTimeout(maxTimeout)
+    timeout = null
+    maxTimeout = null
+    lastArgs = null
+  }
+
+  return debounced
+}
 
 // Default values for critical settings
 const DEFAULT_SETTINGS = {
@@ -56,7 +91,17 @@ const DEFAULT_SETTINGS = {
 
   // Tutorial settings
   'ui.tutorialCompleted': false,
-  'ui.showTutorialOnFirstLaunch': true
+  'ui.showTutorialOnFirstLaunch': true,
+  'ui.applyColorToFruitIcon': true,
+
+  'logs.packetFilters': [],
+  'logs.packetFontSize': 12,
+  'logs.incomingColor': '#10b981',
+  'logs.outgoingColor': '#eab308',
+
+  'plugins.defaultDisplayMode': 'inline',
+
+  'ui.militaryTime': false
 }
 
 // Development mode check (safer than process.env which may be undefined in packaged app)
@@ -123,7 +168,13 @@ module.exports = class Settings {
         { key: 'ui.customThemeName', defaultValue: DEFAULT_SETTINGS['ui.customThemeName'] },
         { key: 'ui.customThemeFruit', defaultValue: DEFAULT_SETTINGS['ui.customThemeFruit'] },
         { key: 'ui.tutorialCompleted', defaultValue: DEFAULT_SETTINGS['ui.tutorialCompleted'] },
-        { key: 'ui.showTutorialOnFirstLaunch', defaultValue: DEFAULT_SETTINGS['ui.showTutorialOnFirstLaunch'] }
+        { key: 'ui.showTutorialOnFirstLaunch', defaultValue: DEFAULT_SETTINGS['ui.showTutorialOnFirstLaunch'] },
+        { key: 'ui.applyColorToFruitIcon', defaultValue: DEFAULT_SETTINGS['ui.applyColorToFruitIcon'] },
+        { key: 'logs.packetFilters', defaultValue: DEFAULT_SETTINGS['logs.packetFilters'] },
+        { key: 'logs.packetFontSize', defaultValue: DEFAULT_SETTINGS['logs.packetFontSize'] },
+        { key: 'logs.incomingColor', defaultValue: DEFAULT_SETTINGS['logs.incomingColor'] },
+        { key: 'logs.outgoingColor', defaultValue: DEFAULT_SETTINGS['logs.outgoingColor'] },
+        { key: 'plugins.defaultDisplayMode', defaultValue: DEFAULT_SETTINGS['plugins.defaultDisplayMode'] }
       ]
 
       for (const {key, defaultValue} of settingsToLoad) {

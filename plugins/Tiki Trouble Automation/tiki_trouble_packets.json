@@ -92,7 +92,7 @@
     },
     {
       "name": "Pick up Pearl 1",
-      "content": "%xt%o%qpup%{room}%tikipearl3%514902%",
+      "content": "%xt%o%qpup%{room}%tikipearl3%{userId}%",
       "type": "xt",
       "delay": "0.3"
     },
@@ -104,7 +104,7 @@
     },
     {
       "name": "Pick up Pearl 2",
-      "content": "%xt%o%qpup%{room}%tikipearl3%514902%",
+      "content": "%xt%o%qpup%{room}%tikipearl3%{userId}%",
       "type": "xt",
       "delay": "0.3"
     },
@@ -116,7 +116,7 @@
     },
     {
       "name": "Pick up Pearl 3",
-      "content": "%xt%o%qpup%{room}%tikipearl3%514902%",
+      "content": "%xt%o%qpup%{room}%tikipearl3%{userId}%",
       "type": "xt",
       "delay": "0.3"
     },

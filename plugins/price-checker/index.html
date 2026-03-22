@@ -1,69 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Price Checker</title>
-    <link rel="stylesheet" href="app://assets/css/style.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <title>Price Checker</title>
+  <link rel="stylesheet" href="app://assets/styles/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    .pc-section { padding: 8px 12px; border-bottom: 1px solid rgba(156,163,175,0.1); }
+    .pc-section:last-child { border-bottom: none; }
+    .pc-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .pc-input { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; }
+    .pc-input::placeholder { color: rgba(255,255,255,0.4); }
+    .pc-input:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .pc-btn { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.2); color: var(--theme-primary, #e83d52); }
+    .pc-btn:hover { background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.3); }
+    .pc-status { font-size: 11px; padding: 4px 0; color: rgba(255,255,255,0.5); transition: color 0.3s ease; }
+    .pc-results { max-height: 150px; overflow-y: auto; border: 1px solid rgba(156,163,175,0.1); border-radius: 4px; }
+    .pc-results:empty { display: none; }
+    #resultsList { list-style: none; padding: 0; margin: 0; }
+    #resultsList li { padding: 6px 10px; font-size: 12px; color: rgba(255,255,255,0.8); cursor: pointer; border-bottom: 1px solid rgba(156,163,175,0.08); transition: background 0.15s ease; }
+    #resultsList li:last-child { border-bottom: none; }
+    #resultsList li:hover { background: rgba(255,255,255,0.06); }
+    #detailsArea { font-size: 12px; color: rgba(255,255,255,0.8); min-height: 60px; overflow-x: auto; }
+    #detailsArea table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+    #detailsArea th { text-align: left; padding: 6px 8px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(156,163,175,0.15); }
+    #detailsArea td { padding: 6px 8px; border-bottom: 1px solid rgba(156,163,175,0.08); vertical-align: top; }
+    #detailsArea tr:hover { background: rgba(255,255,255,0.03); }
+    #detailsArea img { max-height: 48px; border-radius: 4px; cursor: pointer; transition: opacity 0.15s; }
+    #detailsArea img:hover { opacity: 0.8; }
+    #detailsArea a { color: var(--theme-primary, #e83d52); text-decoration: none; }
+    #detailsArea a:hover { text-decoration: underline; }
+    .jam-plugin-content { display: flex; flex-direction: column; flex: 1; overflow-y: auto; padding: 0; }
+    #imageModal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    #imageModal.show { display: flex; }
+    #imageModal img { max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 6px; }
+    #imageModal .modal-close { position: absolute; top: 12px; right: 16px; color: rgba(255,255,255,0.7); font-size: 24px; cursor: pointer; background: none; border: none; }
+    #imageModal .modal-close:hover { color: #fff; }
+  </style>
 </head>
-<body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Price Checker</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
 
-    <!-- Standardized Draggable Header -->
-    <div class="jam-plugin-header">
-        <span class="jam-plugin-title">Price Checker</span>
-        <div class="jam-plugin-controls">
-            <button class="jam-plugin-minimize" aria-label="Minimize">
-                <i class="fas fa-minus"></i>
-            </button>
-            <button class="jam-plugin-close" aria-label="Close">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+  <div class="jam-plugin-content">
+    <div class="pc-section">
+      <div style="display: flex; gap: 6px;">
+        <input type="text" id="searchInput" placeholder="Search for an item..." class="pc-input" style="flex: 1;">
+        <button id="searchButton" class="pc-btn"><i class="fas fa-search mr-1"></i>Search</button>
+      </div>
+      <div id="statusBar" class="pc-status">Ready</div>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="jam-plugin-content flex-1 overflow-y-auto">
-        <div class="container mx-auto max-w-3xl p-6">
-            <h1 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">AJ Item Price Checker</h1>
-
-            <p class="text-xs mb-4" style="color: #dc2626;">Warning: VPNs are blocked by the website. This plugin will not work if you are connected to a VPN.</p>
-
-            <div class="search-bar flex mb-4">
-                <input type="text" id="searchInput" placeholder="Enter item name..." class="flex-grow p-2 border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 placeholder-gray-500 dark:placeholder-gray-400">
-                <button id="searchButton" class="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r-md transition duration-150 ease-in-out">Search</button>
-            </div>
-
-            <div id="statusBar" class="mb-4 p-2 bg-gray-200 dark:bg-gray-700 italic rounded-md text-sm">Status: Ready</div>
-
-            <div class="results-container border border-gray-200 dark:border-gray-700 rounded-md p-4 mb-4 bg-gray-50 dark:bg-gray-800">
-                <h2 class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">Search Results</h2>
-                <ul id="resultsList" class="list-none p-0 max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700">
-                </ul>
-            </div>
-
-            <div class="details-container border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-800">
-                <h2 class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">Worth Details</h2>
-                <div id="detailsArea" class="mt-2 p-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md min-h-[100px] text-sm overflow-x-auto text-gray-900 dark:text-gray-100">
-                </div>
-            </div>
-        </div>
+    <div class="pc-section">
+      <div class="pc-label">Results</div>
+      <div class="pc-results">
+        <ul id="resultsList"></ul>
+      </div>
     </div>
 
-    <!-- Image Modal -->
-    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg max-w-3xl max-h-[80vh] relative">
-            <button id="closeModalButton" class="absolute top-2 right-2 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white text-2xl font-bold">&times;</button>
-            <img id="modalImage" src="" alt="Expanded Item Image" class="block max-w-full max-h-[70vh] object-contain"/>
-        </div>
+    <div class="pc-section" style="flex: 1;">
+      <div class="pc-label">Worth Details</div>
+      <div id="detailsArea"></div>
     </div>
+  </div>
 
-    <script src="index.js"></script>
-    <script src="app://assets/javascript/plugin-utils.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        initializePluginUI();
-      });
-    </script>
+  <div id="imageModal">
+    <button class="modal-close" id="closeModalButton"><i class="fas fa-times"></i></button>
+    <img id="modalImage" src="" alt="Item">
+  </div>
+
+  <script src="index.js"></script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
 </body>
 </html>

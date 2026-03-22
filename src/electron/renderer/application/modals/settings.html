@@ -10,215 +10,141 @@
         white-space: nowrap;
         border-width: 0;
       }
-      .peer:checked ~ .peer-checked-bg {
-        background-color: var(--theme-primary);
-        border-color: var(--theme-primary);
-      }
-      .peer:checked ~ .peer-checked-translate {
-        transform: translateX(1rem);
-      }
-      .toggle-text-on, .toggle-text-off {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.6rem;
-        font-weight: 600;
-        color: white;
-        pointer-events: none;
-        transition: opacity 0.2s ease-in-out;
-      }
-      .toggle-text-on {
-        right: 0.35rem;
-        opacity: 0;
-      }
-      .toggle-text-off {
-        left: 0.35rem;
-        opacity: 1;
-      }
-      .peer:checked ~ .peer-checked-bg .toggle-text-on {
-        opacity: 1;
-      }
-      .peer:checked ~ .peer-checked-bg .toggle-text-off {
-        opacity: 0;
-      }
+      .about-link:hover .fa-github { color: white !important; }
+      .about-link:hover .fa-discord { color: #5865F2 !important; }
+      .about-link:hover .fa-heart { color: #ef4444 !important; }
     </style>
     <div class="flex items-center justify-center min-h-screen">
-      <!-- Modal Backdrop -->
-      <div class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm transition-opacity"></div>
-      
-      <div class="relative bg-secondary-bg rounded-lg shadow-xl max-w-md w-full flex flex-col max-h-[85vh] overflow-hidden">
-        <!-- Modal Header -->
-        <div class="flex items-center p-4 border-b border-sidebar-border flex-shrink-0">
-          <h3 class="text-lg font-semibold text-text-primary">
-            <i class="fas fa-cog text-highlight-yellow mr-2"></i>
+      <div class="modal-backdrop"></div>
+
+      <div class="modal-container max-w-md w-full">
+        <div class="modal-header">
+          <h3 class="modal-header-title">
+            <i class="fas fa-cog modal-section-icon"></i>
             Settings
           </h3>
-          <button type="button" class="text-gray-400 hover:bg-error-red hover:text-white transition-colors p-1 rounded-md ml-auto flex-shrink-0" id="closeSettingsBtn" aria-label="Close">
+          <button type="button" class="modal-close-btn" id="closeSettingsBtn" aria-label="Close">
             <i class="fas fa-times"></i>
           </button>
         </div>
 
-        <!-- Tab Bar -->
-        <div class="flex border-b border-sidebar-border flex-shrink-0 px-2 pt-2">
-          <button type="button" class="settings-tab active-tab relative px-4 py-2 text-sm font-medium text-text-primary focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary focus:ring-offset-secondary-bg" data-tab="general">
+        <div class="modal-tab-bar">
+          <button type="button" class="settings-tab modal-tab active" data-tab="general">
             General
-            <span class="tab-underline absolute bottom-0 left-0 w-full h-[2px]" style="background-color: var(--theme-primary); box-shadow: 0 0 6px 0 var(--theme-primary);"></span>
+            <span class="tab-underline"></span>
           </button>
-          <button type="button" class="settings-tab relative px-4 py-2 text-sm font-medium text-sidebar-text hover:text-text-primary focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary focus:ring-offset-secondary-bg" data-tab="theme">
+          <button type="button" class="settings-tab modal-tab" data-tab="theme">
             Theme
-            <span class="tab-underline absolute bottom-0 left-0 w-full h-[2px]" style="background-color: transparent; box-shadow: none;"></span>
+            <span class="tab-underline"></span>
           </button>
-          <button type="button" class="settings-tab relative px-4 py-2 text-sm font-medium text-sidebar-text hover:text-text-primary focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary focus:ring-offset-secondary-bg" data-tab="plugins">
-            Plugins
-            <span class="tab-underline absolute bottom-0 left-0 w-full h-[2px]" style="background-color: transparent; box-shadow: none;"></span>
-          </button>
-          <button type="button" class="settings-tab relative px-4 py-2 text-sm font-medium text-sidebar-text hover:text-text-primary focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary focus:ring-offset-secondary-bg" data-tab="leakcheck">
+          <button type="button" class="settings-tab modal-tab" data-tab="leakcheck">
             LeakCheck
-            <span class="tab-underline absolute bottom-0 left-0 w-full h-[2px]" style="background-color: transparent; box-shadow: none;"></span>
+            <span class="tab-underline"></span>
           </button>
-          <button type="button" class="settings-tab relative px-4 py-2 text-sm font-medium text-sidebar-text hover:text-text-primary focus:ring-2 focus:ring-offset-2 focus:ring-theme-primary focus:ring-offset-secondary-bg" data-tab="advanced">
+          <button type="button" class="settings-tab modal-tab" data-tab="advanced">
             Advanced
-            <span class="tab-underline absolute bottom-0 left-0 w-full h-[2px]" style="background-color: transparent; box-shadow: none;"></span>
+            <span class="tab-underline"></span>
+          </button>
+          <button type="button" class="settings-tab modal-tab" data-tab="about">
+            About
+            <span class="tab-underline"></span>
           </button>
         </div>
 
-        <!-- Tab Content Area -->
-        <div class="p-5 overflow-y-auto flex-grow">
+        <div class="modal-body themed-scrollbar">
 
-          <!-- General Tab Content -->
-          <div id="generalTabContent" class="settings-tab-content space-y-4">
-            <!-- Update Section -->
-            <div class="space-y-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-sync-alt mr-2 text-highlight-yellow"></i>Application Updates
-              </h4>
-              <!-- Auto Update Toggle -->
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
-                <label for="enableAutoUpdatesToggle" class="text-sm text-text-primary">Enable Automatic Updates</label>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="enableAutoUpdatesToggle" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
-                </label>
+          <div id="generalTabContent" class="settings-tab-content space-y-1">
+
+            <div class="modal-setting-row py-3">
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-text-primary font-medium">Automatic Updates</div>
+                <p class="text-xs text-gray-400 mt-0.5">Download and install updates automatically.</p>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button type="button" id="viewUpdatesBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
-                  <i class="fas fa-list mr-2"></i>View Updates
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                <input type="checkbox" id="enableAutoUpdatesToggle" class="sr-only peer">
+                <div class="toggle-switch"></div>
+              </label>
+            </div>
+
+            <div class="py-3" style="border-top: 1px solid rgba(156,163,175,0.1);">
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" id="viewUpdatesBtn" class="modal-btn-success text-sm">
+                  <i class="fas fa-list mr-1.5"></i>View Updates
                 </button>
-                <button type="button" id="checkForUpdatesBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
-                  <i class="fas fa-search mr-2"></i>Check for Updates
+                <button type="button" id="checkForUpdatesBtn" class="modal-btn-secondary text-sm">
+                  <i class="fas fa-search mr-1.5"></i>Check for Updates
                 </button>
               </div>
-              <div class="grid grid-cols-1 gap-2 mt-2">
-                <button type="button" id="downloadUpdateBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition hidden">
-                  <i class="fas fa-download mr-2"></i>Download Now
-                </button>
-              </div>
+              <button type="button" id="downloadUpdateBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition hidden mt-2 text-sm">
+                <i class="fas fa-download mr-1.5"></i>Download Now
+              </button>
               <p id="manualUpdateStatusText" class="mt-2 text-xs text-gray-400"></p>
               <div id="downloadProgressContainer" class="hidden w-full bg-tertiary-bg rounded-full h-2.5 mt-2">
-                <div id="downloadProgressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                <div id="downloadProgressBar" class="h-2.5 rounded-full" style="width: 0%; background-color: var(--theme-primary, #e83d52);"></div>
               </div>
             </div>
-            <!-- End Update Section -->
 
-            <!-- Server Status Section -->
-            <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-server mr-2 text-highlight-yellow"></i>Server Status
-              </h4>
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
-                <label for="performServerCheckOnLaunchToggle" class="text-sm text-text-primary">Check AJC Server status on launch</label>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="performServerCheckOnLaunchToggle" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
-                </label>
+            <div class="modal-setting-row py-3" style="border-top: 1px solid rgba(156,163,175,0.1);">
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-text-primary font-medium">Server Status Check</div>
+                <p class="text-xs text-gray-400 mt-0.5">Verify AJC server status when the app launches.</p>
               </div>
-              <p class="mt-1 text-xs text-gray-400 -mt-3">If unchecked, the app won't verify Animal Jam Classic server status at startup.</p>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                <input type="checkbox" id="performServerCheckOnLaunchToggle" class="sr-only peer">
+                <div class="toggle-switch"></div>
+              </label>
             </div>
-            <!-- End Server Status Section -->
 
-
-            <!-- Log Management Section -->
-            <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-chart-line mr-2 text-highlight-yellow"></i>Log Management
-              </h4>
-              
-              <!-- Console Log Limit -->
-              <div>
-                <label for="consoleLogLimit" class="block mb-2 text-sm font-medium text-text-primary">Console Log Limit</label>
-                <input id="consoleLogLimit" type="number" min="100" max="10000" step="100" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="500">
+            <div class="modal-setting-row py-3" style="border-top: 1px solid rgba(156,163,175,0.1);">
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-text-primary font-medium">24-Hour Time</div>
+                <p class="text-xs text-gray-400 mt-0.5">Use military time format for console and log timestamps.</p>
               </div>
-
-              <!-- Network Log Limit -->
-              <div>
-                <label for="networkLogLimit" class="block mb-2 text-sm font-medium text-text-primary">Network Log Limit</label>
-                <input id="networkLogLimit" type="number" min="100" max="10000" step="100" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="500">
-              </div>
-
-              <!-- Log Cleanup Info Box -->
-              <div class="bg-tertiary-bg/30 p-3 rounded">
-                <div class="flex items-start">
-                  <i class="fas fa-info-circle text-highlight-yellow mt-0.5 mr-2"></i>
-                  <div>
-                    <p class="text-sm text-text-primary mb-2">When logs reach the limit, older entries (about 40%) are automatically removed.</p>
-                    <p class="text-xs text-gray-400">This prevents performance issues from excessive memory usage.</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tutorial Section -->
-              <div class="space-y-4 pt-4">
-                <h5 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                  <i class="fas fa-graduation-cap mr-2 text-highlight-yellow"></i>Tutorial
-                </h5>
-                <div>
-                  <button type="button" id="restartTutorialBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
-                    <i class="fas fa-redo mr-2"></i>Restart Tutorial
-                  </button>
-                  <p class="mt-1 text-xs text-gray-400">Restart the onboarding tutorial to learn about Strawberry Jam's features.</p>
-                </div>
-              </div>
-
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                <input type="checkbox" id="militaryTimeToggle" class="sr-only peer">
+                <div class="toggle-switch"></div>
+              </label>
             </div>
-            <!-- End Log Management Section -->
+
+            <div class="py-3" style="border-top: 1px solid rgba(156,163,175,0.1);">
+              <button type="button" id="restartTutorialBtn" class="w-full modal-btn-secondary text-sm">
+                <i class="fas fa-redo mr-1.5"></i>Restart Tutorial
+              </button>
+              <p class="mt-1.5 text-xs text-gray-400">Re-run the onboarding walkthrough.</p>
+            </div>
+
           </div>
-          <!-- End General Tab Content -->
 
-          <!-- Theme Tab Content -->
           <div id="themeTabContent" class="settings-tab-content space-y-4 hidden">
-            <!-- Custom Theme Color Section -->
             <div class="space-y-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-palette mr-2 text-highlight-yellow"></i>Custom Theme Color
+              <h4 class="modal-section-title">
+                <i class="fas fa-palette modal-section-icon"></i>Custom Theme Color
               </h4>
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
+              <div class="modal-setting-row">
                 <label for="customThemeEnabledToggle" class="text-sm text-text-primary">Enable Custom Color</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="customThemeEnabledToggle" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                  <div class="toggle-switch"></div>
                 </label>
               </div>
               <p class="mt-1 text-xs text-gray-400 -mt-3">When enabled, the strawberry jam icon will be tinted to match your selected color.</p>
-              
+
+              <div class="modal-setting-row">
+                <label for="applyColorToFruitToggle" class="text-sm text-text-primary">Tint Fruit Icon</label>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="applyColorToFruitToggle" class="sr-only peer" checked>
+                  <div class="toggle-switch"></div>
+                </label>
+              </div>
+              <p class="mt-1 text-xs text-gray-400 -mt-3">When disabled, the fruit icon keeps its original colors instead of being tinted.</p>
+
               <div id="customThemeColorContainer" class="transition-opacity duration-300">
                 <label for="customThemeNameInput" class="block mb-2 text-sm font-medium text-text-primary">Custom Name</label>
-                <input id="customThemeNameInput" type="text" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full mb-3" placeholder="Custom Jam" maxlength="50">
+                <input id="customThemeNameInput" type="text" class="modal-input mb-3" placeholder="Custom Jam" maxlength="50">
                 <p class="mt-1 text-xs text-gray-400 -mt-2 mb-3">Customize the display name shown in the application.</p>
-                
+
                 <label for="customThemeFruitSelect" class="block mb-2 text-sm font-medium text-text-primary">Fruit Icon</label>
-                <select id="customThemeFruitSelect" class="bg-tertiary-bg text-text-primary focus:outline-none rounded px-3 py-2 w-full mb-3">
+                <select id="customThemeFruitSelect" class="modal-input mb-3">
                   <option value="strawberry.png">Strawberry</option>
                   <option value="banana.png">Banana</option>
                   <option value="blueberry.png">Blueberry</option>
@@ -229,264 +155,169 @@
                   <option value="pumpkin.png">Pumpkin</option>
                 </select>
                 <p class="mt-1 text-xs text-gray-400 -mt-2 mb-3">Select which fruit icon to tint with your custom color.</p>
-                
+
                 <label for="customThemeColorPicker" class="block mb-2 text-sm font-medium text-text-primary">Theme Color</label>
                 <div class="flex items-center space-x-3">
                   <input id="customThemeColorPicker" type="color" class="h-10 w-20 rounded cursor-pointer border border-sidebar-border" value="#e83d52">
-                  <input id="customThemeColorInput" type="text" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 flex-1" placeholder="#e83d52" maxlength="7">
+                  <input id="customThemeColorInput" type="text" class="modal-input flex-1" placeholder="#e83d52" maxlength="7" style="width: auto;">
                 </div>
                 <p class="mt-1 text-xs text-gray-400">Pick a color to tint the fruit icon throughout the application.</p>
-                
+
                 <div class="mt-3 flex items-center space-x-2">
                   <img id="customThemeColorPreview" src="app://assets/images/strawberry.png" alt="Color Preview" class="h-6 w-6 rounded border border-sidebar-border">
-                  <button type="button" id="resetCustomThemeColorBtn" class="bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition text-sm">
+                  <button type="button" id="resetCustomThemeColorBtn" class="modal-btn-secondary text-sm">
                     <i class="fas fa-undo mr-1"></i>Reset to Default
                   </button>
                 </div>
               </div>
             </div>
-            <!-- End Custom Theme Color Section -->
           </div>
-          <!-- End Theme Tab Content -->
 
-          <!-- Plugins Tab Content -->
-          <div id="pluginsTabContent" class="settings-tab-content space-y-4 hidden">
-            <!-- User Plugins Directory -->
-            <div class="space-y-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-folder-open mr-2 text-highlight-yellow"></i>User Plugins Directory
-              </h4>
-              <div>
-                <button type="button" id="openUserPluginsDirBtn" class="w-full bg-highlight-green/20 text-highlight-green px-4 py-2 rounded hover:bg-highlight-green/30 transition">
-                  <i class="fas fa-folder-open mr-2"></i>Open User Plugins Folder
-                </button>
-                <p class="mt-1 text-xs text-gray-400">Opens the directory where user-installed plugins are stored. Plugins placed here will persist across application updates.</p>
-              </div>
-            </div>
-
-            <!-- Hide Game-Specific Plugins -->
-            <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-eye-slash mr-2 text-highlight-yellow"></i>Plugin Visibility
-              </h4>
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
-                <label for="hideGamePlugins" class="text-sm text-text-primary">Hide game-specific plugins in plugin list.</label>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="hideGamePlugins" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
-                </label>
-              </div>
-              <p class="mt-1 text-xs text-gray-400 -mt-3">If checked, only UI plugins will be visible in the plugin list.</p>
-            </div>
-            
-            <!-- Plugin Refresh Behavior -->
-            <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-sync-alt mr-2 text-highlight-yellow"></i>Plugin Refresh Behavior
-              </h4>
-              <div>
-                <label for="pluginRefreshBehavior" class="block mb-2 text-sm font-medium text-text-primary">When refreshing plugins with open windows:</label>
-                <select id="pluginRefreshBehavior" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full">
-                  <option value="ask">Ask before closing windows</option>
-                  <option value="alwaysClose">Always close windows automatically</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <!-- End Plugins Tab Content -->
-
-          <!-- LeakCheck Tab Content -->
           <div id="leakcheckTabContent" class="settings-tab-content space-y-6 hidden">
-            <!-- LeakCheck Service Section -->
             <div class="space-y-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-shield-alt mr-2 text-highlight-yellow"></i>LeakCheck Service
+              <h4 class="modal-section-title">
+                <i class="fas fa-shield-alt modal-section-icon"></i>LeakCheck Service
               </h4>
-              <!-- API Key -->
               <div>
                 <label for="leakCheckApiKey" class="block mb-2 text-sm font-medium text-text-primary">API Key</label>
                 <div class="relative inline-block w-full">
-                  <input id="leakCheckApiKey" type="password" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full pr-10" placeholder="Enter LeakCheck API Key">
+                  <input id="leakCheckApiKey" type="password" class="modal-input pr-10" placeholder="Enter LeakCheck API Key">
                   <button type="button" id="leakCheckApiKeyToggle" style="position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%);" class="text-text-primary hover:text-highlight-yellow transition-colors focus:outline-none bg-transparent border-0 cursor-pointer z-10">
                     <i class="fas fa-eye text-sm"></i>
                   </button>
                 </div>
-                <p class="mt-1 text-xs text-gray-400">Requires a <a href="https://leakcheck.io/" target="_blank" class="text-highlight-yellow hover:underline">LeakCheck.io</a> Pro subscription.</p>
+                <p class="mt-1 text-xs text-gray-400">Requires a <a href="https://leakcheck.io/" target="_blank" class="hover:underline" style="color: var(--theme-primary, #e83d52);">LeakCheck.io</a> Pro subscription.</p>
               </div>
-              <!-- Auto Leak Check Section -->
-              <div class="bg-tertiary-bg/30 p-2 rounded-lg space-y-2">
-                <div class="flex items-center justify-center mb-2">
+              <div class="modal-setting-row flex-col space-y-2">
+                <div class="flex items-center justify-center">
                   <label class="text-xs font-medium text-text-primary">Auto-check for leaks</label>
                 </div>
                 <div id="leakCheckThresholdContainer" class="transition-opacity duration-300">
                   <div class="flex items-center justify-center mb-1">
-                    <input id="leakCheckThreshold" type="number" min="0" step="1" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-1.5 py-1 w-14 text-center text-xs" placeholder="0">
+                    <input id="leakCheckThreshold" type="number" min="0" step="1" class="modal-input w-14 text-center text-xs" placeholder="0" style="width: 3.5rem;">
                   </div>
                   <p class="text-xs text-gray-400 text-center">Trigger after new usernames are collected: (0 = disabled)</p>
                 </div>
               </div>
-              <!-- Max Passwords per Account -->
-              <div class="bg-tertiary-bg/30 p-2 rounded-lg space-y-2">
+              <div class="modal-setting-row flex-col space-y-2">
                 <div class="flex flex-col items-center">
                   <label for="leakCheckMaxPasswords" class="block mb-1 text-xs font-medium text-text-primary text-center">Max Passwords per Account</label>
-                  <input id="leakCheckMaxPasswords" type="number" min="0" step="1" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-1.5 py-1 w-16 text-center text-xs" placeholder="0">
+                  <input id="leakCheckMaxPasswords" type="number" min="0" step="1" class="modal-input w-16 text-center text-xs" placeholder="0" style="width: 4rem;">
                   <p class="mt-1 text-xs text-gray-400 text-center">General/found accounts exceeding this limit won't be saved. AJC accounts are always saved. Set to 0 for unlimited.</p>
                 </div>
               </div>
             </div>
 
-            <!-- Username Collection Section -->
             <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-users mr-2 text-highlight-yellow"></i>Username Collection
+              <h4 class="modal-section-title">
+                <i class="fas fa-users modal-section-icon"></i>Username Collection
               </h4>
-              <!-- Master Toggle -->
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded">
+              <div class="modal-setting-row">
                 <label for="leakCheckEnableLogging" class="text-sm text-text-primary">Enable Username Logging</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="leakCheckEnableLogging" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                  <div class="toggle-switch"></div>
                 </label>
               </div>
               <p class="mt-1 text-xs text-gray-400 -mt-3">Master toggle for the Username Logger plugin functionality.</p>
-              <!-- Collection Scopes -->
-              <div id="leakCheckCollectionScopes" class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded opacity-50 pointer-events-none">
+              <div id="leakCheckCollectionScopes" class="modal-setting-row opacity-50 pointer-events-none">
                 <label for="leakCheckCollectNearby" class="text-sm text-text-primary">Collect Usernames from Nearby Players</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="leakCheckCollectNearby" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                  <div class="toggle-switch"></div>
                 </label>
               </div>
               <p class="mt-1 text-xs text-gray-400 -mt-3">Log usernames of players in the same room.</p>
-              <div id="leakCheckCollectionBuddies" class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded opacity-50 pointer-events-none">
+              <div id="leakCheckCollectionBuddies" class="modal-setting-row opacity-50 pointer-events-none">
                 <label for="leakCheckCollectBuddies" class="text-sm text-text-primary">Collect Usernames from Buddy List</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="leakCheckCollectBuddies" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                  <div class="toggle-switch"></div>
                 </label>
               </div>
               <p class="mt-1 text-xs text-gray-400 -mt-3">Log usernames from your buddy list updates.</p>
             </div>
 
-            <!-- File Management Section -->
             <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-folder-open mr-2 text-highlight-yellow"></i>File Management
+              <h4 class="modal-section-title">
+                <i class="fas fa-folder-open modal-section-icon"></i>File Management
               </h4>
-              <!-- Output Directory -->
               <div>
                 <label for="leakCheckOutputDirInput" class="block mb-2 text-sm font-medium text-text-primary">Output Directory (Optional)</label>
-                <input id="leakCheckOutputDirInput" type="text" class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full" placeholder="Default: [App Data]/UsernameLogger/">
+                <input id="leakCheckOutputDirInput" type="text" class="modal-input" placeholder="Default: [App Data]/UsernameLogger/">
                 <p class="mt-1 text-xs text-gray-400">Custom folder for leak check results. Leave blank for default.</p>
               </div>
-              <!-- Open Directory Button -->
               <div>
-                <button type="button" id="openOutputDirBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
+                <button type="button" id="openOutputDirBtn" class="w-full modal-btn-secondary">
                   <i class="fas fa-folder-open mr-2"></i>Open Output Directory
                 </button>
                 <p class="mt-1 text-xs text-gray-400">Opens the directory where results and logs are saved.</p>
               </div>
             </div>
           </div>
-          <!-- End LeakCheck Tab Content -->
 
-          <!-- Advanced Tab Content (Danger Zone) -->
           <div id="advancedTabContent" class="settings-tab-content space-y-4 hidden">
-            <!-- Game Client Settings -->
             <div class="space-y-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-file-code mr-2 text-highlight-yellow"></i>Game Client
+              <h4 class="modal-section-title">
+                <i class="fas fa-file-code modal-section-icon"></i>Game Client
               </h4>
 
-              <!-- SWF File Selection -->
               <div>
                 <label for="selectedSwfFile" class="block mb-2 text-sm font-medium text-text-primary">
                   Active .swf Client
                 </label>
-                <select id="selectedSwfFile" class="bg-tertiary-bg text-text-primary focus:outline-none rounded px-3 py-2 w-full border border-sidebar-border">
+                <select id="selectedSwfFile" class="modal-input">
                   <option value="ajclient.swf">Production Client (ajclient.swf)</option>
                   <option value="ajclientdev.swf">Development Client (ajclientdev.swf)</option>
                 </select>
                 <p class="mt-1 text-xs text-gray-400">Select which .swf file to serve for game sessions. Requires restarting the game to take effect.</p>
               </div>
 
-              <!-- Action Buttons -->
               <div class="mt-3 grid grid-cols-2 gap-2">
-                <button type="button" id="refreshSwfListBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
+                <button type="button" id="refreshSwfListBtn" class="w-full modal-btn-secondary">
                   <i class="fas fa-sync-alt mr-2"></i>Refresh List
                 </button>
-                <button type="button" id="reapplySwfBtn" class="w-full bg-sidebar-hover text-text-primary px-4 py-2 rounded hover:bg-sidebar-hover/70 transition">
+                <button type="button" id="reapplySwfBtn" class="w-full modal-btn-secondary">
                   <i class="fas fa-copy mr-2"></i>Reapply SWF
                 </button>
               </div>
 
-              <!-- Auto Reapply Toggle -->
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded mt-3">
+              <div class="modal-setting-row mt-3">
                 <label for="autoReapplySwfToggle" class="text-sm text-text-primary">Auto-detect and reapply SWF changes</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="autoReapplySwfToggle" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                  <div class="toggle-switch"></div>
                 </label>
               </div>
             </div>
 
-            <!-- Server Connection Settings -->
             <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-text-primary border-b border-sidebar-border pb-2">
-                <i class="fas fa-server mr-2 text-highlight-yellow"></i>Server Connection
+              <h4 class="modal-section-title">
+                <i class="fas fa-server modal-section-icon"></i>Server Connection
               </h4>
 
-              <!-- Server IP -->
               <div>
                 <label for="smartfoxServer" class="block mb-2 text-sm font-medium text-text-primary">
                   Server IP
                 </label>
-                <input id="advancedSmartfoxServer" type="text"
-                  class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none rounded px-3 py-2 w-full"
-                  placeholder="lb-iss02-classic-prod.animaljam.com">
+                <input id="advancedSmartfoxServer" type="text" class="modal-input" placeholder="lb-iss02-classic-prod.animaljam.com">
                 <p class="mt-1 text-xs text-gray-400">Animal Jam server address</p>
               </div>
 
-              <!-- Secure Connection -->
-              <div class="flex items-center justify-between bg-tertiary-bg/30 p-3 rounded mt-4">
+              <div class="modal-setting-row mt-4">
                 <label for="advancedSecureConnection" class="text-sm text-text-primary">Use secure connection (SSL/TLS)</label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" id="advancedSecureConnection" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                  <div class="toggle-switch"></div>
                 </label>
               </div>
             </div>
-            
+
             <div class="space-y-4 pt-4">
-              <h4 class="text-md font-semibold text-red-500 border-b border-sidebar-border pb-2">
+              <h4 class="text-sm font-semibold text-red-500 border-b border-sidebar-border pb-2">
                 <i class="fas fa-exclamation-triangle mr-2"></i>Danger Zone
               </h4>
 
-              <!-- Allow Multiple Instances -->
               <div class="flex items-center justify-between bg-red-600/10 border border-red-600/30 p-3 rounded">
                 <div class="flex-1">
                   <label for="allowMultipleInstancesToggle" class="text-sm text-text-primary font-medium">Allow Multiple Instances</label>
@@ -494,125 +325,79 @@
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer ml-3">
                   <input type="checkbox" id="allowMultipleInstancesToggle" class="sr-only peer">
-                  <div class="w-11 h-6 bg-gray-600 rounded-full transition-colors peer-checked-bg border border-gray-400 relative">
-                    <span class="toggle-text-off">OFF</span>
-                    <span class="toggle-text-on">ON</span>
-                  </div>
-                  <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked-translate shadow"></div>
+                  <div class="toggle-switch"></div>
                 </label>
               </div>
 
-              <!-- Cache Size Display -->
-              <div class="mb-4 py-2 px-3 bg-tertiary-bg/30 rounded">
-                <div class="flex items-center justify-between mb-1">
+              <div class="mb-4 py-2 px-3 modal-setting-row flex-col items-start">
+                <div class="flex items-center justify-between mb-1 w-full">
                   <span class="text-sm font-medium text-text-primary">Current Cache Size:</span>
-                  <span id="cacheSizeValue" class="text-sm text-highlight-yellow">Calculating...</span>
+                  <span id="cacheSizeValue" class="text-sm" style="color: var(--theme-primary, #e83d52);">Calculating...</span>
                 </div>
                 <div class="text-xs text-gray-400 flex items-center">
                   <i class="fas fa-info-circle mr-1"></i>
-                  <span>Cache includes AJ Classic and Strawberry Jam data directories.</span>
+                  <span>Cache includes strawberry-jam-classic and strawberry-jam data directories.</span>
                 </div>
                 <div id="cacheSizeDetails" class="mt-2 text-xs text-gray-400 hidden">
-                  <!-- Will be populated with cache details -->
                 </div>
               </div>
 
-              <!-- Cache Type Selection -->
-              <div class="mb-4 space-y-3">
-                <h5 class="text-sm font-semibold text-text-primary mb-2">Select Cache Types to Clear:</h5>
-                
-                <div class="bg-tertiary-bg/30 p-3 rounded space-y-3">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                      <input type="checkbox" id="cacheSelectAll" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer" checked>
-                      <label for="cacheSelectAll" class="ml-2 text-sm font-medium text-text-primary cursor-pointer">All Cache</label>
-                    </div>
-                  </div>
-                  <p class="text-xs text-gray-400 -mt-2 ml-6">Select or deselect all cache types at once.</p>
-                  
-                  <div class="border-t border-sidebar-border pt-3 space-y-3">
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheGameSession" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
-                        <div class="ml-2 flex-1">
-                          <label for="cacheGameSession" class="text-sm text-text-primary cursor-pointer font-medium">Game Session Cache</label>
-                          <p class="text-xs text-gray-400 mt-0.5">Game assets, session data, and Flash cache from AJ Classic.</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheAuth" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
-                        <div class="ml-2 flex-1">
-                          <label for="cacheAuth" class="text-sm text-text-primary cursor-pointer font-medium">Authentication Cache</label>
-                          <p class="text-xs text-red-400 mt-0.5">Saved accounts and authentication tokens. Clearing this will require re-login.</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cachePlugins" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
-                        <div class="ml-2 flex-1">
-                          <label for="cachePlugins" class="text-sm text-text-primary cursor-pointer font-medium">Plugin Data Cache</label>
-                          <p class="text-xs text-gray-400 mt-0.5">User-installed plugins and plugin settings.</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheLogs" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
-                        <div class="ml-2 flex-1">
-                          <label for="cacheLogs" class="text-sm text-text-primary cursor-pointer font-medium">Log Files</label>
-                          <p class="text-xs text-gray-400 mt-0.5">Application logs and error logs.</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheTemp" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
-                        <div class="ml-2 flex-1">
-                          <label for="cacheTemp" class="text-sm text-text-primary cursor-pointer font-medium">Temporary Files</label>
-                          <p class="text-xs text-gray-400 mt-0.5">Temporary downloads and cached files.</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheData" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
-                        <div class="ml-2 flex-1">
-                          <label for="cacheData" class="text-sm text-text-primary cursor-pointer font-medium">Data Folder Cache</label>
-                          <p class="text-xs text-red-400 mt-0.5">Saved settings and application data. Clearing this will delete your saved settings.</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start flex-1">
-                        <input type="checkbox" id="cacheUsernameLogger" name="cacheType" class="w-4 h-4 cache-checkbox bg-tertiary-bg border-gray-400 rounded focus:ring-2 cursor-pointer mt-0.5" checked>
-                        <div class="ml-2 flex-1">
-                          <label for="cacheUsernameLogger" class="text-sm text-text-primary cursor-pointer font-medium">Username Logger Cache</label>
-                          <p class="text-xs text-red-400 mt-0.5">Logged usernames and collected data. Clearing this will permanently delete all logged usernames.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              <div class="mb-4 space-y-2">
+                <div class="flex items-center justify-between mb-2">
+                  <h5 class="text-sm font-semibold text-text-primary">Clear Cache</h5>
+                  <label class="flex items-center cursor-pointer gap-2">
+                    <input type="checkbox" id="cacheSelectAll" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                    <span class="text-xs text-gray-400">Select All</span>
+                  </label>
+                </div>
+
+                <div class="modal-setting-row flex-col items-start py-2 space-y-1.5">
+                  <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Safe</div>
+                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Game assets, session data, and Flash cache">
+                    <input type="checkbox" id="cacheGameSession" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
+                    <span class="ml-2 text-sm text-text-primary">Game Session Cache</span>
+                  </label>
+                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Application and error logs">
+                    <input type="checkbox" id="cacheLogs" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
+                    <span class="ml-2 text-sm text-text-primary">Log Files</span>
+                  </label>
+                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Temporary downloads and cached files">
+                    <input type="checkbox" id="cacheTemp" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
+                    <span class="ml-2 text-sm text-text-primary">Temporary Files</span>
+                  </label>
+
+                  <div class="border-t border-sidebar-border pt-1.5 mt-1.5 w-full"></div>
+                  <div class="text-xs font-medium text-red-400 uppercase tracking-wide">User Data</div>
+                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Saved accounts and authentication tokens">
+                    <input type="checkbox" id="cacheAuth" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                    <span class="ml-2 text-sm text-text-primary">Saved Accounts</span>
+                    <span class="ml-auto text-xs text-red-400">data loss</span>
+                  </label>
+                  <label class="flex items-center w-full cursor-pointer py-0.5" title="User-installed plugins and plugin settings">
+                    <input type="checkbox" id="cachePlugins" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                    <span class="ml-2 text-sm text-text-primary">Plugins</span>
+                    <span class="ml-auto text-xs text-red-400">data loss</span>
+                  </label>
+                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Saved settings and application data">
+                    <input type="checkbox" id="cacheData" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                    <span class="ml-2 text-sm text-text-primary">App Settings</span>
+                    <span class="ml-auto text-xs text-red-400">data loss</span>
+                  </label>
+                  <label class="flex items-center w-full cursor-pointer py-0.5" title="All logged usernames and collected data">
+                    <input type="checkbox" id="cacheUsernameLogger" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                    <span class="ml-2 text-sm text-text-primary">Username Logger</span>
+                    <span class="ml-auto text-xs text-red-400">data loss</span>
+                  </label>
                 </div>
               </div>
 
-              <!-- Clear Cache Button -->
               <div>
-                <button type="button" id="clearCacheBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                <button type="button" id="clearCacheBtn" class="w-full modal-btn-danger">
                   Clear Cache Now
                 </button>
                 <p class="mt-1 text-xs text-gray-400">Clears selected cache types. Requires app restart.</p>
               </div>
 
-              <!-- Uninstall Button -->
               <div class="mt-4">
                 <button type="button" id="uninstallBtn" class="w-full bg-red-800 text-white px-4 py-2 rounded hover:bg-red-900 transition">
                   Uninstall Strawberry Jam
@@ -621,13 +406,59 @@
               </div>
             </div>
           </div>
-          <!-- End Advanced Tab Content -->
+
+          <div id="aboutTabContent" class="settings-tab-content space-y-5 hidden">
+            <div class="text-center pt-3 pb-1">
+              <img src="app://assets/images/strawberry.png" alt="Strawberry Jam" style="width: 48px; height: 48px; display: block; margin: 0 auto 10px auto;">
+              <h4 class="text-lg font-bold text-text-primary">Strawberry Jam <span id="aboutVersionText" class="text-sm font-normal" style="color: var(--theme-primary, #e83d52);">v0.0.0</span></h4>
+              <p class="text-xs text-gray-500 mt-1.5 px-6 leading-relaxed">A companion tool for Animal Jam Classic, born from my fiancee's love of the game.</p>
+            </div>
+
+            <div class="flex items-center justify-center gap-3 text-sm">
+              <span class="text-text-primary">Forked by <a href="#" class="font-semibold hover:underline" style="color: var(--theme-primary, #e83d52);" onclick="jam.application.open('https://github.com/glvckoma'); return false;">glvckoma</a></span>
+              <span class="text-gray-600">|</span>
+              <span class="text-gray-400">Created by <a href="#" class="text-text-primary font-medium hover:underline" onclick="jam.application.open('https://github.com/Sxip'); return false;">Sxip</a></span>
+            </div>
+
+            <div class="flex justify-center gap-4 py-2">
+              <a href="#" class="p-2.5 rounded-lg hover:bg-tertiary-bg transition-all text-gray-400 hover:text-white" title="GitHub" onclick="jam.application.open('https://github.com/glvckoma/Strawberry-Jam'); return false;">
+                <i class="fab fa-github text-lg"></i>
+              </a>
+              <a href="#" class="p-2.5 rounded-lg hover:bg-tertiary-bg transition-all text-gray-400" style="--hover-color: #5865F2;" title="Discord" onclick="jam.application.open('https://discord.gg/a2y6bZnhB3'); return false;"
+                onmouseenter="this.style.color='#5865F2'" onmouseleave="this.style.color=''">
+                <i class="fab fa-discord text-lg"></i>
+              </a>
+              <a href="#" class="p-2.5 rounded-lg hover:bg-tertiary-bg transition-all text-gray-400" title="Support on Ko-fi" onclick="jam.application.open('https://ko-fi.com/glockoma'); return false;"
+                onmouseenter="this.style.color='#ef4444'" onmouseleave="this.style.color=''">
+                <i class="fas fa-heart text-lg"></i>
+              </a>
+            </div>
+
+            <div style="height: 1px; background: rgba(156,163,175,0.12); margin: 0 16px;"></div>
+
+            <div>
+              <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 px-1">Other Projects</h5>
+              <div class="space-y-1">
+                <a href="#" class="about-link flex items-center gap-2.5 text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded hover:bg-tertiary-bg" onclick="jam.application.open('https://github.com/glvckoma/berrybreach'); return false;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color: #a855f7;"><path d="M22 5V2l-5.89 5.89"/><circle cx="16.6" cy="15.89" r="3"/><circle cx="8.11" cy="7.4" r="3"/><circle cx="12.35" cy="11.65" r="3"/><circle cx="13.91" cy="5.85" r="3"/><circle cx="18.15" cy="10.09" r="3"/><circle cx="6.56" cy="13.2" r="3"/><circle cx="10.8" cy="17.44" r="3"/><circle cx="5" cy="19" r="3"/></svg>
+                  BerryBreach
+                </a>
+                <a href="#" class="about-link flex items-center gap-2.5 text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded hover:bg-tertiary-bg" onclick="jam.application.open('https://github.com/glvckoma/AJC-Price-Checker'); return false;">
+                  <i class="fas fa-dollar-sign" style="color: #3b82f6; width: 14px; text-align: center;"></i>
+                  Price Checker
+                </a>
+                <a href="#" class="about-link flex items-center gap-2.5 text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded hover:bg-tertiary-bg" onclick="jam.application.open('https://chromewebstore.google.com/detail/winkwink-ace-your-studies/pbafopkihldjbcececbibklapleogfdf'); return false;">
+                  <i class="fas fa-graduation-cap" style="color: #eab308; width: 14px; text-align: center;"></i>
+                  WinkWink
+                </a>
+              </div>
+            </div>
+          </div>
 
         </div>
 
-        <!-- Modal Footer -->
-        <div class="flex items-center justify-end p-4 border-t border-sidebar-border flex-shrink-0">
-          <button type="button" class="bg-tertiary-bg text-white rounded-lg px-5 py-2.5 shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-100 focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-bg font-medium" id="saveSettingsBtn">
+        <div class="modal-footer justify-end">
+          <button type="button" class="modal-btn-primary" id="saveSettingsBtn">
             <i class="fas fa-save mr-1.5"></i> Save Changes
           </button>
         </div>

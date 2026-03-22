@@ -76,6 +76,9 @@ class SettingsLoader {
       $modal.find('#consoleLogLimit').val(consoleLogLimit || 500);
       $modal.find('#networkLogLimit').val(networkLogLimit || 500);
 
+      const militaryTime = await ipcRenderer.invoke('get-setting', 'ui.militaryTime');
+      $modal.find('#militaryTimeToggle').prop('checked', militaryTime === true);
+
       $modal.find('#performServerCheckOnLaunchToggle').prop('checked', performServerCheckOnLaunch === true);
 
       $modal.find('#enableAutoUpdatesToggle').prop('checked', enableAutoUpdates === true);

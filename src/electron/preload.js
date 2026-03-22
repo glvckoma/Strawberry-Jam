@@ -1,7 +1,7 @@
 const __init__ = async () => {
   const isPluginPage = window.location.pathname.includes('plugins')
 
-  const cssPath = 'app://assets/css/style.css'
+  const cssPath = 'app://assets/styles/style.css'
 
   const link = document.createElement('link')
   link.setAttribute('rel', 'stylesheet')
@@ -21,38 +21,35 @@ document.addEventListener('DOMContentLoaded', window.__init__)
 // Expose jam.onPacket for UI plugins to receive live packet events
 try {
   const { ipcRenderer } = require('electron');
-  
-  // Ensure window.jam exists
+
   window.jam = window.jam || {};
 
-  // Define onPacket function, only if it doesn't exist
-  if (!window.jam.onPacket) {
-    window.jam.onPacket = function (callback) {
-      if (typeof callback !== 'function') {
-        console.error("[Preload] Invalid callback provided to jam.onPacket");
-        return function unsubscribe() {}; // Return no-op unsubscribe
-      }
+  const isSubFrame = window.parent !== window
 
-      const listener = (event, packetData) => {
-        try {
-          // Simply forward the packet data to the registered callback
-          callback(packetData);
-        } catch (err) {
-          console.error("[Preload] Error in packet callback:", err);
+  if (!window.jam.onPacket) {
+    if (isSubFrame) {
+      window.jam.onPacket = function (callback) {
+        if (typeof callback !== 'function') return function () {}
+        const handler = (e) => {
+          try { callback(e.detail) } catch (_) {}
         }
-      };
-      
-      ipcRenderer.on('packet-event', listener);
-      
-      // Return an unsubscribe function
-      return function unsubscribe() {
-        try {
-          ipcRenderer.removeListener('packet-event', listener);
-        } catch (e) {
-           console.error("[Preload] Error removing packet-event listener:", e);
+        window.parent.addEventListener('jam-packet', handler)
+        return function () {
+          try { window.parent.removeEventListener('jam-packet', handler) } catch (_) {}
         }
-      };
-    };
+      }
+    } else {
+      window.jam.onPacket = function (callback) {
+        if (typeof callback !== 'function') return function () {}
+        const listener = (event, packetData) => {
+          try { callback(packetData) } catch (_) {}
+        }
+        ipcRenderer.on('packet-event', listener)
+        return function () {
+          try { ipcRenderer.removeListener('packet-event', listener) } catch (_) {}
+        }
+      }
+    }
   }
 } catch (e) {
   console.error("[Preload] Error setting up window.jam.onPacket:", e);
@@ -169,15 +166,31 @@ try {
     };
   }
 
+  if (!window.jam.dispatch.sendMultipleMessages) {
+    window.jam.dispatch.sendMultipleMessages = function({ type, messages = [] } = {}) {
+      const sendFn = type === 'aj'
+        ? window.jam.dispatch.sendRemoteMessage
+        : window.jam.dispatch.sendConnectionMessage
+      for (const msg of messages) {
+        sendFn(msg)
+      }
+    }
+  }
+
   // Expose waitForJQuery
   if (!window.jam.dispatch.waitForJQuery) {
     window.jam.dispatch.waitForJQuery = function (pluginWindow, callback) {
-      // Implementation copied from main Dispatch class
       return new Promise((resolve, reject) => {
-        const checkInterval = 100;
-        const maxRetries = 100;
+        if (typeof pluginWindow.$ !== 'undefined') {
+          try {
+            callback();
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+          return;
+        }
         let retries = 0;
-
         const intervalId = setInterval(() => {
           if (typeof pluginWindow.$ !== 'undefined') {
             clearInterval(intervalId);
@@ -187,13 +200,13 @@ try {
             } catch (error) {
               reject(error);
             }
-          } else if (retries >= maxRetries) {
+          } else if (retries >= 20) {
             clearInterval(intervalId);
             reject(new Error('jQuery was not found within the expected time.'));
           } else {
             retries++;
           }
-        }, checkInterval);
+        }, 250);
       });
     };
   }

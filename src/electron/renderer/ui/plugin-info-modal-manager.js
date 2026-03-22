@@ -1,430 +1,295 @@
-/* eslint-disable camelcase */
-const $ = require('jquery');
+const $ = require('jquery')
+
+const PLUGIN_GUIDES = {
+  'UsernameLogger': {
+    icon: 'fa-users',
+    usage: `
+      <div class="space-y-2">
+        <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+          <p class="text-sm text-text-primary leading-relaxed">
+            Automatically collects usernames of players you encounter and saves them to a file.
+            Logging is configured in the main application settings under the LeakCheck tab.
+          </p>
+        </div>
+      </div>`
+  },
+  'Packet Spammer': {
+    icon: 'fa-bolt',
+    usage: `
+      <div class="space-y-2">
+        <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+          <p class="text-sm text-text-primary leading-relaxed mb-2">Send game packets manually or on a timer. Useful for automating repetitive actions.</p>
+          <ul class="text-sm text-text-primary space-y-1.5 pl-4 list-disc">
+            <li><span class="font-medium" style="color: var(--theme-primary);">Send to:</span> Client (game) or Server (AJ servers)</li>
+            <li><span class="font-medium" style="color: var(--theme-primary);">Delay:</span> Milliseconds between each send</li>
+            <li><span class="font-medium" style="color: var(--theme-primary);">Queue:</span> Add multiple packets to run in sequence</li>
+            <li><span class="font-medium" style="color: var(--theme-primary);">Templates:</span> Save and load packet setups</li>
+          </ul>
+        </div>
+      </div>`
+  },
+  'Advertising': {
+    icon: 'fa-bullhorn',
+    usage: `
+      <div class="space-y-2">
+        <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+          <p class="text-sm text-text-primary leading-relaxed mb-2">Automatically sends chat messages at regular intervals for advertising your den or trades.</p>
+          <ol class="text-sm text-text-primary space-y-1.5 pl-4 list-decimal">
+            <li>Add your messages using the input field</li>
+            <li>Set the interval (seconds between messages)</li>
+            <li>Choose sequential or random order</li>
+            <li>Click Start to begin</li>
+          </ol>
+        </div>
+      </div>`
+  },
+  'Bot Detector': {
+    icon: 'fa-shield-alt',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Monitors the room for invisible or hidden players. Alerts you with a sound and console message
+          when activity is detected from a user who has no visible avatar.
+        </p>
+      </div>`
+  },
+  'Pairs': {
+    icon: 'fa-th',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Reveals all card positions when playing the Pairs minigame. Join a Pairs game and the plugin
+          will automatically show where each matching pair is located.
+        </p>
+      </div>`
+  },
+  'Private Chat Emojis': {
+    icon: 'fa-smile',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Displays a searchable grid of private chat emojis. Click any emoji to send it in the game.
+        </p>
+      </div>`
+  },
+  'Price Checker': {
+    icon: 'fa-dollar-sign',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Look up item values to check fair trade prices. Search by item name to see current worth estimates.
+        </p>
+      </div>`
+  },
+  'Glow': {
+    icon: 'fa-sun',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Makes your avatar glow with rapidly changing rainbow colors. Only other players can see the effect.
+        </p>
+      </div>`
+  },
+  'InvisibleToggle': {
+    icon: 'fa-eye-slash',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Toggles your character's visibility on your own screen. Other players can still see you normally.
+        </p>
+      </div>`
+  },
+  'Membership': {
+    icon: 'fa-crown',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Displays membership status information. Runs in the background automatically.
+        </p>
+      </div>`
+  },
+  'No Eyes': {
+    icon: 'fa-eye',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Removes the eyes from your animal's avatar. The effect is visible to other players.
+        </p>
+      </div>`
+  },
+  'Den Log': {
+    icon: 'fa-home',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Logs den visits and tracks activity in dens you visit. Check the console for logged events.
+        </p>
+      </div>`
+  },
+  'Chat Commands': {
+    icon: 'fa-comments',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Adds custom chat commands that can be triggered from the in-game chat. Type commands starting with / in the game chat.
+        </p>
+      </div>`
+  },
+  'Achievements': {
+    icon: 'fa-trophy',
+    usage: `
+      <div class="bg-tertiary-bg/50 p-3 rounded-lg">
+        <p class="text-sm text-text-primary leading-relaxed">
+          Automates achievement completion by sending the required packets. Use the command to trigger specific achievements.
+        </p>
+      </div>`
+  }
+}
+
+const TAG_COLORS = {
+  beta: 'bg-highlight-yellow/20 text-highlight-yellow',
+  new: 'bg-highlight-green/20 text-highlight-green',
+  networking: 'bg-highlight-blue/20 text-highlight-blue',
+  account: 'bg-highlight-purple/20 text-highlight-purple'
+}
 
 module.exports = class PluginInfoModalManager {
-  /**
-   * Constructor.
-   * @param {object} dispatch - The application's dispatch instance.
-   * @constructor
-   */
   constructor (dispatch) {
-    /**
-     * The reference to the dispatch.
-     * @type {object}
-     * @public
-     */
-    this.dispatch = dispatch;
+    this.dispatch = dispatch
   }
 
-  /**
-   * Opens the plugin directory.
-   * @param name
-   * @public
-   */
   directory (name) {
     const plugin = this.dispatch.plugins.get(name)
-
     if (plugin) {
-      const { filepath } = plugin
-      const { ipcRenderer } = require('electron');
-      ipcRenderer.send('open-directory', filepath)
+      require('electron').ipcRenderer.send('open-directory', plugin.filepath)
     }
   }
 
-  /**
-   * Shows the plugin info modal.
-   * @param {string} name - Plugin name
-   * @private
-   */
   show (name) {
-    // Get plugin commands and other metadata if available
-    const pluginMetadata = this.dispatch.plugins.get(name);
-    if (!pluginMetadata) return;
+    const pluginMetadata = this.dispatch.plugins.get(name)
+    if (!pluginMetadata) return
 
-    const { type, description, author = 'Sxip' } = pluginMetadata.configuration;
-    let commands = [];
-    let version = '';
-    let filepath = '';
-    let tags = [];
-    
-    if (pluginMetadata.configuration) {
-      version = pluginMetadata.configuration.version || '';
-      commands = pluginMetadata.configuration.commands || [];
-      tags = pluginMetadata.configuration.tags || [];
-    }
-    filepath = pluginMetadata.filepath || '';
-    
-    // Create modal container
-    const $modal = $('<div>', {
-      class: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm',
+    const { type, description, author = 'Unknown' } = pluginMetadata.configuration
+    const version = pluginMetadata.configuration.version || ''
+    const commands = pluginMetadata.configuration.commands || []
+    const tags = pluginMetadata.configuration.tags || []
+    const filepath = pluginMetadata.filepath || ''
+
+    const $overlay = $('<div>', {
+      class: 'fixed inset-0 z-50 flex items-center justify-center',
       id: 'pluginInfoModal'
-    });
-    
-    // Create the modal content with kid-friendly styling - removed white border
-    const $content = $('<div>', {
-      class: 'bg-primary-bg rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden transform transition-all duration-200 scale-100 hover:scale-[1.01]'
-    });
-    
-    // Modal header with fun styling
-    const $header = $('<div>', {
-      class: 'px-6 py-4 bg-gradient-to-r from-highlight-blue/20 to-highlight-blue/5 border-b border-highlight-blue/50 flex items-center justify-between'
-    });
-    
-    // Title with bouncy animation on hover - Now uses the actual name
-    const $title = $('<h3>', {
-      class: 'text-lg font-bold text-highlight-blue flex items-center transition-transform duration-200',
-      // Use the actual name passed as argument
-      html: `<i class="fas ${type === 'ui' ? 'fa-window-restore' : 'fa-code'} mr-2 transform transition-all duration-300"></i> ${name}` 
-    });
-    
-    // Add bounce effect on hover
-    $title.hover(
-      function() {
-        $(this).find('i').addClass('animate-bounce');
-      },
-      function() {
-        $(this).find('i').removeClass('animate-bounce');
-      }
-    );
-    
-    $header.append($title);
-    
-    // Modal body with colorful sections for kids
-    const $body = $('<div>', {
-      class: 'px-6 py-5 max-h-[65vh] overflow-y-auto custom-scrollbar'
-    });
-    
-    // Version and tags display if available
-    if (version || (tags && tags.length > 0)) {
-      const $versionTagsContainer = $('<div>', {
-        class: 'flex flex-wrap items-center gap-2 mb-4'
-      });
-      
+    })
+
+    const $backdrop = $('<div>', { class: 'modal-backdrop' })
+    $overlay.append($backdrop)
+
+    const $container = $('<div>', { class: 'modal-container max-w-lg w-full mx-4' })
+
+    const typeIcon = type === 'ui' ? 'fa-window-restore' : 'fa-code'
+    const $header = $(`
+      <div class="modal-header">
+        <h3 class="modal-header-title">
+          <i class="fas ${typeIcon} modal-section-icon"></i>
+          ${name}
+        </h3>
+        <button type="button" class="modal-close-btn" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `)
+
+    $header.find('.modal-close-btn').on('click', () => this._close($overlay))
+    $backdrop.on('click', () => this._close($overlay))
+
+    const $body = $('<div>', { class: 'modal-body themed-scrollbar space-y-4' })
+
+    if (version || tags.length > 0) {
+      const $badges = $('<div>', { class: 'flex flex-wrap items-center gap-2' })
       if (version) {
-        $versionTagsContainer.append(
-          $('<span>', {
-            class: 'px-2 py-1 text-xs font-semibold rounded-full bg-tertiary-bg text-text-secondary',
-            text: `v${version}`
-          })
-        );
+        $badges.append(`<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-tertiary-bg text-gray-400">v${version}</span>`)
       }
-      
-      if (tags && tags.length > 0) {
-        tags.forEach(tag => {
-          let tagColorClass = '';
-          switch(tag.toLowerCase()) {
-            case 'beta':
-              tagColorClass = 'bg-highlight-yellow/20 text-highlight-yellow';
-              break;
-            case 'new':
-              tagColorClass = 'bg-highlight-green/20 text-highlight-green';
-              break;
-            case 'networking':
-              tagColorClass = 'bg-highlight-blue/20 text-highlight-blue';
-              break;
-            case 'account':
-              tagColorClass = 'bg-highlight-purple/20 text-highlight-purple';
-              break;
-            default:
-              tagColorClass = 'bg-gray-600/20 text-gray-400';
-          }
-          
-          $versionTagsContainer.append(
-            $('<span>', {
-              class: `px-2 py-1 text-xs font-semibold rounded-full ${tagColorClass}`,
-              text: tag
-            })
-          );
-        });
+      if (author) {
+        $badges.append(`<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-tertiary-bg text-gray-400"><i class="fas fa-user mr-1" style="font-size:9px;"></i>${author}</span>`)
       }
-      
-      $body.append($versionTagsContainer);
-    }
-    
-    // What is this plugin? - with hover effects
-    const $whatIsSection = $('<div>', {
-      class: 'mb-5 bg-highlight-green/10 p-4 rounded-lg border border-highlight-green/30 transform transition-all duration-200 hover:border-highlight-green/60 hover:bg-highlight-green/15 hover:shadow-md'
-    });
-    
-    $whatIsSection.append(
-      $('<h4>', {
-        class: 'text-highlight-green text-base font-bold mb-2 flex items-center',
-        html: '<i class="fas fa-puzzle-piece mr-2"></i> What is this plugin?'
-      }),
-      $('<p>', {
-        class: 'text-text-primary text-sm leading-relaxed',
-        text: description || `A ${type} plugin for Animal Jam`
+      tags.forEach(tag => {
+        const colorClass = TAG_COLORS[tag.toLowerCase()] || 'bg-gray-600/20 text-gray-400'
+        $badges.append(`<span class="px-2 py-0.5 text-xs font-semibold rounded-full ${colorClass}">${tag}</span>`)
       })
-    );
-    
-    $body.append($whatIsSection);
-    
-    // Who made it? - with hover effects
-    const $whoMadeSection = $('<div>', {
-      class: 'mb-5 bg-highlight-yellow/10 p-4 rounded-lg border border-highlight-yellow/30 transform transition-all duration-200 hover:border-highlight-yellow/60 hover:bg-highlight-yellow/15 hover:shadow-md'
-    });
-    
-    $whoMadeSection.append(
-      $('<h4>', {
-        class: 'text-highlight-yellow text-base font-bold mb-2 flex items-center',
-        html: '<i class="fas fa-user-edit mr-2"></i> Who made it?'
-      }),
-      $('<p>', {
-        class: 'text-text-primary text-sm leading-relaxed flex items-center',
-        html: `<i class="fas fa-user mr-2"></i> ${author}${version ? ` <span class="ml-2 text-gray-400">(v${version})</span>` : ''}`
+      $body.append($badges)
+    }
+
+    const descText = description || (type === 'ui' ? 'A UI plugin for Animal Jam Classic.' : 'A game plugin for Animal Jam Classic.')
+    $body.append(`
+      <div>
+        <h4 class="modal-section-title"><i class="fas fa-info-circle modal-section-icon"></i>Description</h4>
+        <p class="text-sm text-text-primary leading-relaxed mt-2">${descText}</p>
+      </div>
+    `)
+
+    const guide = PLUGIN_GUIDES[name]
+    const usageHtml = guide
+      ? guide.usage
+      : type === 'ui'
+        ? '<div class="bg-tertiary-bg/50 p-3 rounded-lg"><p class="text-sm text-text-primary leading-relaxed">Opens in a separate panel. Click the plugin tile in the sidebar to launch it.</p></div>'
+        : '<div class="bg-tertiary-bg/50 p-3 rounded-lg"><p class="text-sm text-text-primary leading-relaxed">Runs automatically in the background. Use the commands below to control it. Type commands in the game chat starting with /.</p></div>'
+
+    $body.append(`
+      <div>
+        <h4 class="modal-section-title"><i class="fas fa-lightbulb modal-section-icon"></i>How to Use</h4>
+        <div class="mt-2">${usageHtml}</div>
+      </div>
+    `)
+
+    const allCommands = [...commands]
+    if (name === 'InvisibleToggle' && !commands.some(c => c.name === 'invis')) {
+      allCommands.push({ name: 'invis', description: 'Toggles your character\'s visibility in the game.' })
+    }
+
+    if (allCommands.length > 0) {
+      const $cmdsSection = $('<div>')
+      $cmdsSection.append('<h4 class="modal-section-title"><i class="fas fa-terminal modal-section-icon"></i>Commands</h4>')
+      const $cmdList = $('<div>', { class: 'space-y-2 mt-2' })
+
+      allCommands.forEach(cmd => {
+        $cmdList.append(`
+          <div class="bg-tertiary-bg/50 p-3 rounded-lg border border-sidebar-border">
+            <code class="text-xs font-mono px-1.5 py-0.5 rounded" style="background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.15); color: var(--theme-primary, #e83d52);">/${cmd.name}</code>
+            <span class="text-sm text-gray-400 ml-2">${cmd.description || ''}</span>
+          </div>
+        `)
       })
-    );
-    
-    $body.append($whoMadeSection);
-    
-    // How do I use it? - detailed instructions based on plugin type
-    const $howToSection = $('<div>', {
-      class: 'mb-5 bg-highlight-blue/10 p-4 rounded-lg border border-highlight-blue/30 transform transition-all duration-200 hover:border-highlight-blue/60 hover:bg-highlight-blue/15 hover:shadow-md'
-    });
-    
-    $howToSection.append(
-      $('<h4>', {
-        class: 'text-highlight-blue text-base font-bold mb-2 flex items-center',
-        html: '<i class="fas fa-lightbulb mr-2"></i> How do I use it?'
-      })
-    );
-    
-    // Customize the instructions based on plugin name
-    let howToUseHtml = '';
-    
-    if (name === 'UsernameLogger') {
-      howToUseHtml = `
-        <div class="space-y-3 mt-3">
-          <div class="bg-secondary-bg/30 p-3 rounded-lg">
-            <p class="text-text-primary text-sm font-medium mb-2 flex items-center">
-              <i class="fas fa-users mr-2"></i> What does this plugin do?
-            </p>
-            <p class="text-text-primary text-sm leading-relaxed">
-              This plugin automatically collects usernames of jammers you see in the game and saves them to a file for you.
-            </p>
-          </div>
-          <div class="bg-secondary-bg/30 p-3 rounded-lg">
-            <p class="text-text-primary text-sm font-medium mb-2 flex items-center">
-              <i class="fas fa-cogs mr-2"></i> How to use it:
-            </p>
-            <p class="text-text-primary text-sm leading-relaxed">
-              Logging is enabled and configured in the main application settings (the gear icon <i class="fas fa-cog"></i>). You can use the commands below to manage the collected usernames.
-            </p>
-          </div>
-        </div>
-      `;
-    } else if (name === 'Spammer') {
-      howToUseHtml = `
-        <div class="space-y-3 mt-3">
-          <div class="bg-secondary-bg/30 p-3 rounded-lg">
-            <p class="text-text-primary text-sm font-medium mb-2 flex items-center">
-              <i class="fas fa-bolt mr-2"></i> What is Spammer?
-            </p>
-            <p class="text-text-primary text-sm leading-relaxed">
-              This tool lets you send packets (game messages) repeatedly. This can be used to automate certain actions in the game.
-            </p>
-          </div>
-          <div class="bg-secondary-bg/30 p-3 rounded-lg">
-            <p class="text-text-primary text-sm font-medium mb-2 flex items-center">
-              <i class="fas fa-gamepad mr-2"></i> Using the buttons:
-            </p>
-            <ul class="text-text-primary text-sm space-y-2 list-disc pl-5">
-              <li><span class="text-highlight-blue font-medium">Packet Type:</span> Choose whether to send the packet to the game (client) or to Animal Jam's servers.</li>
-              <li><span class="text-highlight-blue font-medium">Packet Content:</span> Type or paste the packet message you want to send.</li>
-              <li><span class="text-highlight-blue font-medium">Delay (ms):</span> How long to wait between sending each packet (in milliseconds).</li>
-              <li><span class="text-highlight-blue font-medium">Count:</span> How many packets to send (leave empty to send continuously).</li>
-              <li><span class="text-highlight-blue font-medium">Start/Stop:</span> Begin or end sending the packets.</li>
-              <li><span class="text-highlight-blue font-medium">Save/Load:</span> Save your favorite packet setups to use them again later.</li>
-            </ul>
-          </div>
-          <div class="bg-highlight-yellow/10 p-3 rounded-lg">
-            <p class="text-highlight-yellow text-sm font-medium flex items-center mb-1"><i class="fas fa-exclamation-triangle mr-2"></i> Friendly reminder:</p>
-            <p class="text-text-primary text-sm leading-relaxed">Be careful! Sending too many packets too quickly can cause lag or get you disconnected.</p>
-          </div>
-        </div>
-      `;
-    } else if (name === 'Advertising') {
-      howToUseHtml = `
-        <div class="space-y-3 mt-3">
-          <div class="bg-secondary-bg/30 p-3 rounded-lg">
-            <p class="text-text-primary text-sm font-medium mb-2 flex items-center"><i class="fas fa-bullhorn mr-2"></i> What it does</p>
-            <p class="text-text-primary text-sm leading-relaxed">This plugin helps you automatically send chat messages at regular intervals—perfect for advertising your den or items for trade!</p>
-          </div>
-          <div class="bg-secondary-bg/30 p-3 rounded-lg">
-            <p class="text-text-primary text-sm font-medium mb-2 flex items-center"><i class="fas fa-gamepad mr-2"></i> Step-by-step</p>
-            <ol class="text-text-primary text-sm space-y-2 list-decimal pl-5">
-              <li><span class="text-highlight-blue font-medium">Add messages:</span> Click "Add Message" and type your message.</li>
-              <li><span class="text-highlight-blue font-medium">Set interval:</span> Enter how many seconds to wait between messages.</li>
-              <li><span class="text-highlight-blue font-medium">Choose order:</span> Pick "Sequential" or "Random".</li>
-              <li><span class="text-highlight-blue font-medium">Start/Stop:</span> Click the buttons to begin or end advertising.</li>
-            </ol>
-          </div>
-          <div class="bg-secondary-bg/30 p-3 rounded-lg">
-            <p class="text-text-primary text-sm font-medium mb-2 flex items-center"><i class="fas fa-save mr-2"></i> Saving</p>
-            <p class="text-text-primary text-sm leading-relaxed">Use the "Save" and "Load" buttons to keep your message lists for later.</p>
-          </div>
-        </div>
-      `;
-    } else if (type === 'ui') {
-      // Generic instructions for other UI plugins
-      howToUseHtml = `
-        <p class="text-text-primary text-sm leading-relaxed">
-          This is a UI plugin. Click on it in the sidebar to open its window and see what it does!
-        </p>
-      `;
-    } else {
-      // Generic instructions for Game plugins
-      howToUseHtml = `
-        <p class="text-text-primary text-sm leading-relaxed">
-          This is a Game plugin. It runs in the background to add new features or change game behavior. Check the "Commands" section below to see how you can interact with it.
-        </p>
-      `;
+
+      $cmdsSection.append($cmdList)
+      $body.append($cmdsSection)
     }
-    
-    $howToSection.append(howToUseHtml);
-    $body.append($howToSection);
-    
-    // Special handling for InvisibleToggle plugin
-    if (name === 'InvisibleToggle') {
-      // Add commands section for InvisibleToggle
-      const $invisibleCommandsSection = $('<div>', {
-        class: 'mb-5 bg-highlight-purple/10 p-4 rounded-lg border border-highlight-purple/30 transform transition-all duration-200 hover:border-highlight-purple/60 hover:bg-highlight-purple/15 hover:shadow-md'
-      });
-      
-      $invisibleCommandsSection.append(
-        $('<h4>', {
-          class: 'text-highlight-purple text-base font-bold mb-3 flex items-center',
-          html: '<i class="fas fa-terminal mr-2"></i> Commands you can use:'
-        })
-      );
-      
-      const $commandsList = $('<ul>', {
-        class: 'space-y-3'
-      });
-      
-      const $cmdItem = $('<li>', {
-        class: 'text-text-primary text-sm bg-secondary-bg/50 p-3 rounded-lg border border-sidebar-border/30 transform transition-all duration-200 hover:border-highlight-purple/30 hover:bg-secondary-bg'
-      });
-      
-      const $cmdName = $('<div>', {
-        class: 'font-mono bg-highlight-purple/20 px-2 py-1 rounded text-highlight-purple inline-block mb-1.5',
-        text: 'invis'
-      });
-      
-      const $cmdDesc = $('<div>', {
-        class: 'text-text-primary leading-relaxed',
-        text: 'Toggles your character\'s visibility in the game.'
-      });
-      
-      $cmdItem.append($cmdName, $cmdDesc);
-      $commandsList.append($cmdItem);
-      
-      $invisibleCommandsSection.append($commandsList);
-      $body.append($invisibleCommandsSection);
-    }
-    
-    // Display commands if available with interactive styling
-    if (commands && commands.length > 0) {
-      const $commandsSection = $('<div>', {
-        class: 'mb-5 bg-highlight-purple/10 p-4 rounded-lg border border-highlight-purple/30 transform transition-all duration-200 hover:border-highlight-purple/60 hover:bg-highlight-purple/15 hover:shadow-md'
-      });
-      
-      $commandsSection.append(
-        $('<h4>', {
-          class: 'text-highlight-purple text-base font-bold mb-3 flex items-center',
-          html: '<i class="fas fa-terminal mr-2"></i> Commands you can use:'
-        })
-      );
-      
-      const $commandsList = $('<ul>', {
-        class: 'space-y-3'
-      });
-      
-      commands.forEach(cmd => {
-        const $cmdItem = $('<li>', {
-          class: 'text-text-primary text-sm bg-secondary-bg/50 p-3 rounded-lg border border-sidebar-border/30 transform transition-all duration-200 hover:border-highlight-purple/30 hover:bg-secondary-bg'
-        });
-        
-        const $cmdName = $('<div>', {
-          class: 'font-mono bg-highlight-purple/20 px-2 py-1 rounded text-highlight-purple inline-block mb-1.5',
-          text: cmd.name
-        });
-        
-        const $cmdDesc = $('<div>', {
-          class: 'text-text-primary leading-relaxed',
-          text: cmd.description || ''
-        });
-        
-        $cmdItem.append($cmdName, $cmdDesc);
-        $commandsList.append($cmdItem);
-      });
-      
-      $commandsSection.append($commandsList);
-      $body.append($commandsSection);
-    }
-    
-    // Add a fun footer with bouncy button
-    const $footer = $('<div>', {
-      class: 'px-6 py-4 bg-gradient-to-r from-tertiary-bg to-tertiary-bg/70 border-t border-sidebar-border/50 flex justify-end items-center'
-    });
-    
-    // Add directory button if available
+
+    const $footer = $('<div>', { class: 'modal-footer justify-end' })
+
     if (filepath) {
-      const $dirButton = $('<button>', {
-        class: 'mr-auto bg-tertiary-bg hover:bg-tertiary-bg/80 text-text-secondary hover:text-text-primary px-3 py-1.5 rounded-lg transition-colors text-xs flex items-center',
-        html: '<i class="fas fa-folder mr-1.5"></i> Open folder'
-      }).on('click', () => {
-        this.directory(name);
-      });
-      
-      $footer.append($dirButton);
+      $footer.append(
+        $('<button>', {
+          class: 'modal-btn-secondary mr-auto text-xs',
+          html: '<i class="fas fa-folder-open mr-1.5"></i> Open Folder'
+        }).on('click', () => this.directory(name))
+      )
     }
-    
-    const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim() || '#e83d52'
-    
-    const $gotItButton = $('<button>', {
-      class: 'text-white rounded-lg px-5 py-2.5 shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-100 focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-bg font-medium',
-      id: 'pluginInfoGotItButton',
-      html: '<i class="fas fa-check mr-1.5"></i> Got it!',
-      css: {
-        'background-color': themeColor,
-        'border-color': themeColor
-      }
-    }).on('click', () => {
-      $modal.css({
-        'opacity': '0',
-        'transform': 'scale(0.95)',
-        'transition': 'opacity 0.2s ease-in-out, transform 0.2s ease-in-out'
-      });
-      
-      setTimeout(() => $modal.remove(), 200);
-    }).on('mouseenter', function() {
-      $(this).css('filter', 'brightness(1.1)')
-    }).on('mouseleave', function() {
-      $(this).css('filter', '')
-    }).on('focus', function() {
-      $(this).css('--tw-ring-color', themeColor)
-    });
-    
-    $footer.append($gotItButton);
-    
-    // Assemble and add to DOM
-    $content.append($header, $body, $footer);
-    $modal.append($content);
-    $('body').append($modal);
-    
-    // Fade in animation
-    $modal.css({
-      'opacity': '0',
-      'transform': 'scale(0.95)'
-    });
-    
-    setTimeout(() => {
-      $modal.css({
-        'opacity': '1',
-        'transform': 'scale(1)',
-        'transition': 'opacity 0.3s ease-out, transform 0.3s ease-out'
-      });
-    }, 10);
+
+    $footer.append(
+      $('<button>', {
+        class: 'modal-btn-primary',
+        html: '<i class="fas fa-check mr-1.5"></i> Got it'
+      }).on('click', () => this._close($overlay))
+    )
+
+    $container.append($header, $body, $footer)
+    $overlay.append($container)
+    $('body').append($overlay)
+  }
+
+  _close ($overlay) {
+    const $container = $overlay.find('.modal-container')
+    $container.addClass('modal-exit')
+    $overlay.find('.modal-backdrop').css({ opacity: 0, transition: 'opacity 0.15s ease-out' })
+    setTimeout(() => $overlay.remove(), 150)
   }
 }

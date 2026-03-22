@@ -50,77 +50,65 @@ class CommandRegistrar {
           }
           return true
         },
-        description: 'Ends all AJ Classic.exe processes'
+        description: 'Ends all AJ Classic processes'
       })
 
       app.dispatch.onCommand({
         name: 'terminate',
         callback: async (commandData) => {
           try {
+            const { TCP_SERVER_PORTS, API_SERVER_PORTS } = require('../../Constants')
+            const PortChecker = require('../../utils/PortChecker')
+            const args = commandData.parameters || (Array.isArray(commandData) ? commandData : [])
+            const isConfirm = args.length > 0 && args[0].toLowerCase() === 'confirm'
+            const allPorts = [...TCP_SERVER_PORTS, ...API_SERVER_PORTS]
+
             app.consoleMessage({
               type: 'wait',
-              message: 'Checking ports 443 and 8080...'
+              message: `Checking ports ${allPorts.join(', ')}...`
             })
 
-            const PortChecker = require('../../utils/PortChecker')
-            const port443Busy = await PortChecker.isPortBusy(443)
-            const port8080Busy = await PortChecker.isPortBusy(8080)
+            const busyPorts = []
+            for (const port of allPorts) {
+              const busy = await PortChecker.isPortBusy(port)
+              if (busy) {
+                const processInfo = await PortChecker.findProcessUsingPort(port)
+                busyPorts.push({ port, processInfo })
+              }
+            }
 
-            if (!port443Busy && !port8080Busy) {
+            if (busyPorts.length === 0) {
               app.consoleMessage({
                 type: 'notify',
-                message: 'Ports 443 and 8080 are not in use. No action needed.'
+                message: 'No processes found on any Strawberry Jam ports. No action needed.'
               })
               return true
             }
 
-            const portsToTerminate = []
-            if (port443Busy) {
-              portsToTerminate.push(443)
-              const processInfo = await PortChecker.findProcessUsingPort(443)
-              if (processInfo) {
-                app.consoleMessage({
-                  type: 'warn',
-                  message: `Port 443 is busy: Process ${processInfo.processName || 'Unknown'} (PID: ${processInfo.pid})`
-                })
-              } else {
-                app.consoleMessage({
-                  type: 'warn',
-                  message: 'Port 443 is busy: Unable to identify process'
-                })
-              }
+            for (const { port, processInfo } of busyPorts) {
+              const name = processInfo ? (processInfo.processName || 'Unknown') : 'Unable to identify'
+              const pid = processInfo ? ` (PID: ${processInfo.pid})` : ''
+              app.consoleMessage({
+                type: 'warn',
+                message: `Port ${port} is busy: ${name}${pid}`
+              })
             }
 
-            if (port8080Busy) {
-              portsToTerminate.push(8080)
-              const processInfo = await PortChecker.findProcessUsingPort(8080)
-              if (processInfo) {
-                app.consoleMessage({
-                  type: 'warn',
-                  message: `Port 8080 is busy: Process ${processInfo.processName || 'Unknown'} (PID: ${processInfo.pid})`
-                })
-              } else {
-                app.consoleMessage({
-                  type: 'warn',
-                  message: 'Port 8080 is busy: Unable to identify process'
-                })
-              }
+            if (!isConfirm) {
+              app.consoleMessage({
+                type: 'notify',
+                message: `Found ${busyPorts.length} busy port(s). Run /terminate confirm to kill these processes.`
+              })
+              return true
             }
 
-            for (const port of portsToTerminate) {
+            for (const { port } of busyPorts) {
               try {
                 const result = await this.ipcRenderer.invoke('terminate-port', port)
-                if (result.success) {
-                  app.consoleMessage({
-                    type: 'success',
-                    message: result.message
-                  })
-                } else {
-                  app.consoleMessage({
-                    type: 'error',
-                    message: result.message
-                  })
-                }
+                app.consoleMessage({
+                  type: result.success ? 'success' : 'error',
+                  message: result.message
+                })
               } catch (error) {
                 app.consoleMessage({
                   type: 'error',
@@ -142,7 +130,7 @@ class CommandRegistrar {
             return false
           }
         },
-        description: 'Terminates processes using ports 443 or 8080'
+        description: 'Scans Strawberry Jam ports for conflicts. Use /terminate confirm to kill blocking processes.'
       })
     } else if (typeof app.registerConsoleCommand === 'function') {
       app.registerConsoleCommand(

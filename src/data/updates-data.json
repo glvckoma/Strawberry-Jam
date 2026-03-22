@@ -1560,7 +1560,7 @@
   "4.2.3": {
     "version": "4.2.3",
     "releaseDate": "2025-12-19",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -1605,6 +1605,149 @@
         }
       ],
       "shortcuts": [],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "5.0.0": {
+    "version": "5.0.0",
+    "releaseDate": "2026-03-22",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "desktop_windows",
+          "title": "Multi-Platform Support",
+          "description": "Linux and macOS are now supported. Feedback is appreciated as testing on these platforms is limited.",
+          "priority": "major"
+        },
+        {
+          "icon": "extension",
+          "title": "Inline Plugin Embedding",
+          "description": "Plugins can now be embedded directly into the main Strawberry Jam app to reduce the number of open windows.",
+          "priority": "major"
+        },
+        {
+          "icon": "pets",
+          "title": "All Animals/Pets Available in Shop",
+          "description": "New mod menu enhancements to display all animals and pets in the avatar/pet creator. Some are server validated.",
+          "priority": "major"
+        },
+        {
+          "icon": "camera_alt",
+          "title": "Screenshot Hotkey (F9)",
+          "description": "Press F9 to prepare for screenshot. Hides UI/GUI and zooms out. Use zoom controls in mod menu with Shift +/- to fine tune.",
+          "priority": "major"
+        },
+        {
+          "icon": "layers",
+          "title": "Clothing Layer Order",
+          "description": "New popup added to the mod menu to reorder which clothing items display on top.",
+          "priority": "major"
+        },
+        {
+          "icon": "visibility_off",
+          "title": "Hide Player/Nametag for Screenshots",
+          "description": "New mod menu enhancements to hide your player avatar and nametag for cleaner screenshots.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "brush",
+          "title": "Massive UI Overhaul",
+          "description": "Comprehensive visual refresh and quality of life improvements across the entire application.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "mouse",
+          "title": "Right-Click Context Menus",
+          "description": "Context menus added in the network tab and plugins tab with new options to explore.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "tune",
+          "title": "Mod Menu Improvements",
+          "description": "Click issues addressed. Multi-clothing toggle now unequips items when disabled.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "speed",
+          "title": "Headless + Performance Mode Refined",
+          "description": "Refinements to both Headless mode and Performance mode mods for better stability.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "zoom_in",
+          "title": "App Zoom Controls",
+          "description": "Zoom within the main app now using Ctrl and +/-.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "casino",
+          "title": "TFD Automation Default Whitelist",
+          "description": "Default whitelist added for TFD Automation plugin.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "extension",
+          "title": "Multiple Plugins Revamped",
+          "description": "Several plugins overhauled including Tiki Trouble Automation with dynamic userId, retry logic, stats, and sound notifications.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "bug_report",
+          "title": "Anti-AFK Fixed",
+          "description": "Anti-AFK system now works correctly.",
+          "priority": "fix"
+        },
+        {
+          "icon": "memory",
+          "title": "Flash Memory Leak Fixes",
+          "description": "Fixed several Flash memory leaks to improve stability during longer sessions.",
+          "priority": "fix"
+        },
+        {
+          "icon": "pets",
+          "title": "All New Pets Display Correctly",
+          "description": "All new pets now render and display properly.",
+          "priority": "fix"
+        },
+        {
+          "icon": "egg",
+          "title": "Pet Egg Crash + Prediction Fixed",
+          "description": "Resolved crash when hatching pet eggs and fixed egg prediction.",
+          "priority": "fix"
+        },
+        {
+          "icon": "shield",
+          "title": "Animal/Pet List Crash Prevention",
+          "description": "New mod menu enhancement to prevent crashing when loading large pet and animal lists.",
+          "priority": "fix"
+        },
+        {
+          "icon": "extension",
+          "title": "Pairs Plugin Fixed",
+          "description": "Pairs plugin fixed to work with Strawberry Jam.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [
+        {
+          "icon": "keyboard",
+          "title": "F9 - Prepare for Screenshot",
+          "description": "Hides UI/GUI and zooms out for a clean screenshot. Enable zoom hotkeys in mod menu to fine tune with Shift +/-.",
+          "priority": "shortcut"
+        },
+        {
+          "icon": "keyboard",
+          "title": "Ctrl +/- - App Zoom",
+          "description": "Zoom the main application window in and out.",
+          "priority": "shortcut"
+        }
+      ],
       "commands": [],
       "messages": []
     }

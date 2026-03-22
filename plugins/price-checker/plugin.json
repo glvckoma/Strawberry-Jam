@@ -2,7 +2,7 @@
   "name": "Price Checker",
   "version": "2.0.0",  
   "description": "Checks item prices.",
-  "author": "Glockoma",
+  "author": "glvckoma",
   "main": "index.html",
   "type": "ui"
 }

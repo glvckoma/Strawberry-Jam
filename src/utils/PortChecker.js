@@ -93,22 +93,23 @@ class PortChecker {
    */
   static isOwnProcess(processName) {
     if (!processName) return false
-    
-    const detectedProcess = processName.toLowerCase()
-    const currentProcess = path.basename(process.execPath).toLowerCase()
-    
+
+    const strip = name => name.toLowerCase().replace(/\.exe$/i, '')
+    const detectedProcess = strip(processName)
+    const currentProcess = strip(path.basename(process.execPath))
+
     if (detectedProcess === currentProcess) {
       return true
     }
-    
-    if (currentProcess.includes('electron') && detectedProcess === 'electron.exe') {
+
+    if (currentProcess.includes('electron') && detectedProcess === 'electron') {
       return true
     }
-    
-    if (currentProcess.includes('strawberry-jam') && detectedProcess === 'strawberry-jam.exe') {
+
+    if (currentProcess.includes('strawberry-jam') && detectedProcess === 'strawberry-jam') {
       return true
     }
-    
+
     return false
   }
 }

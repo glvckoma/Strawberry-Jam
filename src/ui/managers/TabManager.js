@@ -4,17 +4,8 @@ class TabManager {
   }
 
   openTab(tabId) {
-    if (tabId === 'packet-logging') {
-      $('#commandContainer').fadeOut(150, function() {
-        $('#searchContainer').fadeIn(150)
-        if (typeof applyFilter === 'function') {
-          setTimeout(applyFilter, 0)
-        }
-      })
-    } else {
-      $('#searchContainer').fadeOut(150, function() {
-        $('#commandContainer').fadeIn(150)
-      })
+    if (tabId === 'packet-logging' && window._packetFilterManager) {
+      setTimeout(() => window._packetFilterManager.applyToDOM(), 0)
     }
 
     const $currentActive = $('.tab-content.active')

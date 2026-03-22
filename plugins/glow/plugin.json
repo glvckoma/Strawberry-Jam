@@ -1,14 +1,9 @@
 {
   "name": "Glow",
-  "version": "1.0.0",
-  "description": "Changes your avatar color glow randomly.",
-  "author": "sxip",
-  "main": "index.js",
-  "type": "game",
-  "commands": [
-    {
-      "name": "glow",
-      "description": "Toggles a random color glow on your avatar."
-    }
-  ]
+  "description": "Change your avatar's glow color with a color picker, rainbow cycle, or pulse effect.",
+  "main": "index.html",
+  "author": "glvckoma",
+  "version": "2.0.0",
+  "type": "ui",
+  "game": "animal-jam-classic"
 }

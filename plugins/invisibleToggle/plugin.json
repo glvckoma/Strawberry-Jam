@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Toggle invisibility using the AJHQ mod command.",
   "main": "index.js",
-  "author": "Glockoma",
+  "author": "glvckoma",
   "license": "MIT",
   "type": "game",
   "commands": [

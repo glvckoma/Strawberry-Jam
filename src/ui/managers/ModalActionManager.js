@@ -25,14 +25,6 @@ class ModalActionManager {
   }
 
   /**
-   * Opens the Links modal
-   * @public
-   */
-  openLinksModal() {
-    this.application.modals.show('links', '#modalContainer')
-  }
-
-  /**
    * Initializes the hover styles for standardized modal close buttons
    * @public
    */

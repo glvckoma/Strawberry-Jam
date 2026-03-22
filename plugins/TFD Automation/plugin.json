@@ -2,7 +2,7 @@
   "name": "TFD Automation",
   "description": "Automates The Forgotten Desert (TFD).",
   "main": "index.html",
-  "author": "Glockoma",
+  "author": "glvckoma",
   "type": "ui",
   "version": "2.0.0",
   "runInBackground": true

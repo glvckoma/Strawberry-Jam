@@ -1,31 +1,22 @@
 const path = require('path')
 const { PluginManager: PM } = require('live-plugin-manager')
 const logManager = require('../../../../utils/LogManagerPreload');
-logManager.info('DIAGNOSTIC_DISPATCH_LOG_TEST from dispatch/index.js top level'); // Diagnostic
+logManager.info('DIAGNOSTIC_DISPATCH_LOG_TEST from dispatch/index.js top level');
 
-// Define isDevelopment for environment checks
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Helper: Only log in development
 function devLog(...args) {
   if (isDevelopment) console.log(...args);
 }
 const fs = require('fs').promises
 const Ajv = new (require('ajv'))({ useDefaults: true })
-const { ConnectionMessageTypes, PluginTypes, getDataPath } = require('../../../../Constants') // Import getDataPath
+const { ConnectionMessageTypes, PluginTypes, getDataPath } = require('../../../../Constants')
 const StateManager = require('../../../../managers/state/StateManager')
 const PluginManager = require('../../../../managers/plugin/PluginManager')
 const MessageDispatcher = require('../../../../managers/message/MessageDispatcher')
+const PlatformPaths = require('../../../../PlatformPaths')
 
-/**
- * The path to the bundled plugins folder.
- * @constant
- */
-const BUNDLED_PLUGINS_PATH = process.platform === 'win32'
-  ? path.resolve('plugins/')
-  : process.platform === 'darwin'
-    ? path.join(__dirname, '..', '..', '..', '..', '..', '..', '..', 'plugins/')
-    : undefined
+const BUNDLED_PLUGINS_PATH = PlatformPaths.getBundledPluginsPath(__dirname)
 
 /**
  * The default Configuration schema.
@@ -89,10 +80,7 @@ module.exports = class Dispatch {
      * @type {PluginManager}
      * @public
      */
-    this.dependencyManager = new PM(process.platform === 'darwin'
-      ? { pluginsPath: path.join(__dirname, '..', '..', '..', '..', '..', '..', '..', 'plugin_packages') }
-      : {}
-    )
+    this.dependencyManager = new PM(PlatformPaths.getPluginManagerConfig(__dirname))
 
     /**
      * Stores all of the commands
@@ -460,8 +448,31 @@ module.exports = class Dispatch {
    * @returns {Promise<number>}
    * @public
    */
-  sendConnectionMessage (message) {
-    const promises = [...this._application.server.clients].map(client => client.sendConnectionMessage(message))
+  sendConnectionMessage (message, options = {}) {
+    if (this._application.server.clients.size === 0) {
+      console.warn('[Dispatch] sendConnectionMessage: No server clients connected.')
+      return Promise.resolve([])
+    }
+
+    let targetClients = [...this._application.server.clients]
+
+    if (options.targetUsername) {
+      targetClients = targetClients.filter(client => client.username === options.targetUsername)
+    } else if (options.targetClientId) {
+      targetClients = targetClients.filter(client => client.clientId === options.targetClientId)
+    }
+
+    if (targetClients.length === 0) {
+      console.warn('[Dispatch] sendConnectionMessage: No matching clients found.')
+      return Promise.resolve([])
+    }
+
+    const promises = targetClients.map(client =>
+      client.sendConnectionMessage(message).catch(err => {
+        console.error(`[Dispatch] sendConnectionMessage error for client ${client.clientId}:`, err.message)
+        return null
+      })
+    )
     return Promise.all(promises)
   }
 
@@ -662,26 +673,23 @@ module.exports = class Dispatch {
    * @private
    */
   async _shouldHideGamePlugins() {
-    // Bypassing application settings cache for this specific check to ensure freshness
+    const now = Date.now()
+    if (this._hideGamePluginsCache !== undefined && (now - this._hideGamePluginsCacheTime) < 5000) {
+      return this._hideGamePluginsCache
+    }
+
     if (typeof require === "function") {
       try {
-        const { ipcRenderer } = require('electron');
-        const ipcSettingValue = await ipcRenderer.invoke('get-setting', 'ui.hideGamePlugins');
-        return ipcSettingValue === true;
+        const { ipcRenderer } = require('electron')
+        const ipcSettingValue = await ipcRenderer.invoke('get-setting', 'ui.hideGamePlugins')
+        this._hideGamePluginsCache = ipcSettingValue === true
+        this._hideGamePluginsCacheTime = now
+        return this._hideGamePluginsCache
       } catch (e) {
-        // It's good practice to log the error in development for debugging
-        if (process.env.NODE_ENV === 'development') {
-          console.error('[_shouldHideGamePlugins] Error getting ui.hideGamePlugins from store via IPC:', e);
-        }
-        return false; // Default to showing all plugins on IPC error
+        return false
       }
-    } else {
-      // This case should ideally not happen in a proper Electron renderer context
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[_shouldHideGamePlugins] require is not a function. Not in Electron renderer context?');
-      }
-      return false; // Default if IPC is not available
     }
+    return false
   }
 
   /**

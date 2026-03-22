@@ -24,18 +24,22 @@ module.exports = class NetworkEventHandler {
           return
         }
 
+        const packetData = {
+          raw: messageText,
+          direction: type === 'aj' ? 'in' : 'out',
+          timestamp: Date.now()
+        }
+
         if (typeof require === "function") {
           try {
             const { ipcRenderer } = require('electron')
-            
-            ipcRenderer.send('packet-event', {
-              raw: messageText,
-              direction: type === 'aj' ? 'in' : 'out',
-              timestamp: Date.now()
-            })
-          } catch (e) {
-          }
+            ipcRenderer.send('packet-event', packetData)
+          } catch (e) {}
         }
+
+        try {
+          window.dispatchEvent(new CustomEvent('jam-packet', { detail: packetData }))
+        } catch (e) {}
         
         if (type === 'aj' && messageText.includes('%xt%l%-1%')) {
           this.application.consoleMessage({

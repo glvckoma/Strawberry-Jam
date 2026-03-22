@@ -47,6 +47,15 @@ class WindowControlsManager {
       })
     }
 
+    const consoleToggleButton = document.getElementById('consoleToggleButton')
+    if (consoleToggleButton) {
+      consoleToggleButton.addEventListener('click', () => {
+        if (this.application.consoleDrawerManager) {
+          this.application.consoleDrawerManager.toggle()
+        }
+      })
+    }
+
     const clearConsoleButton = document.getElementById('clearConsoleButton')
     if (clearConsoleButton) {
       clearConsoleButton.addEventListener('click', () => {
@@ -78,6 +87,10 @@ class WindowControlsManager {
       this.application._packetLogCount = 0
       this.application._appMessageCount = 0
       
+      if (this.application.consoleDrawerManager) {
+        this.application.consoleDrawerManager.resetUnread()
+      }
+
       this.application.consoleMessage({
         type: 'notify',
         message: 'Console logs cleared'

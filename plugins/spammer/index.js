@@ -83,134 +83,60 @@ class Spammer {
     }
   }
 
-  /**
-   * Sends a packet
-   * @param {string|string[]} content - The packet content
-   * @param {string} type - The packet type (aj or connection)
-   */
+  async _getRoomId () {
+    const internalId = await dispatch.getState('internalRoomId')
+    if (internalId !== null && internalId !== undefined) {
+      const parsed = parseInt(internalId, 10)
+      if (!isNaN(parsed)) return parsed
+    }
+    return await dispatch.getState('room')
+  }
+
+  _dispatch (content, type) {
+    const options = {}
+    const selectedAccount = this.targetAccount.value
+    if (selectedAccount && selectedAccount !== '') {
+      options.targetUsername = selectedAccount
+    }
+
+    const sendFn = type === 'aj'
+      ? dispatch.sendRemoteMessage(content, options)
+      : dispatch.sendConnectionMessage(content, options)
+
+    sendFn.catch(err => {
+      console.error(`[Spammer] ${type === 'aj' ? 'sendRemoteMessage' : 'sendConnectionMessage'} error:`, err.message || err)
+    })
+  }
+
   async sendPacket (content, type) {
     if (!content) return
 
-    content = content || this.input.value
-
-    if (window.IS_DEV) {
-      console.log(`[DEBUG] Spammer sendPacket: Received type: "${type}"`);
-      console.log(`[DEBUG] Spammer sendPacket: Received content (raw): "${JSON.stringify(content)}"`);
-    }
-
-    // Get current room identifiers
-    const textualRoomId = await dispatch.getState('room');
-    let internalRoomIdValue = await dispatch.getState('internalRoomId');
-    let parsedInternalRoomId = null;
-
-    if (internalRoomIdValue !== null && internalRoomIdValue !== undefined) {
-        parsedInternalRoomId = parseInt(internalRoomIdValue, 10);
-        if (isNaN(parsedInternalRoomId)) {
-            console.warn(`Spammer Plugin: internalRoomId '${internalRoomIdValue}' could not be parsed to a number.`);
-            parsedInternalRoomId = null; // Ensure it's null if parsing failed
-        }
-    }
-
-    let roomIdToUseForXt = null; // For %xt% packets
-    let roomIdToUseForXml = null; // For XML r="" attribute
-
-    if (parsedInternalRoomId !== null) {
-        roomIdToUseForXt = parsedInternalRoomId;
-        roomIdToUseForXml = parsedInternalRoomId; // XML pubMsg also uses numerical internalRoomId
-        console.log(`Spammer Plugin: Using parsed internalRoomId: ${parsedInternalRoomId}`);
-    } else if (textualRoomId) {
-        roomIdToUseForXt = textualRoomId;
-        roomIdToUseForXml = textualRoomId; // Fallback for XML as well
-        console.warn(`Spammer Plugin: Parsed internalRoomId not available (original value: ${internalRoomIdValue}). Falling back to textualRoomId: ${textualRoomId}. Packets may not work as expected.`);
-    }
+    const roomId = await this._getRoomId()
 
     if (Array.isArray(content)) {
-      if (content.some(msg => msg.includes('{room}')) && !roomIdToUseForXt && !roomIdToUseForXml) {
-        console.error('Spammer Plugin: Cannot send packets, no room ID (textual or internal) is available.')
-        dispatch.showToast('Spammer: Cannot send, not in a room.', 'error')
+      const hasRoom = content.some(msg => msg.includes('{room}'))
+      if (hasRoom && !roomId) {
+        jam.showToast && jam.showToast('Cannot send: not in a room.', 'error')
         return
       }
-
-      const processedMessages = content.map(msg => {
-        let currentMsg = msg;
-        if (currentMsg.includes('{room}')) {
-          // Prioritize numerical for XT, fallback to textual. For XML, it depends on the packet.
-          // For now, we'll assume {room} in XT means the primary room identifier.
-          // For XML, if it's a pubMsg, it should be numerical.
-          if (type === 'aj' && currentMsg.startsWith('%xt%')) { // XT packet
-            console.log(`Spammer Plugin (Array - XT): Replacing {room} with ${roomIdToUseForXt}`);
-            currentMsg = roomIdToUseForXt ? currentMsg.replaceAll('{room}', roomIdToUseForXt) : currentMsg;
-          } else if (type === 'connection' && currentMsg.includes('action="pubMsg"') && currentMsg.includes('r="{room}"')) { // XML pubMsg specifically targeting r="{room}"
-            console.log(`Spammer Plugin (Array - XML pubMsg): Condition MET. Attempting to replace r="{room}" with r="${roomIdToUseForXml}" in message: ${currentMsg}`);
-            currentMsg = roomIdToUseForXml ? currentMsg.replace('r="{room}"', `r="${roomIdToUseForXml}"`) : currentMsg;
-            console.log(`Spammer Plugin (Array - XML pubMsg): Message after replace: ${currentMsg}`);
-          } else if (currentMsg.includes('{room}')) { // General fallback for {room} if not caught by specific handlers
-            // Log why the specific XML pubMsg condition might have failed
-            if (type === 'connection' && currentMsg.includes('action="pubMsg"')) {
-              console.log(`Spammer Plugin (Array - XML pubMsg Condition DEBUG): type === 'connection': ${type === 'connection'}, currentMsg.includes('action="pubMsg"'): ${currentMsg.includes('action="pubMsg"')}, currentMsg.includes('r="{room}"'): ${currentMsg.includes('r="{room}"')}`);
-            }
-            const replacementIdArray = roomIdToUseForXt !== null ? roomIdToUseForXt : (textualRoomId || '');
-            console.log(`Spammer Plugin (Array - General Fallback for {room}): Replacing {room} with ${replacementIdArray}`);
-            currentMsg = currentMsg.replaceAll('{room}', replacementIdArray);
-          } else { // No {room} placeholder
-            console.log(`Spammer Plugin (Array - No {room} placeholder): No replacement needed for ${currentMsg}`);
-            currentMsg = textualRoomId ? currentMsg.replaceAll('{room}', textualRoomId) : currentMsg;
-          }
-        }
-        return currentMsg;
-      })
-
-      return dispatch.sendMultipleMessages({
-        type,
-        messages: processedMessages
-      })
+      for (const msg of content) {
+        const processed = roomId ? msg.replaceAll('{room}', roomId) : msg
+        this._dispatch(processed, type)
+        this.addToHistory(processed, type)
+      }
+      return
     }
 
-    // Single message processing
     if (content.includes('{room}')) {
-      if (!roomIdToUseForXt && !roomIdToUseForXml) {
-        console.error('Spammer Plugin: Cannot send packet, no room ID (textual or internal) is available.')
-        dispatch.showToast('Spammer: Cannot send, not in a room.', 'error')
+      if (!roomId) {
+        jam.showToast && jam.showToast('Cannot send: not in a room.', 'error')
         return
       }
-      // Similar logic for single message
-      if (type === 'aj' && content.startsWith('%xt%')) { // XT packet
-        console.log(`Spammer Plugin (Single - XT): Replacing {room} with ${roomIdToUseForXt}`);
-        content = roomIdToUseForXt ? content.replaceAll('{room}', roomIdToUseForXt) : content;
-      } else if (type === 'connection' && content.includes('action="pubMsg"') && content.includes('r="{room}"')) { // XML pubMsg specifically targeting r="{room}"
-        console.log(`Spammer Plugin (Single - XML pubMsg): Condition MET. Attempting to replace r="{room}" with r="${roomIdToUseForXml}" in message: ${content}`);
-        content = roomIdToUseForXml ? content.replace('r="{room}"', `r="${roomIdToUseForXml}"`) : content;
-        console.log(`Spammer Plugin (Single - XML pubMsg): Message after replace: ${content}`);
-      } else if (content.includes('{room}')) { // General fallback for {room} if not caught by specific handlers
-        // Log why the specific XML pubMsg condition might have failed
-        if (type === 'connection' && content.includes('action="pubMsg"')) {
-            console.log(`Spammer Plugin (Single - XML pubMsg Condition DEBUG): type === 'connection': ${type === 'connection'}, content.includes('action="pubMsg"'): ${content.includes('action="pubMsg"')}, content.includes('r="{room}"'): ${content.includes('r="{room}"')}`);
-        }
-        const replacementIdSingle = roomIdToUseForXt !== null ? roomIdToUseForXt : (textualRoomId || '');
-        console.log(`Spammer Plugin (Single - General Fallback for {room}): Replacing {room} with ${replacementIdSingle}`);
-        content = content.replaceAll('{room}', replacementIdSingle);
-      } else { // No {room} placeholder
-        console.log(`Spammer Plugin (Single - No {room} placeholder): No replacement needed for ${content}`);
-      }
+      content = content.replaceAll('{room}', roomId)
     }
 
-    try {
-      const options = {}
-      const selectedAccount = this.targetAccount.value
-      if (selectedAccount && selectedAccount !== '') {
-        options.targetUsername = selectedAccount
-      }
-      
-      if (type === 'aj') {
-        dispatch.sendRemoteMessage(content, options)
-      } else {
-        dispatch.sendConnectionMessage(content)
-      }
-
-      this.addToHistory(content, type)
-    } catch (error) {
-      console.error('Error sending packet:', error)
-    }
+    this._dispatch(content, type)
+    this.addToHistory(content, type)
   }
 
   /**
@@ -293,16 +219,11 @@ class Spammer {
 
     const type = this.inputType.value
 
-    try {
-      const packets = content.match(/[^\r\n]+/g)
-      if (packets && packets.length > 1) {
-        this.sendPacket(packets, type)
-      } else {
-        this.sendPacket(content, type)
-      }
-      this.addToHistory(content, type)
-    } catch (error) {
-      console.error('Error sending packet:', error)
+    const packets = content.match(/[^\r\n]+/g)
+    if (packets && packets.length > 1) {
+      this.sendPacket(packets, type)
+    } else {
+      this.sendPacket(content.trim(), type)
     }
   }
 
@@ -521,9 +442,10 @@ class Spammer {
    */
   saveToFile () {
     const packets = []
-    for (let i = 1; i < this.table.rows.length; i++) {
+    for (let i = 0; i < this.table.rows.length; i++) {
       const row = this.table.rows[i]
-      const type = row.cells[0].innerText
+      const select = row.cells[0].querySelector('select')
+      const type = select ? select.value : row.cells[0].innerText
       const content = row.cells[1].innerText
       const delay = row.cells[2].innerText
       packets.push({ type, content, delay })
@@ -905,19 +827,28 @@ class Spammer {
    * Sets up the network tab functionality
    */
   setupNetworkTab () {
-    if (typeof require === 'function') {
+    if (typeof jam !== 'undefined' && typeof jam.onPacket === 'function') {
+      this._unsubscribePacket = jam.onPacket((packetData) => {
+        this.addPacketToNetworkTab(packetData)
+      })
+    } else if (typeof require === 'function') {
       try {
         const { ipcRenderer } = require('electron')
-        
         this.packetEventListener = (event, packetData) => {
           this.addPacketToNetworkTab(packetData)
         }
-        
         ipcRenderer.on('packet-event', this.packetEventListener)
       } catch (e) {
         console.error('Error setting up packet event listener:', e)
       }
     }
+
+    try {
+      const mgr = window.parent && window.parent._packetFilterManager
+      if (mgr && typeof mgr.onChange === 'function') {
+        mgr.onChange(() => this._reapplyFilterPatterns())
+      }
+    } catch (_) {}
 
     if (this.filterAllButton) {
       this.filterAllButton.addEventListener('click', () => {
@@ -1003,12 +934,41 @@ class Spammer {
    * Adds a packet to the network tab
    * @param {Object} packetData - The packet data { raw, direction, timestamp }
    */
+  _isFilteredOut (raw) {
+    try {
+      const mgr = window.parent && window.parent._packetFilterManager
+      if (mgr && mgr.filters && mgr.filters.length > 0) {
+        const lc = raw.toLowerCase()
+        return mgr.filters.some(f => lc.includes(f.toLowerCase()))
+      }
+    } catch (_) {}
+    return false
+  }
+
+  _reapplyFilterPatterns () {
+    let removedIn = 0
+    let removedOut = 0
+    this.networkPackets = this.networkPackets.filter(packet => {
+      if (this._isFilteredOut(packet.raw)) {
+        if (packet.direction === 'in') removedIn++
+        else removedOut++
+        if (packet.element && packet.element.parentNode) packet.element.remove()
+        return false
+      }
+      return true
+    })
+    this.networkIncomingCountValue = Math.max(0, this.networkIncomingCountValue - removedIn)
+    this.networkOutgoingCountValue = Math.max(0, this.networkOutgoingCountValue - removedOut)
+    this.updateNetworkCounters()
+  }
+
   addPacketToNetworkTab (packetData) {
     if (!this.packetNetworkLog || !packetData || !packetData.raw) return
+    if (this._isFilteredOut(packetData.raw)) return
 
     const isIncoming = packetData.direction === 'in'
     const packetType = isIncoming ? 'aj' : 'connection'
-    
+
     if (isIncoming) {
       this.networkIncomingCountValue++
     } else {
@@ -1210,23 +1170,23 @@ class Spammer {
    * Cleanup method to remove event listeners
    */
   cleanup () {
-    if (typeof require === 'function') {
+    if (this._unsubscribePacket) {
+      this._unsubscribePacket()
+      this._unsubscribePacket = null
+    }
+    if (this.packetEventListener && typeof require === 'function') {
       try {
         const { ipcRenderer } = require('electron')
-        if (this.packetEventListener) {
-          ipcRenderer.removeListener('packet-event', this.packetEventListener)
-          this.packetEventListener = null
-        }
-      } catch (e) {
-        console.error('Error removing packet event listener:', e)
-      }
+        ipcRenderer.removeListener('packet-event', this.packetEventListener)
+        this.packetEventListener = null
+      } catch (_) {}
     }
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   window.spammer = new Spammer()
-  
+
   window.addEventListener('beforeunload', () => {
     if (window.spammer && typeof window.spammer.cleanup === 'function') {
       window.spammer.cleanup()

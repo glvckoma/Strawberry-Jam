@@ -2,7 +2,7 @@
   "name": "Packet Spammer",
   "version": "2.0.0",
   "description": "Advanced packet replication with history and templates.",
-  "author": "sxip x Glockoma",
+  "author": "sxip x glvckoma",
   "main": "index.html",
   "type": "ui",
   "runInBackground": true

@@ -1,7 +1,6 @@
 const fsPromises = require('fs').promises;
 const path = require('path');
 const { app } = require('electron');
-const os = require('os');
 const { existsSync } = require('fs');
 
 class CacheService {
@@ -16,41 +15,20 @@ class CacheService {
 
     const cachePaths = [];
 
-    if (process.platform === 'win32') {
-      const appDataPath = app.getPath('appData');
-      cachePaths.push(path.join(appDataPath, 'strawberry-jam'));
-      cachePaths.push(path.join(appDataPath, 'AJ Classic'));
-    } else if (process.platform === 'darwin') {
-      const homeDir = app.getPath('home');
-      const libraryPath = path.join(homeDir, 'Library', 'Application Support');
-      cachePaths.push(path.join(libraryPath, 'strawberry-jam'));
-      cachePaths.push(path.join(libraryPath, 'AJ Classic'));
-    }
+    const appDataPath = app.getPath('appData');
+    cachePaths.push(path.join(appDataPath, 'strawberry-jam'));
+    cachePaths.push(path.join(appDataPath, 'strawberry-jam-classic'));
 
     this.cachePaths = cachePaths;
     return cachePaths;
   }
 
   getStrawberryJamPath() {
-    if (process.platform === 'win32') {
-      return path.join(app.getPath('appData'), 'strawberry-jam');
-    } else if (process.platform === 'darwin') {
-      const homeDir = app.getPath('home');
-      const libraryPath = path.join(homeDir, 'Library', 'Application Support');
-      return path.join(libraryPath, 'strawberry-jam');
-    }
-    return null;
+    return path.join(app.getPath('appData'), 'strawberry-jam');
   }
 
   getAJClassicPath() {
-    if (process.platform === 'win32') {
-      return path.join(app.getPath('appData'), 'AJ Classic');
-    } else if (process.platform === 'darwin') {
-      const homeDir = app.getPath('home');
-      const libraryPath = path.join(homeDir, 'Library', 'Application Support');
-      return path.join(libraryPath, 'AJ Classic');
-    }
-    return null;
+    return path.join(app.getPath('appData'), 'strawberry-jam-classic');
   }
 
   async clearGameSessionCache() {

@@ -1,17 +1,37 @@
-const requestPromise = require('request-promise-native')
-const request = require('request')
+const axios = require('axios')
+
+function adaptResponse(axiosResponse, options) {
+  if (options.resolveWithFullResponse) {
+    return {
+      statusCode: axiosResponse.status,
+      headers: axiosResponse.headers,
+      body: axiosResponse.data
+    }
+  }
+  return axiosResponse.data
+}
+
+function buildAxiosConfig(options) {
+  const config = {
+    url: options.url || options.uri,
+    headers: options.headers || {},
+    timeout: options.timeout || 10000,
+    validateStatus: options.simple === false ? () => true : undefined
+  }
+  if (options.body) {
+    config.data = options.body
+  }
+  if (options.json === true) {
+    config.headers['Content-Type'] = config.headers['Content-Type'] || 'application/json'
+  }
+  return config
+}
 
 module.exports = class HttpClient {
   constructor () {
     throw new Error(`The ${this.constructor.name} class may not be instantiated.`)
   }
 
-  /**
-   * Request headers.
-   * @getter
-   * @returns {Object}
-   * @public
-   */
   static get baseHeaders () {
     return {
       Host: 'www.animaljam.com',
@@ -19,46 +39,38 @@ module.exports = class HttpClient {
     }
   }
 
-  /**
-   * Creates a reverse proxy.
-   * @param {string} url
-   * @returns {Request}
-   * @static
-   */
-  static proxy (url) {
-    return request(url)
+  static proxy (options) {
+    const url = typeof options === 'string' ? options : options.url
+    const headers = typeof options === 'string' ? {} : (options.headers || {})
+    return axios({
+      method: 'GET',
+      url,
+      headers,
+      responseType: 'stream',
+      timeout: 30000
+    }).then(response => response.data)
   }
 
-  /**
-   * Makes a GET request.
-   * @param {Object} options
-   * @returns {Promise<RequestPromise<any>>}
-   * @static
-   */
-  static get (options = {}) {
+  static async get (options = {}) {
     if (!options.headers) options.headers = this.baseHeaders
-    return requestPromise.get(options)
+    const config = buildAxiosConfig(options)
+    config.method = 'GET'
+    const response = await axios(config)
+    return adaptResponse(response, options)
   }
 
-  /**
-   * Makes a POST request.
-   * @param {Object} options
-   * @returns {Promise<RequestPromise<any>>}
-   */
-  static post (options = {}) {
+  static async post (options = {}) {
     if (!options.headers) options.headers = this.baseHeaders
-    return requestPromise.post(options)
+    const config = buildAxiosConfig(options)
+    config.method = 'POST'
+    const response = await axios(config)
+    return adaptResponse(response, options)
   }
 
-  /**
-   * Fetches the animal jam classic flashvars.
-   * @returns {Promise<object>}
-   */
   static async fetchFlashvars () {
     const data = await this.get({
       url: 'https://www.animaljam.com/flashvars'
     })
-
-    return JSON.parse(data)
+    return typeof data === 'string' ? JSON.parse(data) : data
   }
 }

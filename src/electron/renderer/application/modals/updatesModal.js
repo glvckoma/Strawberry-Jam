@@ -1,474 +1,220 @@
-const path = require('path');
-const { ipcRenderer } = require('electron');
-const ToastService = require('../../../../ui/services/ToastService');
+const path = require('path')
+const { ipcRenderer } = require('electron')
+const ToastService = require('../../../../ui/services/ToastService')
 
-exports.name = 'updatesModal';
+exports.name = 'updatesModal'
 
 exports.render = async function (app, data = {}) {
-    const { version = null, showHistory = false } = data;
-    
-    let updatesData;
-    try {
-        const dataPath = path.join(__dirname, '../../../../data/updates-data.json');
-        const rawData = await ipcRenderer.invoke('read-file', dataPath);
-        updatesData = JSON.parse(rawData);
-    } catch (error) {
-        console.error('Failed to load updates data:', error);
-        updatesData = {};
+  const { version = null } = data
+
+  let updatesData
+  try {
+    const dataPath = path.join(__dirname, '../../../../data/updates-data.json')
+    const rawData = await ipcRenderer.invoke('read-file', dataPath)
+    updatesData = JSON.parse(rawData)
+  } catch (error) {
+    console.error('Failed to load updates data:', error)
+    updatesData = {}
+  }
+
+  const targetVersion = version || Object.keys(updatesData).find(v => updatesData[v].isLatest) || Object.keys(updatesData)[0]
+  const versionData = updatesData[targetVersion]
+
+  if (!versionData) return null
+
+  const availableVersions = Object.keys(updatesData).sort((a, b) => {
+    const aV = a.split('.').map(Number)
+    const bV = b.split('.').map(Number)
+    for (let i = 0; i < Math.max(aV.length, bV.length); i++) {
+      if ((aV[i] || 0) !== (bV[i] || 0)) return (bV[i] || 0) - (aV[i] || 0)
     }
+    return 0
+  })
 
-    const targetVersion = version || Object.keys(updatesData).find(v => updatesData[v].isLatest) || Object.keys(updatesData)[0];
-    const versionData = updatesData[targetVersion];
-    
-    if (!versionData) {
-        return null;
-    }
+  const visibleCategories = Object.entries(versionData.categories)
+    .filter(([, items]) => items && items.length > 0)
 
-    const availableVersions = Object.keys(updatesData).sort((a, b) => {
-        const aVersion = a.split('.').map(Number);
-        const bVersion = b.split('.').map(Number);
-        for (let i = 0; i < Math.max(aVersion.length, bVersion.length); i++) {
-            const aPart = aVersion[i] || 0;
-            const bPart = bVersion[i] || 0;
-            if (aPart !== bPart) return bPart - aPart;
-        }
-        return 0;
-    });
+  const tabsHtml = visibleCategories.map(([key, items], idx) => {
+    const info = getTabInfo(key)
+    return `
+      <button type="button" class="updates-tab modal-tab ${idx === 0 ? 'active' : ''}" data-tab="${key}">
+        <span class="mr-1">${info.icon}</span>${info.label}
+        <span class="ml-1.5 text-xs bg-tertiary-bg px-1.5 py-0.5 rounded-full text-gray-400">${items.length}</span>
+        <span class="tab-underline"></span>
+      </button>`
+  }).join('')
 
-    const windowHeight = window.innerHeight;
-    const modalMaxHeight = Math.min(windowHeight * 0.85, 600);
-    const headerFooterHeight = 140;
-    const contentHeight = modalMaxHeight - headerFooterHeight;
+  const firstCategory = visibleCategories.length > 0 ? visibleCategories[0][0] : 'features'
 
-    const $modal = $(`
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm" id="updatesModalOverlay">
-            <div class="bg-primary-bg rounded-xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden transform" style="max-height: ${modalMaxHeight}px;">
-                <div class="px-6 py-4 bg-secondary-bg border-b border-sidebar-border">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-highlight-green/20 rounded-full flex items-center justify-center">
-                                <span class="text-highlight-green text-lg font-bold">🎉</span>
-                            </div>
-                            <div>
-                                <h2 class="text-xl font-semibold text-text-primary">What's New</h2>
-                                <p class="text-sidebar-text text-sm">Version ${versionData.version} • ${versionData.releaseDate}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            ${availableVersions.length > 1 ? `
-                                <select id="versionSelector" class="bg-tertiary-bg border border-sidebar-border rounded px-3 py-1 text-text-primary text-sm focus:outline-none focus:border-highlight-green transition-colors">
-                                    ${availableVersions.map(v => `
-                                        <option value="${v}" ${v === targetVersion ? 'selected' : ''}>${v}</option>
-                                    `).join('')}
-                                </select>
-                            ` : ''}
-                            <button type="button" class="text-gray-400 hover:bg-error-red hover:text-white transition-colors p-1 rounded-md" id="closeUpdatesModalHeaderBtn" aria-label="Close">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+  const versionSelectorHtml = availableVersions.length > 1
+    ? `<select id="versionSelector" class="modal-input text-sm py-1 px-2" style="width: auto;">
+        ${availableVersions.map(v => `<option value="${v}" ${v === targetVersion ? 'selected' : ''}>${v}</option>`).join('')}
+       </select>`
+    : ''
 
-                <div class="flex" style="height: ${contentHeight}px;">
-                    <div class="w-48 bg-secondary-bg border-r border-sidebar-border p-4 overflow-y-auto">
-                        <div class="space-y-2">
-                            ${Object.entries(versionData.categories).filter(([key, items]) => items.length > 0).map(([key, items]) => {
-                                const tabInfo = getTabInfo(key);
-                                return `
-                                    <button class="tab-button w-full text-left px-3 py-2 rounded-lg text-sidebar-text hover:text-text-primary hover:bg-tertiary-bg transition-colors flex items-center space-x-2" data-tab="${key}">
-                                        <span>${tabInfo.icon}</span>
-                                        <span class="text-sm">${tabInfo.label}</span>
-                                        <span class="ml-auto text-xs bg-highlight-green/20 text-highlight-green px-2 py-1 rounded-full">${items.length}</span>
-                                    </button>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-
-                    <div class="flex-1 bg-primary-bg overflow-y-auto p-6 min-h-0" style="max-height: ${contentHeight}px;">
-                        <div id="tabContent" class="tab-content animate-fade-in-up">
-                            ${generateTabContent(versionData.categories)}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="px-6 py-4 bg-secondary-bg border-t border-sidebar-border">
-                    <div class="flex justify-between items-center">
-                        <div class="text-sm text-sidebar-text flex items-center">
-                            <i class="fas fa-lightbulb mr-2 text-highlight-green"></i>
-                            <span>Access via Settings → Application Updates → Check for Updates</span>
-                        </div>
-                        <div class="flex space-x-3 items-center">
-                            <button id="markAsRead" class="px-4 py-2 bg-highlight-green/20 text-highlight-green hover:bg-highlight-green/30 rounded-lg transition-colors text-sm font-medium">
-                                <i class="fas fa-check mr-2"></i>Mark as Read
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  const $modal = $(`
+    <div class="flex items-center justify-center min-h-screen" id="updatesModalOverlay">
+      <div class="modal-backdrop"></div>
+      <div class="modal-container max-w-3xl w-full mx-4">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-header-title">
+              <i class="fas fa-gift modal-section-icon"></i>
+              What's New
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">Version ${versionData.version} ${versionData.releaseDate ? '| ' + versionData.releaseDate : ''}</p>
+          </div>
+          <div class="flex items-center space-x-2 ml-auto">
+            ${versionSelectorHtml}
+            <button type="button" class="modal-close-btn" id="closeUpdatesModalHeaderBtn" aria-label="Close">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
         </div>
-    `);
 
-    const categoryKeys = Object.keys(versionData.categories);
-    
-    let activeTab = categoryKeys.find(key => versionData.categories[key] && versionData.categories[key].length > 0) || 'features';
-    
-    if (!versionData.categories[activeTab]) {
-        versionData.categories.features = [{
-            icon: '🎉',
-            title: 'No Updates Available',
-            description: 'There are currently no updates to display.',
-            priority: 'major'
-        }];
-        activeTab = 'features';
-    }
-    
-    function switchTab(tabName) {
-        activeTab = tabName;
-        
-        if (!versionData.categories[tabName]) {
-            tabName = 'features';
-        }
-        
-        $modal.find('.tab-button').removeClass('text-text-primary bg-tertiary-bg').addClass('text-sidebar-text');
-        $modal.find(`[data-tab="${tabName}"]`).removeClass('text-sidebar-text').addClass('text-text-primary bg-tertiary-bg');
-        
-        const $content = $modal.find('#tabContent');
-        
-        $content.css({
-            'opacity': '1',
-            'transform': 'translateY(0px)',
-            'transition': 'opacity 0.2s ease-out, transform 0.2s ease-out'
-        }).animate({
-            'opacity': '0',
-            'transform': 'translateY(-10px)'
-        }, {
-            duration: 200,
-            step: function(now, fx) {
-                if (fx.prop === 'transform') {
-                    $(this).css('transform', `translateY(${now}px)`);
-                }
-            },
-            complete: function() {
-                try {
-                    $content.html(generateTabContentForCategory(tabName, versionData.categories[tabName]));
-                } catch (error) {
-                    console.error('Error updating tab content:', error);
-                    $content.html('<div class="text-center py-8 text-sidebar-text">Error loading content</div>');
-                }
-                
-                $content.css({
-                    'opacity': '0',
-                    'transform': 'translateY(10px)'
-                }).animate({
-                    'opacity': '1',
-                    'transform': 'translateY(0px)'
-                }, {
-                    duration: 300,
-                    step: function(now, fx) {
-                        if (fx.prop === 'transform') {
-                            $(this).css('transform', `translateY(${now}px)`);
-                        }
-                    },
-                    complete: function() {
-                        $content.css({
-                            'transition': '',
-                            'transform': ''
-                        });
-                        $content.find('.space-y-4 > div').each(function(index) {
-                            const $item = $(this);
-                            $item.css({
-                                'opacity': '0',
-                                'transform': 'translateY(20px)',
-                                'transition': 'opacity 0.3s ease-out, transform 0.3s ease-out'
-                            });
-                            
-                            setTimeout(() => {
-                                $item.css({
-                                    'opacity': '1',
-                                    'transform': 'translateY(0px)'
-                                });
-                                
-                                setTimeout(() => {
-                                    $item.css({
-                                        'transition': '',
-                                        'transform': ''
-                                    });
-                                }, 300);
-                            }, index * 50); // Stagger by 50ms per item
-                        });
-                        
-                        setTimeout(() => {
-                            const $scrollContainer = $modal.find('.overflow-y-auto').last();
-                            $scrollContainer[0].scrollTop = $scrollContainer[0].scrollTop;
-                        }, 500);
-                    }
-                });
-            }
-        });
-    }
+        <div class="modal-tab-bar">${tabsHtml}</div>
 
-    switchTab(activeTab);
+        <div class="modal-body themed-scrollbar">
+          <div id="updatesTabContent">
+            ${generateCategoryContent(firstCategory, versionData.categories[firstCategory])}
+          </div>
+        </div>
 
-    $modal.find('.tab-button').click(function() {
-        const tabName = $(this).data('tab');
-        switchTab(tabName);
-    });
+        <div class="modal-footer justify-between">
+          <div class="text-xs text-gray-400 flex items-center">
+            <i class="fas fa-info-circle mr-1.5"></i>
+            Access via Settings > Application Updates > View Updates
+          </div>
+          <button id="markAsRead" class="modal-btn-primary text-sm">
+            <i class="fas fa-check mr-1.5"></i>Mark as Read
+          </button>
+        </div>
+      </div>
+    </div>
+  `)
 
-    $modal.find('#versionSelector').change(function() {
-        const selectedVersion = $(this).val();
-        
-        const $modalContent = $modal.find('.transform');
-        
-        $modalContent.css({
-            'opacity': '1',
-            'transform': 'scale(1) rotateY(0deg)',
-            'transition': 'opacity 0.3s ease-out, transform 0.3s ease-out'
-        }).animate({
-            'opacity': '0',
-            'transform': 'scale(0.95) rotateY(-5deg)'
-        }, {
-            duration: 300,
-            step: function(now, fx) {
-                if (fx.prop === 'transform') {
-                    if (fx.prop === 'transform') {
-                        const scale = fx.now;
-                        $(this).css('transform', `scale(${scale}) rotateY(-5deg)`);
-                    }
-                }
-            },
-            complete: function() {
-                app.modals.show('updatesModal', '#modalContainer', { version: selectedVersion });
-            }
-        });
-    });
+  let activeTab = firstCategory
 
-    const closeModal = function() {
-        $modal.find('.transform').css({
-            'opacity': '1',
-            'transform': 'scale(1) translateY(0px)',
-            'filter': 'blur(0px)',
-            'transition': 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out, filter 0.2s ease-in-out'
-        }).animate({
-            'opacity': '0',
-            'transform': 'scale(0.9) translateY(-20px)',
-            'filter': 'blur(4px)'
-        }, {
-            duration: 300,
-            step: function(now, fx) {
-                if (fx.prop === 'transform') {
-                    $(this).css('transform', `scale(${now}) translateY(-20px)`);
-                } else if (fx.prop === 'filter') {
-                    $(this).css('filter', `blur(4px)`);
-                }
-            },
-            complete: function() {
-                app.modals.close();
-            }
-        });
-        
-        // Fade out backdrop with slight delay
-        setTimeout(() => {
-            $modal.animate({ 'opacity': '0' }, 250);
-        }, 50);
-    };
+  function switchTab(tabName) {
+    activeTab = tabName
+    $modal.find('.updates-tab').removeClass('active')
+    $modal.find(`[data-tab="${tabName}"]`).addClass('active')
 
-    $modal.find('#closeUpdatesModalHeaderBtn').click(closeModal);
-
-    $modal.find('#updatesModalOverlay').click(function(e) {
-        if (e.target === this) {
-            closeModal();
-        }
-    });
-
-    $modal.find('#markAsRead').click(async function() {
-        try {
-            await ipcRenderer.invoke('set-setting', 'lastSeenVersion', targetVersion);
-            ToastService.showInModal($modal, 'Updates marked as read!', 'success', 3000, true);
-            
-            setTimeout(() => {
-                closeModal();
-            }, 1500);
-        } catch (error) {
-            console.error('Failed to mark as read:', error);
-            ToastService.showInModal($modal, 'Failed to mark as read', 'error', 3000, true);
-        }
-    });
-
-    $modal.css({ 'opacity': '0' });
-    $modal.find('.transform').css({
-        'opacity': '0',
-        'transform': 'scale(0.9) translateY(20px)',
-        'filter': 'blur(4px)'
-    });
+    const $content = $modal.find('#updatesTabContent')
+    $content.css({ opacity: 0, transition: 'opacity 0.15s ease-out' })
 
     setTimeout(() => {
-        $modal.css({
-            'opacity': '1',
-            'transition': 'opacity 0.3s ease-out'
-        });
-        
-        $modal.find('.transform').css({
-            'opacity': '1',
-            'transform': 'scale(1) translateY(0px)',
-            'filter': 'blur(0px)',
-            'transition': 'opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.3s ease-out'
-        });
-        
-        setTimeout(() => {
-            $modal.find('.tab-button').each(function(index) {
-                const $tab = $(this);
-                $tab.css({
-                    'opacity': '0',
-                    'transform': 'translateX(-20px)',
-                    'transition': 'opacity 0.3s ease-out, transform 0.3s ease-out'
-                });
-                
-                setTimeout(() => {
-                    $tab.css({
-                        'opacity': '1',
-                        'transform': 'translateX(0px)'
-                    });
-                }, index * 50);
-            });
-            
-            $modal.find('#tabContent .space-y-4 > div').each(function(index) {
-                const $item = $(this);
-                $item.css({
-                    'opacity': '0',
-                    'transform': 'translateY(30px)',
-                    'transition': 'opacity 0.3s ease-out, transform 0.3s ease-out'
-                });
-                
-                setTimeout(() => {
-                    $item.css({
-                        'opacity': '1',
-                        'transform': 'translateY(0px)'
-                    });
-                    
-                    setTimeout(() => {
-                        $item.css({
-                            'transition': '',
-                            'transform': ''
-                        });
-                        
-                        if (index === $modal.find('#tabContent .space-y-4 > div').length - 1) {
-                            setTimeout(() => {
-                                const $scrollContainer = $modal.find('.overflow-y-auto').last();
-                                if ($scrollContainer.length) {
-                                    $scrollContainer[0].scrollTop = $scrollContainer[0].scrollTop;
-                                    $scrollContainer.trigger('scroll');
-                                }
-                            }, 100);
-                        }
-                    }, 300);
-                }, 200 + (index * 75)); // Start after modal animation + stagger
-            });
-        }, 100);
-    }, 10);
+      $content.html(generateCategoryContent(tabName, versionData.categories[tabName]))
+      $content.css({ opacity: 1, transition: 'opacity 0.2s ease-in' })
 
-    const handleResize = () => {
-        const newWindowHeight = window.innerHeight;
-        const newModalMaxHeight = Math.min(newWindowHeight * 0.85, 600);
-        const newContentHeight = newModalMaxHeight - headerFooterHeight;
-        
-        $modal.find('.transform').css('max-height', `${newModalMaxHeight}px`);
-        $modal.find('.flex').first().css('height', `${newContentHeight}px`);
-        $modal.find('.overflow-y-auto').last().css('max-height', `${newContentHeight}px`);
-        
-        // Force scroll recalculation after resize
+      $content.find('.update-item').each(function (index) {
+        const $item = $(this)
+        $item.css({ opacity: 0, transform: 'translateY(8px)', transition: 'opacity 0.25s ease-out, transform 0.25s ease-out' })
         setTimeout(() => {
-            const $scrollContainer = $modal.find('.overflow-y-auto').last();
-            if ($scrollContainer.length) {
-                $scrollContainer[0].scrollTop = $scrollContainer[0].scrollTop;
-            }
-        }, 100);
-    };
-    
-    $(window).on('resize.updatesModal', handleResize);
-    
-    // Clean up resize handler when modal is removed
-    $modal.on('remove', () => {
-        $(window).off('resize.updatesModal');
-    });
+          $item.css({ opacity: 1, transform: 'translateY(0)' })
+        }, index * 50)
+      })
+    }, 150)
+  }
 
-    return $modal;
-};
+  $modal.find('.updates-tab').on('click', function () {
+    switchTab($(this).data('tab'))
+  })
+
+  $modal.find('#versionSelector').on('change', function () {
+    app.modals.show('updatesModal', '#modalContainer', { version: $(this).val() })
+  })
+
+  const closeModal = () => {
+    $modal.find('.modal-container').addClass('modal-exit')
+    $modal.find('.modal-backdrop').css({ opacity: 0, transition: 'opacity 0.15s ease-out' })
+    setTimeout(() => app.modals.close(), 150)
+  }
+
+  $modal.find('#closeUpdatesModalHeaderBtn').on('click', closeModal)
+  $modal.find('.modal-backdrop').on('click', closeModal)
+
+  $modal.find('#markAsRead').on('click', async function () {
+    try {
+      await ipcRenderer.invoke('set-setting', 'lastSeenVersion', targetVersion)
+      ToastService.showInModal($modal, 'Updates marked as read!', 'success', 3000, true)
+      setTimeout(closeModal, 1500)
+    } catch (error) {
+      console.error('Failed to mark as read:', error)
+      ToastService.showInModal($modal, 'Failed to mark as read', 'error', 3000, true)
+    }
+  })
+
+  setTimeout(() => {
+    $modal.find('.update-item').each(function (index) {
+      const $item = $(this)
+      $item.css({ opacity: 0, transform: 'translateY(8px)', transition: 'opacity 0.25s ease-out, transform 0.25s ease-out' })
+      setTimeout(() => {
+        $item.css({ opacity: 1, transform: 'translateY(0)' })
+      }, index * 50)
+    })
+  }, 50)
+
+  return $modal
+}
 
 function getTabInfo(key) {
-    const tabMap = {
-        'features': { icon: '🎉', label: 'New Features' },
-        'improvements': { icon: '⚡', label: 'Improvements' },
-        'fixes': { icon: '🐛', label: 'Bug Fixes' },
-        'shortcuts': { icon: '⌨️', label: 'Shortcuts' },
-        'commands': { icon: '💻', label: 'Commands' },
-        'messages': { icon: '📢', label: 'Messages' }
-    };
-    return tabMap[key] || { icon: '📝', label: key.charAt(0).toUpperCase() + key.slice(1) };
+  const tabMap = {
+    features: { icon: '&#x2728;', label: 'Features' },
+    improvements: { icon: '&#x26A1;', label: 'Improvements' },
+    fixes: { icon: '&#x1F41B;', label: 'Bug Fixes' },
+    shortcuts: { icon: '&#x2328;', label: 'Shortcuts' },
+    commands: { icon: '&#x1F4BB;', label: 'Commands' },
+    messages: { icon: '&#x1F4E2;', label: 'Messages' }
+  }
+  return tabMap[key] || { icon: '&#x1F4DD;', label: key.charAt(0).toUpperCase() + key.slice(1) }
 }
 
-function generateTabContent(categories) {
-    const firstCategory = Object.keys(categories).find(key => categories[key].length > 0);
-    return generateTabContentForCategory(firstCategory, categories[firstCategory]);
-}
+function generateCategoryContent(categoryKey, items) {
+  if (!items || items.length === 0) {
+    return '<div class="text-center py-8 text-gray-400">No items in this category</div>'
+  }
 
-function generateTabContentForCategory(categoryKey, items) {
-    if (!items || items.length === 0) {
-        return '<div class="text-center py-8 text-sidebar-text">No items in this category</div>';
-    }
+  const isShortcuts = categoryKey === 'shortcuts'
+  const isCommands = categoryKey === 'commands'
 
-    const isShortcuts = categoryKey === 'shortcuts';
-    const isCommands = categoryKey === 'commands';
-
-    return `
-        <div class="space-y-4">
-            ${items.map(item => `
-                <div class="rounded-lg p-4 bg-secondary-bg border border-sidebar-border hover:border-highlight-green/30 hover:bg-tertiary-bg transition-all duration-200">
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 bg-highlight-green/20 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span class="text-sm">${item.icon}</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between">
-                                <h3 class="font-semibold text-text-primary">${item.title}</h3>
-                                ${item.priority ? `<span class="text-xs px-2 py-1 rounded-full ${getPriorityClass(item.priority)}">${item.priority}</span>` : ''}
-                            </div>
-                            <p class="text-sidebar-text text-sm mt-1">${item.description}</p>
-                            ${isShortcuts && item.keys ? `
-                                <div class="mt-2 flex items-center space-x-1">
-                                    ${item.keys.map(key => `
-                                        <kbd class="px-2 py-1 text-xs bg-tertiary-bg border border-sidebar-border rounded font-mono text-text-primary">${key}</kbd>
-                                    `).join(' + ')}
-                                </div>
-                            ` : ''}
-                            ${isCommands && item.command ? `
-                                <div class="mt-2">
-                                    <code class="px-2 py-1 text-xs bg-tertiary-bg border border-sidebar-border rounded font-mono text-highlight-green">${item.command}</code>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('')}
+  return `<div class="space-y-3">
+    ${items.map(item => `
+      <div class="update-item rounded-lg p-4 bg-tertiary-bg/50 border border-sidebar-border hover:border-sidebar-border/80 transition-colors">
+        <div class="flex items-start space-x-3">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm" style="background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.15);">
+            ${item.icon || ''}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <h3 class="font-semibold text-sm text-text-primary">${item.title}</h3>
+              ${item.priority ? `<span class="text-xs px-2 py-0.5 rounded-full ${getPriorityClass(item.priority)}">${item.priority}</span>` : ''}
+            </div>
+            <p class="text-gray-400 text-sm mt-1">${item.description}</p>
+            ${isShortcuts && item.keys ? `
+              <div class="mt-2 flex items-center space-x-1">
+                ${item.keys.map(key => `<kbd class="px-2 py-0.5 text-xs bg-secondary-bg border border-sidebar-border rounded font-mono text-text-primary">${key}</kbd>`).join(' <span class="text-gray-500 text-xs">+</span> ')}
+              </div>` : ''}
+            ${isCommands && item.command ? `
+              <div class="mt-2">
+                <code class="px-2 py-0.5 text-xs border border-sidebar-border rounded font-mono" style="background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.1); color: var(--theme-primary, #e83d52);">${item.command}</code>
+              </div>` : ''}
+          </div>
         </div>
-    `;
+      </div>
+    `).join('')}
+  </div>`
 }
 
 function getPriorityClass(priority) {
-    switch (priority) {
-        case 'major':
-            return 'bg-highlight-green/20 text-highlight-green';
-        case 'enhancement':
-            return 'bg-blue-500/20 text-blue-400';
-        case 'fix':
-            return 'bg-red-500/20 text-red-400';
-        default:
-            return 'bg-sidebar-text/20 text-sidebar-text';
-    }
+  switch (priority) {
+    case 'major': return 'bg-highlight-green/20 text-highlight-green'
+    case 'enhancement': return 'bg-blue-500/20 text-blue-400'
+    case 'fix': return 'bg-red-500/20 text-red-400'
+    default: return 'bg-gray-500/20 text-gray-400'
+  }
 }
 
-
-exports.close = function (app) {
-    // Clean up window resize event handler
-    $(window).off('resize.updatesModal');
-};
+exports.close = function () {
+  $(window).off('resize.updatesModal')
+}

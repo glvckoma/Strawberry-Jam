@@ -49,7 +49,7 @@ const os = require('os');
 const chokidar = require('chokidar');
 const processManager = require('../utils/ProcessManager');
 const setupIpcHandlers = require('./ipcHandlers');
-// const keytar = require('keytar'); // Will be required in constructor
+const PlatformPaths = require('../PlatformPaths');
 
 // Suppress Electron security warnings
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
@@ -76,11 +76,7 @@ function devLog(...args) {}
 function devWarn(...args) {}
 const USER_DATA_PATH = app.getPath('userData');
 
-const STRAWBERRY_JAM_CLASSIC_BASE_PATH = process.platform === 'win32'
-  ? path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'strawberry-jam-classic')
-  : process.platform === 'darwin'
-    ? path.join('/', 'Applications', 'Strawberry Jam Classic.app', 'Contents')
-    : undefined;
+const STRAWBERRY_JAM_CLASSIC_BASE_PATH = PlatformPaths.getStrawberryJamClassicBasePath();
 
 const schema = {
   network: {
@@ -111,6 +107,10 @@ const schema = {
       performServerCheckOnLaunch: {
         type: 'boolean',
         default: true
+      },
+      consoleDrawerHeight: {
+        type: 'number',
+        default: 200
       }
     },
     default: {}
@@ -153,6 +153,28 @@ const schema = {
               collectBuddies: { type: 'boolean', default: true }
             },
             default: {}
+          }
+        },
+        default: {}
+      },
+      sidebar: {
+        type: 'object',
+        properties: {
+          customIcons: { type: 'object', default: {} },
+          hiddenPlugins: {
+            type: 'array',
+            items: { type: 'string' },
+            default: []
+          },
+          sortMode: {
+            type: 'string',
+            enum: ['type', 'alphabetical', 'custom'],
+            default: 'type'
+          },
+          customOrder: {
+            type: 'array',
+            items: { type: 'string' },
+            default: []
           }
         },
         default: {}
@@ -206,6 +228,9 @@ const defaultWindowOptions = {
     contextIsolation: false,
     enableRemoteModule: true,
     nodeIntegration: true,
+    nodeIntegrationInSubFrames: true,
+    webviewTag: true,
+    plugins: true,
     preload: path.resolve(__dirname, 'preload.js'),
     additionalArguments: ['--disable-electron-security-warnings']
   }
@@ -221,7 +246,16 @@ class Electron {
     this._apiProcess = null
     this._apiPort = null
     this._store = new Store({ schema });
-    this.keytar = require('keytar');
+    try {
+      this.keytar = require('keytar');
+    } catch (e) {
+      logManager.warn('[Electron] keytar not available, credential storage will use fallback');
+      this.keytar = {
+        getPassword: async () => null,
+        setPassword: async () => {},
+        deletePassword: async () => {}
+      };
+    }
     this._swfFileWatcher = null;
 
     const appNameForKeytar = app.getName();
@@ -242,6 +276,8 @@ class Electron {
     this.pluginWindows = new Map();
     this._backgroundPlugins = new Set();
     this._backgroundIntervals = new Map();
+    this._cachedJQuery = null;
+    this._cachedJQueryUI = null;
     this._setupFileOpeningIPC();
     this._setupCleanupHandlers();
     this.manualCheckInProgressRef = { value: false };
@@ -259,6 +295,20 @@ class Electron {
         }
       });
     });
+  }
+
+  _loadJQueryCache() {
+    if (this._cachedJQuery) return
+    try {
+      this._cachedJQuery = fs.readFileSync(path.join(__dirname, '..', '..', 'node_modules', 'jquery', 'dist', 'jquery.min.js'), 'utf8')
+    } catch (e) {
+      this._cachedJQuery = null
+    }
+    try {
+      this._cachedJQueryUI = fs.readFileSync(path.join(__dirname, '..', '..', 'assets', 'scripts', 'jquery-ui.js'), 'utf8')
+    } catch (e) {
+      this._cachedJQueryUI = null
+    }
   }
 
   async _migrateLeakCheckApiKeyToKeytar() {
@@ -351,27 +401,16 @@ class Electron {
     pluginWindow.webContents.on('did-finish-load', () => {
       pluginWindow.focus();
 
-      pluginWindow.webContents.executeJavaScript(`
-        (function() {
-          if (!window.jQuery) {
-            var jQueryScript = document.createElement('script');
-            jQueryScript.src = "https://code.jquery.com/jquery-3.6.0.min.js";
-            jQueryScript.onload = function() {
-              if (process.env.NODE_ENV === 'development') console.log("[Plugin Window] jQuery injected:", typeof window.$);
-              
-              if (typeof window.$.ui === 'undefined') { 
-                var jQueryUIScript = document.createElement('script');
-                jQueryUIScript.src = "https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js";
-                jQueryUIScript.onload = function() {
-                  if (process.env.NODE_ENV === 'development') console.log("[Plugin Window] jQuery UI injected.");
-                };
-                document.head.appendChild(jQueryUIScript);
-              }
-            };
-            document.head.appendChild(jQueryScript);
-          }
-        })();
-      `).then(() => {
+      this._loadJQueryCache()
+      const jqInjection = this._cachedJQuery
+        ? `if (!window.jQuery) { ${this._cachedJQuery}\n }`
+        : ''
+      const jqUIInjection = this._cachedJQueryUI
+        ? `if (window.jQuery && !window.jQuery.ui) { ${this._cachedJQueryUI}\n }`
+        : ''
+      pluginWindow.webContents.executeJavaScript(jqInjection).then(() => {
+        return pluginWindow.webContents.executeJavaScript(jqUIInjection)
+      }).then(() => {
           pluginWindow.webContents.executeJavaScript(`
             try {
               const { ipcRenderer } = require('electron');
@@ -451,7 +490,63 @@ class Electron {
 
     pluginWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
     });
-  } 
+  }
+
+  _handleOpenGameWindow() {
+    if (this._gameWindow && !this._gameWindow.isDestroyed()) {
+      if (this._gameWindow.isMinimized()) this._gameWindow.restore()
+      this._gameWindow.focus()
+      return
+    }
+
+    const gameWindow = new BrowserWindow({
+      ...defaultWindowOptions,
+      title: 'Game Client',
+      width: 1024,
+      height: 768,
+      frame: false,
+      icon: path.join(getAssetsPath(app), 'images', 'icon.png'),
+      webPreferences: {
+        ...defaultWindowOptions.webPreferences,
+        nodeIntegration: true,
+        contextIsolation: false
+      }
+    })
+
+    const clientPath = path.join(app.getAppPath(), 'assets', 'client', 'gui', 'index.html')
+    gameWindow.loadFile(clientPath)
+
+    this._gameWindow = gameWindow
+
+    gameWindow.webContents.on('dom-ready', () => {
+      const config = require(path.join(app.getAppPath(), 'assets', 'client', 'config.js'))
+      const username = this._store.get('login.username', '')
+      const rememberMe = this._store.get('login.rememberMe', false)
+      const df = require('crypto').randomUUID()
+
+      gameWindow.webContents.send('postSystemData', {
+        version: app.getVersion(),
+        platform: os.platform(),
+        platformRelease: os.release(),
+        language: this._store.get('login.language') || 'en',
+        affiliateCode: this._store.get('login.affiliateCode') || ''
+      })
+
+      gameWindow.webContents.send('loginInfoLoaded', {
+        username,
+        rememberMe,
+        authToken: null,
+        refreshToken: null,
+        config,
+        df,
+        rcToken: ''
+      })
+    })
+
+    gameWindow.on('closed', () => {
+      this._gameWindow = null
+    })
+  }
 
   async getAppState() {
     return await this.appStateService.getAppState();
@@ -597,6 +692,32 @@ class Electron {
     }
   }
 
+  _setupZoomHandling(win) {
+    const MIN_ZOOM = -3;
+    const MAX_ZOOM = 3;
+
+    win.webContents.on('before-input-event', (event, input) => {
+      if (!input.control || input.type !== 'keyDown') return;
+
+      if (input.key === '0') {
+        win.webContents.setZoomLevel(0);
+        event.preventDefault();
+      } else if (input.key === '=' || input.key === '+') {
+        const current = win.webContents.getZoomLevel();
+        if (current < MAX_ZOOM) {
+          win.webContents.setZoomLevel(Math.min(current + 0.5, MAX_ZOOM));
+        }
+        event.preventDefault();
+      } else if (input.key === '-') {
+        const current = win.webContents.getZoomLevel();
+        if (current > MIN_ZOOM) {
+          win.webContents.setZoomLevel(Math.max(current - 0.5, MIN_ZOOM));
+        }
+        event.preventDefault();
+      }
+    });
+  }
+
   async _onReady () {
     // --- REGISTER IPC HANDLER HERE using ipcMain.on and event.sender.send ---
     ipcMain.on('request-main-log-path', (event) => { // Listening for the request
@@ -648,9 +769,10 @@ class Electron {
       }
     });
     
+    this._setupZoomHandling(this._window);
+
     const dataPath = getDataPath(app);
-    
-    // Note: loadFile is already promise-based, no fsPromises needed here.
+
     await this._window.loadFile(path.join(__dirname, 'renderer', 'index.html'))
 
     const assetsPath = getAssetsPath(app)
@@ -723,8 +845,18 @@ class Electron {
       this._apiProcess.on('error', (error) => {
       });
 
+      this._apiProcess.on('message', (message) => {
+        if (message && message.type === 'api-port' && message.port) {
+          this._apiPort = message.port
+        }
+      });
+
       this._apiProcess.on('exit', (code, signal) => {
-        if (code !== 0) {
+        if (code !== 0 && this._window && !this._window.isDestroyed()) {
+          this._window.webContents.send('port-error', {
+            server: 'api',
+            message: 'The API server failed to start because all ports (7680, 7681, 7682, 7683, 7684) are busy. Close other applications using these ports or use the /terminate command, then restart.'
+          })
         }
       });
 
@@ -746,51 +878,49 @@ class Electron {
     }
 
 
-    this.autoUpdateService.initialize();
-
-    try {
-      const autoReapplyEnabled = this._store.get('game.autoReapplySwf');
-      const selectedFile = this._store.get('game.selectedSwfFile');
-      
-      if (autoReapplyEnabled && selectedFile) {
-        const FilesController = require('../api/controllers/FilesController');
-        const sourceFilePath = path.join(FilesController.optionsDir, selectedFile);
-        
-        if (fs.existsSync(sourceFilePath)) {
-          const stats = fs.statSync(sourceFilePath);
-          const currentModifiedTime = stats.mtime.getTime();
-          const lastModifiedKey = `game.swfLastModified.${selectedFile}`;
-          const lastModifiedTime = this._store.get(lastModifiedKey);
-          
-          if (!lastModifiedTime || currentModifiedTime > lastModifiedTime) {
-            logManager.log(`[Auto Reapply] Detected modification to ${selectedFile}, reapplying...`, 'main', logManager.logLevels.INFO);
-            const result = await FilesController.replaceSwfFile(selectedFile);
-            
-            if (result.success) {
-              this._store.set(lastModifiedKey, currentModifiedTime);
-              
-              if (this._window && this._window.webContents && !this._window.isDestroyed()) {
-                this._window.webContents.send('swf-auto-reapplied');
-              }
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error applying SWF on launch:', error);
-    }
-
-    this._setupSwfFileWatcher();
+    await Promise.all([
+      Promise.resolve(this.autoUpdateService.initialize()).catch(() => {}),
+      this._autoReapplySwfIfNeeded().catch(e => console.error('Error applying SWF on launch:', e)),
+      this._setupSwfFileWatcher().catch(() => {})
+    ]);
   }
 
-  _setupSwfFileWatcher() {
+  async _autoReapplySwfIfNeeded() {
+    const autoReapplyEnabled = this._store.get('game.autoReapplySwf')
+    const selectedFile = this._store.get('game.selectedSwfFile')
+    if (!autoReapplyEnabled || !selectedFile) return
+
+    const FilesController = require('../api/controllers/FilesController')
+    const sourceFilePath = path.join(FilesController.optionsDir, selectedFile)
+
+    const sourceExists = await fsPromises.access(sourceFilePath).then(() => true).catch(() => false)
+    if (!sourceExists) return
+
+    const stats = await fsPromises.stat(sourceFilePath)
+    const currentModifiedTime = stats.mtime.getTime()
+    const lastModifiedKey = `game.swfLastModified.${selectedFile}`
+    const lastModifiedTime = this._store.get(lastModifiedKey)
+
+    if (!lastModifiedTime || currentModifiedTime > lastModifiedTime) {
+      logManager.log(`[Auto Reapply] Detected modification to ${selectedFile}, reapplying...`, 'main', logManager.logLevels.INFO)
+      const result = await FilesController.replaceSwfFile(selectedFile)
+      if (result.success) {
+        this._store.set(lastModifiedKey, currentModifiedTime)
+        if (this._window && this._window.webContents && !this._window.isDestroyed()) {
+          this._window.webContents.send('swf-auto-reapplied')
+        }
+      }
+    }
+  }
+
+  async _setupSwfFileWatcher() {
     try {
       const FilesController = require('../api/controllers/FilesController');
       const optionsDir = FilesController.optionsDir;
 
-      if (!optionsDir || !fs.existsSync(optionsDir)) {
-        return;
-      }
+      if (!optionsDir) return;
+      const dirExists = await fsPromises.access(optionsDir).then(() => true).catch(() => false);
+      if (!dirExists) return;
 
       if (this._swfFileWatcher) {
         this._swfFileWatcher.close();
@@ -805,9 +935,10 @@ class Electron {
         ignored: /(^|[\/\\])\../,
         persistent: true,
         ignoreInitial: true,
+        usePolling: false,
         awaitWriteFinish: {
           stabilityThreshold: 500,
-          pollInterval: 100
+          pollInterval: 500
         }
       });
 
@@ -819,7 +950,7 @@ class Electron {
           }
 
           const filename = path.basename(filePath);
-          const stats = fs.statSync(filePath);
+          const stats = await fsPromises.stat(filePath);
           const currentModifiedTime = stats.mtime.getTime();
           const lastModifiedKey = `game.swfLastModified.${filename}`;
           const lastModifiedTime = this._store.get(lastModifiedKey);
@@ -877,11 +1008,13 @@ class Electron {
   }
   
   _enableBackgroundProcessing(window, name) {
+    if (this._backgroundIntervals.has(name)) return
+
     try {
       if (window.webContents && !window.webContents.isDestroyed()) {
         window.webContents.backgroundThrottling = false;
       }
-      
+
       window.webContents.executeJavaScript(`
         (function() {
           if (!window._backgroundKeepAliveInterval) {
@@ -890,11 +1023,8 @@ class Electron {
                 window.dispatchEvent(new CustomEvent('jam-background-tick', {
                   detail: { timestamp: Date.now() }
                 }));
-                
-                if (Date.now() % 10000 < 1000) {
-                }
               }
-            }, 1000);
+            }, 5000);
           }
           return window._backgroundKeepAliveInterval;
         })();
@@ -902,8 +1032,7 @@ class Electron {
         if (intervalId) {
           this._backgroundIntervals.set(name, intervalId);
         }
-      }).catch(err => {
-      });
+      }).catch(() => {});
     } catch (err) {
     }
   }
@@ -914,18 +1043,27 @@ class Electron {
         try {
           window.webContents.send('app-restored');
           window.webContents.executeJavaScript('window.jam.isAppMinimized = false;');
-          
+
+          if (this._backgroundIntervals.has(name)) {
+            window.webContents.executeJavaScript(`
+              if (window._backgroundKeepAliveInterval) {
+                clearInterval(window._backgroundKeepAliveInterval);
+                window._backgroundKeepAliveInterval = null;
+              }
+            `).catch(() => {});
+            this._backgroundIntervals.delete(name);
+          }
+
           window.webContents.executeJavaScript(`
             window.dispatchEvent(new CustomEvent('jam-foreground', {
               detail: { timestamp: Date.now() }
             }));
-          `).catch(err => {
-          });
+          `).catch(() => {});
         } catch (err) {
         }
       }
     });
-    
+
     this._window.webContents.send('app-restored');
   }
 

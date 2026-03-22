@@ -13,9 +13,6 @@ class SettingsSaver {
     }
 
     try {
-      const consoleLogLimit = Math.max(100, Math.min(10000, parseInt($modal.find('#consoleLogLimit').val()) || 500));
-      const networkLogLimit = Math.max(100, Math.min(10000, parseInt($modal.find('#networkLogLimit').val()) || 500));
-
       const initialSwfFile = $modal.data('initialSwfFile');
       const selectedSwfFile = $modal.find('#selectedSwfFile').val();
       const swfFileChanged = initialSwfFile !== selectedSwfFile;
@@ -29,8 +26,6 @@ class SettingsSaver {
       const settingsToSave = [
         { key: 'network.smartfoxServer', value: $modal.find('#advancedSmartfoxServer').val() },
         { key: 'network.secureConnection', value: $modal.find('#advancedSecureConnection').is(':checked') },
-        { key: 'ui.hideGamePlugins', value: $modal.find('#hideGamePlugins').is(':checked') },
-        { key: 'plugins.refreshBehavior', value: $modal.find('#pluginRefreshBehavior').val() },
         { key: 'plugins.usernameLogger.apiKey', value: $modal.find('#leakCheckApiKey').val() },
         { key: 'plugins.usernameLogger.autoCheck.enabled', value: (parseInt($modal.find('#leakCheckThreshold').val()) || 0) > 0 },
         { key: 'plugins.usernameLogger.autoCheck.threshold', value: parseInt($modal.find('#leakCheckThreshold').val()) || 0 },
@@ -39,13 +34,12 @@ class SettingsSaver {
         { key: 'plugins.usernameLogger.collection.collectBuddies', value: $modal.find('#leakCheckCollectBuddies').is(':checked') },
         { key: 'plugins.usernameLogger.outputDir', value: $modal.find('#leakCheckOutputDirInput').val().trim() },
         { key: 'plugins.usernameLogger.maxPasswordsPerAccount', value: parseInt($modal.find('#leakCheckMaxPasswords').val()) || 0 },
-        { key: 'logs.consoleLimit', value: consoleLogLimit },
-        { key: 'logs.networkLimit', value: networkLogLimit },
         { key: 'ui.performServerCheckOnLaunch', value: $modal.find('#performServerCheckOnLaunchToggle').is(':checked') },
         { key: 'dev-log.performServerCheckOnLaunch', value: $modal.find('#performServerCheckOnLaunchToggle').is(':checked') },
         { key: 'updates.enableAutoUpdates', value: $modal.find('#enableAutoUpdatesToggle').is(':checked') },
         { key: 'game.selectedSwfFile', value: selectedSwfFile },
         { key: 'game.autoReapplySwf', value: $modal.find('#autoReapplySwfToggle').is(':checked') },
+        { key: 'ui.militaryTime', value: $modal.find('#militaryTimeToggle').is(':checked') },
         { key: 'ui.allowMultipleInstances', value: $modal.find('#allowMultipleInstancesToggle').is(':checked') },
         { key: 'ui.customThemeColor', value: normalizedColor },
         { key: 'ui.customThemeEnabled', value: $modal.find('#customThemeEnabledToggle').is(':checked') },
@@ -126,8 +120,6 @@ class SettingsSaver {
 }
 
 module.exports = SettingsSaver;
-
-
 
 
 

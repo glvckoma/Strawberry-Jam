@@ -54,10 +54,8 @@ class ConnectionStatusManager {
       statusElement.classList.remove('text-highlight-green', 'text-gray-400', 'text-highlight-yellow', 'text-error-red')
       
       if (this.serverStatus.accessStatus === 'disabled_by_setting') {
-        statusElement.querySelector('span:last-child').textContent = 'Disabled in Settings'
-        statusElement.classList.add('text-gray-400')
-        dotElement.classList.add('bg-tertiary-bg')
-        statusElement.setAttribute('title', 'Server status check is disabled in settings.')
+        statusElement.style.display = 'none'
+        return
       } else if (this.serverStatus.isOnline === true) {
         if (this.serverStatus.accessStatus === 'blocked') {
           statusElement.querySelector('span:last-child').textContent = 'AJ Servers: IP Blocked'
@@ -250,17 +248,25 @@ class ConnectionStatusManager {
   }
 
   setupConnectionMonitoring(updateTimestamp, checkEmptyPluginList) {
+    this._lastConnectedState = null
+
     setInterval(() => {
-      const isConnected = this.application.server && 
-                          this.application.server.clients && 
+      const isConnected = this.application.server &&
+                          this.application.server.clients &&
                           this.application.server.clients.size > 0
       if (this.application.dispatch) {
         this.application.dispatch.setState('connected', isConnected)
       }
-      this.updateConnectionStatus(isConnected)
+      if (isConnected !== this._lastConnectedState) {
+        this._lastConnectedState = isConnected
+        this.updateConnectionStatus(isConnected)
+      }
+    }, 1000)
+
+    setInterval(() => {
       if (updateTimestamp) updateTimestamp()
       if (checkEmptyPluginList) checkEmptyPluginList()
-    }, 1000)
+    }, 5000)
 
     if (this.application) {
       this.application.on('connection:change', (isConnected) => {

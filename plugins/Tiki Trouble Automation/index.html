@@ -1,123 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Tiki Trouble Automation</title>
-    <link rel="stylesheet" href="app://assets/css/style.css">
-    <link rel="stylesheet" href="app://assets/css/tailwind.css">
-    <link rel="stylesheet" href="app://assets/css/plugin-styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .stats-card {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-            border: 1px solid rgba(99, 102, 241, 0.3);
-        }
-        .progress-bar {
-            transition: width 0.3s ease-in-out;
-        }
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Tiki Trouble Automation</title>
+  <link rel="stylesheet" href="app://assets/styles/style.css">
+  <link rel="stylesheet" href="app://assets/styles/tailwind.css">
+  <link rel="stylesheet" href="app://assets/styles/plugin-styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    .setting-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(156,163,175,0.08);
+      border-radius: 8px;
+      margin: 6px 10px;
+      overflow: hidden;
+    }
+    .setting-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .setting-card-header:hover { background: rgba(255,255,255,0.03); }
+    .setting-card-body { padding: 0 12px 10px; }
+    .setting-card-body.collapsed { display: none; }
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+    }
+    .setting-label { font-size: 11px; color: rgba(255,255,255,0.6); }
+    .setting-select {
+      background: #1e1f2e;
+      border: 1px solid rgba(156,163,175,0.15);
+      border-radius: 4px;
+      padding: 4px 8px;
+      color: #fff;
+      font-size: 11px;
+      color-scheme: dark;
+    }
+    .setting-checkbox {
+      width: 14px;
+      height: 14px;
+      accent-color: #10b981;
+      cursor: pointer;
+    }
+    .ctrl-btn {
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1;
+    }
+    .ctrl-btn-start { background: rgba(16,185,129,0.2); color: #10b981; }
+    .ctrl-btn-start:hover { background: rgba(16,185,129,0.3); }
+    .ctrl-btn-stop { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .ctrl-btn-stop:hover { background: rgba(239,68,68,0.3); }
+    .ctrl-btn-reset { background: rgba(156,163,175,0.1); color: rgba(255,255,255,0.5); }
+    .ctrl-btn-reset:hover { background: rgba(156,163,175,0.2); }
+    .progress-track {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--theme-primary, #e83d52);
+      transition: width 0.3s ease;
+    }
+    .status-text {
+      font-size: 11px;
+      font-family: monospace;
+      color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.04);
+      border-radius: 4px;
+      padding: 6px 8px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .stat-box {
+      text-align: center;
+      padding: 6px 4px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.03);
+    }
+    .stat-value { font-size: 16px; font-weight: 700; }
+    .stat-label { font-size: 9px; text-transform: uppercase; color: rgba(255,255,255,0.4); letter-spacing: 0.5px; }
+    .chevron { transition: transform 0.2s ease; font-size: 10px; color: rgba(255,255,255,0.3); }
+    .section-title { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+  </style>
 </head>
-<body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
 
-    <!-- Standardized Draggable Header -->
-    <div class="jam-plugin-header">
-        <span class="jam-plugin-title">Tiki Trouble Automation</span>
-        <div class="jam-plugin-controls">
-            <button class="jam-plugin-minimize" aria-label="Minimize">
-                <i class="fas fa-minus"></i>
-            </button>
-            <button class="jam-plugin-close" aria-label="Close">
-                <i class="fas fa-times"></i>
-            </button>
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Tiki Trouble</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div class="jam-plugin-content flex-1 overflow-y-auto" style="padding: 0;">
+
+    <div class="setting-card">
+      <div class="setting-card-header" id="settingsHeader">
+        <span class="section-title"><i class="fas fa-cog" style="margin-right: 6px;"></i>Settings</span>
+        <i class="fas fa-chevron-down chevron" id="settingsChevron"></i>
+      </div>
+      <div class="setting-card-body" id="settingsBody">
+        <div class="setting-row">
+          <span class="setting-label">Sound Alerts</span>
+          <input type="checkbox" id="soundEnabled" class="setting-checkbox" checked>
         </div>
+        <div class="setting-row">
+          <span class="setting-label">Auto-Retry on Failure</span>
+          <input type="checkbox" id="autoRetry" class="setting-checkbox" checked>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Max Retries</span>
+          <select id="maxRetries" class="setting-select">
+            <option value="1">1</option>
+            <option value="3" selected>3</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Target Account</span>
+          <select id="targetAccount" class="setting-select" style="min-width: 120px;">
+            <option value="">All Accounts</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Loop Mode</span>
+          <select id="loopMode" class="setting-select">
+            <option value="1" selected>Run Once</option>
+            <option value="2">2 Times</option>
+            <option value="3">3 Times</option>
+            <option value="5">5 Times</option>
+            <option value="10">10 Times</option>
+            <option value="25">25 Times</option>
+            <option value="50">50 Times</option>
+            <option value="100">100 Times</option>
+            <option value="infinite">Infinite</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="jam-plugin-content flex-1 overflow-y-auto">
-        <div class="container mx-auto max-w-4xl p-4">
-            <!-- Header -->
-            <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                    <i class="fas fa-mask mr-2"></i>Tiki Trouble
-                </h1>
-                <p class="text-text-secondary">
-                    Automated completion of the Tiki Trouble adventure.
-                </p>
-            </div>
-
-            <!-- Control Panel -->
-            <div class="bg-secondary-bg rounded-lg p-4 mb-6">
-                <div class="flex flex-col md:flex-row justify-center items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <label for="loopMode" class="text-sm text-text-secondary">Loop:</label>
-                        <select id="loopMode" class="rounded-md bg-secondary-bg border border-gray-700 text-sm px-2 py-1">
-                            <option value="1" selected>Run Once</option>
-                            <option value="2">2 Times</option>
-                            <option value="3">3 Times</option>
-                            <option value="5">5 Times</option>
-                            <option value="10">10 Times</option>
-                            <option value="25">25 Times</option>
-                            <option value="50">50 Times</option>
-                            <option value="100">100 Times</option>
-                            <option value="infinite">Loop Forever</option>
-                        </select>
-                    </div>
-                    <button id="startButton" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-play mr-2"></i>Start Automation
-                    </button>
-                    <button id="stopButton" class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-medium shadow-md" disabled>
-                        <i class="fas fa-stop mr-2"></i>Stop Automation
-                    </button>
-                </div>
-            </div>
-
-            <!-- Status and Progress -->
-            <div class="stats-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-3 flex items-center">
-                    <i class="fas fa-chart-line mr-2 text-green-400"></i>Status & Progress
-                </h2>
-                <div class="space-y-3">
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-medium">Current Status:</span>
-                            <span id="statusIcon" class="text-sm">
-                                <i class="fas fa-circle text-gray-400"></i> Idle
-                            </span>
-                        </div>
-                        <p id="statusMessage" class="text-sm text-text-secondary bg-gray-800 rounded p-2 font-mono">Ready to start Tiki Trouble automation (start from your den)</p>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-medium">Progress:</span>
-                            <span id="progressText" class="text-sm">0%</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2">
-                            <div id="progressBar" class="progress-bar bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="setting-card">
+      <div style="padding: 8px 12px;">
+        <span class="section-title"><i class="fas fa-gamepad" style="margin-right: 6px;"></i>Controls</span>
+        <div style="display: flex; gap: 6px; margin-top: 8px;">
+          <button id="startButton" class="ctrl-btn ctrl-btn-start"><i class="fas fa-play" style="margin-right: 4px;"></i>Start</button>
+          <button id="stopButton" class="ctrl-btn ctrl-btn-stop" disabled><i class="fas fa-stop" style="margin-right: 4px;"></i>Stop</button>
+          <button id="resetButton" class="ctrl-btn ctrl-btn-reset" title="Reset Stats"><i class="fas fa-redo-alt"></i></button>
         </div>
+      </div>
     </div>
-    <!-- End of jam-plugin-content -->
 
-    <script src="index.js"></script>
-    <!-- Import Plugin Utilities -->
-    <script src="app://assets/javascript/plugin-utils.js"></script>
-    <!-- Initialize Standardized UI -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            initializePluginUI();
-        });
-    </script>
+    <div class="setting-card">
+      <div style="padding: 8px 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span class="section-title"><i class="fas fa-info-circle" style="margin-right: 6px;"></i>Status</span>
+          <span id="progressText" style="font-size: 11px; color: rgba(255,255,255,0.4);">0%</span>
+        </div>
+        <div class="progress-track" style="margin-bottom: 8px;">
+          <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+        </div>
+        <div id="statusIcon" style="font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 4px;">
+          <i class="fas fa-circle" style="font-size: 8px; margin-right: 4px;"></i>Idle
+        </div>
+        <div id="statusMessage" class="status-text">Ready to start. Begin from your den.</div>
+      </div>
+    </div>
+
+    <div class="setting-card">
+      <div style="padding: 8px 12px;">
+        <span class="section-title"><i class="fas fa-chart-bar" style="margin-right: 6px;"></i>Statistics</span>
+        <div class="stat-grid" style="margin-top: 8px;">
+          <div class="stat-box">
+            <div id="statSuccessful" class="stat-value" style="color: #10b981;">0</div>
+            <div class="stat-label">Successful</div>
+          </div>
+          <div class="stat-box">
+            <div id="statFailed" class="stat-value" style="color: #ef4444;">0</div>
+            <div class="stat-label">Failed</div>
+          </div>
+          <div class="stat-box">
+            <div id="statTotal" class="stat-value" style="color: rgba(255,255,255,0.7);">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="index.js"></script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
 </body>
 </html>

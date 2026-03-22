@@ -1,5 +1,6 @@
 const Client = require('../client')
 const net = require('net')
+const { TCP_SERVER_PORTS } = require('../../Constants')
 
 module.exports = class Server {
   /**
@@ -40,7 +41,7 @@ module.exports = class Server {
      * @type {number[]}
      * @private
      */
-    this._fallbackPorts = [443, 444, 445, 8443, 9443]
+    this._fallbackPorts = [...TCP_SERVER_PORTS]
     
     // Ensure proper default settings
     this._ensureDefaultSettings()
@@ -108,12 +109,6 @@ module.exports = class Server {
     }
   }
 
-  /**
-   * Create socket and begin listening for new connections.
-   * Auto-detects available port starting with 443.
-   * @returns {Promise<void>}
-   * @public
-   */
   async serve () {
     if (this.server) throw new Error('The server has already been instantiated.')
 

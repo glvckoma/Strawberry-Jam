@@ -11,27 +11,15 @@ class SettingsUIManager {
 
   setActiveTab(tabDataId, $modalContext) {
     const $allTabs = $modalContext.find('.settings-tab');
-    const $allContentPanes = $modalContext.find('.settings-tab-content');
 
     $allTabs.each(function() {
       const $tab = $(this);
-      const $underline = $tab.find('.tab-underline');
       const currentTabDataId = $tab.data('tab');
 
       if (currentTabDataId === tabDataId) {
-        $tab.addClass('active-tab text-text-primary').removeClass('text-sidebar-text');
-        $underline.css({
-          'background-color': 'var(--theme-primary)',
-          'box-shadow': '0 0 6px 0 var(--theme-primary)',
-          'transition': 'background-color 0.3s ease, box-shadow 0.3s ease'
-        });
+        $tab.addClass('active');
       } else {
-        $tab.removeClass('active-tab text-text-primary').addClass('text-sidebar-text');
-        $underline.css({
-          'background-color': 'transparent',
-          'box-shadow': 'none',
-          'transition': 'background-color 0.3s ease, box-shadow 0.3s ease'
-        });
+        $tab.removeClass('active');
       }
     });
 

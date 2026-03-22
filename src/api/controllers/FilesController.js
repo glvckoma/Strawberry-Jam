@@ -1,6 +1,8 @@
 const HTTPClient = require('../../services/HttpClient')
+const axios = require('axios')
 const path = require('path')
 const fs = require('fs')
+const fsPromises = fs.promises
 
 class FilesController {
   constructor(app = null) {
@@ -88,22 +90,21 @@ class FilesController {
    */
   async initializeSwf() {
     try {
-      // Ensure options directory exists
-      if (!fs.existsSync(this.optionsDir)) {
-        await fs.promises.mkdir(this.optionsDir, { recursive: true });
-        console.log('Created options directory for SWF files.');
-      }
+      await fsPromises.mkdir(this.optionsDir, { recursive: true })
 
-      const activeSwfPath = path.join(this.flashDir, 'ajclient.swf');
-      const prodSwfPath = path.join(this.optionsDir, 'ajclient-prod.swf');
+      const activeSwfPath = path.join(this.flashDir, 'ajclient.swf')
+      const prodSwfPath = path.join(this.optionsDir, 'ajclient-prod.swf')
 
-      // If active SWF doesn't exist, create it from the production version.
-      if (!fs.existsSync(activeSwfPath) && fs.existsSync(prodSwfPath)) {
-        await fs.promises.copyFile(prodSwfPath, activeSwfPath);
-        console.log('Created active SWF file from production version.');
+      const [activeExists, prodExists] = await Promise.all([
+        fsPromises.access(activeSwfPath).then(() => true).catch(() => false),
+        fsPromises.access(prodSwfPath).then(() => true).catch(() => false)
+      ])
+
+      if (!activeExists && prodExists) {
+        await fsPromises.copyFile(prodSwfPath, activeSwfPath)
       }
     } catch (error) {
-      console.error('Failed to initialize SWF system:', error);
+      console.error('Failed to initialize SWF system:', error)
     }
   }
 
@@ -121,28 +122,27 @@ class FilesController {
    * @returns {Promise<{success: boolean, message?: string, error?: string}>}
    */
   async replaceSwfFile(selectedFile) {
-    const targetFile = path.join(this.flashDir, 'ajclient.swf');
-    const sourceFromOptions = path.join(this.optionsDir, selectedFile);
+    const targetFile = path.join(this.flashDir, 'ajclient.swf')
+    const sourceFromOptions = path.join(this.optionsDir, selectedFile)
 
     try {
-      if (!fs.existsSync(sourceFromOptions)) {
-        return { success: false, error: `Option for ${selectedFile} not found.` };
+      const sourceExists = await fsPromises.access(sourceFromOptions).then(() => true).catch(() => false)
+      if (!sourceExists) {
+        return { success: false, error: `Option for ${selectedFile} not found.` }
       }
 
-      await fs.promises.copyFile(sourceFromOptions, targetFile);
-      console.log(`Switched active client to ${selectedFile}`);
+      await fsPromises.copyFile(sourceFromOptions, targetFile)
 
       return {
         success: true,
         message: `Successfully switched to ${selectedFile}`
-      };
-
+      }
     } catch (error) {
-      console.error('Error replacing SWF file:', error);
+      console.error('Error replacing SWF file:', error)
       return {
         success: false,
         error: `Failed to replace SWF file: ${error.message}`
-      };
+      }
     }
   }
 
@@ -150,27 +150,37 @@ class FilesController {
    * Gets the currently active SWF file info by comparing it against options.
    * @returns {Object} Info about the currently active file
    */
-  getActiveSwfInfo() {
-    const targetFile = path.join(this.flashDir, 'ajclient.swf');
+  async getActiveSwfInfo() {
+    const targetFile = path.join(this.flashDir, 'ajclient.swf')
 
     try {
-      if (!fs.existsSync(targetFile) || !fs.existsSync(this.optionsDir)) {
-        return { active: null, error: 'Active SWF or options directory not found.' };
+      let stats
+      try {
+        stats = await fsPromises.stat(targetFile)
+      } catch (e) {
+        return { active: null, error: 'Active SWF or options directory not found.' }
       }
 
-      const stats = fs.statSync(targetFile);
-      let detectedSource = 'ajclient.swf'; // Default assumption
+      let detectedSource = 'ajclient.swf'
 
-      const optionFiles = fs.readdirSync(this.optionsDir).filter(f => f.endsWith('.swf'));
+      let optionEntries
+      try {
+        optionEntries = await fsPromises.readdir(this.optionsDir)
+      } catch (e) {
+        return { active: detectedSource, size: stats.size, modified: stats.mtime }
+      }
+
+      const optionFiles = optionEntries.filter(f => f.endsWith('.swf'))
       for (const filename of optionFiles) {
-        const optionPath = path.join(this.optionsDir, filename);
-        if (fs.existsSync(optionPath)) {
-          const optionStats = fs.statSync(optionPath);
-          // Compare by size as a reliable heuristic
+        const optionPath = path.join(this.optionsDir, filename)
+        try {
+          const optionStats = await fsPromises.stat(optionPath)
           if (optionStats.size === stats.size) {
-            detectedSource = filename;
-            break;
+            detectedSource = filename
+            break
           }
+        } catch (e) {
+          continue
         }
       }
 
@@ -178,10 +188,10 @@ class FilesController {
         active: detectedSource,
         size: stats.size,
         modified: stats.mtime
-      };
+      }
     } catch (error) {
-      console.error('Error getting active SWF info:', error.message);
-      return { active: null, error: error.message };
+      console.error('Error getting active SWF info:', error.message)
+      return { active: null, error: error.message }
     }
   }
 
@@ -189,20 +199,21 @@ class FilesController {
    * Gets all available SWF files that can be selected.
    * @returns {Array<string>} Array of available SWF filenames
    */
-  getAvailableSwfFiles () {
+  async getAvailableSwfFiles () {
     try {
-        if (!fs.existsSync(this.optionsDir)) {
-            console.warn('Options directory not found during getAvailableSwfFiles. Returning defaults.');
-            return ['ajclient-prod.swf'];
-        }
-        // The list of selectable files is simply the list of options.
-        const files = fs.readdirSync(this.optionsDir)
-            .filter(f => f.endsWith('.swf') && !fs.statSync(path.join(this.optionsDir, f)).isDirectory());
-        
-        return [...new Set(files)].sort(); // Return sorted unique list
+      let entries
+      try {
+        entries = await fsPromises.readdir(this.optionsDir, { withFileTypes: true })
+      } catch (e) {
+        return ['ajclient-prod.swf']
+      }
+      const files = entries
+        .filter(entry => !entry.isDirectory() && entry.name.endsWith('.swf'))
+        .map(entry => entry.name)
+      return [...new Set(files)].sort()
     } catch (error) {
-        console.error('Error scanning for SWF files:', error);
-        return ['ajclient-prod.swf']; // Fallback
+      console.error('Error scanning for SWF files:', error)
+      return ['ajclient-prod.swf']
     }
   }
 
@@ -210,61 +221,56 @@ class FilesController {
    * Gets SWF file information for display purposes.
    * @returns {Array<Object>} Array of SWF file info objects
    */
-  getSwfFileInfo () {
-    const files = this.getAvailableSwfFiles();
-    
-    return files.map(filename => {
-      const optionPath = path.join(this.optionsDir, filename);
-      let stats = null;
-      let displayName = filename;
-      
+  async getSwfFileInfo () {
+    const files = await this.getAvailableSwfFiles()
+    const displayNames = {
+      'ajclient-prod.swf': 'Production Client',
+      'ajclient-dev.swf': 'Development Client',
+      'ajclient-jam.swf': 'Jam Client',
+      'ajclient-old.swf': 'Old Client'
+    }
+
+    return Promise.all(files.map(async (filename) => {
+      const optionPath = path.join(this.optionsDir, filename)
+      let stats = null
+
       try {
-        if (fs.existsSync(optionPath)) {
-          stats = fs.statSync(optionPath);
-        }
-        
-        if (filename === 'ajclient-prod.swf') {
-          displayName = 'Production Client';
-        } else if (filename === 'ajclient-dev.swf') {
-          displayName = 'Development Client';
-        } else if (filename === 'ajclient-jam.swf') {
-            displayName = 'Jam Client';
-        } else if (filename === 'ajclient-old.swf') {
-            displayName = 'Old Client';
-        } else {
-          displayName = filename.replace('.swf', '')
-        }
-      } catch (error) {
-        console.error(`Error getting stats for ${filename}:`, error);
-      }
+        stats = await fsPromises.stat(optionPath)
+      } catch (e) {}
 
       return {
         filename,
-        displayName,
+        displayName: displayNames[filename] || filename.replace('.swf', ''),
         size: stats ? stats.size : 0,
         modified: stats ? stats.mtime : null,
         exists: stats !== null
-      };
-    });
+      }
+    }))
   }
 
   /**
    * Serves the active ajclient.swf file.
    */
-  game (request, response) {
-    const activeSwfPath = path.join(this.flashDir, 'ajclient.swf');
-    
-    if (!fs.existsSync(activeSwfPath)) {
-      console.error(`Active SWF file not found: ${activeSwfPath}`);
-      return response.status(404).send('SWF file not found');
+  async game (request, response) {
+    const activeSwfPath = path.join(this.flashDir, 'ajclient.swf')
+
+    try {
+      await fsPromises.access(activeSwfPath)
+    } catch (e) {
+      console.error(`Active SWF file not found: ${activeSwfPath}`)
+      return response.status(404).send('SWF file not found')
     }
-    
-    console.log(`Serving active SWF file: ${activeSwfPath}`);
-    return response.sendFile(activeSwfPath);
+
+    response.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
+    return response.sendFile(activeSwfPath)
   }
 
 
-  index (request, response) {
+  async index (request, response) {
     const requestPath = request.path.toLowerCase();
     
     if (requestPath.includes('ajclient.swf')) {
@@ -281,135 +287,73 @@ class FilesController {
     
     // Handle wall requests - proxy to prod-wall.animaljam.com instead of ajcontent.akamaized.net
     if (requestPath.startsWith('/wall')) {
-      const wallBaseUrl = 'https://prod-wall.animaljam.com';
-      const requestLib = require('request');
-      
-      const wallHeaders = {
-        Host: 'prod-wall.animaljam.com',
-        Referer: 'https://desktop.animaljam.com/gameClient/game/index.html'
-      };
-      
-      // Copy relevant headers from incoming request
-      if (request.headers['content-type']) {
-        wallHeaders['Content-Type'] = request.headers['content-type'];
-      }
-      if (request.headers['user-agent']) {
-        wallHeaders['User-Agent'] = request.headers['user-agent'];
-      }
-      
-      // Use request library directly to properly handle POST requests with body
-      const proxyOptions = {
-        method: request.method,
-        url: `${wallBaseUrl}${request.path}`,
-        headers: wallHeaders
-      };
-      
-      // Handle request body - body-parser may have parsed it or it might be raw
-      if (request.body !== undefined && request.body !== null) {
-        if (typeof request.body === 'object' && !Buffer.isBuffer(request.body)) {
-          // Parsed JSON object - send as JSON
-          proxyOptions.json = true;
-          proxyOptions.body = request.body;
-        } else {
-          // Raw string or buffer - send as-is
-          proxyOptions.body = request.body;
-          if (typeof request.body === 'string' && request.body.trim().startsWith('{')) {
-            // Looks like JSON string, ensure Content-Type is set
-            if (!wallHeaders['Content-Type']) {
-              wallHeaders['Content-Type'] = 'application/json';
-            }
-          }
-        }
-      }
-      
-      return requestLib(proxyOptions).pipe(response);
-    }
-    
-    // Handle masterpiece submission requests - proxy to jammercentral.animaljam.com
-    if (requestPath.startsWith('/game/mp')) {
-      const masterpieceBaseUrl = 'https://jammercentral.animaljam.com';
-      const requestLib = require('request');
-      
-      const masterpieceHeaders = {
-        Host: 'jammercentral.animaljam.com',
-        Referer: 'https://desktop.animaljam.com/gameClient/game/index.html'
-      };
-      
-      // Copy relevant headers from incoming request
-      if (request.headers['content-type']) {
-        masterpieceHeaders['Content-Type'] = request.headers['content-type'];
-      }
-      if (request.headers['user-agent']) {
-        masterpieceHeaders['User-Agent'] = request.headers['user-agent'];
-      }
-      if (request.headers['content-length']) {
-        masterpieceHeaders['Content-Length'] = request.headers['content-length'];
-      }
-      
-      console.log(`[Masterpiece Proxy] Proxying masterpiece request: ${request.method} ${request.path} to ${masterpieceBaseUrl}${request.path}`);
-      
-      // For multipart/form-data, use the raw body buffer
-      const proxyOptions = {
-        method: request.method,
-        url: `${masterpieceBaseUrl}${request.path}`,
-        headers: masterpieceHeaders
-      };
-      
-      // Handle request body - should be a Buffer for multipart requests (from express.raw())
-      if (request.body !== undefined && request.body !== null) {
-        if (Buffer.isBuffer(request.body)) {
-          // Raw buffer (multipart form data) - send as-is
-          proxyOptions.body = request.body;
-          console.log(`[Masterpiece Proxy] Using buffer body, size: ${request.body.length} bytes`);
-        } else if (typeof request.body === 'string') {
-          // String data - send as-is
-          proxyOptions.body = request.body;
-          console.log(`[Masterpiece Proxy] Using string body, length: ${request.body.length}`);
-        } else if (typeof request.body === 'object') {
-          // Parsed object - send as JSON
-          proxyOptions.json = true;
-          proxyOptions.body = request.body;
-          console.log(`[Masterpiece Proxy] Using JSON body`);
-        }
-      } else {
-        // No body - might be a GET request or empty POST
-        console.warn(`[Masterpiece Proxy] No request body found for ${request.method} ${request.path}`);
-      }
-      
-      // Create the proxy request with error handling
-      const proxyRequest = requestLib(proxyOptions);
-      
-      // Handle proxy errors
-      proxyRequest.on('error', (error) => {
-        console.error(`[Masterpiece Proxy] Error proxying request:`, error);
-        if (!response.headersSent) {
-          response.status(500).json({ 
-            error: 'Proxy error', 
-            message: error.message 
-          });
-        }
-      });
-      
-      // Handle response errors
-      proxyRequest.on('response', (proxyResponse) => {
-        console.log(`[Masterpiece Proxy] Received response: ${proxyResponse.statusCode}`);
-        if (proxyResponse.statusCode >= 400) {
-          console.error(`[Masterpiece Proxy] Error response from server: ${proxyResponse.statusCode}`);
-        }
-      });
-      
-      // Pipe the response
-      proxyRequest.pipe(response);
-      
-      return proxyRequest;
-    }
-    
-    return request.pipe(
-      HTTPClient.proxy({
-        url: `${this.baseUrl}/${request.path}`,
-        headers: this.baseHeaders
+      return this._proxyRequest(request, response, {
+        baseUrl: 'https://prod-wall.animaljam.com',
+        host: 'prod-wall.animaljam.com'
       })
-    ).pipe(response);
+    }
+
+    if (requestPath.startsWith('/game/mp')) {
+      return this._proxyRequest(request, response, {
+        baseUrl: 'https://jammercentral.animaljam.com',
+        host: 'jammercentral.animaljam.com'
+      })
+    }
+
+    try {
+      const proxyResponse = await axios({
+        method: 'GET',
+        url: `${this.baseUrl}${request.path}`,
+        headers: this.baseHeaders,
+        responseType: 'stream',
+        timeout: 30000,
+        validateStatus: () => true
+      })
+      proxyResponse.data.pipe(response)
+    } catch (error) {
+      if (!response.headersSent) {
+        response.status(502).send('Proxy error')
+      }
+    }
+  }
+
+  async _proxyRequest(request, response, { baseUrl, host }) {
+    const headers = {
+      Host: host,
+      Referer: 'https://desktop.animaljam.com/gameClient/game/index.html'
+    }
+    if (request.headers['content-type']) headers['Content-Type'] = request.headers['content-type']
+    if (request.headers['user-agent']) headers['User-Agent'] = request.headers['user-agent']
+    if (request.headers['content-length']) headers['Content-Length'] = request.headers['content-length']
+
+    let data = undefined
+    if (request.body !== undefined && request.body !== null) {
+      if (Buffer.isBuffer(request.body) || typeof request.body === 'string') {
+        data = request.body
+      } else if (typeof request.body === 'object') {
+        data = JSON.stringify(request.body)
+        if (!headers['Content-Type']) headers['Content-Type'] = 'application/json'
+      }
+    }
+
+    try {
+      const proxyResponse = await axios({
+        method: request.method,
+        url: `${baseUrl}${request.path}`,
+        headers,
+        data,
+        responseType: 'stream',
+        timeout: 30000,
+        validateStatus: () => true
+      })
+      response.status(proxyResponse.status)
+      proxyResponse.data.pipe(response)
+    } catch (error) {
+      console.error(`[Proxy] Error proxying to ${baseUrl}:`, error.message)
+      if (!response.headersSent) {
+        response.status(502).json({ error: 'Proxy error', message: error.message })
+      }
+    }
   }
 }
 

@@ -15,7 +15,8 @@ const GameTimeTracker = require('../services/game/GameTimeTracker');
 const GameProcessManager = require('../managers/game/GameProcessManager');
 const AccountManager = require('../services/account/AccountManager');
 const SystemInfoService = require('../services/system/SystemInfoService');
-const { getDataPath, getUsernameLoggerPath } = require('../Constants');
+const { getDataPath, getUsernameLoggerPath, TCP_SERVER_PORTS, API_SERVER_PORTS } = require('../Constants');
+
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -44,6 +45,12 @@ function setupIpcHandlers(electronInstance) {
 
   ipcMain.handle('read-file', async (event, filePath) => {
     return await fileIOHandler.readFile(filePath);
+  });
+
+  ipcMain.on('port-error', (event, data) => {
+    if (electronInstance._window && !electronInstance._window.isDestroyed()) {
+      electronInstance._window.webContents.send('port-error', data);
+    }
   });
 
   ipcMain.on('show-toast', (event, { message, type }) => {
@@ -129,7 +136,7 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.handle('get-swf-files', async (event) => {
     try {
       const FilesController = require('../api/controllers/FilesController');
-      return FilesController.getSwfFileInfo();
+      return await FilesController.getSwfFileInfo();
     } catch (error) {
       console.error('Error getting SWF files information:', error);
       return [];
@@ -143,18 +150,14 @@ function setupIpcHandlers(electronInstance) {
       const result = await FilesController.replaceSwfFile(selectedFile);
       
       if (result.success) {
-        const fs = require('fs');
-        const path = require('path');
         const sourceFilePath = path.join(FilesController.optionsDir, selectedFile);
-        
-        if (fs.existsSync(sourceFilePath)) {
-          const stats = fs.statSync(sourceFilePath);
-          const currentModifiedTime = stats.mtime.getTime();
+        try {
+          const stats = await fsPromises.stat(sourceFilePath);
           const lastModifiedKey = `game.swfLastModified.${selectedFile}`;
-          electronInstance._store.set(lastModifiedKey, currentModifiedTime);
-        }
+          electronInstance._store.set(lastModifiedKey, stats.mtime.getTime());
+        } catch (e) {}
       }
-      
+
       return result;
     } catch (error) {
       console.error('Error replacing SWF file:', error);
@@ -162,25 +165,20 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
-  // IPC handler for reapplying SWF files
   ipcMain.handle('reapply-swf-file', async (event, selectedFile) => {
     try {
       const FilesController = require('../api/controllers/FilesController');
       const result = await FilesController.replaceSwfFile(selectedFile);
-      
+
       if (result.success) {
-        const fs = require('fs');
-        const path = require('path');
         const sourceFilePath = path.join(FilesController.optionsDir, selectedFile);
-        
-        if (fs.existsSync(sourceFilePath)) {
-          const stats = fs.statSync(sourceFilePath);
-          const currentModifiedTime = stats.mtime.getTime();
+        try {
+          const stats = await fsPromises.stat(sourceFilePath);
           const lastModifiedKey = `game.swfLastModified.${selectedFile}`;
-          electronInstance._store.set(lastModifiedKey, currentModifiedTime);
-        }
+          electronInstance._store.set(lastModifiedKey, stats.mtime.getTime());
+        } catch (e) {}
       }
-      
+
       return result;
     } catch (error) {
       console.error('Error reapplying SWF file:', error);
@@ -193,7 +191,7 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.handle('get-active-swf-info', async (event) => {
     try {
       const FilesController = require('../api/controllers/FilesController');
-      return FilesController.getActiveSwfInfo();
+      return await FilesController.getActiveSwfInfo();
     } catch (error) {
       console.error('Error getting active SWF info:', error);
       return { active: null, hasBackup: false, error: error.message };
@@ -388,15 +386,17 @@ function setupIpcHandlers(electronInstance) {
 
         if (options.data) {
           const dataPath = getDataPath(app);
-          if (dataPath && fs.existsSync(dataPath)) {
-            pathsToDelete.push(dataPath);
+          if (dataPath) {
+            const exists = await fsPromises.access(dataPath).then(() => true).catch(() => false);
+            if (exists) pathsToDelete.push(dataPath);
           }
         }
 
         if (options.usernameLogger) {
           const usernameLoggerPath = getUsernameLoggerPath(app);
-          if (usernameLoggerPath && fs.existsSync(usernameLoggerPath)) {
-            pathsToDelete.push(usernameLoggerPath);
+          if (usernameLoggerPath) {
+            const exists = await fsPromises.access(usernameLoggerPath).then(() => true).catch(() => false);
+            if (exists) pathsToDelete.push(usernameLoggerPath);
           }
         }
       }
@@ -602,17 +602,69 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.on('open-plugin-window', electronInstance._handleOpenPluginWindow.bind(electronInstance));
+  ipcMain.on('open-game-window', electronInstance._handleOpenGameWindow.bind(electronInstance));
+
+  ipcMain.handle('get-df', async () => {
+    return crypto.randomUUID();
+  });
+
+  ipcMain.handle('refresh-df', async () => {
+    return crypto.randomUUID();
+  });
+
+  ipcMain.handle('get-stored-tokens', async () => {
+    const username = electronInstance._store.get('login.username') || '';
+    const authToken = electronInstance._store.get('login.authToken') || null;
+    const refreshToken = electronInstance._store.get('login.refreshToken') || null;
+    const rememberMe = electronInstance._store.get('login.rememberMe', false);
+    return { username, authToken, refreshToken, rememberMe };
+  });
+
+  ipcMain.handle('auth-save-login', async (event, { username, language, rememberMe, authToken, refreshToken }) => {
+    try {
+      electronInstance._store.set('login.username', username);
+      electronInstance._store.set('login.language', language || 'en');
+      electronInstance._store.set('login.rememberMe', rememberMe);
+
+      if (authToken) {
+        electronInstance._store.set(`accounts.${username}.authToken`, authToken);
+      }
+      if (refreshToken) {
+        electronInstance._store.set(`accounts.${username}.refreshToken`, refreshToken);
+      }
+
+      if (rememberMe) {
+        if (authToken) electronInstance._store.set('login.authToken', authToken);
+        if (refreshToken) electronInstance._store.set('login.refreshToken', refreshToken);
+      } else {
+        electronInstance._store.delete('login.authToken');
+        electronInstance._store.delete('login.refreshToken');
+      }
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
 
   ipcMain.handle('get-os-info', async () => {
     return systemInfoService.getOsInfo();
   });
 
   ipcMain.handle('get-server-port', async () => {
-    // Get the server port from the application instance
     if (electronInstance && electronInstance.application && electronInstance.application.server) {
-      return electronInstance.application.server.actualPort || 443;
+      if (electronInstance.application.server.actualPort) {
+        return electronInstance.application.server.actualPort
+      }
+
+      for (let attempt = 0; attempt < 10; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        if (electronInstance.application.server.actualPort) {
+          return electronInstance.application.server.actualPort
+        }
+      }
     }
-    return 443; // Default fallback
+    return null
   });
 
   ipcMain.handle('get-api-port', async () => {
@@ -630,7 +682,7 @@ function setupIpcHandlers(electronInstance) {
       }
 
       const http = require('http')
-      const ports = [8080, 8081, 8082, 9080, 3000]
+      const ports = [...API_SERVER_PORTS]
       
       for (const port of ports) {
         try {
@@ -672,7 +724,7 @@ function setupIpcHandlers(electronInstance) {
       }
     }
     
-    return 8080
+    return null
   });
 
   ipcMain.handle('terminate-port', async (event, port) => {
@@ -680,46 +732,58 @@ function setupIpcHandlers(electronInstance) {
     const { promisify } = require('util')
     const execAsync = promisify(exec)
     const platform = process.platform
-    
+    const ownPid = process.pid
+
     try {
       if (platform === 'win32') {
         const { stdout } = await execAsync(`netstat -ano | findstr :${port}`)
         const lines = stdout.trim().split('\n').filter(line => line.trim())
-        
+        const pidsToKill = new Set()
+
         for (const line of lines) {
           const parts = line.trim().split(/\s+/)
-          const pid = parts[parts.length - 1]
-          
-          if (pid && !isNaN(pid)) {
-            try {
-              await execAsync(`taskkill /PID ${pid} /F`)
-              return { success: true, message: `Terminated process ${pid} using port ${port}` }
-            } catch (killError) {
-              return { success: false, message: `Failed to terminate process ${pid}: ${killError.message}` }
-            }
+          const pid = parseInt(parts[parts.length - 1], 10)
+          if (pid && !isNaN(pid) && pid !== ownPid) {
+            pidsToKill.add(pid)
           }
         }
-        
-        return { success: false, message: `No process found using port ${port}` }
+
+        if (pidsToKill.size === 0) {
+          return { success: false, message: `Port ${port} is in use by this application. Restart the app to free it.` }
+        }
+
+        for (const pid of pidsToKill) {
+          try {
+            await execAsync(`taskkill /PID ${pid} /F`)
+          } catch (killError) {
+            return { success: false, message: `Failed to terminate process ${pid}: ${killError.message}` }
+          }
+        }
+
+        return { success: true, message: `Terminated ${pidsToKill.size} process(es) using port ${port}` }
       } else if (platform === 'darwin' || platform === 'linux') {
         const { stdout } = await execAsync(`lsof -ti:${port}`)
         const pids = stdout.trim().split('\n').filter(pid => pid.trim())
-        
-        if (pids.length === 0) {
+        const filteredPids = pids.filter(p => parseInt(p, 10) !== ownPid)
+
+        if (filteredPids.length === 0) {
+          if (pids.length > 0) {
+            return { success: false, message: `Port ${port} is in use by this application. Restart the app to free it.` }
+          }
           return { success: false, message: `No process found using port ${port}` }
         }
-        
-        for (const pid of pids) {
+
+        for (const pid of filteredPids) {
           try {
             await execAsync(`kill -9 ${pid}`)
           } catch (killError) {
             return { success: false, message: `Failed to terminate process ${pid}: ${killError.message}` }
           }
         }
-        
-        return { success: true, message: `Terminated ${pids.length} process(es) using port ${port}` }
+
+        return { success: true, message: `Terminated ${filteredPids.length} process(es) using port ${port}` }
       }
-      
+
       return { success: false, message: 'Unsupported platform' }
     } catch (error) {
       return { success: false, message: `Error checking port ${port}: ${error.message}` }
@@ -731,31 +795,34 @@ function setupIpcHandlers(electronInstance) {
       const plugins = [];
       const pluginsPath = path.join(app.getPath('userData'), 'plugins');
       
-      if (fs.existsSync(pluginsPath)) {
-        const pluginDirs = fs.readdirSync(pluginsPath, { withFileTypes: true })
-          .filter(dirent => dirent.isDirectory())
-          .map(dirent => dirent.name);
-        
-        for (const dir of pluginDirs) {
-          const configPath = path.join(pluginsPath, dir, 'plugin.json');
-          
-          if (fs.existsSync(configPath)) {
+      let pluginEntries
+      try {
+        pluginEntries = await fsPromises.readdir(pluginsPath, { withFileTypes: true })
+      } catch (e) {
+        return plugins
+      }
+
+      const pluginDirs = pluginEntries
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
+
+      for (const dir of pluginDirs) {
+        const configPath = path.join(pluginsPath, dir, 'plugin.json')
+        try {
+          const configRaw = await fsPromises.readFile(configPath, 'utf8')
+          const configData = JSON.parse(configRaw)
+          if (configData.enabled !== false) {
+            plugins.push({
+              name: configData.name || dir,
+              version: configData.version || 'unknown',
+              author: configData.author || 'unknown'
+            })
+          }
+        } catch (err) {
+          if (err.code !== 'ENOENT') {
             try {
-              const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-              
-              if (configData.enabled !== false) {
-                plugins.push({
-                  name: configData.name || dir,
-                  version: configData.version || 'unknown',
-                  author: configData.author || 'unknown'
-                });
-              }
-            } catch (err) {
-              try {
-                logManager.error(`Error reading plugin config for ${dir}: ${err.message}`);
-              } catch (logErr) {
-              }
-            }
+              logManager.error(`Error reading plugin config for ${dir}: ${err.message}`)
+            } catch (logErr) {}
           }
         }
       }
@@ -770,15 +837,22 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
-  ipcMain.handle('get-user-plugins-path', () => {
+  ipcMain.handle('get-user-plugins-path', async () => {
     const userPluginsPath = path.join(app.getPath('userData'), 'plugins');
-    if (!fs.existsSync(userPluginsPath)) {
-      fs.mkdirSync(userPluginsPath, { recursive: true });
-    }
+    await fsPromises.mkdir(userPluginsPath, { recursive: true });
     return userPluginsPath;
   });
 
+  let _cacheSizeResult = null;
+  let _cacheSizeTimestamp = 0;
+  const CACHE_SIZE_TTL = 30000;
+
   ipcMain.handle('get-cache-size', async () => {
+    const now = Date.now();
+    if (_cacheSizeResult && (now - _cacheSizeTimestamp) < CACHE_SIZE_TTL) {
+      return _cacheSizeResult;
+    }
+
     const cachePaths = electronInstance._getCachePaths();
     const cacheService = electronInstance.cacheService;
     const sizes = { total: 0, directories: {}, byType: {} };
@@ -912,6 +986,8 @@ function setupIpcHandlers(electronInstance) {
       }
       sizes.byType.temp = tempSize;
 
+      _cacheSizeResult = sizes;
+      _cacheSizeTimestamp = Date.now();
       return sizes;
     } catch (error) {
       return { total: 0, directories: {}, byType: {} };
@@ -991,33 +1067,36 @@ function setupIpcHandlers(electronInstance) {
 
   // Global IPC handlers that don't depend on electronInstance directly
   ipcMain.on('packet-event', (event, packetData) => {
-    const windows = BrowserWindow.getAllWindows();
-    windows.forEach(win => {
+    const mainWin = electronInstance._window;
+    if (mainWin && !mainWin.isDestroyed()) {
+      try { mainWin.webContents.send('packet-event', packetData); } catch (e) {}
+    }
+    electronInstance.pluginWindows.forEach((win) => {
       try {
-        if (win && win.webContents && !win.webContents.isDestroyed()) {
+        if (win && !win.isDestroyed() && win.webContents !== event.sender) {
           win.webContents.send('packet-event', packetData);
         }
-      } catch (e) {
-      }
+      } catch (e) {}
     });
   });
 
   ipcMain.on('plugin-remote-message', (event, msg) => {
-    const mainWindow = BrowserWindow.getAllWindows().find(win =>
-      win.webContents && !win.webContents.isDestroyed() && win.webContents.getURL().includes('renderer/index.html')
-    );
-    if (mainWindow && mainWindow.webContents) {
+    const mainWindow = electronInstance._window;
+    if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('plugin-remote-message', msg);
-    } else {
+    }
+  });
+
+  ipcMain.on('plugin-connection-message', (event, msg) => {
+    const mainWindow = electronInstance._window;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('plugin-connection-message', msg);
     }
   });
 
   ipcMain.on('send-remote-message', (event, data) => {
-    const mainWindow = BrowserWindow.getAllWindows().find(win =>
-      win.webContents && !win.webContents.isDestroyed() && win.webContents.getURL().includes('renderer/index.html')
-    );
-    if (mainWindow && mainWindow.webContents) {
-      // Support both old format (string) and new format (object with message and options)
+    const mainWindow = electronInstance._window;
+    if (mainWindow && !mainWindow.isDestroyed()) {
       if (typeof data === 'string') {
         mainWindow.webContents.send('plugin-remote-message', data);
       } else if (data && data.message) {
@@ -1027,10 +1106,8 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.handle('dispatch-get-connected-clients', async () => {
-    const mainWindow = BrowserWindow.getAllWindows().find(win =>
-      win.webContents && !win.webContents.isDestroyed() && win.webContents.getURL().includes('renderer/index.html')
-    );
-    if (mainWindow && mainWindow.webContents) {
+    const mainWindow = electronInstance._window;
+    if (mainWindow && !mainWindow.isDestroyed()) {
       try {
         const result = await mainWindow.webContents.executeJavaScript(`
           (window.jam && window.jam.application && window.jam.application.dispatch && 
@@ -1049,10 +1126,8 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.on('send-connection-message', (event, msg) => {
-    const mainWindow = BrowserWindow.getAllWindows().find(win =>
-      win.webContents.getURL().includes('renderer/index.html')
-    );
-    if (mainWindow && mainWindow.webContents) {
+    const mainWindow = electronInstance._window;
+    if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('plugin-connection-message', msg);
     }
   });
@@ -1061,11 +1136,9 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.on('dispatch-get-state-sync', (event, key) => {
-    const mainWindow = BrowserWindow.getAllWindows().find(win =>
-      win.webContents.getURL().includes('renderer/index.html')
-    );
+    const mainWindow = electronInstance._window;
 
-    if (!mainWindow || !mainWindow.webContents) {
+    if (!mainWindow || mainWindow.isDestroyed()) {
       event.returnValue = null;
       return;
     }
@@ -1091,6 +1164,14 @@ function setupIpcHandlers(electronInstance) {
 
   ipcMain.handle('get-total-uptime', async () => {
     return await gameTimeTracker.getTotalUptime();
+  });
+
+  ipcMain.handle('get-time-stats', async () => {
+    const [totalUptime, totalGameTime] = await Promise.all([
+      gameTimeTracker.getTotalUptime(),
+      gameTimeTracker.getTotalGameTime()
+    ]);
+    return { totalUptime, totalGameTime };
   });
 
   ipcMain.on('update-total-uptime', async (event, uptime) => {
@@ -1128,18 +1209,16 @@ function setupIpcHandlers(electronInstance) {
   // End AJ Classic processes handler
   ipcMain.handle('search-wiki', async (event, searchTerm) => {
     try {
-      const results = await PriceCheckerScraper.searchForItems(searchTerm);
-      return results;
+      return await PriceCheckerScraper.searchForItems(searchTerm);
     } catch (error) {
       console.error('[IPC] Error in search-wiki:', error);
-      throw error; // Rethrow to send error back to renderer
+      throw error;
     }
   });
 
-  ipcMain.handle('get-page-details', async (event, pageUrl) => {
+  ipcMain.handle('get-page-details', async (event, pageTitle) => {
     try {
-      const details = await PriceCheckerScraper.getItemDetails(pageUrl);
-      return details;
+      return await PriceCheckerScraper.getItemDetails(pageTitle);
     } catch (error) {
       console.error('[IPC] Error in get-page-details:', error);
       throw error;

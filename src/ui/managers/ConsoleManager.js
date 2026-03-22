@@ -1,22 +1,17 @@
 const { ipcRenderer } = require('electron')
 
-/**
- * ConsoleManager - Manages console message display and logging
- * 
- * @module ConsoleManager
- */
 class ConsoleManager {
   constructor(application, messageIcons) {
     this.application = application
     this.messageIcons = messageIcons
-    
+
     this._packetLogCount = 0
     this._appMessageCount = 0
     this._consoleLogLimit = 1000
     this._networkLogLimit = 1000
     this._maxLogEntries = 1000
     this._cleanPercentage = 0.4
-    
+
     this._suppressedTypes = new Set()
     this._suppressedPatterns = []
     this._quietMode = false
@@ -27,29 +22,20 @@ class ConsoleManager {
     }
   }
 
-  /**
-   * Displays a new console message.
-   * @param {Object} params - Message parameters
-   * @param {string} params.message - Message text
-   * @param {string} [params.type='success'] - Message type
-   * @param {boolean} [params.withStatus=true] - Show status icon
-   * @param {boolean} [params.time=true] - Show timestamp
-   * @param {boolean} [params.isPacket=false] - Is packet log
-   * @param {boolean} [params.isIncoming=false] - Is incoming packet
-   * @param {Object} [params.details=null] - Additional details
-   * @param {string} [params.style=''] - Custom styles
-   * @public
-   */
   message({ message, type = 'success', withStatus = true, time = true, isPacket = false, isIncoming = false, details = null, style = '' } = {}) {
     if (this._shouldSuppressMessage(message, type)) {
       return
+    }
+
+    if (isPacket && this.application.packetFilterManager) {
+      if (!this.application.packetFilterManager.shouldShow(message, isIncoming)) return
     }
 
     const logCategory = this._getLogCategory(message)
     if (logCategory) {
       this._removePreviousLogByCategory(logCategory)
     }
-    
+
     const baseTypeClasses = {
       success: 'bg-highlight-green/10 border-l-4 border-highlight-green text-highlight-green',
       error: 'bg-error-red/10 border-l-4 border-error-red text-error-red',
@@ -64,8 +50,13 @@ class ConsoleManager {
     }
 
     const packetTypeClasses = {
-      incoming: 'bg-tertiary-bg/20 border-l-4 border-highlight-green text-text-primary',
-      outgoing: 'bg-highlight-green/5 border-l-4 border-highlight-yellow text-text-primary'
+      incoming: 'bg-tertiary-bg/20 border-l-4 text-text-primary',
+      outgoing: 'bg-tertiary-bg/10 border-l-4 text-text-primary'
+    }
+
+    const packetBorderColors = {
+      incoming: 'var(--packet-incoming-color, #10b981)',
+      outgoing: 'var(--packet-outgoing-color, #eab308)'
     }
 
     const createElement = (tag, classes = '', content = '') => {
@@ -74,10 +65,19 @@ class ConsoleManager {
 
     const getTime = () => {
       const now = new Date()
-      const hour = String(now.getHours()).padStart(2, '0')
+      const useMilitary = this.application && this.application.settings
+        ? this.application.settings.get('ui.militaryTime', false)
+        : false
       const minute = String(now.getMinutes()).padStart(2, '0')
       const second = String(now.getSeconds()).padStart(2, '0')
-      return `${hour}:${minute}:${second}`
+      if (useMilitary) {
+        const hour = String(now.getHours()).padStart(2, '0')
+        return `${hour}:${minute}:${second}`
+      }
+      let hour = now.getHours()
+      const period = hour >= 12 ? 'PM' : 'AM'
+      hour = hour % 12 || 12
+      return `${hour}:${minute}:${second} ${period}`
     }
 
     const status = (type, message) => {
@@ -95,18 +95,24 @@ class ConsoleManager {
 
     const $container = createElement(
       'div',
-      'flex items-start p-3 rounded-md mb-2 shadow-sm max-w-full w-full transition-colors duration-150 hover:bg-opacity-20'
+      'flex items-start p-3 rounded-md mb-2 shadow-sm max-w-full w-full'
     )
 
     if (isPacket) {
-      $container.addClass(packetTypeClasses[isIncoming ? 'incoming' : 'outgoing'])
+      const packetDir = isIncoming ? 'incoming' : 'outgoing'
+      $container.addClass(packetTypeClasses[packetDir])
+      $container.css('border-left-color', packetBorderColors[packetDir])
     } else {
       $container.addClass(baseTypeClasses[type] || 'bg-tertiary-bg/10 border-l-4 border-tertiary-bg text-text-primary')
     }
 
     if (isPacket) {
-      const iconClass = isIncoming ? 'fa-arrow-down text-highlight-green' : 'fa-arrow-up text-highlight-yellow'
-      const $iconContainer = createElement('div', 'flex items-center mr-3 text-base', `<i class="fas ${iconClass}"></i>`)
+      $container.attr('data-packet', 'true').attr('data-message', message)
+      const iconClass = isIncoming ? 'fa-arrow-down' : 'fa-arrow-up'
+      const iconColor = isIncoming
+        ? 'var(--packet-incoming-color, #10b981)'
+        : 'var(--packet-outgoing-color, #eab308)'
+      const $iconContainer = createElement('div', 'flex items-center mr-3 text-base', `<i class="fas ${iconClass}" style="color: ${iconColor};"></i>`)
       $container.append($iconContainer)
     } else if (time) {
       const $timeContainer = createElement('div', 'text-xs text-gray-500 mr-3 whitespace-nowrap font-mono', getTime())
@@ -116,7 +122,7 @@ class ConsoleManager {
     const $messageContainer = createElement(
       'div',
       isPacket
-        ? 'text-xs flex-1 break-all leading-relaxed'
+        ? 'flex-1 break-all leading-relaxed'
         : 'flex-1 text-xs flex items-center space-x-2 leading-relaxed'
     )
 
@@ -134,14 +140,13 @@ class ConsoleManager {
     }
 
     $messageContainer.css({
-      overflow: 'hidden',
-      'text-overflow': 'ellipsis',
       'white-space': 'normal',
-      'word-break': 'break-word'
+      'word-break': 'break-all'
     })
 
+
     $container.append($messageContainer)
-    
+
     if (details && details.messageId) {
       $container.attr('data-message-id', details.messageId)
     }
@@ -192,7 +197,7 @@ class ConsoleManager {
         e.stopPropagation()
         $detailsContainer.toggleClass('hidden')
         const isHidden = $detailsContainer.hasClass('hidden')
-        
+
         if (isHidden) {
           $detailsButton.html('<i class="fas fa-chevron-down mr-1 smooth-chevron"></i> Details')
           $detailsButton.find('i').css('transform', 'rotate(0deg)')
@@ -213,7 +218,7 @@ class ConsoleManager {
     }
 
     const $targetContainer = isPacket ? $('#message-log') : $('#messages')
-    
+
     if (isPacket) {
       const $totalCount = $('#totalCount')
       const $incomingCount = $('#incomingCount')
@@ -229,7 +234,7 @@ class ConsoleManager {
         const outgoingCount = parseInt($outgoingCount.text() || '0', 10) + 1
         $outgoingCount.text(outgoingCount)
       }
-      
+
       this._packetLogCount++
       if (this._packetLogCount > this._networkLogLimit) {
         this.cleanOldLogs($targetContainer, true)
@@ -241,6 +246,12 @@ class ConsoleManager {
       }
     }
 
+    if (isPacket && this.application.packetFilterManager) {
+      if (!this.application.packetFilterManager.shouldShow(message, isIncoming)) {
+        $container.hide()
+      }
+    }
+
     $targetContainer.append($container)
 
     const isAtBottom = $targetContainer.scrollTop() + $targetContainer.innerHeight() >= $targetContainer[0].scrollHeight - 30
@@ -248,18 +259,11 @@ class ConsoleManager {
       $targetContainer.scrollTop($targetContainer[0].scrollHeight)
     }
 
-    if (window.applyFilter) window.applyFilter()
+    if (!isPacket && this.application.consoleDrawerManager && !this.application.consoleDrawerManager.isOpen) {
+      this.application.consoleDrawerManager.incrementUnread()
+    }
   }
 
-  /**
-   * Updates an existing console message by its data-message-id.
-   * @param {string} messageId - The identifier used when the message was created
-   * @param {Object} params - Update parameters
-   * @param {string} params.message - New message text
-   * @param {string} [params.type='success'] - New message type
-   * @returns {boolean} True if updated, false if not found
-   * @public
-   */
   updateMessage(messageId, { message, type = 'success' } = {}) {
     try {
       if (!messageId) return false
@@ -285,15 +289,9 @@ class ConsoleManager {
     }
   }
 
-  /**
-   * Cleans old log entries from the specified container.
-   * @param {JQuery<HTMLElement>} $logContainer - The jQuery object for the log container
-   * @param {boolean} isPacketLog - Whether the container is for packet logs
-   * @private
-   */
   cleanOldLogs($logContainer, isPacketLog) {
     const maxEntries = isPacketLog ? this._networkLogLimit : this._consoleLogLimit
-    
+
     const entriesToRemove = Math.floor(maxEntries * this._cleanPercentage)
     const $entries = $logContainer.children('div')
     const currentTotal = $entries.length
@@ -341,15 +339,10 @@ class ConsoleManager {
     }
   }
 
-  /**
-   * Loads log limit settings from user settings.
-   * @returns {Promise<void>}
-   * @public
-   */
   async loadLogLimitSettings() {
     try {
       let consoleLogLimit, networkLogLimit
-      
+
       try {
         consoleLogLimit = await ipcRenderer.invoke('get-setting', 'logs.consoleLimit')
         networkLogLimit = await ipcRenderer.invoke('get-setting', 'logs.networkLimit')
@@ -359,16 +352,16 @@ class ConsoleManager {
         networkLogLimit = this.application.settings.get('logs.networkLimit')
       }
 
-      this._consoleLogLimit = consoleLogLimit !== undefined && consoleLogLimit !== null 
+      this._consoleLogLimit = consoleLogLimit !== undefined && consoleLogLimit !== null
         ? Math.max(100, Math.min(10000, parseInt(consoleLogLimit) || 1000))
         : 1000
-      
+
       this._networkLogLimit = networkLogLimit !== undefined && networkLogLimit !== null
         ? Math.max(100, Math.min(10000, parseInt(networkLogLimit) || 1000))
         : 1000
-      
+
       this._maxLogEntries = Math.max(this._consoleLogLimit, this._networkLogLimit)
-      
+
     } catch (error) {
       this._consoleLogLimit = 1000
       this._networkLogLimit = 1000
@@ -376,26 +369,17 @@ class ConsoleManager {
     }
   }
 
-  /**
-   * Clears all console log messages.
-   * @private
-   */
   clearMessages() {
     const $messages = $('#messages')
     $messages.empty()
     this._appMessageCount = 0
   }
-  
-  /**
-   * Removes all messages with a specific ID.
-   * @param {string} messageId - The ID of the message(s) to remove
-   * @private
-   */
+
   removeMessageById(messageId) {
     if (!messageId) return
-    
+
     const messageElements = document.querySelectorAll(`[data-message-id='${messageId}']`)
-    
+
     if (messageElements && messageElements.length > 0) {
       messageElements.forEach(element => {
         $(element).fadeOut(200, function() {
@@ -405,34 +389,18 @@ class ConsoleManager {
     }
   }
 
-  /**
-   * Gets packet log count
-   * @returns {number}
-   */
   getPacketLogCount() {
     return this._packetLogCount
   }
 
-  /**
-   * Gets app message count
-   * @returns {number}
-   */
   getAppMessageCount() {
     return this._appMessageCount
   }
 
-  /**
-   * Sets packet log count
-   * @param {number} count
-   */
   setPacketLogCount(count) {
     this._packetLogCount = count
   }
 
-  /**
-   * Sets app message count
-   * @param {number} count
-   */
   setAppMessageCount(count) {
     this._appMessageCount = count
   }
@@ -503,15 +471,15 @@ class ConsoleManager {
     }
 
     const lowerMessage = message.toLowerCase()
-    
+
     if (lowerMessage.includes('was reapplied') || lowerMessage.includes('reapplied')) {
       return 'reapplied'
     }
-    
+
     if (lowerMessage.includes('has closed') || lowerMessage.includes('closed')) {
       return 'closed'
     }
-    
+
     if (lowerMessage.includes('successfully launched') || lowerMessage.includes('started')) {
       return 'started'
     }
@@ -534,7 +502,7 @@ class ConsoleManager {
         const $log = $(this)
         const wasIncoming = $log.hasClass('bg-tertiary-bg/20')
         const wasOutgoing = $log.hasClass('bg-highlight-green/5')
-        
+
         $log.remove()
 
         if (wasIncoming || wasOutgoing) {
@@ -567,4 +535,3 @@ class ConsoleManager {
 }
 
 module.exports = ConsoleManager
-

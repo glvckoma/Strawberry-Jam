@@ -5,177 +5,131 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auto Advertising</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <link href="app://assets/css/style.css" rel="stylesheet">
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <style>
+    .ad-section { padding: 8px 12px; border-bottom: 1px solid rgba(156,163,175,0.1); }
+    .ad-section:last-child { border-bottom: none; }
+    .ad-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .ad-input { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; }
+    .ad-input::placeholder { color: rgba(255,255,255,0.4); }
+    .ad-input:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .ad-select { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 5px 8px; color: #fff; font-size: 12px; color-scheme: dark; }
+    .ad-btn { padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; }
+    .ad-btn-start { background: rgba(16,185,129,0.2); color: #10b981; }
+    .ad-btn-start:hover { background: rgba(16,185,129,0.3); }
+    .ad-btn-stop { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .ad-btn-stop:hover { background: rgba(239,68,68,0.3); }
+    .ad-btn-secondary { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); }
+    .ad-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    .ad-msg-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(156,163,175,0.12); border-radius: 6px; padding: 8px; transition: border-color 0.2s ease; }
+    .ad-msg-card:hover { border-color: rgba(156,163,175,0.25); }
+    .ad-msg-textarea { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 12px; resize: vertical; min-height: 50px; }
+    .ad-msg-textarea::placeholder { color: rgba(255,255,255,0.4); }
+    .ad-msg-textarea:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .ad-status { display: inline-flex; align-items: center; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 9999px; }
+  </style>
 </head>
-<body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
 
-  <!-- Standardized Draggable Header -->
   <div class="jam-plugin-header">
-    <div class="flex items-center gap-2">
-      <span class="jam-plugin-title">Auto Advertising</span>
-    </div>
-    <div class="jam-plugin-controls flex items-center gap-2">
-      <span id="status-indicator" class="px-2 py-1 text-xs rounded-full bg-error-red/20 text-error-red">
-        <i class="fas fa-circle mr-1"></i> Inactive
-      </span>
-      <button class="jam-plugin-minimize" aria-label="Minimize">
-        <i class="fas fa-minus"></i>
-      </button>
-      <button class="jam-plugin-close" aria-label="Close">
-        <i class="fas fa-times"></i>
-      </button>
+    <span class="jam-plugin-title">Auto Advertising</span>
+    <div class="jam-plugin-controls" style="display: flex; align-items: center; gap: 6px;">
+      <span id="status-indicator" class="ad-status" style="background: rgba(239,68,68,0.2); color: #ef4444;">Inactive</span>
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
   </div>
 
-  <!-- Main Content Area (this will be hidden/shown on minimize) -->
-  <div class="jam-plugin-content p-6 flex-1 flex flex-col h-full">
-    <!-- The existing div with class "flex-1 flex flex-col h-full" is now effectively replaced by jam-plugin-content and its inner structure -->
-    <div class="flex-1 overflow-y-auto mb-4 pr-1" style="max-height: calc(100% - 80px)">
-      <div class="bg-secondary-bg rounded-md shadow p-4 space-y-4 mb-4">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-base font-medium text-text-primary">Message Rotation</h2>
-          <div class="text-xs text-gray-400">
-          </div>
-        </div>
+  <div class="jam-plugin-content" style="padding: 0; overflow-y: auto;">
 
-        <div id="messages-container" class="space-y-3">
-        </div>
-
-        <div class="flex justify-center mt-4">
-          <button id="add-message-btn"
-            class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-            <i class="fas fa-plus mr-2"></i> Add Message
-          </button>
-        </div>
+    <div class="ad-section">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="ad-label">Messages</div>
+        <button id="add-message-btn" class="ad-btn ad-btn-secondary" style="padding: 3px 10px; font-size: 11px;">
+          <i class="fas fa-plus mr-1"></i> Add
+        </button>
       </div>
+      <div id="messages-container" style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;"></div>
+    </div>
 
-      <div class="bg-secondary-bg rounded-md shadow p-4 space-y-4 mb-4">
-        <h2 class="text-base font-medium text-text-primary mb-3">Settings</h2>
+    <div class="ad-section">
+      <div class="ad-label">Account</div>
+      <select id="target-account" class="ad-select">
+        <option value="">All Accounts</option>
+      </select>
+    </div>
 
-        <div class="space-y-4">
-          <div>
-            <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-              <input type="checkbox" id="random-interval-toggle" class="form-checkbox h-4 w-4 text-highlight-green bg-tertiary-bg border-sidebar-border rounded focus:ring-highlight-green">
-              <span>Use Randomized Interval</span>
-            </label>
-          </div>
-
-          <div id="interval-container" class="flex flex-wrap gap-4">
-            <div id="static-interval-container" class="flex-1 min-w-[200px]">
-              <label for="interval" class="block text-xs font-medium text-gray-400 mb-1">Interval (seconds)</label>
-              <input type="number" id="interval" min="10" value="60"
-                class="w-full bg-tertiary-bg text-text-primary placeholder-gray-400 p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-highlight-green text-sm">
-              <p class="mt-1 text-xs text-gray-400">Minimum 10 seconds recommended</p>
-            </div>
-
-            <div id="random-interval-container" class="flex-1 min-w-[200px] hidden">
-              <label class="block text-xs font-medium text-gray-400 mb-1">Interval Range (seconds)</label>
-              <div class="flex gap-2">
-                <input type="number" id="min-interval" min="10" value="30"
-                  class="w-full bg-tertiary-bg text-text-primary placeholder-gray-400 p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-highlight-green text-sm" placeholder="Min">
-                <input type="number" id="max-interval" min="11" value="90"
-                  class="w-full bg-tertiary-bg text-text-primary placeholder-gray-400 p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-highlight-green text-sm" placeholder="Max">
-              </div>
-              <p class="mt-1 text-xs text-gray-400">e.g., between 30 and 90 seconds</p>
-            </div>
-          </div>
+    <div class="ad-section">
+      <div style="display: flex; gap: 8px;">
+        <div style="flex: 1;">
+          <div class="ad-label">Order</div>
+          <select id="order-type" class="ad-select">
+            <option value="sequential">Sequential</option>
+            <option value="random">Random</option>
+          </select>
         </div>
-
-        <div class="flex flex-wrap gap-4">
-          <div class="flex-1 min-w-[200px]">
-            <label for="order-type" class="block text-xs font-medium text-gray-400 mb-1">Message Order</label>
-            <select id="order-type"
-              class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-highlight-green text-sm">
-              <option value="sequential">Sequential</option>
-              <option value="random">Random</option>
-            </select>
-            <p class="mt-1 text-xs text-gray-400">How messages will be rotated</p>
-          </div>
-          <div class="flex-1 min-w-[200px]">
-            <label for="message-suffix" class="block text-xs font-medium text-gray-400 mb-1">Message Suffix</label>
-            <input type="text" id="message-suffix" maxlength="10" value="%0"
-              class="w-full bg-tertiary-bg text-text-primary placeholder-gray-400 p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-highlight-green text-sm"
-              placeholder="%0">
-            <p class="mt-1 text-xs text-gray-400">
-              If advertising stops working, send a chat manually in-game and review the network tab packet:
-              [CDATA[{messageToSend}%0]] then change the value for %0 to yours.
-            </p>
-          </div>
+        <div style="flex: 1;">
+          <div class="ad-label">Suffix</div>
+          <input type="text" id="message-suffix" maxlength="10" value="%0" class="ad-input" placeholder="%0">
         </div>
-
-        <div class="flex flex-wrap gap-4">
-          <div class="flex-1 min-w-[200px]">
-            <label for="target-account" class="block text-xs font-medium text-gray-400 mb-1">Target Account</label>
-            <select id="target-account"
-              class="w-full bg-tertiary-bg text-text-primary p-2 rounded-md focus:outline-none focus:ring-1 focus:ring-highlight-green text-sm">
-              <option value="">All Accounts</option>
-            </select>
-            <p class="mt-1 text-xs text-gray-400">Select which account to send messages to (default: all accounts)</p>
-          </div>
-        </div>
-
       </div>
     </div>
 
-    <div class="bg-secondary-bg rounded-md shadow p-4 sticky bottom-0">
-      <div class="flex flex-wrap gap-4 items-center justify-between">
-        <div class="flex gap-2">
-          <button id="save-btn"
-            class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-            <i class="fas fa-save mr-2"></i> Save
-          </button>
-          <button id="load-btn"
-            class="px-4 py-2 bg-tertiary-bg hover:bg-sidebar-hover text-text-primary rounded-md transition text-sm">
-            <i class="fas fa-folder-open mr-2"></i> Load
-          </button>
+    <div class="ad-section">
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+        <input type="checkbox" id="random-interval-toggle" style="accent-color: var(--theme-primary, #e83d52);">
+        <span style="font-size: 12px; color: rgba(255,255,255,0.7);">Randomize interval</span>
+      </div>
+      <div id="interval-container">
+        <div id="static-interval-container">
+          <div class="ad-label">Interval (seconds)</div>
+          <input type="number" id="interval" min="10" value="60" class="ad-input">
         </div>
-
-        <div class="flex gap-2 items-center">
-          <button id="start-btn"
-            class="px-4 py-2 bg-highlight-green/20 hover:bg-highlight-green/30 text-highlight-green rounded-md transition text-sm">
-            <i class="fas fa-play mr-2"></i> Start
-          </button>
-          <button id="stop-btn" disabled
-            class="px-4 py-2 bg-error-red/20 hover:bg-error-red/30 text-error-red rounded-md transition text-sm">
-            <i class="fas fa-stop mr-2"></i> Stop
-          </button>
+        <div id="random-interval-container" style="display: none;">
+          <div class="ad-label">Interval Range (seconds)</div>
+          <div style="display: flex; gap: 6px;">
+            <input type="number" id="min-interval" min="10" value="30" class="ad-input" placeholder="Min">
+            <input type="number" id="max-interval" min="11" value="90" class="ad-input" placeholder="Max">
+          </div>
         </div>
       </div>
     </div>
-  </div> <!-- This closes the original "flex-1 flex flex-col h-full" -->
-  </div> <!-- This closes jam-plugin-content -->
+
+    <div class="ad-section" style="display: flex; gap: 6px; align-items: center; justify-content: space-between;">
+      <div style="display: flex; gap: 6px;">
+        <button id="save-btn" class="ad-btn ad-btn-secondary"><i class="fas fa-save mr-1"></i> Save</button>
+        <button id="load-btn" class="ad-btn ad-btn-secondary"><i class="fas fa-folder-open mr-1"></i> Load</button>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button id="start-btn" class="ad-btn ad-btn-start"><i class="fas fa-play mr-1"></i> Start</button>
+        <button id="stop-btn" disabled class="ad-btn ad-btn-stop"><i class="fas fa-stop mr-1"></i> Stop</button>
+      </div>
+    </div>
+
+  </div>
 
   <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
-
   <input type="file" id="file-input" accept=".json" class="hidden">
 
   <template id="message-template">
-    <div class="message-input bg-tertiary-bg/30 p-3 rounded-md border border-sidebar-border hover:border-highlight-green transition-colors">
-      <div class="flex items-center justify-between mb-2">
-        <label class="text-xs font-medium text-gray-400 message-label">Message</label>
-        <div class="flex items-center gap-2">
-          <button class="text-xs text-gray-400 hover:text-highlight-green transition-colors px-2 py-1 rounded hover:bg-tertiary-bg/50 preview-btn">
-            <i class="fas fa-eye mr-1"></i> Preview
+    <div class="message-input ad-msg-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <span class="message-label" style="font-size: 11px; color: rgba(255,255,255,0.5);">Message</span>
+        <div style="display: flex; gap: 4px;">
+          <button class="preview-btn" style="font-size: 10px; color: rgba(255,255,255,0.4); background: none; border: none; cursor: pointer; padding: 2px 6px;">
+            <i class="fas fa-eye mr-1"></i>Preview
           </button>
-          <button class="text-xs text-error-red hover:text-error-red/80 transition-colors px-2 py-1 rounded hover:bg-tertiary-bg/50 remove-btn">
-            <i class="fas fa-trash mr-1"></i> Remove
+          <button class="remove-btn" style="font-size: 10px; color: #ef4444; background: none; border: none; cursor: pointer; padding: 2px 6px;">
+            <i class="fas fa-trash mr-1"></i>Remove
           </button>
         </div>
       </div>
-      <textarea class="w-full bg-tertiary-bg text-text-primary placeholder-gray-400 p-2 rounded-md focus:outline-none focus:ring-1 resize-y min-h-[60px] text-sm message-content" placeholder="Enter your advertisement message here..."></textarea>
+      <textarea class="message-content ad-msg-textarea" placeholder="Enter your advertisement message..."></textarea>
     </div>
   </template>
 
   <script src="index.js"></script>
-<!-- Import Plugin Utilities -->
-  <script src="app://assets/javascript/plugin-utils.js"></script>
-  <!-- Initialize Standardized UI -->
-  <script>
-    // Initialize the standardized UI components when the document is ready
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize standard plugin UI behavior (minimize/close)
-      initializePluginUI();
-    });
-  </script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
 </body>
 </html>

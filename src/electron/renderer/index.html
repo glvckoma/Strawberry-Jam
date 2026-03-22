@@ -5,7 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Strawberry Jam</title>
-  <link rel="stylesheet" href="app://assets/css/style.css">
+  <link rel="stylesheet" href="app://assets/styles/style.css">
+  <style>
+    @media (max-width: 480px) {
+      .header-tab-label { display: none !important; }
+    }
+  </style>
 
   <!-- jQuery -->
   <script>
@@ -14,172 +19,128 @@
 </head>
 
 <body class="bg-primary-bg text-sidebar-text h-screen flex font-sans">
-  <!-- Sidebar -->
-  <div id="sidebar"
-    class="w-64 h-full bg-sidebar-bg p-4 fixed top-0 left-0 transform translate-x-0 transition-transform duration-300 border-r border-sidebar-border z-30 flex flex-col shadow-lg">
+  <div id="mainContent" class="flex-1 flex flex-col bg-primary-bg overflow-hidden">
 
-    <!-- Main Navigation -->
-    <div class="px-2 py-2">
-      <div class="flex items-center px-2 mb-1">
-        <h2 class="sidebar-section-title flex items-center flex-grow">
-          <span>Navigation</span>
-        </h2>
-        <button id="toggleNavSection" class="ml-2 text-sidebar-text hover:text-theme-primary p-1.5 rounded transition-all sidebar-chevron" aria-label="Toggle Navigation">
-          <i class="fas fa-chevron-up"></i>
-        </button>
-      </div>
-      <div id="navSectionContent" class="collapsible-section" style="max-height: 1000px; opacity: 1; overflow: hidden; transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s cubic-bezier(0.4,0,0.2,1);">
-      <ul class="space-y-1">
-        <li>
-          <a href="#" id="playButton"
-            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
-            onclick="jam.application.openAnimalJam()">
-            <i class="fas fa-gamepad theme-icon text-xl"></i>
-            <span id="playButtonText" class="font-medium">Strawberry Jam</span>
-            <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-              <i class="fas fa-external-link-alt text-xs" style="color: var(--theme-primary);"></i>
-            </div>
-          </a>
-        </li>
-        <!-- AJ Classic -->
-        <li>
-          <a href="#" id="ajClassicButton"
-            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
-            onclick="jam.application.openAJClassic()">
-            <i class="fas fa-paw text-xl" style="color: #e3861afe;"></i>
-            <span class="font-medium">AJ Classic</span>
-            <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-              <i class="fas fa-external-link-alt text-xs" style="color: var(--theme-primary);"></i>
-            </div>
-          </a>
-        </li>
-        <!-- Settings -->
-        <li>
-          <a href="#" id="settingsLink"
-            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
-            onclick="return false;">
-            <i class="fas fa-wrench text-gray-400 text-xl transition-colors"></i>
-            <span class="font-medium">Settings</span>
-          </a>
-        </li>
-        <!-- ADDED Links -->
-        <li class="relative">
-          <a href="#" id="openLinksSection"
-            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
-            onclick="return false;">
-            <i class="fas fa-link text-sidebar-text/80 text-xl transition-colors"></i>
-            <span class="font-medium">Links</span>
-          </a>
-        </li>
-        <!-- ADDED Plugin Library -->
-        <li>
-          <a href="#" id="openPluginHubLink"
-            class="flex items-center space-x-3 text-sidebar-text hover:bg-tertiary-bg group px-3 py-2.5 rounded-md transition-all"
-            onclick="return false;">
-            <i class="fas fa-puzzle-piece text-sidebar-text/80 text-xl transition-colors"></i>
-            <span class="font-medium">Plugin Library</span>
-          </a>
-        </li>
-      </ul>
-      </div>
-    </div>
-
-    <!-- Plugins Section -->
-    <div class="flex-1 overflow-hidden flex flex-col min-h-0 px-3 pt-4 mt-2">
-      <div class="flex items-center px-2 mb-1">
-        <h2 class="sidebar-section-title flex items-center flex-grow">
-          <span>Installed Plugins</span>
-        </h2>
-        <button id="refreshPluginsSection" class="ml-2 text-sidebar-text hover:text-blue-400 p-1.5 rounded transition-all" aria-label="Refresh Plugins">
-          <i class="fas fa-sync-alt"></i>
-        </button>
-        <button id="togglePluginsSection" class="ml-2 text-sidebar-text hover:text-theme-primary p-1.5 rounded transition-all sidebar-chevron" aria-label="Toggle Plugins">
-          <i class="fas fa-chevron-up"></i>
-        </button>
-      </div>
-      <div id="pluginsSectionContent" class="collapsible-section" style="flex:1; min-height:0; display:flex; flex-direction:column; max-height: 1000px; opacity: 1; overflow: hidden; transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s cubic-bezier(0.4,0,0.2,1);">
-        <!-- Enhanced Plugin List -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar pr-1" style="min-height:0;">
-          <ul id="pluginList" class="space-y-2.5">
-            <!-- Plugin items will be added dynamically -->
-          </ul>
-          
-          <!-- Empty plugin message -->
-          <div id="emptyPluginMessage" class="hidden text-center py-4 text-gray-400">
-            <i class="fas fa-puzzle-piece mb-2 text-lg opacity-50"></i>
-            <p class="text-xs">No plugins installed</p>
-          </div>
+    <header id="header" class="flex items-center justify-center bg-secondary-bg border-b border-sidebar-border shadow" style="min-height: 0; gap: 0; padding: 8px 12px;">
+      <div style="flex: 1 1 0; min-width: 0;"></div>
+      <div class="flex rounded-lg overflow-hidden" style="border: 1px solid rgba(156,163,175,0.15); -webkit-app-region: no-drag; flex-shrink: 1; min-width: 0;">
+          <button id="playGameBtn"
+            class="text-sidebar-text py-1.5 px-3 text-xs font-medium transition-all relative hover:text-white flex items-center"
+            style="white-space: nowrap; flex-shrink: 0;"
+            title="Launch Game">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><polygon points="6 3 20 12 6 21 6 3"/></svg><span class="header-tab-label" style="margin-left: 6px;">PLAY</span>
+          </button>
+          <button id="packetLoggingTab"
+            class="tab-button active text-sidebar-text py-1.5 px-3 text-xs font-medium transition-all relative flex items-center"
+            data-tab="packet-logging"
+            style="border-left: 1px solid rgba(156,163,175,0.15); white-space: nowrap; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span class="header-tab-label" style="margin-left: 6px;">Network</span>
+            <span class="active-indicator absolute bottom-0 left-0 right-0 h-0.5 transition-transform duration-300 ease-out" style="transform: scaleX(0);"></span>
+          </button>
+          <button id="pluginsTab"
+            class="tab-button text-sidebar-text py-1.5 px-3 text-xs font-medium transition-all relative flex items-center"
+            data-tab="plugins"
+            style="border-left: 1px solid rgba(156,163,175,0.15); white-space: nowrap; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-2 .9-2 2v3.8h1.5c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5H2V19c0 1.1.9 2 2 2h3.8v-1.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5V21H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg><span class="header-tab-label" style="margin-left: 6px;">Plugins</span>
+            <span class="active-indicator absolute bottom-0 left-0 right-0 h-0.5 transition-transform duration-300 ease-out" style="transform: scaleX(0);"></span>
+          </button>
         </div>
-      </div>
-    </div>
 
-    <div class="mt-4 pt-3 border-t border-sidebar-border/30 text-xs text-gray-500 text-center">
-      Forked with 🤎 by <a href="https://github.com/glvckoma" target="_blank" class="text-highlight-green underline transition-colors" id="forkLink">Glockoma</a><br>
-      <!-- Donate Link -->
-      <a href="#" onclick="jam.application.open('https://ko-fi.com/glockoma')" class="text-xs text-yellow-700 hover:text-yellow-500 transition-colors underline">
-         Support the Project!
-      </a><br>
-      <span id="appVersionDisplay" class="text-xs text-highlight-green font-bold"></span><br>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <div id="mainContent" class="flex-1 ml-64 transition-margin duration-300 flex flex-col bg-primary-bg">
-
-    <!-- Header -->
-    <header id="header" class="flex items-center p-4 bg-secondary-bg border-b border-sidebar-border shadow relative">
-      <div class="z-10">
-        <button id="menuButton" class="text-lg text-sidebar-text focus:outline-none p-2 rounded hover:bg-tertiary-bg transition-colors">
-          <i id="menuIcon" class="fas fa-bars-staggered"></i>
+      <div style="flex: 1 1 0; min-width: 0; display: flex; justify-content: flex-end;">
+      <div class="flex items-center flex-shrink-0" style="-webkit-app-region: no-drag; gap: 2px;">
+        <button id="settingsHeaderBtn" class="p-2 rounded hover:bg-tertiary-bg transition-colors text-sidebar-text focus:outline-none" data-tooltip="Settings">
+          <i class="fas fa-cog"></i>
         </button>
-      </div>
-      
-      <!-- Fruit Icon (Moved from Sidebar) - Using absolute positioning for perfect centering -->
-      <div class="absolute left-0 right-0 top-0 bottom-0 flex justify-center items-center pointer-events-none">
-         <img id="fruitIcon" src="app://assets/images/strawberry.png" alt="Fruit Icon" class="h-11 w-11 cursor-pointer pointer-events-auto transition-transform" style="z-index: 10; -webkit-app-region: no-drag;">
-      </div>
-
-      <!-- Window Control Buttons -->
-      <div class="ml-auto z-10 flex items-center" style="-webkit-app-region: no-drag;">
         <button id="minimizeButton"
-          class="p-2 rounded hover:bg-tertiary-bg hover:text-white transition-colors text-sidebar-text focus:outline-none mr-1"
+          class="p-2 rounded hover:bg-tertiary-bg hover:text-white transition-colors text-sidebar-text focus:outline-none"
           data-tooltip="Minimize">
           <i class="fas fa-minus"></i>
         </button>
         <button id="fullscreenButton"
-          class="p-2 rounded hover:bg-tertiary-bg hover:text-white transition-colors text-sidebar-text focus:outline-none mr-1"
+          class="p-2 rounded hover:bg-tertiary-bg hover:text-white transition-colors text-sidebar-text focus:outline-none"
           data-tooltip="Toggle Fullscreen">
           <i class="fa-regular fa-window-maximize"></i>
         </button>
         <button id="mainCloseButton"
           class="p-2 rounded hover:bg-error-red hover:text-white transition-colors text-sidebar-text focus:outline-none"
           data-tooltip="Close">
-        <i class="fas fa-times"></i>
-      </button>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
       </div>
     </header>
 
-    <!-- Tab Navigation -->
-    <div class="tabs w-full grid grid-cols-2 border-b border-sidebar-border bg-tertiary-bg">
-      <button id="consoleTab"
-        class="tab-button active text-sidebar-text hover:bg-sidebar-hover py-2 text-sm font-semibold transition-all relative overflow-hidden"
-        data-tab="console">
-        <i class="fas fa-terminal mr-2 text-xs"></i>Console
-        <span class="active-indicator absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 transition-transform duration-300 ease-out"></span>
-      </button>
-      <button id="packetLoggingTab"
-        class="tab-button text-sidebar-text hover:bg-sidebar-hover py-2 text-sm font-medium transition-all relative overflow-hidden"
-        data-tab="packet-logging">
-        <i class="fas fa-network-wired mr-2 text-xs"></i>Network
-        <span class="active-indicator absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 transition-transform duration-300 ease-out"></span>
-      </button>
-    </div>
-
-    <!-- Tab Content -->
-    <div id="console" class="tab-content flex-1 p-4 overflow-hidden flex flex-col">
-      <div id="messages" class="flex flex-col overflow-auto flex-grow min-h-0">
-        <!-- This is where the game client <webview> might be injected by JavaScript -->
-        <!-- Or it might be part of a different view that's shown/hidden -->
+    <div id="plugins" class="tab-content flex-1 p-4 overflow-hidden flex flex-col hidden" style="min-height: 0;">
+      <div class="flex items-center justify-between mb-1 px-3 py-1">
+        <div class="flex items-center space-x-1">
+          <button id="pluginSortBtn" class="text-sidebar-text hover:text-highlight-yellow px-2 py-1 rounded transition-all text-xs font-medium flex items-center" title="Sort: By Type" aria-label="Sort Plugins">
+            <i class="fas fa-sort-amount-down text-xs mr-1.5"></i>
+            <span id="pluginSortLabel">By Type</span>
+          </button>
+          <div style="width: 1px; height: 16px; background: rgba(156,163,175,0.2);"></div>
+          <button id="showHiddenPluginsBtn" class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all hidden" title="Show Hidden Plugins" aria-label="Show Hidden Plugins">
+            <i class="fas fa-eye-slash text-sm"></i>
+          </button>
+          <button id="hideGamePluginsToggle" class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all" title="Toggle Game Plugins" aria-label="Toggle Game Plugins">
+            <i class="fas fa-gamepad text-sm"></i>
+          </button>
+        </div>
+        <div class="flex items-center space-x-1">
+          <div class="relative" id="pluginSettingsWrapper">
+            <button id="pluginSettingsBtn" class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all" title="Plugin Settings" aria-label="Plugin Settings">
+              <i class="fas fa-cog text-sm"></i>
+            </button>
+            <div id="pluginSettingsPopover" class="absolute right-0 bg-secondary-bg rounded-lg shadow-lg p-4" style="top: 100%; min-width: 260px; z-index: 50; display: none; border: 1px solid rgba(255,255,255,0.15);">
+              <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Plugin Settings</div>
+              <div>
+                <label class="block mb-1.5 text-xs font-medium text-text-primary">Refresh Behavior</label>
+                <span class="block mb-2 text-xs text-gray-500">When refreshing plugins with open windows:</span>
+                <select id="pluginRefreshBehaviorPopover" class="bg-tertiary-bg text-text-primary focus:outline-none rounded px-3 py-1.5 w-full text-sm" style="color-scheme: dark;">
+                  <option value="ask">Ask before closing</option>
+                  <option value="alwaysClose">Always close automatically</option>
+                </select>
+              </div>
+              <div class="mt-3">
+                <label class="block mb-1.5 text-xs font-medium text-text-primary">Default Open Mode</label>
+                <span class="block mb-2 text-xs text-gray-500">How UI plugins open when clicked:</span>
+                <select id="pluginDefaultDisplayMode" class="bg-tertiary-bg text-text-primary focus:outline-none rounded px-3 py-1.5 w-full text-sm" style="color-scheme: dark;">
+                  <option value="inline">Embedded (in-app)</option>
+                  <option value="window">Separate Window</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div style="width: 1px; height: 16px; background: rgba(156,163,175,0.2);"></div>
+          <button id="openPluginHubLink" class="text-sidebar-text hover:text-highlight-green p-1.5 rounded transition-all" title="Plugin Store" aria-label="Plugin Store">
+            <i class="fas fa-store text-sm"></i>
+          </button>
+          <button id="openUserPluginsDirBtn" class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all" title="Open Plugins Folder" aria-label="Open Plugins Folder">
+            <i class="fas fa-folder-open text-sm"></i>
+          </button>
+          <button id="refreshPluginsSection" class="text-sidebar-text hover:text-blue-400 p-1.5 rounded transition-all" title="Refresh Plugins" aria-label="Refresh Plugins">
+            <i class="fas fa-sync-alt text-sm"></i>
+          </button>
+        </div>
+      </div>
+      <div id="pluginsSectionContent" class="flex-1 overflow-y-auto overflow-x-hidden themed-scrollbar">
+        <ul id="pluginList" class="grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+        </ul>
+        <div id="emptyPluginMessage" class="hidden text-center py-8 text-gray-400">
+          <i class="fas fa-puzzle-piece mb-2 text-2xl" style="opacity: 0.5;"></i>
+          <p class="text-sm">No plugins installed</p>
+        </div>
+      </div>
+      <div id="inlinePluginContainer" class="hidden flex-1 flex flex-col overflow-hidden">
+        <div id="inlinePluginHeader" class="flex items-center px-3 py-2 bg-secondary-bg border-b border-sidebar-border">
+          <button id="inlinePluginBackBtn" class="p-1.5 rounded hover:bg-tertiary-bg transition-colors text-sidebar-text" title="Back to plugins">
+            <i class="fas fa-arrow-left text-sm"></i>
+          </button>
+          <span id="inlinePluginName" class="ml-2 text-sm font-semibold text-text-primary truncate flex-1"></span>
+          <button id="inlinePluginPopoutBtn" class="p-1.5 rounded hover:bg-tertiary-bg transition-colors text-sidebar-text" title="Open in new window">
+            <i class="fas fa-external-link-alt text-sm"></i>
+          </button>
+        </div>
+        <iframe id="inlinePluginFrame" class="flex-1 border-0" style="width:100%; background: #1e1f2e;"></iframe>
       </div>
     </div>
 
@@ -187,101 +148,188 @@
       <!-- Modal content will be dynamically inserted here -->
     </div>
 
-    <div id="packet-logging" class="tab-content flex-1 hidden w-full flex flex-col overflow-hidden">
-      <div class="bg-secondary-bg p-2 border-b border-sidebar-border flex-shrink-0">
-        <!-- Counter Row -->
-        <div class="flex justify-between items-center mb-2">
-          <div class="flex items-center space-x-3">
-            <!-- Filter Controls -->
+    <div id="packet-logging" class="tab-content flex-1 active w-full flex flex-col overflow-hidden" style="min-height: 0;">
+      <div class="bg-secondary-bg p-3 border-b border-sidebar-border flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="flex items-center rounded-lg overflow-hidden flex-shrink-0" style="border: 1px solid rgba(156,163,175,0.15);">
             <button id="filterAllButton"
-              class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition active min-w-[40px]">
-              All
-            </button>
+              class="text-text-primary px-3 py-1.5 text-xs font-medium transition-all active"
+              style="min-width: 48px;">All</button>
             <button id="filterIncomingButton"
-              class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px]">
-              Incoming
-            </button>
+              class="text-text-primary px-3 py-1.5 text-xs font-medium transition-all"
+              style="min-width: 72px; border-left: 1px solid rgba(156,163,175,0.15);">
+              <i class="fas fa-arrow-down mr-1" style="font-size: 9px; color: #10b981;"></i>In</button>
             <button id="filterOutgoingButton"
-              class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px]">
-              Outgoing
-            </button>
+              class="text-text-primary px-3 py-1.5 text-xs font-medium transition-all"
+              style="min-width: 72px; border-left: 1px solid rgba(156,163,175,0.15);">
+              <i class="fas fa-arrow-up mr-1" style="font-size: 9px; color: #eab308;"></i>Out</button>
           </div>
-
-          <div class="flex items-center space-x-3">
-            <span class="text-text-primary text-xs">
-              <i class="fas fa-arrow-down text-highlight-green mr-1"></i>
-              <span id="incomingCount">0</span> In
-            </span>
-            <span class="text-text-primary text-xs">
-              <i class="fas fa-arrow-up text-highlight-yellow mr-1"></i>
-              <span id="outgoingCount">0</span> Out
-            </span>
-            <span class="text-text-primary text-xs">
-              <i class="fas fa-list mr-1"></i>
-              <span id="totalCount">0</span> Total
-            </span>
+          <div class="relative flex-grow">
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2" style="color: var(--theme-primary, #e83d52); opacity: 0.6; font-size: 11px;"></i>
+            <input id="packetSearch" type="text"
+              class="text-text-primary placeholder-text-primary focus:outline-none w-full py-1.5 rounded-lg"
+              style="background: rgba(255,255,255,0.06); padding-left: 28px; padding-right: 12px; border: 1px solid rgba(156,163,175,0.15); transition: border-color 0.2s ease, box-shadow 0.2s ease;"
+              placeholder="Search packets...">
+          </div>
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <div class="flex items-center space-x-2 rounded-lg px-3 py-1" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(156,163,175,0.1);">
+              <span class="text-xs font-medium">
+                <span id="incomingCount" style="color: #10b981;">0</span>
+                <span class="text-gray-500">in</span>
+              </span>
+              <span style="width: 1px; height: 12px; background: rgba(156,163,175,0.2);"></span>
+              <span class="text-xs font-medium">
+                <span id="outgoingCount" style="color: #eab308;">0</span>
+                <span class="text-gray-500">out</span>
+              </span>
+              <span style="width: 1px; height: 12px; background: rgba(156,163,175,0.2);"></span>
+              <span class="text-xs font-medium">
+                <span class="text-text-primary" id="totalCount">0</span>
+                <span class="text-gray-500">total</span>
+              </span>
+            </div>
             <button id="copyPacketLogsButton"
-              class="bg-tertiary-bg text-text-primary px-2 py-1 rounded text-xs hover:bg-sidebar-hover transition min-w-[40px] ml-2">
-              <i class="fas fa-copy mr-1"></i>Copy
+              class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all"
+              title="Copy Packets">
+              <i class="fas fa-copy text-sm"></i></button>
+            <button id="clearPacketLogButton"
+              class="text-sidebar-text p-1.5 rounded transition-all"
+              title="Clear packet logs"
+              style="color: rgba(232, 61, 82, 0.9);">
+              <i class="fas fa-trash-alt text-sm"></i>
             </button>
+            <div class="relative" id="networkSettingsWrapper">
+              <button id="networkSettingsBtn"
+                class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all"
+                title="Network Settings">
+                <i class="fas fa-cog text-sm"></i>
+              </button>
+              <div id="networkSettingsPopover"
+                class="absolute right-0 bg-secondary-bg rounded-lg shadow-lg p-4 themed-scrollbar"
+                style="top: calc(100% + 6px); min-width: 280px; max-width: 320px; max-height: 70vh; overflow-y: auto; z-index: 50; display: none; border: 1px solid rgba(255,255,255,0.15);">
+                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Log Limits</div>
+                <div class="space-y-3 mb-4">
+                  <div>
+                    <label class="block mb-1 text-xs font-medium text-text-primary">Console Log Limit</label>
+                    <input id="netSettingsConsoleLimit" type="number" min="100" max="10000" step="100"
+                      class="text-text-primary focus:outline-none rounded px-3 py-1.5 w-full text-sm"
+                      style="background: rgba(255,255,255,0.06); border: 1px solid rgba(156,163,175,0.15);">
+                  </div>
+                  <div>
+                    <label class="block mb-1 text-xs font-medium text-text-primary">Network Log Limit</label>
+                    <input id="netSettingsNetworkLimit" type="number" min="100" max="10000" step="100"
+                      class="text-text-primary focus:outline-none rounded px-3 py-1.5 w-full text-sm"
+                      style="background: rgba(255,255,255,0.06); border: 1px solid rgba(156,163,175,0.15);">
+                  </div>
+                  <p class="text-xs text-gray-500">When limits are reached, older entries (~40%) are removed.</p>
+                </div>
+                <div style="height: 1px; background: rgba(156,163,175,0.15); margin-bottom: 12px;"></div>
+                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Display</div>
+                <div class="space-y-3 mb-4">
+                  <div class="flex items-center justify-between">
+                    <label class="text-xs font-medium text-text-primary">Font Size</label>
+                    <select id="netSettingsFontSize"
+                      class="text-text-primary focus:outline-none rounded px-2 py-1 text-xs"
+                      style="background: rgba(255,255,255,0.06); border: 1px solid rgba(156,163,175,0.15); color-scheme: dark;">
+                      <option value="10">Small (10px)</option>
+                      <option value="12" selected>Medium (12px)</option>
+                      <option value="14">Large (14px)</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <label class="text-xs font-medium text-text-primary">Incoming Color</label>
+                    <input id="netSettingsIncomingColor" type="color" value="#10b981"
+                      class="rounded cursor-pointer" style="width: 32px; height: 24px; border: 1px solid rgba(156,163,175,0.2); background: none; padding: 2px;">
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <label class="text-xs font-medium text-text-primary">Outgoing Color</label>
+                    <input id="netSettingsOutgoingColor" type="color" value="#eab308"
+                      class="rounded cursor-pointer" style="width: 32px; height: 24px; border: 1px solid rgba(156,163,175,0.2); background: none; padding: 2px;">
+                  </div>
+                </div>
+                <div style="height: 1px; background: rgba(156,163,175,0.15); margin-bottom: 12px;"></div>
+                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Filter Out</div>
+                <p class="text-xs text-gray-500 mb-2">Packets matching these patterns are always hidden.</p>
+                <div class="flex gap-1 mb-2">
+                  <input id="netSettingsFilterInput" type="text" placeholder="Add pattern..."
+                    class="text-text-primary focus:outline-none rounded px-2 py-1 text-xs flex-grow"
+                    style="background: rgba(255,255,255,0.06); border: 1px solid rgba(156,163,175,0.15);">
+                  <button id="netSettingsFilterAdd"
+                    class="px-2.5 py-1 rounded text-xs text-text-primary hover:bg-sidebar-hover transition"
+                    style="border: 1px solid rgba(156,163,175,0.15); flex-shrink: 0;">Add</button>
+                </div>
+                <div id="netSettingsFilterList" class="space-y-1" style="max-height: 120px; overflow-y: auto;"></div>
+                <button id="netSettingsFilterClearAll"
+                  class="mt-2 w-full px-2 py-1 rounded text-xs text-gray-400 hover:text-error-red hover:bg-error-red/10 transition"
+                  style="border: 1px solid rgba(156,163,175,0.15); display: none;">Clear All</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Scrollable Message Log -->
-      <div id="message-log" class="flex flex-col p-4 overflow-y-auto flex-grow min-h-0"></div>
+      <div id="message-log" class="flex flex-col p-4 overflow-y-auto flex-grow min-h-0 themed-scrollbar"></div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-secondary-bg border-t border-sidebar-border p-4 mt-auto">
-      <!-- Status Bar with Connection Status and Time -->
-      <div class="flex items-center justify-between mb-2">
+    <footer class="bg-secondary-bg mt-auto flex flex-col">
+      <div id="consoleToggleBar" class="w-full flex items-center justify-center relative"
+           style="height: 6px; background: var(--tertiary-bg); cursor: pointer; transition: height 0.15s ease, background 0.15s ease;">
+        <div style="width: 40px; height: 3px; background: rgba(195,195,195,0.3); border-radius: 2px;"></div>
+      </div>
+      <div id="consoleDrawer" style="display: none;">
+        <div id="messages" class="flex flex-col overflow-auto themed-scrollbar" style="height: 200px; min-height: 80px; max-height: 60vh;">
+        </div>
+      </div>
+
+      <div class="flex items-center px-4 py-1.5">
         <div id="connection-status" class="flex items-center text-xs text-gray-400">
           <span class="w-1.5 h-1.5 rounded-full bg-error-red mr-1.5 pulse-animation"></span>
           <span>Disconnected</span>
         </div>
-        <div class="text-xs text-gray-400 flex items-center" id="timestamp-display-container">
-          <i class="fas fa-clock mr-1.5 text-xs"></i>
-          <span id="timestamp-display"></span>
+        <div class="flex items-center space-x-3 ml-auto">
+          <div class="text-xs text-gray-400 flex items-center" id="timestamp-display-container">
+            <i class="fas fa-clock mr-1.5 text-xs"></i>
+            <span id="timestamp-display">Fetching Stats<span class="fetching-dots"></span></span>
+          </div>
         </div>
-      </div>
-      
-      <div id="commandContainer" class="relative flex items-center gap-2">
-        <div class="relative flex-grow">
-          <i class="fas fa-terminal absolute left-3 top-1/2 transform -translate-y-1/2 text-sidebar-text/70"></i>
-          <input id="input" type="text"
-            class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none w-full pl-10 pr-3 py-2 rounded"
-            placeholder="Type a command...">
-        </div>
-        <button id="clearConsoleButton" 
-          class="py-2 px-3 rounded flex items-center justify-center" 
-          title="Clear console"
-          style="background-color: var(--tertiary-bg); border: 1px solid rgba(232, 61, 82, 0.5); color: rgba(232, 61, 82, 0.9);">
-          <i class="fas fa-trash-alt"></i>
-        </button>
       </div>
 
-      <div id="searchContainer" class="relative hidden flex-container items-center gap-2">
-        <div class="relative flex-grow">
-          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-sidebar-text/70"></i>
-          <input id="packetSearch" type="text"
-            class="bg-tertiary-bg text-text-primary placeholder-text-primary focus:outline-none w-full pl-10 pr-3 py-2 rounded"
-            placeholder="Search packets...">
+      <div class="px-4 py-2">
+        <div class="flex items-center gap-2">
+          <img id="fruitIcon" src="app://assets/images/strawberry.png" alt="Fruit Icon" class="cursor-pointer transition-transform flex-shrink-0" style="width: 24px; height: 24px; -webkit-app-region: no-drag;">
+          <span id="appVersionDisplay" class="text-highlight-green font-bold flex-shrink-0" style="font-size: 12px;"></span>
+          <div id="commandContainer" class="flex flex-grow items-center gap-2">
+            <div class="relative flex-grow">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--theme-primary, #e83d52); opacity: 0.6;"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+              <input id="input" type="text"
+                class="text-text-primary placeholder-text-primary focus:outline-none w-full py-2 rounded-lg"
+                style="background: rgba(255,255,255,0.06); padding-left: 32px; padding-right: 12px; border: 1px solid rgba(156,163,175,0.15); transition: border-color 0.2s ease, box-shadow 0.2s ease;"
+                placeholder="Type a command...">
+            </div>
+            <div class="relative">
+              <span id="consoleBadge" style="display: none; position: absolute; top: -8px; right: -8px; background: var(--theme-primary, #e83d52); color: var(--primary-bg, #16171f); font-size: 9px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; align-items: center; justify-content: center; padding: 0 4px; z-index: 10;">0</span>
+              <button id="consoleToggleButton"
+                class="py-2 px-3 rounded flex items-center justify-center"
+                title="Toggle Console"
+                style="background-color: var(--tertiary-bg); border: 1px solid rgba(156,163,175,0.3); color: rgba(156,163,175,0.7);">
+                <i class="fas fa-terminal"></i>
+              </button>
+            </div>
+            <button id="clearConsoleButton"
+              class="py-2 px-3 rounded flex items-center justify-center"
+              title="Clear console"
+              style="background-color: var(--tertiary-bg); border: 1px solid rgba(232, 61, 82, 0.5); color: rgba(232, 61, 82, 0.9);">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
         </div>
-        <button id="clearPacketLogButton" 
-          class="py-2 px-3 rounded flex items-center justify-center" 
-          title="Clear packet logs"
-          style="background-color: var(--tertiary-bg); border: 1px solid rgba(232, 61, 82, 0.5); color: rgba(232, 61, 82, 0.9);">
-          <i class="fas fa-trash-alt"></i>
-        </button>
       </div>
     </footer>
   </div>
 
 
   <!-- Auto complete -->
-  <script src="app://assets/javascript/jquery-ui.js"></script>
-  <script src="app://assets/javascript/popper.min.js"></script>
+  <script src="app://assets/scripts/jquery-ui.js"></script>
+  <script src="app://assets/scripts/popper.min.js"></script>
 
   <!-- Jam -->
   <script src="index.js"></script>
@@ -295,52 +343,72 @@
       0%,100% { transform: scale(1); }
       50%  { transform: scale(1.25); }
     }
-    /* Sidebar section title and chevron consistency */
-    .sidebar-section-title {
-      font-size: 0.75rem; /* text-xs */
-      font-weight: 600;   /* font-semibold */
-      color: #9ca3af;     /* text-gray-400 */
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      line-height: 1.25rem;
-      margin-bottom: 0;
+    #consoleToggleBar:hover {
+      height: 8px;
+      background: var(--sidebar-hover) !important;
     }
-    .sidebar-chevron i {
-      font-size: 1rem !important;
-      vertical-align: middle;
-      /* Smooth chevron rotation animation */
-      transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      transform-origin: center;
-      display: inline-block;
+    #plugins > div:first-child button:hover,
+    #plugins > div:first-child .relative:hover > button {
+      background-color: rgba(255, 255, 255, 0.08);
     }
-    .collapsible-section {
-      /* Smooth content expansion/collapse animation */
-      transition: max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                  opacity 0.3s ease,
-                  padding 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      overflow: hidden;
-      max-height: 1000px; /* Large enough for expanded content */
+    #packet-logging > div:first-child button:hover,
+    #packet-logging > div:first-child .relative:hover > button {
+      background-color: rgba(255, 255, 255, 0.08);
     }
-    
-    .collapsible-section.collapsed {
-      max-height: 0 !important;
-      opacity: 0;
-      pointer-events: none;
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
+    #inlinePluginHeader button:hover {
+      background-color: rgba(255, 255, 255, 0.08);
     }
-    
-    /* Clear Button Styles */
-    #clearConsoleButton, #clearPacketLogButton {
+    #clearPacketLogButton:hover {
+      color: #e83d52 !important;
+      background-color: rgba(232, 61, 82, 0.1) !important;
+    }
+    #clearConsoleButton {
       transition: all 0.2s ease-in-out;
     }
-    
-    #clearConsoleButton:hover, #clearPacketLogButton:hover {
+    #consoleToggleButton:hover {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      color: white !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+    #clearConsoleButton:hover {
       background-color: #e83d52 !important;
       color: white !important;
       border-color: #e83d52 !important;
     }
+    #input:focus, #packetSearch:focus {
+      border-color: var(--theme-primary, #e83d52) !important;
+      box-shadow: 0 0 0 2px rgba(var(--theme-primary-rgb, 232, 61, 82), 0.15),
+                  0 0 12px rgba(var(--theme-primary-rgb, 232, 61, 82), 0.1) !important;
+    }
+    #input::placeholder, #packetSearch::placeholder {
+      color: rgba(156, 163, 175, 0.4);
+      font-size: 13px;
+    }
     
+    .tab-button.active {
+      background-color: rgba(156, 163, 175, 0.12) !important;
+      color: white !important;
+    }
+    .tab-button:not(.active) {
+      background-color: transparent !important;
+    }
+    .tab-button:not(.active):hover {
+      background-color: rgba(156, 163, 175, 0.06) !important;
+    }
+
+    #filterAllButton.active,
+    #filterIncomingButton.active,
+    #filterOutgoingButton.active {
+      background-color: var(--sidebar-hover, #2b2b40);
+      color: white;
+      font-weight: 600;
+    }
+    #filterAllButton:not(.active):hover,
+    #filterIncomingButton:not(.active):hover,
+    #filterOutgoingButton:not(.active):hover {
+      background-color: rgba(156, 163, 175, 0.08);
+    }
+
     /* Connection Status Styles - Footer based */
     #connection-status {
       transition: all 0.3s ease;
@@ -403,66 +471,6 @@
     @keyframes messageIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* Enhanced Scrollbar Styling for Console Tab */
-    #messages {
-      scrollbar-width: thin;
-      scrollbar-color: rgba(232, 61, 82, 0.8) rgba(18, 18, 18, 0.5);
-      scrollbar-color: rgba(var(--theme-primary-rgb), 0.8) rgba(18, 18, 18, 0.5);
-    }
-    
-    #messages::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    
-    #messages::-webkit-scrollbar-track {
-      background: rgba(18, 18, 18, 0.5);
-      border-radius: 8px;
-    }
-    
-    #messages::-webkit-scrollbar-thumb {
-      background: rgba(232, 61, 82, 0.8);
-      background: rgba(var(--theme-primary-rgb), 0.8);
-      border-radius: 8px;
-      transition: background 0.2s ease, filter 0.2s ease;
-    }
-    
-    #messages::-webkit-scrollbar-thumb:hover {
-      background: rgba(232, 61, 82, 1);
-      background: rgba(var(--theme-primary-rgb), 1);
-      filter: brightness(1.15);
-    }
-    
-    /* Enhanced Scrollbar Styling for Network Tab */
-    #message-log {
-      scrollbar-width: thin;
-      scrollbar-color: rgba(232, 61, 82, 0.8) rgba(18, 18, 18, 0.5);
-      scrollbar-color: rgba(var(--theme-primary-rgb), 0.8) rgba(18, 18, 18, 0.5);
-    }
-    
-    #message-log::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    
-    #message-log::-webkit-scrollbar-track {
-      background: rgba(18, 18, 18, 0.5);
-      border-radius: 8px;
-    }
-    
-    #message-log::-webkit-scrollbar-thumb {
-      background: rgba(232, 61, 82, 0.8);
-      background: rgba(var(--theme-primary-rgb), 0.8);
-      border-radius: 8px;
-      transition: background 0.2s ease, filter 0.2s ease;
-    }
-    
-    #message-log::-webkit-scrollbar-thumb:hover {
-      background: rgba(232, 61, 82, 1);
-      background: rgba(var(--theme-primary-rgb), 1);
-      filter: brightness(1.15);
     }
     
     /* Container that toggles between hidden and flex */
@@ -568,6 +576,13 @@
       animation: refresh-shimmer 1.6s ease-in-out infinite;
     }
 
+    #pluginsSectionContent {
+      overflow-x: hidden !important;
+    }
+    #pluginList {
+      overflow-x: hidden;
+    }
+
     .plugins-refreshing #pluginList {
       transition: all 0.4s ease-out;
     }
@@ -590,51 +605,17 @@
       transform: scale(0.95);
     }
 
-    /* Disabled state during refresh */
     #refreshPluginsSection:disabled {
       opacity: 0.6;
       pointer-events: none;
     }
+
   </style>
   <script>
-    // REMOVED Vanilla JS fruit icon handler
     document.addEventListener("DOMContentLoaded", function () {
-      // Collapsible Navigation Section
-      const navToggle = document.getElementById("toggleNavSection");
-      const navContent = document.getElementById("navSectionContent");
-      if (navToggle && navContent) {
-        navToggle.addEventListener("click", function () {
-          navContent.classList.toggle("collapsed");
-          const icon = navToggle.querySelector("i");
-          // Use smooth CSS transform instead of class switching
-          if (navContent.classList.contains("collapsed")) {
-            icon.style.transform = "rotate(180deg)";
-          } else {
-            icon.style.transform = "rotate(0deg)";
-          }
-        });
-      }
-
-      // Collapsible Plugins Section
-      const pluginsToggle = document.getElementById("togglePluginsSection");
-      const pluginsContent = document.getElementById("pluginsSectionContent");
-      if (pluginsToggle && pluginsContent) {
-        pluginsToggle.addEventListener("click", function () {
-          pluginsContent.classList.toggle("collapsed");
-          const icon = pluginsToggle.querySelector("i");
-          // Use smooth CSS transform instead of class switching
-          if (pluginsContent.classList.contains("collapsed")) {
-            icon.style.transform = "rotate(180deg)";
-          } else {
-            icon.style.transform = "rotate(0deg)";
-          }
-        });
-      }
-      // Plugins refresh button
-      const pluginsRefresh = document.getElementById("refreshPluginsSection");
+      var pluginsRefresh = document.getElementById("refreshPluginsSection");
       if (pluginsRefresh) {
         pluginsRefresh.addEventListener("click", function () {
-          // Just call refresh - let the dispatch method handle animations
           if (window.jam && window.jam.application && window.jam.application.dispatch && typeof window.jam.application.dispatch.refresh === "function") {
             window.jam.application.dispatch.refresh();
           } else if (typeof jam !== "undefined" && jam.application && jam.application.dispatch && typeof jam.application.dispatch.refresh === "function") {
@@ -642,6 +623,326 @@
           }
         });
       }
+
+      var openUserPluginsBtn = document.getElementById("openUserPluginsDirBtn");
+      if (openUserPluginsBtn) {
+        openUserPluginsBtn.addEventListener("click", async function () {
+          try {
+            const { ipcRenderer } = require('electron');
+            const userPluginsPath = await ipcRenderer.invoke('get-user-plugins-path');
+            if (userPluginsPath) {
+              ipcRenderer.send('open-directory', userPluginsPath);
+            }
+          } catch (_) {}
+        });
+      }
+
+      var hideGameToggle = document.getElementById("hideGamePluginsToggle");
+      if (hideGameToggle) {
+        var updateGameToggleStyle = function () {
+          try {
+            var app = window.jam && window.jam.application;
+            if (!app || !app.settings || !app.settings._isLoaded) return;
+            var hidden = app.settings.get('ui.hideGamePlugins', false);
+            hideGameToggle.style.opacity = hidden ? '0.4' : '1';
+            hideGameToggle.title = hidden ? 'Show Game Plugins' : 'Hide Game Plugins';
+          } catch (_) {}
+        };
+
+        hideGameToggle.addEventListener("click", function () {
+          try {
+            var app = window.jam && window.jam.application;
+            if (!app || !app.settings || !app.settings._isLoaded) return;
+            var current = app.settings.get('ui.hideGamePlugins', false);
+            app.settings.update('ui.hideGamePlugins', !current);
+            if (app.pluginUIManager) app.pluginUIManager.reorderPluginList();
+            updateGameToggleStyle();
+          } catch (_) {}
+        });
+
+        setTimeout(updateGameToggleStyle, 3000);
+      }
+
+      var sortBtn = document.getElementById("pluginSortBtn");
+      var sortLabel = document.getElementById("pluginSortLabel");
+      if (sortBtn) {
+        sortBtn.addEventListener("click", function () {
+          try {
+            var app = window.jam && window.jam.application;
+            if (!app || !app.pluginUIManager) return;
+            var newMode = app.pluginUIManager.cycleSortMode();
+            var labels = { type: 'By Type', alphabetical: 'A-Z' };
+            var titleLabels = { type: 'Sort: By Type', alphabetical: 'Sort: A-Z' };
+            sortBtn.title = titleLabels[newMode] || 'Sort: By Type';
+            if (sortLabel) sortLabel.textContent = labels[newMode] || 'By Type';
+          } catch (_) {}
+        });
+      }
+
+      var showHiddenBtn = document.getElementById("showHiddenPluginsBtn");
+      if (showHiddenBtn) {
+        showHiddenBtn.addEventListener("click", function () {
+          try {
+            var app = window.jam && window.jam.application;
+            if (!app || !app.pluginUIManager) return;
+            app.pluginUIManager.showHiddenPluginsOverlay();
+          } catch (_) {}
+        });
+      }
+
+      function showPopover(el) {
+        el.style.display = ''
+        el.style.opacity = '0'
+        el.style.transform = 'translateY(-6px) scale(0.96)'
+        requestAnimationFrame(() => {
+          el.style.transition = 'opacity 0.2s ease, transform 0.2s ease'
+          el.style.opacity = '1'
+          el.style.transform = 'translateY(0) scale(1)'
+        })
+      }
+      function hidePopover(el) {
+        if (el.style.display === 'none') return
+        el.style.transition = 'opacity 0.15s ease, transform 0.15s ease'
+        el.style.opacity = '0'
+        el.style.transform = 'translateY(-6px) scale(0.96)'
+        setTimeout(() => { el.style.display = 'none' }, 150)
+      }
+      function isPopoverVisible(el) {
+        return el.style.display !== 'none'
+      }
+      function closeAllPopovers() {
+        document.querySelectorAll('.popover-panel').forEach(el => hidePopover(el))
+      }
+      window._closeAllPopovers = closeAllPopovers
+
+      var pluginSettingsBtn = document.getElementById("pluginSettingsBtn");
+      var pluginSettingsPopover = document.getElementById("pluginSettingsPopover");
+      var pluginRefreshSelect = document.getElementById("pluginRefreshBehaviorPopover");
+      var pluginDisplayModeSelect = document.getElementById("pluginDefaultDisplayMode");
+      if (pluginSettingsBtn && pluginSettingsPopover) {
+        pluginSettingsBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (isPopoverVisible(pluginSettingsPopover)) {
+            hidePopover(pluginSettingsPopover);
+          } else {
+            showPopover(pluginSettingsPopover);
+            try {
+              var app = window.jam && window.jam.application;
+              if (app && app.settings && app.settings.get) {
+                var val = app.settings.get('plugins.refreshBehavior', 'ask');
+                if (pluginRefreshSelect) pluginRefreshSelect.value = val;
+                var displayMode = app.settings.get('plugins.defaultDisplayMode', 'inline');
+                if (pluginDisplayModeSelect) pluginDisplayModeSelect.value = displayMode;
+              }
+            } catch (_) {}
+          }
+        });
+        document.addEventListener("click", function (e) {
+          if (!pluginSettingsBtn.contains(e.target) && !pluginSettingsPopover.contains(e.target)) {
+            hidePopover(pluginSettingsPopover);
+          }
+        });
+        if (pluginRefreshSelect) {
+          pluginRefreshSelect.addEventListener("change", function () {
+            try {
+              var app = window.jam && window.jam.application;
+              if (app && app.settings && app.settings.update) {
+                app.settings.update('plugins.refreshBehavior', pluginRefreshSelect.value);
+              }
+            } catch (_) {}
+          });
+        }
+        if (pluginDisplayModeSelect) {
+          pluginDisplayModeSelect.addEventListener("change", function () {
+            try {
+              var app = window.jam && window.jam.application;
+              if (app && app.settings && app.settings.update) {
+                app.settings.update('plugins.defaultDisplayMode', pluginDisplayModeSelect.value);
+              }
+            } catch (_) {}
+          });
+        }
+      }
+
+      var netSettingsBtn = document.getElementById('networkSettingsBtn');
+      var netSettingsPopover = document.getElementById('networkSettingsPopover');
+      function getFilterManager() {
+        return window._packetFilterManager || null;
+      }
+
+      function renderNetFilterList() {
+        var list = document.getElementById('netSettingsFilterList');
+        var clearBtn = document.getElementById('netSettingsFilterClearAll');
+        if (!list) return;
+        list.innerHTML = '';
+        var mgr = getFilterManager();
+        var filters = mgr ? mgr.filters : [];
+        filters.forEach(function(pattern, idx) {
+          var item = document.createElement('div');
+          item.className = 'flex items-center justify-between rounded px-2 py-1';
+          item.style.background = 'rgba(255,255,255,0.04)';
+          item.style.overflow = 'hidden';
+          var label = document.createElement('span');
+          label.className = 'text-xs text-text-primary';
+          label.style.overflow = 'hidden';
+          label.style.textOverflow = 'ellipsis';
+          label.style.whiteSpace = 'nowrap';
+          label.style.minWidth = '0';
+          label.style.flex = '1';
+          label.textContent = pattern;
+          label.title = pattern;
+          var remove = document.createElement('button');
+          remove.className = 'text-gray-500 hover:text-error-red ml-2 flex-shrink-0';
+          remove.style.fontSize = '10px';
+          remove.innerHTML = '<i class="fas fa-times"></i>';
+          remove.addEventListener('click', function() {
+            if (mgr) mgr.removeFilter(idx);
+            renderNetFilterList();
+          });
+          item.appendChild(label);
+          item.appendChild(remove);
+          list.appendChild(item);
+        });
+        if (clearBtn) clearBtn.style.display = filters.length > 0 ? 'block' : 'none';
+      }
+
+      function applyNetDisplaySettings(fontSize, inColor, outColor) {
+        var log = document.getElementById('message-log');
+        if (log && fontSize) log.style.fontSize = fontSize + 'px';
+        if (inColor) {
+          document.body.style.setProperty('--packet-incoming-color', inColor);
+          var inIcon = document.querySelector('#filterIncomingButton i');
+          if (inIcon) inIcon.style.color = inColor;
+          var inCount = document.getElementById('incomingCount');
+          if (inCount) inCount.style.color = inColor;
+        }
+        if (outColor) {
+          document.body.style.setProperty('--packet-outgoing-color', outColor);
+          var outIcon = document.querySelector('#filterOutgoingButton i');
+          if (outIcon) outIcon.style.color = outColor;
+          var outCount = document.getElementById('outgoingCount');
+          if (outCount) outCount.style.color = outColor;
+        }
+      }
+
+      if (netSettingsBtn && netSettingsPopover) {
+        netSettingsPopover.style.position = 'fixed';
+        netSettingsBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (isPopoverVisible(netSettingsPopover)) {
+            hidePopover(netSettingsPopover);
+          } else {
+            var rect = netSettingsBtn.getBoundingClientRect();
+            netSettingsPopover.style.top = (rect.bottom + 6) + 'px';
+            netSettingsPopover.style.right = (window.innerWidth - rect.right) + 'px';
+            netSettingsPopover.style.left = 'auto';
+            showPopover(netSettingsPopover);
+            try {
+              var app = window.jam && window.jam.application;
+              if (app && app.settings && app.settings.get) {
+                document.getElementById('netSettingsConsoleLimit').value = app.settings.get('logs.consoleLimit', 1000);
+                document.getElementById('netSettingsNetworkLimit').value = app.settings.get('logs.networkLimit', 1000);
+                var fs = app.settings.get('logs.packetFontSize', 12);
+                document.getElementById('netSettingsFontSize').value = String(fs);
+                document.getElementById('netSettingsIncomingColor').value = app.settings.get('logs.incomingColor', '#10b981');
+                document.getElementById('netSettingsOutgoingColor').value = app.settings.get('logs.outgoingColor', '#eab308');
+                renderNetFilterList();
+              }
+            } catch (_) {}
+          }
+        });
+
+        document.addEventListener('click', function(e) {
+          if (!netSettingsBtn.contains(e.target) && !netSettingsPopover.contains(e.target)) {
+            hidePopover(netSettingsPopover);
+          }
+        });
+
+        ['netSettingsConsoleLimit', 'netSettingsNetworkLimit'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          el.addEventListener('change', function() {
+            var key = id === 'netSettingsConsoleLimit' ? 'logs.consoleLimit' : 'logs.networkLimit';
+            var val = Math.max(100, Math.min(10000, parseInt(el.value) || 1000));
+            el.value = val;
+            try {
+              var app = window.jam && window.jam.application;
+              if (app && app.settings && app.settings.update) app.settings.update(key, val);
+            } catch (_) {}
+          });
+        });
+
+        var netFontSizeEl = document.getElementById('netSettingsFontSize');
+        if (netFontSizeEl) {
+          netFontSizeEl.addEventListener('change', function() {
+            var val = parseInt(this.value) || 12;
+            applyNetDisplaySettings(val, null, null);
+            try {
+              var app = window.jam && window.jam.application;
+              if (app && app.settings && app.settings.update) app.settings.update('logs.packetFontSize', val);
+            } catch (_) {}
+          });
+        }
+
+        var netInColorEl = document.getElementById('netSettingsIncomingColor');
+        if (netInColorEl) {
+          netInColorEl.addEventListener('input', function() {
+            applyNetDisplaySettings(null, this.value, null);
+            try {
+              var app = window.jam && window.jam.application;
+              if (app && app.settings && app.settings.update) app.settings.update('logs.incomingColor', this.value);
+            } catch (_) {}
+          });
+        }
+
+        var netOutColorEl = document.getElementById('netSettingsOutgoingColor');
+        if (netOutColorEl) {
+          netOutColorEl.addEventListener('input', function() {
+            applyNetDisplaySettings(null, null, this.value);
+            try {
+              var app = window.jam && window.jam.application;
+              if (app && app.settings && app.settings.update) app.settings.update('logs.outgoingColor', this.value);
+            } catch (_) {}
+          });
+        }
+
+        var netFilterAddBtn = document.getElementById('netSettingsFilterAdd');
+        var netFilterInput = document.getElementById('netSettingsFilterInput');
+        var netFilterClearAll = document.getElementById('netSettingsFilterClearAll');
+        if (netFilterAddBtn && netFilterInput) {
+          function addNetFilter() {
+            var val = netFilterInput.value.trim();
+            if (!val) return;
+            var mgr = getFilterManager();
+            if (mgr) mgr.addFilter(val);
+            netFilterInput.value = '';
+            renderNetFilterList();
+          }
+          netFilterAddBtn.addEventListener('click', addNetFilter);
+          netFilterInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') addNetFilter();
+          });
+        }
+        if (netFilterClearAll) {
+          netFilterClearAll.addEventListener('click', function() {
+            var mgr = getFilterManager();
+            if (mgr) mgr.clearAll();
+            renderNetFilterList();
+          });
+        }
+      }
+
+      setTimeout(function() {
+        try {
+          var app = window.jam && window.jam.application;
+          if (app && app.settings && app.settings.get) {
+            var fs = app.settings.get('logs.packetFontSize', 12);
+            var ic = app.settings.get('logs.incomingColor', '#10b981');
+            var oc = app.settings.get('logs.outgoingColor', '#eab308');
+            applyNetDisplaySettings(fs, ic, oc);
+          }
+        } catch (_) {}
+      }, 1000);
     });
   </script>
 
@@ -668,15 +969,12 @@
       // Initialize with default strawberry jam color
       updateThemeColors('#e83d52');
       
-      // Initialize active tab indicator on page load
       const $activeTab = $('.tab-button.active');
       const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim() || '#e83d52';
       if ($activeTab.length) {
-        $activeTab.find('.active-indicator').css({
-          'transform': 'scaleX(1)',
-          'background-color': themeColor,
-          'box-shadow': `0 0 6px 0 ${themeColor}`
-        });
+        const $indicator = $activeTab.find('.active-indicator');
+        $indicator.css({ 'background-color': themeColor, 'box-shadow': `0 0 6px 0 ${themeColor}` });
+        setTimeout(() => { $indicator.css('transform', 'scaleX(1)'); }, 100);
       }
       
       // Function to apply theme to all synchronized elements
@@ -693,27 +991,16 @@
         
         // Create CSS rules for all themed elements
         styleEl.textContent = `
-          /* Chevron and header link button hover colors */
-          .sidebar-chevron:hover {
-            color: ${color} !important;
-          }
-          
-          /* Launch button theme styling */
-          #playButton .fa-external-link-alt {
-            color: ${color} !important;
-          }
-          
-          /* Theme icons */
           .theme-icon {
             color: ${color} !important;
           }
-          
-          /* Menu button hover */
-          #menuButton:hover {
+          #playButton:hover .theme-icon {
             color: ${color} !important;
           }
-          
-          /* Tab indicators */
+          #consoleBadge {
+            background: ${color} !important;
+          }
+
           .tab-button.active .active-indicator {
             background-color: ${color} !important;
             box-shadow: 0 0 6px 0 ${color} !important;
@@ -751,14 +1038,12 @@
             border-color: ${color} !important;
           }
           
-          /* Fork link hover color */
-          #forkLink:hover {
-            color: #22c55e !important;
-          }
-          
-          /* Version text theme color */
           #appVersionDisplay {
             color: ${color} !important;
+          }
+          #playGameBtn svg {
+            color: ${color} !important;
+            transition: color 0.2s ease;
           }
         `;
         
@@ -768,8 +1053,6 @@
           'box-shadow': `0 0 6px 0 ${color}`
         });
         
-        // Update Launch button external link icon color
-        $('#playButton .fa-external-link-alt').css('color', color);
         
         // Update version text colors
         $('#appVersionDisplay').css('color', color);
@@ -800,8 +1083,17 @@
         
         const fruitPath = customFruit === 'strawberry-jam.png' ? 'app://assets/images/strawberry-jam.png' : `app://assets/images/${customFruit}`;
         $fruitIcon.attr('src', fruitPath);
-        const filter = hexToCssFilter(color);
-        $fruitIcon.css('filter', filter);
+        let applyColorToFruit = true;
+        if (window.jam && window.jam.ipcRenderer) {
+          applyColorToFruit = await window.jam.ipcRenderer.invoke('get-setting', 'ui.applyColorToFruitIcon').catch(() => true);
+          if (applyColorToFruit === undefined || applyColorToFruit === null) applyColorToFruit = true;
+        }
+        if (applyColorToFruit) {
+          const filter = hexToCssFilter(color);
+          $fruitIcon.css('filter', filter);
+        } else {
+          $fruitIcon.css('filter', 'none');
+        }
         
         updateThemeColors(color);
         applySynchronizedElements(color);
@@ -1018,7 +1310,42 @@
         
         // Start checking for jam to be ready
         checkJamReady();
-        
+
+        const loadNetDisplaySettings = () => {
+          if (window.jam && window.jam.ipcRenderer) {
+            Promise.all([
+              window.jam.ipcRenderer.invoke('get-setting', 'logs.packetFontSize'),
+              window.jam.ipcRenderer.invoke('get-setting', 'logs.incomingColor'),
+              window.jam.ipcRenderer.invoke('get-setting', 'logs.outgoingColor')
+            ]).then(function(results) {
+              var fs = results[0], inC = results[1], outC = results[2];
+              if (fs) {
+                var log = document.getElementById('message-log');
+                if (log) log.style.fontSize = fs + 'px';
+                var sel = document.getElementById('netSettingsFontSize');
+                if (sel) sel.value = String(fs);
+              }
+              if (inC) {
+                document.body.style.setProperty('--packet-incoming-color', inC);
+                var inIcon = document.querySelector('#filterIncomingButton i');
+                if (inIcon) inIcon.style.color = inC;
+                var inCount = document.getElementById('incomingCount');
+                if (inCount) inCount.style.color = inC;
+              }
+              if (outC) {
+                document.body.style.setProperty('--packet-outgoing-color', outC);
+                var outIcon = document.querySelector('#filterOutgoingButton i');
+                if (outIcon) outIcon.style.color = outC;
+                var outCount = document.getElementById('outgoingCount');
+                if (outCount) outCount.style.color = outC;
+              }
+            }).catch(function() {});
+          } else {
+            setTimeout(loadNetDisplaySettings, 100);
+          }
+        };
+        loadNetDisplaySettings();
+
         // Force pointer cursor with inline style as a backup
         $fruitIcon.css('cursor', 'pointer');
         
@@ -1051,88 +1378,70 @@
         });
       }
       
-      const $menuButton = $('#menuButton')
-      const $sidebar = $('#sidebar')
-      const $mainContent = $('#mainContent')
-      const $menuIcon = $('#menuIcon')
       const $commandInput = $('#input')
       const $packetSearch = $('#packetSearch')
       const $messageLog = $('#message-log')
-      const $commandContainer = $('#commandContainer')
-      const $searchContainer = $('#searchContainer')
 
-      let currentFilter = 'all'
-      let currentSearchQuery = ''
-
-      // Ensure initial container states
-      $commandContainer.removeClass('hidden')
-      $searchContainer.addClass('hidden')
-
-      function toggleSidebar() {
-        const isOpen = !$sidebar.hasClass('-translate-x-full')
-        $sidebar.toggleClass('-translate-x-full', isOpen)
-        $mainContent.toggleClass('ml-64', !isOpen)
-        $menuIcon.toggleClass('fa-bars-staggered', !isOpen).toggleClass('fa-bars', isOpen)
-      }
-
-      $menuButton.on('click', toggleSidebar)
-      
-      // Handle active state for sidebar navigation items
-      $('#sidebar a.flex').on('click', function() {
-        // Remove active class from all sidebar navigation items
-        $('#sidebar a.flex').removeClass('active');
-        // Add active class to the clicked item
-        $(this).addClass('active');
-        
-        // Apply theme color to the active indicator
-        const themeColor = $('body').css('--theme-primary') || '#e83d52';
-        // This will activate the ::after pseudo-element via CSS
-      });
+      $('#playGameBtn').on('click', function(e) {
+        e.preventDefault()
+        const btn = this
+        const ripple = document.createElement('span')
+        const size = Math.max(btn.offsetWidth, btn.offsetHeight)
+        Object.assign(ripple.style, {
+          position: 'absolute',
+          width: size + 'px',
+          height: size + 'px',
+          borderRadius: '50%',
+          background: 'var(--theme-primary, #e83d52)',
+          opacity: '0.3',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) scale(0)',
+          pointerEvents: 'none'
+        })
+        btn.style.position = 'relative'
+        btn.style.overflow = 'hidden'
+        btn.appendChild(ripple)
+        requestAnimationFrame(() => {
+          ripple.style.transition = 'transform 0.5s ease-out, opacity 0.5s ease-out'
+          ripple.style.transform = 'translate(-50%, -50%) scale(2.5)'
+          ripple.style.opacity = '0'
+        })
+        btn.style.transition = 'transform 0.15s ease'
+        btn.style.transform = 'scale(0.93)'
+        setTimeout(() => {
+          btn.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          btn.style.transform = 'scale(1)'
+        }, 150)
+        setTimeout(() => { ripple.remove() }, 600)
+        if (window.jam && window.jam.application) jam.application.openAnimalJam()
+      })
 
       function applyFilter() {
-        const query = currentSearchQuery
-        const $packets = $messageLog.children('div')
-        $packets.each(function () {
-          const $this = $(this)
-          const isIncoming = $this.find('.fa-arrow-down').length > 0
-          const isOutgoing = $this.find('.fa-arrow-up').length > 0
-          const directionMatch = (
-            currentFilter === 'all' ||
-            (currentFilter === 'incoming' && isIncoming) ||
-            (currentFilter === 'outgoing' && isOutgoing)
-          )
-          const textMatch = query === '' || $this.text().toLowerCase().includes(query)
-          $this.toggle(directionMatch && textMatch)
-        })
+        if (window._packetFilterManager) window._packetFilterManager.applyToDOM()
       }
 
       function openTab(tabId) {
         if (tabId === 'packet-logging') {
-          $('#commandContainer').addClass('hidden')
-          $('#searchContainer').removeClass('hidden')
           setTimeout(applyFilter, 0)
-        } else {
-          $('#commandContainer').removeClass('hidden')
-          $('#searchContainer').addClass('hidden')
         }
 
         $('.tab-content').removeClass('active').addClass('hidden')
         $(`#${tabId}`).removeClass('hidden').addClass('active')
-        
-        // Update tab buttons
+
         $('.tab-button').removeClass('active')
         const $activeTab = $(`.tab-button[data-tab="${tabId}"]`).addClass('active')
-        
-        // Reset all indicators, then style the active one with theme color
+
         $('.active-indicator').css({
           'transform': 'scaleX(0)',
           'background-color': '',
           'box-shadow': ''
         })
-        
-        // Get current theme color and apply to the active tab indicator
+
+        const $newIndicator = $activeTab.find('.active-indicator')
+        $newIndicator[0].offsetWidth
         const themeColor = $('body').css('--theme-primary') || '#e83d52'
-        $activeTab.find('.active-indicator').css({
+        $newIndicator.css({
           'transform': 'scaleX(1)',
           'background-color': themeColor,
           'box-shadow': `0 0 6px 0 ${themeColor}`
@@ -1144,23 +1453,209 @@
       })
 
       $packetSearch.on('input', function () {
-        currentSearchQuery = ($(this).val() || '').toLowerCase()
-        applyFilter()
+        if (window._packetFilterManager) window._packetFilterManager.setSearchQuery($(this).val() || '')
       })
 
       $('#filterAllButton, #filterIncomingButton, #filterOutgoingButton').on('click', function () {
         $('#filterAllButton, #filterIncomingButton, #filterOutgoingButton').removeClass('active')
         $(this).addClass('active')
 
-        if (this.id === 'filterAllButton') {
-          currentFilter = 'all'
-        } else if (this.id === 'filterIncomingButton') {
-          currentFilter = 'incoming'
-        } else if (this.id === 'filterOutgoingButton') {
-          currentFilter = 'outgoing'
+        let dir = 'all'
+        if (this.id === 'filterIncomingButton') dir = 'incoming'
+        else if (this.id === 'filterOutgoingButton') dir = 'outgoing'
+
+        if (window._packetFilterManager) window._packetFilterManager.setDirectionFilter(dir)
+      })
+
+      let $activePacketMenu = null
+      let lastSelectedPacket = null
+
+      function getSelectedPackets() {
+        return $messageLog.children('[data-packet].packet-selected')
+      }
+
+      function clearSelection() {
+        $messageLog.children('.packet-selected').removeClass('packet-selected')
+        lastSelectedPacket = null
+      }
+
+      function selectPacket($packet) {
+        $packet.addClass('packet-selected')
+        lastSelectedPacket = $packet[0]
+      }
+
+      function deselectPacket($packet) {
+        $packet.removeClass('packet-selected')
+        if (lastSelectedPacket === $packet[0]) lastSelectedPacket = null
+      }
+
+      function selectRange($from, $to) {
+        const $all = $messageLog.children('[data-packet]:visible')
+        const fromIdx = $all.index($from)
+        const toIdx = $all.index($to)
+        if (fromIdx === -1 || toIdx === -1) return
+        const start = Math.min(fromIdx, toIdx)
+        const end = Math.max(fromIdx, toIdx)
+        $all.slice(start, end + 1).addClass('packet-selected')
+      }
+
+      $messageLog.on('click', '[data-packet]', function(e) {
+        if ($(e.target).closest('button').length) return
+        const $packet = $(this)
+
+        if (e.shiftKey && lastSelectedPacket) {
+          e.preventDefault()
+          selectRange($(lastSelectedPacket), $packet)
+          lastSelectedPacket = $packet[0]
+        } else if (e.ctrlKey || e.metaKey) {
+          if ($packet.hasClass('packet-selected')) {
+            deselectPacket($packet)
+          } else {
+            selectPacket($packet)
+          }
+        } else {
+          const wasOnlySelected = $packet.hasClass('packet-selected') && getSelectedPackets().length === 1
+          clearSelection()
+          if (!wasOnlySelected) {
+            selectPacket($packet)
+          }
+        }
+      })
+
+      function deletePackets($packets) {
+        let removedIn = 0
+        let removedOut = 0
+        $packets.each(function() {
+          if ($(this).find('.fa-arrow-down').length > 0) removedIn++
+          else if ($(this).find('.fa-arrow-up').length > 0) removedOut++
+        })
+        const total = removedIn + removedOut
+        $packets.remove()
+        const $total = $('#totalCount')
+        const $in = $('#incomingCount')
+        const $out = $('#outgoingCount')
+        $total.text(Math.max(0, parseInt($total.text() || '0') - total))
+        $in.text(Math.max(0, parseInt($in.text() || '0') - removedIn))
+        $out.text(Math.max(0, parseInt($out.text() || '0') - removedOut))
+        if (window._consoleManager) {
+          window._consoleManager.setPacketLogCount(Math.max(0, window._consoleManager.getPacketLogCount() - total))
+        }
+        lastSelectedPacket = null
+      }
+
+      function removePacketMenu() {
+        if ($activePacketMenu) {
+          $activePacketMenu.remove()
+          $activePacketMenu = null
+        }
+      }
+
+      function showPacketContextMenu(x, y, $packet) {
+        removePacketMenu()
+
+        const $selected = getSelectedPackets()
+        const isMulti = $selected.length > 1
+        const msgs = []
+        const $targets = isMulti ? $selected : $packet
+        $targets.each(function() { msgs.push($(this).attr('data-message') || '') })
+        const label = isMulti ? $selected.length + ' packets' : ''
+
+        const $menu = $('<div>').addClass('plugin-context-menu')
+
+        const menuItems = [
+          {
+            label: '<i class="fas fa-copy" style="width:14px;"></i> Copy' + (isMulti ? ' ' + label : ''),
+            action: () => { navigator.clipboard.writeText(msgs.join('\n')).catch(() => {}) }
+          },
+          {
+            label: '<i class="fas fa-ban" style="width:14px;"></i> Filter Out' + (isMulti ? ' ' + label : ''),
+            action: () => {
+              if (!window._packetFilterManager) return
+              const unique = [...new Set(msgs)]
+              unique.forEach(m => window._packetFilterManager.addFilter(m))
+            }
+          },
+          { separator: true },
+          {
+            label: '<i class="fas fa-trash-alt" style="width:14px;"></i> Delete' + (isMulti ? ' ' + label : ''),
+            danger: true,
+            action: () => { deletePackets($targets) }
+          }
+        ]
+
+        if (!isMulti) {
+          menuItems.push({
+            label: '<i class="fas fa-paper-plane" style="width:14px;"></i> Open in Packet Spammer',
+            action: () => {
+              navigator.clipboard.writeText(msgs[0]).catch(() => {})
+              window._pendingSpammerPacket = msgs[0]
+              try {
+                if (typeof openTab === 'function') openTab('plugins')
+                var app = window.jam && window.jam.application
+                if (app && app.inlinePluginManager) {
+                  app.inlinePluginManager.open('Packet Spammer')
+                } else if (app && app.dispatch) {
+                  app.dispatch.open('Packet Spammer')
+                }
+              } catch (_) {}
+            }
+          })
         }
 
-        applyFilter()
+        menuItems.forEach(item => {
+          if (item.separator) {
+            $menu.append($('<div>').addClass('plugin-context-menu-separator'))
+            return
+          }
+          const $item = $('<div>').addClass('plugin-context-menu-item').html(item.label)
+          if (item.danger) $item.css('color', 'var(--error-red, #ef4444)')
+          $item.on('click', () => {
+            item.action()
+            removePacketMenu()
+          })
+          $menu.append($item)
+        })
+
+        const vw = window.innerWidth
+        const vh = window.innerHeight
+        $menu.css({ left: x, top: y, position: 'fixed' })
+        $('body').append($menu)
+        $activePacketMenu = $menu
+
+        const rect = $menu[0].getBoundingClientRect()
+        if (rect.right > vw) $menu.css('left', vw - rect.width - 4)
+        if (rect.bottom > vh) $menu.css('top', vh - rect.height - 4)
+      }
+
+      $messageLog.on('contextmenu', function(e) {
+        e.preventDefault()
+        const $packet = $(e.target).closest('[data-packet]')
+        if (!$packet.length) return
+        if (!$packet.hasClass('packet-selected')) {
+          clearSelection()
+          selectPacket($packet)
+        }
+        showPacketContextMenu(e.clientX, e.clientY, $packet)
+      })
+
+      $(document).on('click', function(e) {
+        if ($activePacketMenu && !$activePacketMenu.is(e.target) && !$activePacketMenu.has(e.target).length) {
+          removePacketMenu()
+        }
+      })
+
+      $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+          removePacketMenu()
+          clearSelection()
+        }
+        if ((e.key === 'Delete' || e.key === 'Backspace') && !$(e.target).is('input, textarea')) {
+          const $selected = getSelectedPackets()
+          if ($selected.length > 0) {
+            e.preventDefault()
+            deletePackets($selected)
+          }
+        }
       })
 
     window.applyFilter = applyFilter
@@ -1172,26 +1667,17 @@
     document.addEventListener('DOMContentLoaded', () => {
       const checkJamReady = () => {
         if (window.jam && window.jam.application) {
-          const settingsLink = document.getElementById('settingsLink');
-          if (settingsLink) {
-            settingsLink.addEventListener('click', (e) => {
+          const settingsBtn = document.getElementById('settingsHeaderBtn');
+          if (settingsBtn) {
+            settingsBtn.addEventListener('click', (e) => {
               e.preventDefault();
+              if (window._closeAllPopovers) window._closeAllPopovers()
               if (window.jam && window.jam.application && window.jam.application.openSettings) {
                 window.jam.application.openSettings();
               }
             });
           }
-          
-          const linksModalLink = document.getElementById('openLinksSection');
-          if (linksModalLink) {
-            linksModalLink.addEventListener('click', (e) => {
-              e.preventDefault();
-              if (window.jam && window.jam.application && window.jam.application.openLinksModal) {
-                window.jam.application.openLinksModal();
-              }
-            });
-          }
-          
+
           const pluginHubLink = document.getElementById('openPluginHubLink');
           if (pluginHubLink) {
             pluginHubLink.addEventListener('click', (e) => {

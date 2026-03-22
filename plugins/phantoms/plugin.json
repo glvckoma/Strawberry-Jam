@@ -2,7 +2,7 @@
   "name": "Return of the Phantoms",
   "version": "1.0.0",
   "description": "Farm ROTP and collect prizes!",
-  "author": "Nosmile x Glockoma",
+  "author": "Nosmile x glvckoma",
   "main": "index.js",
   "type": "game",
   "commands": [

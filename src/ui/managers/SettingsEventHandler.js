@@ -14,8 +14,14 @@ class SettingsEventHandler {
     }
 
     const self = this;
+
+    const $aboutVersion = $modal.find('#aboutVersionText');
+    if ($aboutVersion.length) {
+      ipcRenderer.invoke('get-app-version').then(v => $aboutVersion.text('v' + v)).catch(() => {})
+    }
+
     const $openOutputDirButton = $modal.find('#openOutputDirBtn');
-    const $openUserPluginsDirButton = $modal.find('#openUserPluginsDirBtn');
+
     const $leakCheckOutputDirInput = $modal.find('#leakCheckOutputDirInput');
     const $clearCacheButton = $modal.find('#clearCacheBtn');
     const $uninstallButton = $modal.find('#uninstallBtn');
@@ -308,6 +314,33 @@ class SettingsEventHandler {
 
     toggleCustomThemeVisibility();
 
+    const $applyColorToFruitToggle = $modal.find('#applyColorToFruitToggle');
+    if (app && app.settings) {
+      const applyColor = app.settings.get('ui.applyColorToFruitIcon', true);
+      $applyColorToFruitToggle.prop('checked', applyColor !== false);
+    }
+    $applyColorToFruitToggle.on('change', async function() {
+      if (window.jam && window.jam.ipcRenderer && app && app.settings) {
+        const isEnabled = $(this).is(':checked');
+        await app.settings.update('ui.applyColorToFruitIcon', isEnabled);
+        const $fruitIcon = $('#fruitIcon');
+        if (!isEnabled) {
+          $fruitIcon.css('filter', 'none');
+        } else if (window.applyCustomColorTheme || window.restoreFruitTheme) {
+          const customEnabled = app.settings.get('ui.customThemeEnabled', false);
+          if (customEnabled && window.applyCustomColorTheme) {
+            window.applyCustomColorTheme(
+              app.settings.get('ui.customThemeColor', '#e83d52'),
+              app.settings.get('ui.customThemeName', 'Custom Jam'),
+              app.settings.get('ui.customThemeFruit', 'strawberry.png')
+            );
+          } else if (window.restoreFruitTheme) {
+            window.restoreFruitTheme();
+          }
+        }
+      }
+    });
+
     $openOutputDirButton.on('click', async () => {
       try {
         const customOutputDir = await ipcRenderer.invoke('get-setting', 'plugins.usernameLogger.outputDir');
@@ -339,6 +372,7 @@ class SettingsEventHandler {
       }
     });
 
+    const $openUserPluginsDirButton = $modal.find('#openUserPluginsDirBtn');
     $openUserPluginsDirButton.on('click', async () => {
       try {
         const userPluginsPath = await ipcRenderer.invoke('get-user-plugins-path');

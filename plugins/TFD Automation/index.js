@@ -1294,19 +1294,24 @@ function saveWhitelists() {
     updateFilteringStatus();
 }
 
+const DEFAULT_CLOTHING_WHITELIST = [277, 278, 279, 280, 148, 283, 286, 386, 770, 342, 620, 138, 64, 719, 525, 285, 635, 1213, 1360, 1516, 1518]
+const DEFAULT_DEN_WHITELIST = [351, 4544, 112, 422, 387, 368, 385, 348, 335, 344, 359, 360, 362, 361, 533, 2152, 115, 89, 3, 155, 130, 143, 284, 292, 294, 2549, 65, 393, 265, 365, 137, 247, 380]
+
 function loadWhitelists() {
-    const loadList = (key, element) => {
+    const loadList = (key, element, defaults) => {
         const saved = localStorage.getItem(key);
         if (saved && element) {
             try {
                 element.value = JSON.parse(saved).join(', ');
             } catch (e) {
-                console.error(`[TFD Automation] Failed to load whitelist ${key}:`, e);
+                element.value = defaults.join(', ');
             }
+        } else if (element) {
+            element.value = defaults.join(', ');
         }
     };
-    loadList('tfd_clothing_whitelist', clothingWhitelist);
-    loadList('tfd_den_whitelist', denWhitelist);
+    loadList('tfd_clothing_whitelist', clothingWhitelist, DEFAULT_CLOTHING_WHITELIST);
+    loadList('tfd_den_whitelist', denWhitelist, DEFAULT_DEN_WHITELIST);
     updateFilteringStatus();
 }
 

@@ -1,0 +1,130 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to GitHub Releases'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CSS
+        run: npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify
+
+      - name: Pack client ASAR
+        run: |
+          npm install --prefix assets/client
+          if (Test-Path "assets/client/node_modules/strawberry-jam") { Remove-Item -Recurse -Force "assets/client/node_modules/strawberry-jam" }
+          npx asar pack assets/client assets/app-client.asar --unpack *.node
+        shell: pwsh
+
+      - name: Generate installer script
+        run: node scripts/generate-installer-script.js
+
+      - name: Build Windows installer
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx electron-builder build -w ${{ (github.event_name == 'push' || github.event.inputs.publish == 'true') && '-p always' || '' }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            build/*.exe
+            build/*.yml
+          retention-days: 30
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CSS
+        run: npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify
+
+      - name: Pack client ASAR
+        run: |
+          npm install --prefix assets/client
+          rm -rf assets/client/node_modules/strawberry-jam
+          npx asar pack assets/client assets/app-client.asar --unpack *.node
+
+      - name: Build macOS DMG
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx electron-builder build -m ${{ (github.event_name == 'push' || github.event.inputs.publish == 'true') && '-p always' || '' }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: |
+            build/*.dmg
+            build/*.yml
+          retention-days: 30
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CSS
+        run: npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify
+
+      - name: Pack client ASAR
+        run: |
+          npm install --prefix assets/client
+          rm -rf assets/client/node_modules/strawberry-jam
+          npx asar pack assets/client assets/app-client.asar --unpack *.node
+
+      - name: Build Linux packages
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx electron-builder build -l ${{ (github.event_name == 'push' || github.event.inputs.publish == 'true') && '-p always' || '' }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            build/*.AppImage
+            build/*.deb
+            build/*.yml
+          retention-days: 30

@@ -51,7 +51,7 @@ router.post('/api/aj-classic-close', (request, response) => {
  * Animal Jam files route.
  * @public
  */
-router.get(/^\/(\d{4})\/ajclient\.swf$/, (request, response) => FilesController.game(request, response))
-router.all('*', (request, response) => FilesController.index(request, response))
+router.get(/^\/(\d{4})\/ajclient\.swf$/, async (request, response) => FilesController.game(request, response))
+router.all('*', async (request, response) => FilesController.index(request, response))
 
 module.exports = router

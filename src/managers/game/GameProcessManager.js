@@ -1,19 +1,15 @@
 const { spawn } = require('child_process');
 const path = require('path');
-const os = require('os');
 const fs = require('fs');
 const { dialog, BrowserWindow, app } = require('electron');
 const processManager = require('../../utils/ProcessManager');
 const logManager = require('../../utils/LogManager');
 const { getDataPath } = require('../../Constants');
+const PlatformPaths = require('../../PlatformPaths');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const STRAWBERRY_JAM_CLASSIC_BASE_PATH = process.platform === 'win32'
-  ? path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'strawberry-jam-classic')
-  : process.platform === 'darwin'
-    ? path.join('/', 'Applications', 'Strawberry Jam Classic.app', 'Contents')
-    : undefined;
+const STRAWBERRY_JAM_CLASSIC_BASE_PATH = PlatformPaths.getStrawberryJamClassicBasePath();
 
 class GameProcessManager {
   constructor(electronInstance, gameTimeTracker, gameStartTimeRef, isGameTimeBeingTrackedRef) {
@@ -24,11 +20,7 @@ class GameProcessManager {
   }
 
   launchGameClient() {
-    const exePath = process.platform === 'win32'
-      ? path.join(STRAWBERRY_JAM_CLASSIC_BASE_PATH, 'AJ Classic.exe')
-      : process.platform === 'darwin'
-        ? path.join(STRAWBERRY_JAM_CLASSIC_BASE_PATH, 'MacOS', 'AJ Classic')
-        : undefined;
+    const exePath = PlatformPaths.getGameExecutablePath(STRAWBERRY_JAM_CLASSIC_BASE_PATH);
 
     if (!exePath || !fs.existsSync(exePath)) {
       logManager.error(`[GameProcessManager] Game client executable not found at: ${exePath}`);
@@ -102,22 +94,8 @@ class GameProcessManager {
   }
 
   launchAJClassic() {
-    const getAJClassicPath = () => {
-      if (process.platform === 'win32') {
-        return path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'aj-classic', 'AJ Classic.exe');
-      } else if (process.platform === 'darwin') {
-        return path.join('/', 'Applications', 'AJ Classic.app', 'Contents', 'MacOS', 'AJ Classic');
-      } else {
-        const possiblePaths = [
-          path.join(os.homedir(), '.local', 'share', 'aj-classic', 'AJ Classic'),
-          path.join('/opt', 'aj-classic', 'AJ Classic'),
-          path.join('/usr', 'local', 'bin', 'aj-classic')
-        ];
-        return possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
-      }
-    };
-
-    const exePath = getAJClassicPath();
+    const ajClassicBasePath = PlatformPaths.getAnimalJamClassicBasePath();
+    const exePath = PlatformPaths.getGameExecutablePath(ajClassicBasePath);
 
     if (!fs.existsSync(exePath)) {
       logManager.error(`[GameProcessManager] AJ Classic executable not found at: ${exePath}`);
@@ -155,9 +133,9 @@ class GameProcessManager {
     try {
       let processCount = 0;
 
-      if (process.platform === 'win32') {
-        const processNames = ['AJ Classic.exe'];
+      const processNames = PlatformPaths.getProcessNames();
 
+      if (PlatformPaths.platform === 'win32') {
         for (const processName of processNames) {
           try {
             const { stdout: listOutput } = await execAsync(`tasklist /FI "IMAGENAME eq ${processName}" /FO CSV | findstr /V "INFO:"`);
@@ -176,9 +154,7 @@ class GameProcessManager {
             }
           }
         }
-      } else if (process.platform === 'darwin') {
-        const processNames = ['AJ Classic'];
-
+      } else {
         for (const processName of processNames) {
           try {
             await execAsync(`pkill -f "${processName}"`);
@@ -188,21 +164,8 @@ class GameProcessManager {
 
             if (count > 0) {
               processCount += count;
-              logManager.log(`[GameProcessManager] Killed ${processName} processes`, 'main', logManager.logLevels.INFO);
             }
-          } catch (killError) {
-            if (!killError.message.includes('No matching processes')) {
-              logManager.warn(`[GameProcessManager] Failed to kill ${processName}: ${killError.message}`);
-            }
-          }
-        }
-      } else {
-        const processNames = ['aj-classic', 'AJ Classic'];
 
-        for (const processName of processNames) {
-          try {
-            await execAsync(`pkill -f "${processName}"`);
-            processCount++;
             logManager.log(`[GameProcessManager] Killed ${processName} processes`, 'main', logManager.logLevels.INFO);
           } catch (killError) {
             if (!killError.message.includes('No matching processes')) {

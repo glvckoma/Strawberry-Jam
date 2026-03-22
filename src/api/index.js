@@ -2,50 +2,25 @@ const { urlencoded, json } = require('body-parser')
 const express = require('express')
 
 const FilesController = require('./controllers/FilesController')
+const { API_SERVER_PORTS } = require('../Constants')
 
-/**
- * Routes
- */
 const ApiRouter = require('./routes')
 
-/**
- * Express instance
- */
 const app = express()
 
-/**
- * Fallback ports to try if the primary port is busy.
- * @type {number[]}
- */
-const FALLBACK_PORTS = [8080, 8081, 8082, 9080, 3000]
+const FALLBACK_PORTS = [...API_SERVER_PORTS]
 
-/**
- * The actual port the API server is listening on.
- * @type {?number}
- */
 let actualApiPort = null
 
-/**
- * Middleware
- */
 app.use(urlencoded({ extended: true }))
 app.use(json())
 
-/**
- * Routers
- */
 app.use('/', ApiRouter)
 
-/**
- * Initialize SWF backups on startup
- */
 FilesController.initializeSwf().catch(err => {
   console.error('[API Server] Critical error during SWF initialization:', err)
 })
 
-/**
- * Auto-detect available port and start server
- */
 async function startServer() {
   let lastError = null
 
@@ -56,10 +31,13 @@ async function startServer() {
         server = app.listen(port, '127.0.0.1', () => {
           actualApiPort = port
           console.log(`[API Server] Successfully started on port ${port}`)
-          
-          // Store reference for cleanup
+
           global.apiServer = server
-          
+
+          if (process.send) {
+            process.send({ type: 'api-port', port: port })
+          }
+
           resolve()
         })
 

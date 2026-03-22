@@ -5,136 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>TFD Automation</title>
-    <link rel="stylesheet" href="app://assets/css/style.css">
-    <link rel="stylesheet" href="app://assets/css/tailwind.css">
-    <link rel="stylesheet" href="app://assets/css/plugin-styles.css">
+    <link rel="stylesheet" href="app://assets/styles/style.css">
+    <link rel="stylesheet" href="app://assets/styles/tailwind.css">
+    <link rel="stylesheet" href="app://assets/styles/plugin-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .stats-card {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-            border: 1px solid rgba(99, 102, 241, 0.3);
+        .stats-card, .setting-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(156,163,175,0.12);
         }
-        .progress-bar {
-            transition: width 0.3s ease-in-out;
-        }
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        .setting-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        .modal-overlay {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-        }
-        .modal-content {
-            background: linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(50, 50, 50, 0.95));
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            backdrop-filter: blur(20px);
-        }
-        #itemLog {
-            overflow-y: auto;
-            transition: max-height 0.3s ease-in-out;
-        }
-        #itemLog.collapsed {
-            max-height: 180px; /* Approx 5 items */
-        }
-        
-        /* Collapsible sections */
-        .collapsible-content {
-            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
-            overflow: hidden;
-            max-height: 5000px; /* Large enough for content */
-            opacity: 1;
-        }
-        .collapsible-content.collapsed {
-            max-height: 0 !important;
-            opacity: 0;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            margin-bottom: 0 !important;
-        }
-        .collapse-toggle {
-            cursor: pointer;
-            user-select: none;
-        }
-        .collapse-toggle:hover {
-            opacity: 0.8;
-        }
-        
-        /* Custom Button Colors */
-        #startButton {
-            background: linear-gradient(to right, #10b981, #059669) !important;
-            padding: 8px 16px !important;
-            height: auto !important;
-        }
-        #startButton:hover {
-            background: linear-gradient(to right, #059669, #047857) !important;
-        }
-        
-        #stopButton {
-            background: linear-gradient(to right, #ef4444, #dc2626) !important;
-            padding: 8px 16px !important;
-            height: auto !important;
-        }
-        #stopButton:hover {
-            background: linear-gradient(to right, #dc2626, #b91c1c) !important;
-        }
-        
-        #resetStatsButton {
-            background: linear-gradient(to right, #3b82f6, #2563eb) !important;
-            padding: 8px 16px !important;
-            height: auto !important;
-        }
-        #resetStatsButton:hover {
-            background: linear-gradient(to right, #2563eb, #1d4ed8) !important;
-        }
-        
-        /* Whitelist Button Colors */
-        #saveWhitelistsButton, #clearWhitelistsButton, #openClothingJson, #openDenItemsJson {
-            background: #4b5563 !important;
-        }
-        #saveWhitelistsButton:hover, #clearWhitelistsButton:hover, #openClothingJson:hover, #openDenItemsJson:hover {
-            background: #374151 !important;
-        }
-        
-        /* Force Statistics Spacing */
-        .stats-container {
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            gap: 80px !important;
-        }
-        
-        .stats-container > div {
-            text-align: center !important;
-        }
-        
-        /* Force Control Button Spacing */
-        .control-buttons-container {
-            display: flex !important;
-            flex-direction: row !important;
-            justify-content: center !important;
-            align-items: center !important;
-            gap: 60px !important;
-        }
-        
-        .control-buttons-container > button {
-            padding: 8px 16px !important;
-            border-radius: 8px !important;
-            font-weight: 500 !important;
-            transition: all 0.2s ease !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-            border: none !important;
-            color: white !important;
-            cursor: pointer !important;
-        }
+        .progress-bar { transition: width 0.3s ease; }
+        .modal-overlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); }
+        .modal-content { background: #1e1f2e; border: 1px solid rgba(156,163,175,0.2); }
+        #itemLog { overflow-y: auto; transition: max-height 0.3s ease; }
+        #itemLog.collapsed { max-height: 180px; }
+        .collapsible-content { transition: max-height 0.3s ease, opacity 0.3s ease; overflow: hidden; max-height: 5000px; opacity: 1; }
+        .collapsible-content.collapsed { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+        .collapse-toggle { cursor: pointer; user-select: none; }
+        .collapse-toggle:hover { opacity: 0.8; }
+        #startButton { background: rgba(16,185,129,0.2); color: #10b981; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        #startButton:hover { background: rgba(16,185,129,0.3); }
+        #stopButton { background: rgba(239,68,68,0.2); color: #ef4444; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        #stopButton:hover { background: rgba(239,68,68,0.3); }
+        #resetStatsButton { background: rgba(59,130,246,0.2); color: #3b82f6; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        #resetStatsButton:hover { background: rgba(59,130,246,0.3); }
+        #saveWhitelistsButton, #clearWhitelistsButton, #openClothingJson, #openDenItemsJson,
+        #toggleLogButton, #clearLogButton { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid rgba(156,163,175,0.15); }
+        #saveWhitelistsButton:hover, #clearWhitelistsButton:hover, #openClothingJson:hover, #openDenItemsJson:hover,
+        #toggleLogButton:hover, #clearLogButton:hover { background: rgba(255,255,255,0.1); }
+        .stats-container { display: flex; justify-content: center; align-items: center; gap: 40px; }
+        .stats-container > div { text-align: center; }
+        .control-buttons-container { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .control-buttons-container > button { border-radius: 6px; font-size: 12px; }
+        select, textarea, input[type="number"], input[type="text"] { background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; color: #fff; font-size: 12px; }
+        select { color-scheme: dark; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+        #progressBar { background: var(--theme-primary, #e83d52); }
+        #startAutomationFromModal { background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.2); color: var(--theme-primary, #e83d52); border: none; }
+        #startAutomationFromModal:hover { background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.3); }
+        #infoButton { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid rgba(156,163,175,0.15); box-shadow: none; }
+        #infoButton:hover { background: rgba(255,255,255,0.1); }
+        .form-checkbox { accent-color: var(--theme-primary, #e83d52); }
     </style>
 </head>
 <body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
@@ -543,7 +454,7 @@
 
     <script src="index.js"></script>
     <!-- Import Plugin Utilities -->
-    <script src="app://assets/javascript/plugin-utils.js"></script>
+    <script src="app://assets/scripts/plugin-utils.js"></script>
     <!-- Initialize Standardized UI -->
     <script>
         // Initialize the standardized UI components when the document is ready
