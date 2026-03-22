@@ -21,7 +21,7 @@
     "asar": true,
     "target": [
       {
-        "target": "dmg",
+        "target": "zip",
         "arch": [
           "x64",
           "arm64"
@@ -65,9 +65,6 @@
     "include": "build/installer.nsh",
     "warningsAsErrors": false,
     "guid": "a2f8d7c4-6f3b-4c9e-9a2b-1c8f9e4d7a3c"
-  },
-  "dmg": {
-    "artifactName": "${productName}-Setup-${version}.${ext}"
   },
   "files": [
     "**/*",

@@ -89,7 +89,7 @@ jobs:
         with:
           name: macos-build
           path: |
-            build/*.dmg
+            build/*.zip
             build/*.yml
           retention-days: 30
 

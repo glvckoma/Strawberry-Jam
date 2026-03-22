@@ -3,7 +3,10 @@
   "description": "strawberry jam is my personal fork of the project jam created and developed by sxip.",
   "main": "src/index.js",
   "version": "5.0.0",
-  "author": "glvckoma",
+  "author": {
+    "name": "glvckoma",
+    "email": "glvckoma@users.noreply.github.com"
+  },
   "scripts": {
     "dev": "npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify && npm run pack && npx cross-env NODE_ENV=development electron .",
     "test": "npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify && npm run pack && npx cross-env NODE_ENV=production electron .",
