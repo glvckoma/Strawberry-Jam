@@ -65,9 +65,13 @@ class ConsoleManager {
 
     const getTime = () => {
       const now = new Date()
-      const useMilitary = this.application && this.application.settings
-        ? this.application.settings.get('ui.militaryTime', false)
-        : false
+      let useMilitary = false
+      try {
+        useMilitary = this.application && this.application.settings
+          ? this.application.settings.get('ui.militaryTime', false)
+          : false
+      } catch (e) {
+      }
       const minute = String(now.getMinutes()).padStart(2, '0')
       const second = String(now.getSeconds()).padStart(2, '0')
       if (useMilitary) {

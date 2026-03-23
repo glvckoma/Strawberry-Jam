@@ -1612,7 +1612,7 @@
   "5.0.0": {
     "version": "5.0.0",
     "releaseDate": "2026-03-22",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -1748,6 +1748,76 @@
           "priority": "shortcut"
         }
       ],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "5.0.1": {
+    "version": "5.0.1",
+    "releaseDate": "2026-03-23",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "terminal",
+          "title": "Linux Compatibility Layer",
+          "description": "Built-in Wine/Proton compatibility layer added for running the AJ Classic game client on Linux.",
+          "priority": "major"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "save",
+          "title": "Den Log Persistence",
+          "description": "Den log plugin now remembers its enabled state across launches.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "pets",
+          "title": "Exclusive Pet Accessories in Salon",
+          "description": "New mod menu enhancement to unlock party-exclusive pet accessories in any Pet Salon visit.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "bug_report",
+          "title": "TFD Filters Fixed",
+          "description": "TFD Automation filters now correctly log received items and properly recycle/discard unlisted items.",
+          "priority": "fix"
+        },
+        {
+          "icon": "bug_report",
+          "title": "Error #1502 Fix",
+          "description": "Addressed AS3 Error #1502 crash in ItemXtCommManager when loading item data.",
+          "priority": "fix"
+        },
+        {
+          "icon": "bug_report",
+          "title": "Private Chat Bubbles Fixed",
+          "description": "Private chat message bubbles now fade out properly instead of persisting until a new message is sent.",
+          "priority": "fix"
+        },
+        {
+          "icon": "bug_report",
+          "title": "Multi-Clothing Issues Fixed",
+          "description": "Turning off multi-clothing now properly removes stacked items from other players and your own animals.",
+          "priority": "fix"
+        },
+        {
+          "icon": "bug_report",
+          "title": "Shops Fixed",
+          "description": "Clicking on in-world shops like the diamond shop now works correctly again.",
+          "priority": "fix"
+        },
+        {
+          "icon": "bug_report",
+          "title": "HUD Display Fixed",
+          "description": "Animal clothing display in the HUD now renders correctly for all animals and items.",
+          "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
       "commands": [],
       "messages": []
     }

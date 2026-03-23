@@ -1359,37 +1359,43 @@ function getItemName(defId, itemType) {
     return `Unknown ${itemType || 'Item'} (ID: ${defId})`;
 }
 
-// Improved packet handler for item filtering with better packet parsing
 async function handleIncomingPackets(data) {
-    // Only process packets if automation is running and filtering is enabled
-    if (!isAutomationRunning || !data || data.direction !== 'in' || !isFilteringEnabled()) {
+    if (!isAutomationRunning || !data || data.direction !== 'in') {
         return;
     }
 
     const { raw: rawMessage } = data;
     const parts = rawMessage.split('%');
 
-    // Handle clothing/accessory item packets (%xt%il%)
-    if (rawMessage.startsWith('%xt%il%') && parts.length > 10 && parts[4] === '2') {
+    if (rawMessage.startsWith('%xt%il%') && parts.length > 10) {
         try {
-            const numAdded = parseInt(parts[9]);
-            if (numAdded > 0) {
-                let currentIndex = 11;
-                for (let i = 0; i < numAdded; i++) {
-                    if (parts.length > currentIndex + 1) {
-                        const invId = parts[currentIndex];
-                        const defId = parts[currentIndex + 1];
-                        await processItemForFiltering(defId, invId, 'clothing');
-                        currentIndex += 2; // Move to the next pair
+            const ilType = parts[4];
+
+            if (ilType === '2' || ilType === '3') {
+                const numAdded = parseInt(parts[9]);
+                if (numAdded > 0) {
+                    let currentIndex = 11;
+                    for (let i = 0; i < numAdded; i++) {
+                        if (parts.length > currentIndex + 1) {
+                            const invId = parts[currentIndex];
+                            const defId = parts[currentIndex + 1];
+                            await processItemForFiltering(defId, invId, 'clothing');
+                            currentIndex += 2;
+                        }
                     }
+                }
+            } else if (parts.length > 12) {
+                const invId = parts[11];
+                const defId = parts[12];
+                if (invId && defId) {
+                    await processItemForFiltering(defId, invId, 'clothing');
                 }
             }
         } catch (error) {
             console.error('[TFD Automation] Error processing `il` packet:', error);
         }
     }
-    
-    // Handle den item inventory packets (%xt%di%)
+
     else if (rawMessage.startsWith('%xt%di%')) {
         try {
             const isAdventureRunning = questStartTime !== null; // A simple check to see if we're in an active run
@@ -1433,66 +1439,61 @@ async function handleIncomingPackets(data) {
     }
 }
 
-// Helper function to process an item for filtering
 async function processItemForFiltering(defId, invId, itemType) {
+    if (!defId || !invId || defId.length === 0 || invId.length === 0) {
+        return;
+    }
+
+    const itemName = getItemName(defId, itemType);
+
+    if (!isFilteringEnabled()) {
+        logReceivedItem(itemName, 'kept');
+        return;
+    }
+
     const whitelists = getWhitelists();
     const whitelist = itemType === 'clothing' ? whitelists.clothing : whitelists.den;
 
-    if (defId && invId && defId.length > 0 && invId.length > 0) {
-        const itemName = getItemName(defId, itemType);
+    if (whitelist.has(defId)) {
+        updateStatus(`Whitelisted: ${itemName}. Keeping it.`, 'info');
 
-        if (whitelist.has(defId)) {
-            updateStatus(`✓ Whitelisted: ${itemName}. Keeping it.`, 'info');
-            
-            // Check if this item was already seen in chest (logged as kept or skipped)
-            const existingItemIndex = receivedItems.findIndex(item => 
-                item.name === itemName && (item.status === 'kept' || item.status === 'skipped'));
-            
-            if (existingItemIndex !== -1) {
-                // Update existing item (refresh timestamp if already kept, or update skipped to kept)
-                const oldStatus = receivedItems[existingItemIndex].status;
-                receivedItems[existingItemIndex].status = 'kept';
-                receivedItems[existingItemIndex].timestamp = new Date().toISOString();
-                console.log(`[TFD Automation] Updated ${itemName} from ${oldStatus} to kept (actual collection)`);
-                renderItemLog();
-                localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
-            } else {
-                // Log as new kept item (not seen in chest preview)
-                console.log(`[TFD Automation] New kept item (not detected in chest): ${itemName}`);
-                logReceivedItem(itemName, 'kept');
-            }
-            
-            playNotificationSound('success'); // Play sound when valuable item is kept
+        const existingItemIndex = receivedItems.findIndex(item =>
+            item.name === itemName && (item.status === 'kept' || item.status === 'skipped'));
+
+        if (existingItemIndex !== -1) {
+            receivedItems[existingItemIndex].status = 'kept';
+            receivedItems[existingItemIndex].timestamp = new Date().toISOString();
+            renderItemLog();
+            localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
         } else {
-            updateStatus(`♻ Recycling: ${itemName}.`, 'warning');
-            logReceivedItem(itemName, 'recycled');
-            
-            await new Promise(resolve => setTimeout(resolve, 150)); // Small delay
-            
-            await refreshRoom();
-            
-            let recyclePacket;
-            if (itemType === 'den') {
-                // Use the den-specific recycling packet with the correct format
-                recyclePacket = `%xt%o%dr%${getRoomIdToUse()}%0%${invId}%`;
-            } else {
-                // Default to the standard item recycling packet for clothing
-                recyclePacket = `%xt%o%ir%${getRoomIdToUse()}%${invId}%`;
-            }
-            
-            try {
-                await sendPacketWithRetry(recyclePacket, true);
-            } catch (error) {
-                console.error(`[TFD Automation] FAILED: Could not send recycle request for InvID ${invId}:`, error);
-                updateStatus(`Error recycling ${itemName}: ${error.message}`, 'error');
-            }
+            logReceivedItem(itemName, 'kept');
         }
+
+        playNotificationSound('success');
     } else {
-        console.warn(`[TFD Automation] WARNING: Could not process item. Invalid DefID or InvID. DefID: ${defId}, InvID: ${invId}`);
+        updateStatus(`Recycling: ${itemName}.`, 'warning');
+        logReceivedItem(itemName, 'recycled');
+
+        await new Promise(resolve => setTimeout(resolve, 150));
+
+        await refreshRoom();
+
+        let recyclePacket;
+        if (itemType === 'den') {
+            recyclePacket = `%xt%o%dr%${getRoomIdToUse()}%0%${invId}%`;
+        } else {
+            recyclePacket = `%xt%o%ir%${getRoomIdToUse()}%${invId}%`;
+        }
+
+        try {
+            await sendPacketWithRetry(recyclePacket, true);
+        } catch (error) {
+            console.error(`[TFD Automation] FAILED: Could not send recycle request for InvID ${invId}:`, error);
+            updateStatus(`Error recycling ${itemName}: ${error.message}`, 'error');
+        }
     }
 }
 
-// Function to add item to the received items log
 function logReceivedItem(itemName, status) {
     // Check if the checkbox exists and is checked before skipping recycled and skipped items
     if (dontLogRecycledCheckbox && dontLogRecycledCheckbox.checked && (status === 'recycled' || status === 'skipped')) {

@@ -33,10 +33,13 @@ module.exports = class HttpClient {
   }
 
   static get baseHeaders () {
-    return {
-      Host: 'www.animaljam.com',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AJClassic/1.5.4 Chrome/87.0.4280.141 Electron/11.5.0 Safari/537.36'
+    const headers = {}
+    const isRenderer = typeof process !== 'undefined' && process.type === 'renderer'
+    if (!isRenderer) {
+      headers['Host'] = 'www.animaljam.com'
+      headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AJClassic/1.5.4 Chrome/87.0.4280.141 Electron/11.5.0 Safari/537.36'
     }
+    return headers
   }
 
   static proxy (options) {

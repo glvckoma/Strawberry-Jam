@@ -1,4 +1,4 @@
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { dialog, BrowserWindow, app } = require('electron');
@@ -9,22 +9,63 @@ const PlatformPaths = require('../../PlatformPaths');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const STRAWBERRY_JAM_CLASSIC_BASE_PATH = PlatformPaths.getStrawberryJamClassicBasePath();
+const resolveCompatLayer = (setting) => {
+  if (PlatformPaths.platform !== 'linux') return null
+
+  if (setting === 'none') return null
+  if (setting === 'wine' || setting === 'bottles') return setting
+
+  const detected = PlatformPaths.detectCompatibilityLayer()
+  return detected[0] || null
+}
+
+const getWineBinary = (compatLayer) => {
+  if (compatLayer === 'bottles') {
+    try {
+      execSync('which flatpak', { stdio: 'ignore' })
+      return null
+    } catch (e) {}
+  }
+  return 'wine'
+}
 
 class GameProcessManager {
-  constructor(electronInstance, gameTimeTracker, gameStartTimeRef, isGameTimeBeingTrackedRef) {
+  constructor(electronInstance, gameTimeTracker, gameStartTimeRef, isGameTimeBeingTrackedRef, settingsService) {
     this.electronInstance = electronInstance;
     this.gameTimeTracker = gameTimeTracker;
     this.gameStartTimeRef = gameStartTimeRef;
     this.isGameTimeBeingTrackedRef = isGameTimeBeingTrackedRef;
+    this.settingsService = settingsService;
+  }
+
+  _getLinuxSettings() {
+    let compatLayer = 'auto'
+    let winePrefix = ''
+    try {
+      if (this.settingsService) {
+        compatLayer = this.settingsService.getSetting('linux.compatibilityLayer') || 'auto'
+        winePrefix = this.settingsService.getSetting('linux.winePrefix') || ''
+      }
+    } catch (e) {}
+    return { compatLayer, winePrefix }
   }
 
   launchGameClient() {
-    const exePath = PlatformPaths.getGameExecutablePath(STRAWBERRY_JAM_CLASSIC_BASE_PATH);
+    const { compatLayer: compatSetting, winePrefix } = this._getLinuxSettings();
+    const resolvedCompat = resolveCompatLayer(compatSetting);
+
+    const basePath = PlatformPaths.getStrawberryJamClassicBasePath(resolvedCompat, winePrefix);
+    const exePath = PlatformPaths.getGameExecutablePath(basePath, resolvedCompat);
 
     if (!exePath || !fs.existsSync(exePath)) {
       logManager.error(`[GameProcessManager] Game client executable not found at: ${exePath}`);
-      dialog.showErrorBox('Launch Error', `Could not find the game client executable. Please ensure it is installed correctly at:\n${exePath}`);
+
+      let errorDetail = `Could not find the game client executable. Please ensure it is installed correctly at:\n${exePath}`;
+      if (PlatformPaths.platform === 'linux' && !resolvedCompat) {
+        errorDetail += '\n\nOn Linux, AJ Classic requires Wine or Bottles. Install Wine and configure it in Settings > Advanced > Linux Compatibility Layer.';
+      }
+
+      dialog.showErrorBox('Launch Error', errorDetail);
       return;
     }
 
@@ -34,8 +75,34 @@ class GameProcessManager {
       STRAWBERRY_JAM_DATA_PATH: dataPath
     };
 
+    if (resolvedCompat) {
+      spawnEnv.WINEPREFIX = winePrefix || PlatformPaths.detectWinePrefix(winePrefix);
+    }
+
     try {
-      const gameProcess = spawn(exePath, [], {
+      let spawnCmd, spawnArgs;
+
+      if (resolvedCompat === 'bottles') {
+        try {
+          execSync('which flatpak', { stdio: 'ignore' });
+          spawnCmd = 'flatpak';
+          spawnArgs = ['run', '--command=bottles-cli', 'com.usebottles.bottles', 'run', '-e', exePath];
+          logManager.log('[GameProcessManager] Launching via Bottles (flatpak)', 'main', logManager.logLevels.INFO);
+        } catch (e) {
+          spawnCmd = 'wine';
+          spawnArgs = [exePath];
+          logManager.log('[GameProcessManager] Bottles flatpak not found, falling back to Wine', 'main', logManager.logLevels.WARN);
+        }
+      } else if (resolvedCompat === 'wine') {
+        spawnCmd = 'wine';
+        spawnArgs = [exePath];
+        logManager.log('[GameProcessManager] Launching via Wine', 'main', logManager.logLevels.INFO);
+      } else {
+        spawnCmd = exePath;
+        spawnArgs = [];
+      }
+
+      const gameProcess = spawn(spawnCmd, spawnArgs, {
         detached: false,
         stdio: 'ignore',
         env: spawnEnv
@@ -94,20 +161,51 @@ class GameProcessManager {
   }
 
   launchAJClassic() {
-    const ajClassicBasePath = PlatformPaths.getAnimalJamClassicBasePath();
-    const exePath = PlatformPaths.getGameExecutablePath(ajClassicBasePath);
+    const { compatLayer: compatSetting, winePrefix } = this._getLinuxSettings();
+    const resolvedCompat = resolveCompatLayer(compatSetting);
+
+    const ajClassicBasePath = PlatformPaths.getAnimalJamClassicBasePath(resolvedCompat, winePrefix);
+    const exePath = PlatformPaths.getGameExecutablePath(ajClassicBasePath, resolvedCompat);
 
     if (!fs.existsSync(exePath)) {
       logManager.error(`[GameProcessManager] AJ Classic executable not found at: ${exePath}`);
-      dialog.showErrorBox('AJ Classic Launch Error',
-        `Could not find AJ Classic installation.\n\nLooked for:\n${exePath}\n\nPlease ensure AJ Classic is installed correctly.`);
+      let errorMsg = `Could not find AJ Classic installation.\n\nLooked for:\n${exePath}\n\nPlease ensure AJ Classic is installed correctly.`;
+      if (PlatformPaths.platform === 'linux' && !resolvedCompat) {
+        errorMsg += '\n\nOn Linux, install AJ Classic via Wine and configure the compatibility layer in Settings.';
+      }
+      dialog.showErrorBox('AJ Classic Launch Error', errorMsg);
       return;
     }
 
+    const spawnEnv = { ...process.env };
+    if (resolvedCompat) {
+      spawnEnv.WINEPREFIX = winePrefix || PlatformPaths.detectWinePrefix(winePrefix);
+    }
+
     try {
-      const classicProcess = spawn(exePath, [], {
+      let spawnCmd, spawnArgs;
+
+      if (resolvedCompat === 'bottles') {
+        try {
+          execSync('which flatpak', { stdio: 'ignore' });
+          spawnCmd = 'flatpak';
+          spawnArgs = ['run', '--command=bottles-cli', 'com.usebottles.bottles', 'run', '-e', exePath];
+        } catch (e) {
+          spawnCmd = 'wine';
+          spawnArgs = [exePath];
+        }
+      } else if (resolvedCompat === 'wine') {
+        spawnCmd = 'wine';
+        spawnArgs = [exePath];
+      } else {
+        spawnCmd = exePath;
+        spawnArgs = [];
+      }
+
+      const classicProcess = spawn(spawnCmd, spawnArgs, {
         detached: true,
-        stdio: 'ignore'
+        stdio: 'ignore',
+        env: spawnEnv
       });
 
       processManager.add(classicProcess);

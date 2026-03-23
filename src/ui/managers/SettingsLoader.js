@@ -85,6 +85,27 @@ class SettingsLoader {
 
       $modal.find('#allowMultipleInstancesToggle').prop('checked', allowMultipleInstances === true);
 
+      if (process.platform === 'linux') {
+        $modal.find('#linuxCompatSection').removeClass('hidden');
+        const linuxCompatLayer = await ipcRenderer.invoke('get-setting', 'linux.compatibilityLayer');
+        const linuxWinePrefix = await ipcRenderer.invoke('get-setting', 'linux.winePrefix');
+        $modal.find('#linuxCompatLayer').val(linuxCompatLayer || 'auto');
+        $modal.find('#linuxWinePrefix').val(linuxWinePrefix || '');
+
+        try {
+          const PlatformPaths = require('../../PlatformPaths');
+          const detected = PlatformPaths.detectCompatibilityLayer();
+          const $status = $modal.find('#linuxCompatStatus');
+          if (detected.length > 0) {
+            $status.text(`Detected: ${detected.join(', ')}. AJ Classic will launch through the selected compatibility layer.`);
+            $status.removeClass('text-gray-400').addClass('text-highlight-green');
+          } else {
+            $status.text('No compatibility layer detected. Install Wine or Bottles to run AJ Classic on Linux.');
+            $status.removeClass('text-gray-400').addClass('text-red-400');
+          }
+        } catch (e) {}
+      }
+
       $modal.find('#customThemeColorPicker').val(customThemeColor || '#e83d52');
       $modal.find('#customThemeColorInput').val(customThemeColor || '#e83d52');
       $modal.find('#customThemeNameInput').val(customThemeName || 'Custom Jam');

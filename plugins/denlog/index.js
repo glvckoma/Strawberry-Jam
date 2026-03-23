@@ -1,5 +1,26 @@
-module.exports = function ({ dispatch, application }) {
-  let isEnabled = false;
+module.exports = function ({ dispatch, application, dataPath }) {
+  const path = require('path');
+  const fs = require('fs');
+  const settingsFile = path.join(dataPath, 'denlog-settings.json');
+
+  const loadSettings = () => {
+    try {
+      if (fs.existsSync(settingsFile)) {
+        return JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
+      }
+    } catch (e) {}
+    return { enabled: false };
+  };
+
+  const saveSettings = () => {
+    try {
+      fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+      fs.writeFileSync(settingsFile, JSON.stringify({ enabled: isEnabled }));
+    } catch (e) {}
+  };
+
+  const settings = loadSettings();
+  let isEnabled = settings.enabled;
   const userStates = new Map();
 
   const log = (type, msg) => application.consoleMessage({ type, message: msg });
@@ -41,6 +62,7 @@ module.exports = function ({ dispatch, application }) {
       if (!isEnabled) {
         userStates.clear();
       }
+      saveSettings();
       log(isEnabled ? 'success' : 'warn',
           `Den logging ${isEnabled ? 'enabled' : 'disabled'}.`);
     }
@@ -50,4 +72,8 @@ module.exports = function ({ dispatch, application }) {
     type: dispatch.ConnectionMessageTypes.any,
     callback: handleDrcPacket
   });
+
+  if (isEnabled) {
+    log('success', 'Den logging restored from previous session.');
+  }
 };

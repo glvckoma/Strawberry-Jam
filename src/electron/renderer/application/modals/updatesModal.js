@@ -46,9 +46,12 @@ exports.render = async function (app, data = {}) {
 
   const firstCategory = visibleCategories.length > 0 ? visibleCategories[0][0] : 'features'
 
+  const dropdownVersions = availableVersions.slice(0, 5)
+  if (!dropdownVersions.includes(targetVersion)) dropdownVersions.push(targetVersion)
+
   const versionSelectorHtml = availableVersions.length > 1
-    ? `<select id="versionSelector" class="modal-input text-sm py-1 px-2" style="width: auto;">
-        ${availableVersions.map(v => `<option value="${v}" ${v === targetVersion ? 'selected' : ''}>${v}</option>`).join('')}
+    ? `<select id="versionSelector" class="modal-input text-sm py-1 px-2 themed-scrollbar" style="width: auto;">
+        ${dropdownVersions.map(v => `<option value="${v}" ${v === targetVersion ? 'selected' : ''}>${v}</option>`).join('')}
        </select>`
     : ''
 
@@ -145,15 +148,20 @@ exports.render = async function (app, data = {}) {
     }
   })
 
-  setTimeout(() => {
-    $modal.find('.update-item').each(function (index) {
-      const $item = $(this)
-      $item.css({ opacity: 0, transform: 'translateY(8px)', transition: 'opacity 0.25s ease-out, transform 0.25s ease-out' })
-      setTimeout(() => {
-        $item.css({ opacity: 1, transform: 'translateY(0)' })
-      }, index * 50)
+  $modal.find('.update-item').css({ opacity: 0, transform: 'translateY(8px)' })
+
+  $(document).one('modal:opened', function (e, data) {
+    if (data.name !== 'updatesModal') return
+    requestAnimationFrame(() => {
+      $modal.find('.update-item').each(function (index) {
+        const $item = $(this)
+        $item.css({ transition: 'opacity 0.25s ease-out, transform 0.25s ease-out' })
+        setTimeout(() => {
+          $item.css({ opacity: 1, transform: 'translateY(0)' })
+        }, index * 50)
+      })
     })
-  }, 50)
+  })
 
   return $modal
 }
@@ -170,6 +178,35 @@ function getTabInfo(key) {
   return tabMap[key] || { icon: '&#x1F4DD;', label: key.charAt(0).toUpperCase() + key.slice(1) }
 }
 
+function resolveIcon(icon) {
+  if (!icon) return ''
+  if (/[\u{1F000}-\u{1FFFF}]|[\u2000-\u3300]|[\u{FE00}-\u{FEFF}]/u.test(icon)) return icon
+  const faMap = {
+    desktop_windows: 'fa-desktop',
+    extension: 'fa-puzzle-piece',
+    pets: 'fa-paw',
+    camera_alt: 'fa-camera',
+    layers: 'fa-layer-group',
+    visibility_off: 'fa-eye-slash',
+    brush: 'fa-paint-brush',
+    mouse: 'fa-mouse-pointer',
+    tune: 'fa-sliders-h',
+    speed: 'fa-tachometer-alt',
+    zoom_in: 'fa-search-plus',
+    casino: 'fa-dice',
+    bug_report: 'fa-bug',
+    memory: 'fa-microchip',
+    egg: 'fa-egg',
+    shield: 'fa-shield-alt',
+    keyboard: 'fa-keyboard',
+    terminal: 'fa-terminal',
+    save: 'fa-save'
+  }
+  const faClass = faMap[icon]
+  if (faClass) return `<i class="fas ${faClass}" style="font-size: 12px;"></i>`
+  return icon
+}
+
 function generateCategoryContent(categoryKey, items) {
   if (!items || items.length === 0) {
     return '<div class="text-center py-8 text-gray-400">No items in this category</div>'
@@ -183,7 +220,7 @@ function generateCategoryContent(categoryKey, items) {
       <div class="update-item rounded-lg p-4 bg-tertiary-bg/50 border border-sidebar-border hover:border-sidebar-border/80 transition-colors">
         <div class="flex items-start space-x-3">
           <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm" style="background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.15);">
-            ${item.icon || ''}
+            ${resolveIcon(item.icon)}
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">

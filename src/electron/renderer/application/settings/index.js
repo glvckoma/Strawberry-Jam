@@ -101,7 +101,10 @@ const DEFAULT_SETTINGS = {
 
   'plugins.defaultDisplayMode': 'inline',
 
-  'ui.militaryTime': false
+  'ui.militaryTime': false,
+
+  'linux.compatibilityLayer': 'auto',
+  'linux.winePrefix': ''
 }
 
 // Development mode check (safer than process.env which may be undefined in packaged app)

@@ -313,6 +313,33 @@
               </div>
             </div>
 
+            <div id="linuxCompatSection" class="space-y-4 pt-4 hidden">
+              <h4 class="modal-section-title">
+                <i class="fas fa-wine-glass modal-section-icon"></i>Linux Compatibility Layer
+              </h4>
+
+              <div>
+                <label for="linuxCompatLayer" class="block mb-2 text-sm font-medium text-text-primary">
+                  Compatibility Layer
+                </label>
+                <select id="linuxCompatLayer" class="modal-input">
+                  <option value="auto">Auto-detect</option>
+                  <option value="wine">Wine</option>
+                  <option value="bottles">Bottles</option>
+                  <option value="none">None (native Linux binary)</option>
+                </select>
+                <p id="linuxCompatStatus" class="mt-1 text-xs text-gray-400">AJ Classic requires a Windows compatibility layer on Linux.</p>
+              </div>
+
+              <div>
+                <label for="linuxWinePrefix" class="block mb-2 text-sm font-medium text-text-primary">
+                  Wine Prefix Path
+                </label>
+                <input id="linuxWinePrefix" type="text" class="modal-input" placeholder="~/.wine (leave empty for default)">
+                <p class="mt-1 text-xs text-gray-400">Custom Wine prefix path. Leave empty to auto-detect from default Wine or Bottles locations.</p>
+              </div>
+            </div>
+
             <div class="space-y-4 pt-4">
               <h4 class="text-sm font-semibold text-red-500 border-b border-sidebar-border pb-2">
                 <i class="fas fa-exclamation-triangle mr-2"></i>Danger Zone

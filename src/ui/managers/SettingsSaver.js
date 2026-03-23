@@ -47,6 +47,13 @@ class SettingsSaver {
         { key: 'ui.customThemeFruit', value: customThemeFruit }
       ];
 
+      if (process.platform === 'linux') {
+        settingsToSave.push(
+          { key: 'linux.compatibilityLayer', value: $modal.find('#linuxCompatLayer').val() || 'auto' },
+          { key: 'linux.winePrefix', value: $modal.find('#linuxWinePrefix').val().trim() }
+        );
+      }
+
       for (const setting of settingsToSave) {
         if (app && app.settings && typeof app.settings.update === 'function') {
           await app.settings.update(setting.key, setting.value);

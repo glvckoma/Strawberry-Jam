@@ -31,7 +31,7 @@ function setupIpcHandlers(electronInstance) {
   const fileIOHandler = new FileIOHandler(app, electronInstance._window);
   const windowManager = new WindowManager(electronInstance);
   const gameTimeTracker = new GameTimeTracker(app, gameStartTimeRef, lastKnownGoodGameTimeRef);
-  const gameProcessManager = new GameProcessManager(electronInstance, gameTimeTracker, gameStartTimeRef, isGameTimeBeingTrackedRef);
+  const gameProcessManager = new GameProcessManager(electronInstance, gameTimeTracker, gameStartTimeRef, isGameTimeBeingTrackedRef, settingsService);
   const accountManager = new AccountManager(electronInstance._store);
   const systemInfoService = new SystemInfoService();
 
