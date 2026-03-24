@@ -82,10 +82,11 @@ class SettingsUIManager {
       });
 
       $dropdown.val(selectedFile);
+      if (!$dropdown.val()) $dropdown.val('v5.0.2.swf');
     } catch (error) {
       console.error('Error loading SWF files:', error);
       $dropdown.html(`
-        <option value="ajclient-prod.swf">Production Client</option>
+        <option value="v5.0.2.swf">v5.0.2 (latest)</option>
       `);
       $dropdown.val(selectedFile);
     }

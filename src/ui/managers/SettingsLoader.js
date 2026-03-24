@@ -47,12 +47,12 @@ class SettingsLoader {
       const customThemeName = await ipcRenderer.invoke('get-setting', 'ui.customThemeName');
       const customThemeFruit = await ipcRenderer.invoke('get-setting', 'ui.customThemeFruit');
 
-      $modal.data('initialSwfFile', selectedSwfFile || 'ajclient-prod.swf');
+      $modal.data('initialSwfFile', selectedSwfFile || 'v5.0.2.swf');
 
       $modal.find('#advancedSmartfoxServer').val(smartfoxServer || '');
       $modal.find('#advancedSecureConnection').prop('checked', secureConnection === true);
 
-      await uiManager.loadSwfFileSettings($modal, selectedSwfFile || 'ajclient-prod.swf');
+      await uiManager.loadSwfFileSettings($modal, selectedSwfFile || 'v5.0.2.swf');
 
       $modal.find('#autoReapplySwfToggle').prop('checked', autoReapplySwf === true);
 

@@ -998,23 +998,6 @@
             return false;
           }, false);
           
-          // Ensure all elements have localize methods
-          if (!document.getElementById("login-screen").localize) {
-            console.warn("Adding missing localize method to login-screen");
-            document.getElementById("login-screen").localize = function() {
-              console.log("Default localize method called on login-screen");
-              return Promise.resolve();
-            };
-          }
-          
-          if (!document.getElementById("game-screen").localize) {
-            console.warn("Adding missing localize method to game-screen");
-            document.getElementById("game-screen").localize = function() {
-              console.log("Default localize method called on game-screen");
-              return Promise.resolve();
-            };
-          }
-          
           // Ensure loginScreen has logIn method
           if (!loginScreen.logIn) {
             console.warn("Adding missing logIn method to login-screen");

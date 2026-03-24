@@ -409,6 +409,7 @@
 
       this.webViewElem.addEventListener("did-fail-load", event => {
         if (!event.isMainFrame) return;
+        if (event.errorCode === -3) return;
 
         console.error(`[SWF] WebView failed to load:`, {
           validatedURL: event.validatedURL,
@@ -449,7 +450,9 @@
     resetWebView() {
       this._webviewReady = false;
       if (this.webViewElem) {
-        this.webViewElem.src = this.blankPageString;
+        const loadPromise = this.webViewElem.loadURL ? this.webViewElem.loadURL(this.blankPageString) : null;
+        if (loadPromise) loadPromise.catch(() => {});
+        else this.webViewElem.src = this.blankPageString;
       }
       if (this.gameFrameElem) {
         this.gameFrameElem.classList.add("logged-out");

@@ -194,7 +194,7 @@ const getPermissionErrorMessage = () => {
 const getProcessNames = () => {
   if (platform === 'win32') return ['AJ Classic.exe']
   if (platform === 'darwin') return ['AJ Classic']
-  return ['aj-classic', 'AJ Classic']
+  return ['aj-classic', 'AJ Classic', 'AJ Classic.exe']
 }
 
 const getClientOS = () => {

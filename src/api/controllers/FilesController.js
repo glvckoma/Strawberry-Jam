@@ -93,7 +93,7 @@ class FilesController {
       await fsPromises.mkdir(this.optionsDir, { recursive: true })
 
       const activeSwfPath = path.join(this.flashDir, 'ajclient.swf')
-      const prodSwfPath = path.join(this.optionsDir, 'ajclient-prod.swf')
+      const prodSwfPath = path.join(this.optionsDir, 'v5.0.2.swf')
 
       const [activeExists, prodExists] = await Promise.all([
         fsPromises.access(activeSwfPath).then(() => true).catch(() => false),
@@ -205,15 +205,23 @@ class FilesController {
       try {
         entries = await fsPromises.readdir(this.optionsDir, { withFileTypes: true })
       } catch (e) {
-        return ['ajclient-prod.swf']
+        return ['v5.0.2.swf']
       }
       const files = entries
         .filter(entry => !entry.isDirectory() && entry.name.endsWith('.swf'))
         .map(entry => entry.name)
-      return [...new Set(files)].sort()
+      const order = ['v5.0.2.swf', 'v4.2.3.swf', 'non-purple-private-chat.swf', 'unmodded-ajclient.swf']
+      return [...new Set(files)].sort((a, b) => {
+        const ai = order.indexOf(a)
+        const bi = order.indexOf(b)
+        if (ai === -1 && bi === -1) return a.localeCompare(b)
+        if (ai === -1) return 1
+        if (bi === -1) return -1
+        return ai - bi
+      })
     } catch (error) {
       console.error('Error scanning for SWF files:', error)
-      return ['ajclient-prod.swf']
+      return ['v5.0.2.swf']
     }
   }
 
@@ -224,10 +232,10 @@ class FilesController {
   async getSwfFileInfo () {
     const files = await this.getAvailableSwfFiles()
     const displayNames = {
-      'ajclient-prod.swf': 'Production Client',
-      'ajclient-dev.swf': 'Development Client',
-      'ajclient-jam.swf': 'Jam Client',
-      'ajclient-old.swf': 'Old Client'
+      'v5.0.2.swf': 'v5.0.2 (latest)',
+      'v4.2.3.swf': 'v4.2.3 (older)',
+      'non-purple-private-chat.swf': 'Non-Colored Private Chat (outdated)',
+      'unmodded-ajclient.swf': 'Unmodded (latest)'
     }
 
     return Promise.all(files.map(async (filename) => {

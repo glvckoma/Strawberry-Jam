@@ -19,16 +19,6 @@ const resolveCompatLayer = (setting) => {
   return detected[0] || null
 }
 
-const getWineBinary = (compatLayer) => {
-  if (compatLayer === 'bottles') {
-    try {
-      execSync('which flatpak', { stdio: 'ignore' })
-      return null
-    } catch (e) {}
-  }
-  return 'wine'
-}
-
 class GameProcessManager {
   constructor(electronInstance, gameTimeTracker, gameStartTimeRef, isGameTimeBeingTrackedRef, settingsService) {
     this.electronInstance = electronInstance;
@@ -42,9 +32,9 @@ class GameProcessManager {
     let compatLayer = 'auto'
     let winePrefix = ''
     try {
-      if (this.settingsService) {
-        compatLayer = this.settingsService.getSetting('linux.compatibilityLayer') || 'auto'
-        winePrefix = this.settingsService.getSetting('linux.winePrefix') || ''
+      if (this.settingsService && this.settingsService.store) {
+        compatLayer = this.settingsService.store.get('linux.compatibilityLayer') || 'auto'
+        winePrefix = this.settingsService.store.get('linux.winePrefix') || ''
       }
     } catch (e) {}
     return { compatLayer, winePrefix }
@@ -85,8 +75,10 @@ class GameProcessManager {
       if (resolvedCompat === 'bottles') {
         try {
           execSync('which flatpak', { stdio: 'ignore' });
+          const detectedPrefix = PlatformPaths.detectWinePrefix(winePrefix);
+          const bottleName = path.basename(detectedPrefix);
           spawnCmd = 'flatpak';
-          spawnArgs = ['run', '--command=bottles-cli', 'com.usebottles.bottles', 'run', '-e', exePath];
+          spawnArgs = ['run', '--command=bottles-cli', 'com.usebottles.bottles', 'run', '-b', bottleName, '-e', exePath];
           logManager.log('[GameProcessManager] Launching via Bottles (flatpak)', 'main', logManager.logLevels.INFO);
         } catch (e) {
           spawnCmd = 'wine';
@@ -188,8 +180,10 @@ class GameProcessManager {
       if (resolvedCompat === 'bottles') {
         try {
           execSync('which flatpak', { stdio: 'ignore' });
+          const detectedPrefix = PlatformPaths.detectWinePrefix(winePrefix);
+          const bottleName = path.basename(detectedPrefix);
           spawnCmd = 'flatpak';
-          spawnArgs = ['run', '--command=bottles-cli', 'com.usebottles.bottles', 'run', '-e', exePath];
+          spawnArgs = ['run', '--command=bottles-cli', 'com.usebottles.bottles', 'run', '-b', bottleName, '-e', exePath];
         } catch (e) {
           spawnCmd = 'wine';
           spawnArgs = [exePath];
