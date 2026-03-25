@@ -1,10 +1,9 @@
 const { dispatch, application } = jam;
 const TFD_packets = require('./TFD_packets.json');
 
-// Constants
-const QUEST_ID = '23'; // Hardcoded for The Forgotten Desert
+const QUEST_ID = '23';
 
-// UI Elements
+
 const startButton = document.getElementById('startButton');
 const stopButton = document.getElementById('stopButton');
 const resetStatsButton = document.getElementById('resetStatsButton');
@@ -16,7 +15,6 @@ const successCount = document.getElementById('successCount');
 const failureCount = document.getElementById('failureCount');
 const totalRuns = document.getElementById('totalRuns');
 
-// Settings Elements
 const autoRetryCheckbox = document.getElementById('autoRetryCheckbox');
 const soundNotificationCheckbox = document.getElementById('soundNotificationCheckbox');
 const connectionFailureSoundCheckbox = document.getElementById('connectionFailureSoundCheckbox');
@@ -31,29 +29,33 @@ const loopMode = document.getElementById('loopMode');
 const targetAccount = document.getElementById('targetAccount');
 const rewardWaitTime = document.getElementById('rewardWaitTime');
 
-// Modal Elements
 const educationalModal = document.getElementById('educationalModal');
 const closeModal = document.getElementById('closeModal');
 const startAutomationFromModal = document.getElementById('startAutomationFromModal');
 const infoButton = document.getElementById('infoButton');
+const guideAcknowledgeContainer = document.getElementById('guideAcknowledgeContainer');
+const guideAcknowledgeCheckbox = document.getElementById('guideAcknowledgeCheckbox');
 
-// Item Filter Elements
 const clothingWhitelist = document.getElementById('clothingWhitelist');
 const denWhitelist = document.getElementById('denWhitelist');
 const saveWhitelistsButton = document.getElementById('saveWhitelistsButton');
 const clearWhitelistsButton = document.getElementById('clearWhitelistsButton');
-const openClothingJson = document.getElementById('openClothingJson');
-const openDenItemsJson = document.getElementById('openDenItemsJson');
-const enableFilteringCheckbox = document.getElementById('enableFilteringCheckbox');
+const exportWhitelistsButton = document.getElementById('exportWhitelistsButton');
+const importWhitelistsButton = document.getElementById('importWhitelistsButton');
+const importFileInput = document.getElementById('importFileInput');
 const filterStatusText = document.getElementById('filterStatusText');
+const clothingSearch = document.getElementById('clothingSearch');
+const denSearch = document.getElementById('denSearch');
+const clothingSearchDropdown = document.getElementById('clothingSearchDropdown');
+const denSearchDropdown = document.getElementById('denSearchDropdown');
+const clothingTags = document.getElementById('clothingTags');
+const denTags = document.getElementById('denTags');
 
-// Received Items Log Elements
 const itemLog = document.getElementById('itemLog');
 const clearLogButton = document.getElementById('clearLogButton');
 const toggleLogButton = document.getElementById('toggleLogButton');
 const itemSearchBox = document.getElementById('itemSearchBox');
 
-// State Variables
 let receivedItems = [];
 let clothingItems = {};
 let denItems = {};
@@ -235,13 +237,11 @@ const generateEfficientCrystalPackets = (crystalData) => {
 // Efficient QQM Packet Handler - Gift Detection Only
 const efficientHandleQqm = (data) => {
     if (!isEfficientMode || !isAutomationRunning) return;
-    
-    // Check if this is a qqm packet
+
     const { raw: rawMessage } = data;
     if (!rawMessage || !rawMessage.includes('%xt%qqm%')) return;
-    
+
     try {
-        // Parse the raw message to extract base64 data
         const parts = rawMessage.split('%');
         if (parts.length < 5) {
             return;
@@ -434,6 +434,50 @@ const efficientHandleQqm = (data) => {
         }
     } catch (e) {
         console.error('[TFD Automation] Error processing qqm packet:', e);
+    }
+};
+
+const efficientHandleQs = (data) => {
+    if (!isEfficientMode || !isAutomationRunning || efficientCrystalPackets.length > 0) return;
+
+    const { raw: rawMessage } = data;
+    if (!rawMessage) return;
+
+    const isQs = rawMessage.startsWith('%xt%qs%');
+    if (!isQs) return;
+
+    try {
+        const variantMatch = rawMessage.match(/1crystal_01([ab])%/);
+        if (!variantMatch) return;
+
+        const variant = variantMatch[1];
+        console.log(`[TFD Automation] Detected crystal variant '${variant}' from qs response`);
+
+        const crystalData = [
+            { type: '1crystal', variant, count: 25 },
+            { type: '2crystal', variant, count: 25 }
+        ];
+
+        if (!isSpecialMode) {
+            crystalData.push({ type: '3water', variant, count: 40 });
+            crystalData.push({ type: '3crystal', variant, count: 20 });
+            crystalData.push({ type: '4socvol', variant, count: 15 });
+            crystalData.push({ type: '4crystal', variant, count: 15 });
+        } else {
+            const waitPeriodData = [
+                { type: '3water', variant, count: 40 },
+                { type: '3crystal', variant, count: 20 },
+                { type: '4socvol', variant, count: 15 },
+                { type: '4crystal', variant, count: 15 }
+            ];
+            waitPeriodCrystalPackets = generateEfficientCrystalPackets(waitPeriodData);
+            console.log(`[TFD Automation] Special mode: Reserved ${waitPeriodCrystalPackets.length} packets for wait period collection`);
+        }
+
+        efficientCrystalPackets = generateEfficientCrystalPackets(crystalData);
+        console.log(`[TFD Automation] Generated ${efficientCrystalPackets.length} optimized packets from qs response`);
+    } catch (e) {
+        console.error('[TFD Automation] Error processing qs packet:', e);
     }
 };
 
@@ -803,9 +847,14 @@ async function runSingleAutomation() {
         });
         if (!isAutomationRunning) return;
 
-        // Refresh room info after joining adventure
         await refreshRoom();
         const adventureRoomId = getRoomIdToUse();
+
+        if (isEfficientMode && efficientCrystalPackets.length > 0) {
+            console.log(`[TFD Automation] Efficient mode: Using ${efficientCrystalPackets.length} optimized packets from qs response`);
+        } else if (isEfficientMode) {
+            console.log(`[TFD Automation] Efficient mode: No crystal data detected from qs, will use default packets`);
+        }
 
         updateStatus('Adventure joined. Beginning gem collection...', 'info', 4);
 
@@ -1256,16 +1305,31 @@ function resetStats() {
     }
 }
 
-// Modal functionality
-function showModal() {
-    if (educationalModal) {
-        educationalModal.style.display = 'flex';
+let isFirstLaunchGuide = false;
+
+function showModal(enforced) {
+    if (!educationalModal) return;
+    isFirstLaunchGuide = !!enforced;
+    educationalModal.style.display = 'flex';
+
+    if (enforced) {
+        if (closeModal) closeModal.classList.add('hidden');
+        if (guideAcknowledgeContainer) guideAcknowledgeContainer.classList.remove('hidden');
+        if (guideAcknowledgeCheckbox) guideAcknowledgeCheckbox.checked = false;
+        if (startAutomationFromModal) startAutomationFromModal.disabled = true;
+    } else {
+        if (closeModal) closeModal.classList.remove('hidden');
+        if (guideAcknowledgeContainer) guideAcknowledgeContainer.classList.add('hidden');
+        if (startAutomationFromModal) startAutomationFromModal.disabled = false;
     }
 }
 
 function hideModal() {
-    if (educationalModal) {
-        educationalModal.style.display = 'none';
+    if (!educationalModal) return;
+    educationalModal.style.display = 'none';
+    if (isFirstLaunchGuide) {
+        localStorage.setItem('tfd_guide_acknowledged', 'true');
+        isFirstLaunchGuide = false;
     }
 }
 
@@ -1273,7 +1337,7 @@ function hideModal() {
 function getWhitelists() {
     const getIds = (element) => {
         if (!element || !element.value.trim()) return new Set();
-        return new Set(element.value.split(',').map(id => id.trim()).filter(Boolean));
+        return new Set(element.value.split(',').map(s => s.trim()).filter(s => /^\d+$/.test(s)));
     };
     return {
         clothing: getIds(clothingWhitelist),
@@ -1297,17 +1361,51 @@ function saveWhitelists() {
 const DEFAULT_CLOTHING_WHITELIST = [277, 278, 279, 280, 148, 283, 286, 386, 770, 342, 620, 138, 64, 719, 525, 285, 635, 1213, 1360, 1516, 1518]
 const DEFAULT_DEN_WHITELIST = [351, 4544, 112, 422, 387, 368, 385, 348, 335, 344, 359, 360, 362, 361, 533, 2152, 115, 89, 3, 155, 130, 143, 284, 292, 294, 2549, 65, 393, 265, 365, 137, 247, 380]
 
+function renderWhitelistTags() {
+    renderTagsFor(clothingWhitelist, clothingTags, 'clothing');
+    renderTagsFor(denWhitelist, denTags, 'den');
+}
+
+function renderTagsFor(textarea, container, itemType) {
+    if (!textarea || !container) return;
+    const ids = textarea.value.split(',').map(s => s.trim()).filter(Boolean);
+    container.innerHTML = '';
+    ids.forEach(id => {
+        const name = getItemName(id, itemType);
+        const isUnknown = name.startsWith('Unknown');
+        const tag = document.createElement('span');
+        tag.className = isUnknown ? 'wl-tag wl-tag-unknown' : 'wl-tag';
+        const label = isUnknown ? id : `${name} (${id})`;
+        tag.innerHTML = `${label} <span class="remove-tag">&times;</span>`;
+        tag.querySelector('.remove-tag').addEventListener('click', () => {
+            const current = textarea.value.split(',').map(s => s.trim()).filter(Boolean);
+            textarea.value = current.filter(v => v !== id).join(', ');
+            renderTagsFor(textarea, container, itemType);
+            updateFilteringStatus();
+        });
+        container.appendChild(tag);
+    });
+}
+
+function addIdToWhitelist(textarea, container, itemType, id) {
+    const current = textarea.value.split(',').map(s => s.trim()).filter(Boolean);
+    if (!current.includes(id)) {
+        current.push(id);
+        textarea.value = current.join(', ');
+        renderTagsFor(textarea, container, itemType);
+        updateFilteringStatus();
+    }
+}
+
 function loadWhitelists() {
     const loadList = (key, element, defaults) => {
         const saved = localStorage.getItem(key);
-        if (saved && element) {
-            try {
-                element.value = JSON.parse(saved).join(', ');
-            } catch (e) {
-                element.value = defaults.join(', ');
-            }
-        } else if (element) {
-            element.value = defaults.join(', ');
+        let ids = defaults;
+        if (saved) {
+            try { ids = JSON.parse(saved); } catch (e) {}
+        }
+        if (element) {
+            element.value = ids.map(id => String(id)).join(', ');
         }
     };
     loadList('tfd_clothing_whitelist', clothingWhitelist, DEFAULT_CLOTHING_WHITELIST);
@@ -1337,11 +1435,80 @@ function clearWhitelists() {
         localStorage.removeItem('tfd_clothing_whitelist');
         localStorage.removeItem('tfd_den_whitelist');
         updateFilteringStatus();
+        renderWhitelistTags();
         updateStatus('Whitelists cleared.', 'info');
     }
 }
 
-// Enhanced item name lookup with better error handling
+function setupWhitelistSearch(input, dropdown, textarea, tagsContainer, itemType) {
+    if (!input || !dropdown) return;
+    let debounce = null;
+
+    input.addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => {
+            const items = itemType === 'clothing' ? clothingItems : denItems;
+            const query = input.value.trim().toLowerCase();
+            dropdown.innerHTML = '';
+            if (!query || query.length < 2 || !items) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            const results = [];
+            for (const id in items) {
+                const item = items[id];
+                const name = itemType === 'clothing' ? (item.name || '') : (item.abbrName || '');
+                if (name.toLowerCase().includes(query)) {
+                    results.push({ id, name });
+                }
+                if (results.length >= 6) break;
+            }
+            if (results.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            results.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'search-dropdown-item';
+                div.innerHTML = `${r.name} <span class="item-id">(${r.id})</span>`;
+                div.addEventListener('click', () => {
+                    addIdToWhitelist(textarea, tagsContainer, itemType, r.id);
+                    input.value = '';
+                    dropdown.classList.add('hidden');
+                });
+                dropdown.appendChild(div);
+            });
+            dropdown.classList.remove('hidden');
+        }, 200);
+    });
+
+    input.addEventListener('blur', () => {
+        setTimeout(() => dropdown.classList.add('hidden'), 150);
+    });
+}
+
+function exportWhitelists() {
+    const whitelists = getWhitelists();
+    const clothingIds = Array.from(whitelists.clothing);
+    const denIds = Array.from(whitelists.den);
+    let content = 'Clothing Whitelist:\n';
+    clothingIds.forEach(id => {
+        content += `${id} - ${getItemName(id, 'clothing')}\n`;
+    });
+    content += '\nDen Item Whitelist:\n';
+    denIds.forEach(id => {
+        content += `${id} - ${getItemName(id, 'den')}\n`;
+    });
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tfd-whitelists.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+
 function getItemName(defId, itemType) {
     if (!defId) return 'Unknown Item';
 
@@ -1587,27 +1754,9 @@ function clearItemLog() {
     updateStatus('Item log cleared.', 'info');
 }
 
-// Function to open a file in the default editor
-function openFileInEditor(fileName) {
-    if (typeof require === 'function') {
-        try {
-            const { ipcRenderer } = require('electron');
-            // The main process will resolve the full path relative to the plugin directory
-            ipcRenderer.send('open-file-in-editor', fileName);
-        } catch (e) {
-            console.error(`[TFD Automation] Could not open file ${fileName}.`, e);
-            updateStatus(`Error: Could not open file ${fileName}.`, 'error');
-        }
-    }
-}
-
-// --- Collapsible Sections ---
 const settingsToggle = document.getElementById('settingsToggle');
 const settingsContent = document.getElementById('settingsContent');
 const settingsChevron = document.getElementById('settingsChevron');
-const filterToggle = document.getElementById('filterToggle');
-const filterContent = document.getElementById('filterContent');
-const filterChevron = document.getElementById('filterChevron');
 
 function toggleSection(sectionContent, chevron, storageKey, defaultCollapsed = true) {
     const isCollapsed = sectionContent.classList.contains('collapsed');
@@ -1640,9 +1789,6 @@ function loadSectionState(sectionContent, chevron, storageKey, defaultCollapsed 
 // Initialize collapsible sections on load
 if (settingsContent) {
     loadSectionState(settingsContent, settingsChevron, 'tfd_settings_section_collapsed', true);
-}
-if (filterContent) {
-    loadSectionState(filterContent, filterChevron, 'tfd_filter_section_collapsed', true);
 }
 
 // --- Settings Persistence ---
@@ -1702,7 +1848,7 @@ function loadSettings() {
             // Update UI visibility
             const isChecked = efficientModeCheckbox.checked;
             if (specialModeContainer) {
-                specialModeContainer.style.display = isChecked ? 'block' : 'none';
+                specialModeContainer.style.display = isChecked ? 'flex' : 'none';
             }
             if (crystalDelayContainer) {
                 crystalDelayContainer.style.display = isChecked ? 'block' : 'none';
@@ -1758,7 +1904,7 @@ if (efficientModeCheckbox) {
     efficientModeCheckbox.addEventListener('change', () => {
         const isChecked = efficientModeCheckbox.checked;
         if (specialModeContainer) {
-            specialModeContainer.style.display = isChecked ? 'block' : 'none';
+            specialModeContainer.style.display = isChecked ? 'flex' : 'none';
         }
         if (crystalDelayContainer) {
             crystalDelayContainer.style.display = isChecked ? 'block' : 'none';
@@ -1781,66 +1927,88 @@ if (rewardWaitTime) {
     });
 }
 
-// Event Listeners for UI buttons
 if (startButton) startButton.addEventListener('click', startAutomation);
 if (stopButton) stopButton.addEventListener('click', stopAutomation);
 if (resetStatsButton) resetStatsButton.addEventListener('click', resetStats);
-if (infoButton) infoButton.addEventListener('click', showModal);
+if (infoButton) infoButton.addEventListener('click', () => showModal(false));
 if (saveWhitelistsButton) saveWhitelistsButton.addEventListener('click', saveWhitelists);
 if (clearWhitelistsButton) clearWhitelistsButton.addEventListener('click', clearWhitelists);
 if (clearLogButton) clearLogButton.addEventListener('click', clearItemLog);
 if (toggleLogButton) {
     toggleLogButton.addEventListener('click', () => {
         itemLog.classList.toggle('collapsed');
-        renderItemLog(); // Re-render to update view and button text
+        renderItemLog();
     });
 }
-if (openClothingJson) openClothingJson.addEventListener('click', () => openFileInEditor('1000-clothing.json'));
-if (openDenItemsJson) openDenItemsJson.addEventListener('click', () => openFileInEditor('1030-denitems.json'));
+if (exportWhitelistsButton) exportWhitelistsButton.addEventListener('click', exportWhitelists);
+if (importWhitelistsButton) importWhitelistsButton.addEventListener('click', () => {
+    if (importFileInput) importFileInput.click();
+});
+if (importFileInput) {
+    importFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const text = ev.target.result;
+            const lines = text.split('\n');
+            let mode = null;
+            const clothingIds = [];
+            const denIds = [];
+            for (const line of lines) {
+                const trimmed = line.trim().toLowerCase();
+                if (trimmed.startsWith('clothing')) { mode = 'clothing'; continue; }
+                if (trimmed.startsWith('den')) { mode = 'den'; continue; }
+                const match = line.match(/^(\d+)/);
+                if (match) {
+                    if (mode === 'den') denIds.push(match[1]);
+                    else clothingIds.push(match[1]);
+                }
+            }
+            if (clothingIds.length > 0 && clothingWhitelist) {
+                clothingWhitelist.value = [...new Set(clothingIds)].join(', ');
+            }
+            if (denIds.length > 0 && denWhitelist) {
+                denWhitelist.value = [...new Set(denIds)].join(', ');
+            }
+            renderWhitelistTags();
+            updateFilteringStatus();
+            updateStatus(`Imported ${clothingIds.length} clothing + ${denIds.length} den IDs.`, 'success');
+        };
+        reader.readAsText(file);
+        importFileInput.value = '';
+    });
+}
 
-// Collapsible section event listeners
 if (settingsToggle && settingsContent) {
     settingsToggle.addEventListener('click', () => {
         toggleSection(settingsContent, settingsChevron, 'tfd_settings_section_collapsed');
     });
 }
 
-if (filterToggle && filterContent) {
-    filterToggle.addEventListener('click', () => {
-        toggleSection(filterContent, filterChevron, 'tfd_filter_section_collapsed');
-    });
-}
-
-// Add event listener for whitelist input changes to update status in real-time
-if (clothingWhitelist) clothingWhitelist.addEventListener('input', updateFilteringStatus);
-if (denWhitelist) denWhitelist.addEventListener('input', updateFilteringStatus);
-
-// Add event listener for search box
 if (itemSearchBox) {
-    itemSearchBox.addEventListener('input', () => {
-        renderItemLog();
-    });
+    itemSearchBox.addEventListener('input', () => renderItemLog());
 }
 
-// Modal event listeners
 if (closeModal) closeModal.addEventListener('click', hideModal);
 if (startAutomationFromModal) {
-    startAutomationFromModal.addEventListener('click', () => {
-        hideModal();
-        // Don't auto-start, just close the modal
+    startAutomationFromModal.addEventListener('click', () => hideModal());
+}
+if (guideAcknowledgeCheckbox) {
+    guideAcknowledgeCheckbox.addEventListener('change', () => {
+        if (startAutomationFromModal) {
+            startAutomationFromModal.disabled = !guideAcknowledgeCheckbox.checked;
+        }
     });
 }
-
-// Close modal when clicking outside
 if (educationalModal) {
     educationalModal.addEventListener('click', (e) => {
-        if (e.target === educationalModal) {
+        if (e.target === educationalModal && !isFirstLaunchGuide) {
             hideModal();
         }
     });
 }
 
-// Function to load item data from JSON files
 async function loadItemData() {
     try {
         const clothingResponse = await fetch('./1000-clothing.json');
@@ -1861,7 +2029,6 @@ async function loadItemData() {
     }
 }
 
-// Function to load the item log from localStorage
 function loadItemLog() {
     const savedLog = localStorage.getItem('tfd_item_log');
     if (savedLog) {
@@ -1876,7 +2043,6 @@ function loadItemLog() {
 }
 
 
-// Initialize
 async function initialize() {
     loadStats();
     loadSettings();
@@ -1884,22 +2050,32 @@ async function initialize() {
     loadItemLog();
     await loadItemData();
 
-    // The plugin's 'dispatch' object does not have event listeners.
-    // We must use ipcRenderer to listen for events from the main application.
+    const onPacketData = (data) => {
+        handleIncomingPackets(data);
+        if (isEfficientMode && isAutomationRunning) {
+            efficientHandleQqm(data);
+            efficientHandleQs(data);
+        }
+    };
+
+    const isInlineFrame = window.parent !== window;
+
+    if (isInlineFrame) {
+        window.parent.addEventListener('jam-packet', (e) => {
+            onPacketData(e.detail);
+        });
+    }
+
     if (typeof require === 'function') {
         try {
             const { ipcRenderer } = require('electron');
-            
-            // Listener for individual packets
-            ipcRenderer.on('packet-event', (event, data) => {
-                handleIncomingPackets(data);
-                // Handle efficient mode packets
-                if (isEfficientMode && isAutomationRunning) {
-                    efficientHandleQqm(data);
-                }
-            });
 
-            // Listener for global connection status changes
+            if (!isInlineFrame) {
+                ipcRenderer.on('packet-event', (event, data) => {
+                    onPacketData(data);
+                });
+            }
+
             ipcRenderer.on('connection-status-changed', (event, isConnected) => {
                 if (!isConnected && isAutomationRunning) {
                     updateStatus('Connection lost. Stopping automation.', 'error');
@@ -1913,17 +2089,21 @@ async function initialize() {
         }
     }
 
+    setupWhitelistSearch(clothingSearch, clothingSearchDropdown, clothingWhitelist, clothingTags, 'clothing');
+    setupWhitelistSearch(denSearch, denSearchDropdown, denWhitelist, denTags, 'den');
+    renderWhitelistTags();
+
     updateStatus('Ready to start TFD automation', 'info');
-    
-    // Initialize account dropdown
+
+    if (!localStorage.getItem('tfd_guide_acknowledged')) {
+        showModal(true);
+    }
+
     updateAccountDropdown();
     loadAccountSelection();
-    setInterval(updateAccountDropdown, 5000); // Update every 5 seconds
+    setInterval(updateAccountDropdown, 5000);
 }
 
-/**
- * Populates the target account dropdown with connected clients
- */
 async function updateAccountDropdown() {
     try {
         let clients = [];

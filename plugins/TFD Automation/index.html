@@ -15,7 +15,7 @@
             border: 1px solid rgba(156,163,175,0.12);
         }
         .progress-bar { transition: width 0.3s ease; }
-        .modal-overlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); }
+        .modal-overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
         .modal-content { background: #1e1f2e; border: 1px solid rgba(156,163,175,0.2); }
         #itemLog { overflow-y: auto; transition: max-height 0.3s ease; }
         #itemLog.collapsed { max-height: 180px; }
@@ -29,10 +29,8 @@
         #stopButton:hover { background: rgba(239,68,68,0.3); }
         #resetStatsButton { background: rgba(59,130,246,0.2); color: #3b82f6; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
         #resetStatsButton:hover { background: rgba(59,130,246,0.3); }
-        #saveWhitelistsButton, #clearWhitelistsButton, #openClothingJson, #openDenItemsJson,
-        #toggleLogButton, #clearLogButton { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid rgba(156,163,175,0.15); }
-        #saveWhitelistsButton:hover, #clearWhitelistsButton:hover, #openClothingJson:hover, #openDenItemsJson:hover,
-        #toggleLogButton:hover, #clearLogButton:hover { background: rgba(255,255,255,0.1); }
+        .btn-subtle { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid rgba(156,163,175,0.15); }
+        .btn-subtle:hover { background: rgba(255,255,255,0.1); }
         .stats-container { display: flex; justify-content: center; align-items: center; gap: 40px; }
         .stats-container > div { text-align: center; }
         .control-buttons-container { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -41,16 +39,29 @@
         select { color-scheme: dark; }
         input:focus, textarea:focus, select:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
         #progressBar { background: var(--theme-primary, #e83d52); }
-        #startAutomationFromModal { background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.2); color: var(--theme-primary, #e83d52); border: none; }
-        #startAutomationFromModal:hover { background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.3); }
+        #startAutomationFromModal { transition: all 0.2s ease; transform: scale(1); }
+        #startAutomationFromModal:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+        #startAutomationFromModal:not(:disabled):hover { transform: scale(1.03); }
         #infoButton { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid rgba(156,163,175,0.15); box-shadow: none; }
         #infoButton:hover { background: rgba(255,255,255,0.1); }
         .form-checkbox { accent-color: var(--theme-primary, #e83d52); }
+        .toggle-switch { width: 28px; height: 16px; border-radius: 8px; background: #4b5563; position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.2s ease; }
+        .toggle-switch::after { content: ''; position: absolute; width: 12px; height: 12px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .peer:checked ~ .toggle-switch { background-color: var(--theme-primary, #e83d52); }
+        .peer:checked ~ .toggle-switch::after { transform: translateX(12px); }
+        .wl-tags { display: flex; flex-wrap: wrap; gap: 3px; min-height: 24px; max-height: 80px; overflow-y: auto; padding: 4px; background: rgba(0,0,0,0.2); border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; }
+        .wl-tag { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 3px; font-size: 10px; background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.25); white-space: nowrap; }
+        .wl-tag-unknown { background: rgba(156,163,175,0.1); color: #9ca3af; border-color: rgba(156,163,175,0.2); }
+        .wl-tag .remove-tag { cursor: pointer; opacity: 0.5; font-size: 9px; line-height: 1; }
+        .wl-tag .remove-tag:hover { opacity: 1; color: #ef4444; }
+        .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.25); border-radius: 4px; max-height: 160px; overflow-y: auto; }
+        .search-dropdown-item { padding: 4px 8px; cursor: pointer; font-size: 11px; color: #d1d5db; }
+        .search-dropdown-item:hover { background: rgba(139,92,246,0.2); }
+        .search-dropdown-item .item-id { color: #9ca3af; font-size: 10px; }
     </style>
 </head>
 <body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
 
-    <!-- Standardized Draggable Header -->
     <div class="jam-plugin-header">
         <span class="jam-plugin-title">TFD Automation</span>
         <div class="jam-plugin-controls">
@@ -63,173 +74,160 @@
         </div>
     </div>
 
-    <!-- Educational Modal -->
     <div id="educationalModal" class="modal-overlay fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto hidden">
-        <div class="modal-content rounded-lg w-full max-w-[600px] max-h-[90vh] min-h-[400px] my-4 overflow-hidden flex flex-col">
-            <div class="p-6 flex-shrink-0">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-purple-400">
+        <div class="modal-content rounded-lg w-full max-w-[560px] max-h-[90vh] my-4 overflow-hidden flex flex-col">
+            <div class="p-5 flex-shrink-0">
+                <div class="flex items-center justify-between mb-1">
+                    <h2 class="text-lg font-bold text-purple-400">
                         <i class="fas fa-graduation-cap mr-2"></i>TFD Automation Guide
                     </h2>
-                    <button id="closeModal" class="text-gray-400 hover:text-white transition-colors">
-                        <i class="fas fa-times text-xl"></i>
+                    <button id="closeModal" class="text-gray-400 hover:text-white transition-colors hidden">
+                        <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
             </div>
-            
-            <div class="px-6 flex-1 overflow-y-auto">
-                <div class="space-y-4 text-sm">
-                    <div class="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-blue-300 mb-2">
-                            <i class="fas fa-info-circle mr-2"></i>How It Works
+
+            <div class="px-5 flex-1 overflow-y-auto">
+                <div class="space-y-3 text-xs">
+                    <div class="bg-red-900/30 border border-red-500/50 rounded-lg p-3">
+                        <h3 class="font-semibold text-red-300 mb-1.5 text-sm">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Prerequisites
                         </h3>
-                        <ul class="space-y-1 text-blue-200">
-                            <li>• Items go straight to your inventory (you won't see them appear)</li>
-                            <li>• Start in your den for best results</li>
-                            <li>• Choose how long to wait before collecting rewards</li>
-                            <li>• Automatically recycles items you don't want</li>
+                        <ul class="space-y-1 text-red-200">
+                            <li>You <strong>MUST</strong> be in your den before starting automation</li>
+                            <li>Do <strong>NOT</strong> open your inventory or check items in-game during a run. Use the Item Log in this plugin instead</li>
+                            <li>For long or looped runs, enable <strong>Performance Mode</strong> or <strong>Headless Mode</strong> via <strong>F10 Mod Menu</strong>. Flash will slow down, this just extends the session</li>
                         </ul>
                     </div>
 
-                    <div class="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-green-300 mb-2">
-                            <i class="fas fa-check-circle mr-2"></i>Best Practices
+                    <div class="bg-blue-900/30 border border-blue-500/50 rounded-lg p-3">
+                        <h3 class="font-semibold text-blue-300 mb-1.5 text-sm">
+                            <i class="fas fa-info-circle mr-1"></i>Modes
                         </h3>
-                        <ul class="space-y-1 text-green-200">
-                            <li>• Stay in your den while it runs</li>
-                            <li>• Don't switch rooms during automation</li>
-                            <li>• Check your inventory when done to see your items</li>
-                            <li>• Use loop mode to run multiple times</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-purple-900/30 border border-purple-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-purple-300 mb-2">
-                            <i class="fas fa-magic mr-2"></i>Efficient Mode (🚀)
-                        </h3>
-                        <ul class="space-y-1 text-purple-200">
-                            <li>• Detects items before the chest opens by analyzing quest packets</li>
-                            <li>• Only collects valuable items (whitelisted) and skips unwanted ones</li>
-                            <li>• Uses optimized crystal packets generated from detected patterns</li>
-                            <li>• Skips reward collection entirely if no valuable items are found</li>
-                            <li>• Uses faster crystal delays (10ms default) instead of randomized delays</li>
-                        </ul>
-                        <div class="mt-3 pt-3 border-t border-purple-500/30">
-                            <p class="text-xs font-semibold text-purple-300 mb-1">Special Mode (8x speed):</p>
-                            <ul class="space-y-1 text-purple-200 text-xs">
-                                <li>• Collects additional layer 3 & 4 crystals during the wait period</li>
-                                <li>• Utilizes wait time(to reach 11:00-13:00) for extra crystal collection, making runs faster</li>
-                                <li>• Only works when Efficient Mode is enabled</li>
-                            </ul>
+                        <div class="space-y-1.5 text-blue-200">
+                            <div><strong class="text-blue-300">Normal:</strong> Sends all crystal packets, waits the selected time, collects all 4 prizes, recycles non-whitelisted items</div>
+                            <div><strong class="text-blue-300">Efficient:</strong> Detects crystal variant from server data and sends only matching packets (140 vs 279). Detects prize contents before collection. Only collects green/yellow crystals instantly, saves blue/white for the wait period</div>
+                            <div><strong class="text-blue-300">Special</strong> <span class="text-blue-400">(requires Efficient):</span> Only collects green/yellow crystals instantly. If it doesn't have a whitelisted item it leaves. Fastest mode</div>
                         </div>
                     </div>
 
-                    <div class="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-yellow-300 mb-2">
-                            <i class="fas fa-filter mr-2"></i>Item Filtering System
+                    <div class="bg-purple-900/30 border border-purple-500/50 rounded-lg p-3">
+                        <h3 class="font-semibold text-purple-300 mb-1.5 text-sm">
+                            <i class="fas fa-filter mr-1"></i>Item Filtering
+                        </h3>
+                        <ul class="space-y-1 text-purple-200">
+                            <li>Whitelisted items are <strong>KEPT</strong>. In normal mode everything else is <strong>RECYCLED</strong> automatically</li>
+                            <li>Default whitelists include commonly valuable items. Search by name to add more</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-3">
+                        <h3 class="font-semibold text-yellow-300 mb-1.5 text-sm">
+                            <i class="fas fa-life-ring mr-1"></i>Troubleshooting
                         </h3>
                         <ul class="space-y-1 text-yellow-200">
-                            <li>• Add item IDs you want to keep</li>
-                            <li>• Items you don't want get recycled automatically</li>
-                            <li>• You'll hear a sound when good items are found</li>
-                            <li>• Use the "Find IDs" buttons to see what items are available</li>
+                            <li>Game crashes on long runs are normal (Flash limitation). Just restart the game and re-run</li>
+                            <li>If automation stalls, stop it and restart from your den</li>
                         </ul>
-                    </div>
-
-                    <div class="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-red-300 mb-2">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>Important Notes
-                        </h3>
-                        <ul class="space-y-1 text-red-200">
-                            <li>• Wait time is calculated automatically</li>
-                            <li>• Failed runs will retry automatically</li>
-                            <li>• Your stats are saved between sessions</li>
-                            <li>• Stops if you lose connection</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-gray-900/30 border border-gray-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-gray-300 mb-2">
-                            <i class="fas fa-cogs mr-2"></i>Settings Overview
-                        </h3>
-                        <ul class="space-y-1 text-gray-200">
-                            <li>• Max Retries: How many times to retry if it fails</li>
-                            <li>• Loop Mode: Run once or many times</li>
-                            <li>• Sound alerts: Get notified when good items are found</li>
-                            <li>• Efficient Mode: Makes crystal collection faster and smarter</li>
-                        </ul>
+                        <p class="mt-2 text-sm font-bold text-red-400 text-center"><i class="fas fa-ban mr-1"></i>Do NOT flood #sj-help on Discord with usage questions. Read this guide first.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="p-6 flex-shrink-0 border-t border-gray-600">
+            <div class="p-5 flex-shrink-0 border-t border-gray-700">
+                <div id="guideAcknowledgeContainer" class="flex items-center justify-center gap-2 mb-3 hidden">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-300">
+                        <input type="checkbox" id="guideAcknowledgeCheckbox" class="form-checkbox h-3.5 w-3.5 rounded">
+                        <span>I have read and understand the above</span>
+                    </label>
+                </div>
                 <div class="flex justify-center">
-                    <button id="startAutomationFromModal" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 hover:shadow-xl hover:scale-105 transition-all duration-200 font-medium shadow-lg">
-                        <i class="fas fa-check mr-2"></i>Got It!
+                    <button id="startAutomationFromModal" class="px-6 py-2.5 text-white rounded-lg transition-all font-semibold text-sm shadow-lg" style="background: var(--theme-primary, #e83d52); box-shadow: 0 4px 14px rgba(232,61,82,0.3);" disabled>
+                        <i class="fas fa-check mr-1"></i>Got It!
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content Area (this will be hidden/shown on minimize) -->
     <div class="jam-plugin-content flex-1 overflow-y-auto">
-        <div class="container mx-auto max-w-4xl p-4">
-            <!-- Header -->
-            <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+        <div class="container mx-auto max-w-4xl px-4 py-3">
+
+            <div class="text-center mb-4">
+                <h1 class="text-xl font-bold mb-1 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                     <i class="fas fa-map-marked-alt mr-2"></i>The Forgotten Desert
                 </h1>
-                <p class="text-text-secondary mb-2">
-                    Automated completion of TFD quest
-                </p>
-                <p class="text-xs mb-3" style="color: #f87171 !important;">
+                <p class="text-xs text-text-secondary mb-1">Automated TFD quest completion</p>
+                <p class="text-xs mb-2" style="color: #f87171 !important;">
                     Efficient Mode algorithm by <a href="https://github.com/Secretmimi" target="_blank" class="font-medium" style="color: #f87171 !important; text-decoration: none;" onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='#f87171'">NoSmile</a>
                 </p>
-                <button id="infoButton" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 font-medium shadow-lg border-2 border-green-400">
-                    <i class="fas fa-book mr-2"></i>Guide
+                <button id="infoButton" class="px-3 py-1.5 rounded-lg transition-all text-xs font-medium btn-subtle">
+                    <i class="fas fa-book mr-1"></i>Guide
                 </button>
             </div>
 
-            <!-- Settings Panel -->
-            <div class="setting-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center justify-between collapse-toggle" id="settingsToggle">
+            <div class="setting-card rounded-lg p-3 mb-3">
+                <h2 class="text-sm font-semibold mb-2 flex items-center justify-between collapse-toggle" id="settingsToggle">
                     <span class="flex items-center">
-                        <i class="fas fa-cogs mr-2 text-blue-400"></i>Settings
+                        <i class="fas fa-cogs mr-1.5 text-blue-400"></i>Settings
                     </span>
-                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="settingsChevron"></i>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform text-xs" id="settingsChevron"></i>
                 </h2>
                 <div class="collapsible-content" id="settingsContent">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="soundNotificationCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Sound alerts for valuable items</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="connectionFailureSoundCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Sound on connection failure</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="dontLogRecycledCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Don't log recycled items</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="autoRetryCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Auto-retry failed runs</span>
-                        </label>
+                    <div class="space-y-0 text-sm">
+                        <div class="flex items-center justify-between py-2" style="border-bottom: 1px solid rgba(156,163,175,0.08);">
+                            <span>Sound alerts for valuable items</span>
+                            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                <input type="checkbox" id="soundNotificationCheckbox" checked class="sr-only peer">
+                                <div class="toggle-switch"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-2" style="border-bottom: 1px solid rgba(156,163,175,0.08);">
+                            <span>Sound on connection failure</span>
+                            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                <input type="checkbox" id="connectionFailureSoundCheckbox" checked class="sr-only peer">
+                                <div class="toggle-switch"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-2" style="border-bottom: 1px solid rgba(156,163,175,0.08);">
+                            <span>Auto-retry failed runs</span>
+                            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                <input type="checkbox" id="autoRetryCheckbox" checked class="sr-only peer">
+                                <div class="toggle-switch"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-2" style="border-bottom: 1px solid rgba(156,163,175,0.08);">
+                            <span>Hide recycled items in log</span>
+                            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                <input type="checkbox" id="dontLogRecycledCheckbox" class="sr-only peer">
+                                <div class="toggle-switch"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-2" style="border-bottom: 1px solid rgba(156,163,175,0.08);">
+                            <span class="text-blue-300 font-medium"><i class="fas fa-bolt mr-1"></i>Efficient Mode</span>
+                            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                <input type="checkbox" id="efficientModeCheckbox" class="sr-only peer">
+                                <div class="toggle-switch"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-2" id="specialModeContainer" style="display: none;">
+                            <span class="text-purple-300 font-medium"><i class="fas fa-meteor mr-1"></i>Special Mode</span>
+                            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                <input type="checkbox" id="specialModeCheckbox" class="sr-only peer">
+                                <div class="toggle-switch"></div>
+                            </label>
+                        </div>
                     </div>
-                    <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-2 mt-3 mb-2">
                         <div>
-                            <label for="targetAccount" class="block text-sm font-medium text-text-secondary mb-1">Target Account:</label>
-                            <select id="targetAccount" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                            <label for="targetAccount" class="block text-xs text-text-secondary mb-0.5">Target Account</label>
+                            <select id="targetAccount" class="w-full rounded px-2 py-1 text-xs">
                                 <option value="">All Accounts</option>
                             </select>
-                            <small class="text-xs text-gray-400">Select which account to send packets to (default: all accounts)</small>
                         </div>
                         <div>
-                            <label for="maxRetries" class="block text-sm font-medium text-text-secondary mb-1">Max Retries:</label>
-                            <select id="maxRetries" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                            <label for="maxRetries" class="block text-xs text-text-secondary mb-0.5">Max Retries</label>
+                            <select id="maxRetries" class="w-full rounded px-2 py-1 text-xs">
                                 <option value="1">1</option>
                                 <option value="3" selected>3</option>
                                 <option value="5">5</option>
@@ -237,8 +235,8 @@
                             </select>
                         </div>
                         <div>
-                            <label for="loopMode" class="block text-sm font-medium text-text-secondary mb-1">Loop Mode:</label>
-                            <select id="loopMode" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                            <label for="loopMode" class="block text-xs text-text-secondary mb-0.5">Loop Mode</label>
+                            <select id="loopMode" class="w-full rounded px-2 py-1 text-xs">
                                 <option value="1">Run Once</option>
                                 <option value="2">2 Times</option>
                                 <option value="3">3 Times</option>
@@ -251,216 +249,139 @@
                             </select>
                         </div>
                         <div>
-                            <label for="rewardWaitTime" class="block text-sm font-medium text-text-secondary mb-1">Reward Wait Time:</label>
-                            <select id="rewardWaitTime" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                                <option value="11:00">11:00 (2 minutes)</option>
-                                <option value="12:00">12:00 (3 minutes)</option>
-                                <option value="13:00" selected>13:00 (4 minutes)</option>
+                            <label for="rewardWaitTime" class="block text-xs text-text-secondary mb-0.5">Reward Wait Time</label>
+                            <select id="rewardWaitTime" class="w-full rounded px-2 py-1 text-xs">
+                                <option value="11:00">11:00 (2 min)</option>
+                                <option value="12:00">12:00 (3 min)</option>
+                                <option value="13:00" selected>13:00 (4 min)</option>
                                 <option value="randomized">Randomized</option>
                             </select>
-                            <small class="text-xs text-gray-400">Time to wait before collecting rewards to avoid blocking</small>
                         </div>
                     </div>
-                </div>
-                </div>
-            </div>
+                    <div id="crystalDelayContainer" class="mb-2" style="display: none;">
+                        <label for="crystalDelay" class="block text-xs text-text-secondary mb-0.5">Crystal Delay (ms)</label>
+                        <input type="number" id="crystalDelay" value="10" min="5" max="1000" class="w-full rounded px-2 py-1 text-xs">
+                        <span class="text-xs text-gray-500">10ms fastest, 50ms safe, 100ms stable</span>
+                    </div>
 
-            <!-- Advanced Modes Section -->
-            <div class="setting-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center">
-                    <i class="fas fa-rocket mr-2 text-purple-400"></i>Advanced Modes
-                </h2>
-                <div class="space-y-4">
-                    <div class="p-3 rounded-lg bg-blue-900/20 border border-blue-500/30">
-                        <label class="flex items-start space-x-2 mb-2">
-                            <input type="checkbox" id="efficientModeCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded mt-0.5">
-                            <div class="flex-1">
-                                <span class="text-sm font-semibold text-blue-300">Efficient Mode 🚀</span>
-                                <p class="text-xs text-blue-200 mt-1">
-                                    Collects crystals faster and smarter. Skips items you don't want.
-                                </p>
-                            </div>
-                        </label>
-                    </div>
-                    <div class="p-3 rounded-lg bg-purple-900/20 border border-purple-500/30" id="specialModeContainer" style="display: none;">
-                        <label class="flex items-start space-x-2 mb-2">
-                            <input type="checkbox" id="specialModeCheckbox" class="form-checkbox h-4 w-4 text-purple-600 rounded mt-0.5">
-                            <div class="flex-1">
-                                <span class="text-sm font-semibold text-purple-300">Special Mode (8x speed)</span>
-                                <p class="text-xs text-purple-200 mt-1">
-                                    Super fast mode! Only works with Efficient Mode on. For advanced users.
-                                </p>
-                            </div>
-                        </label>
-                    </div>
-                    <div id="crystalDelayContainer" style="display: none;">
-                        <label for="crystalDelay" class="block text-sm font-medium text-text-secondary mb-1">Crystal Delay (ms) - Efficient Mode Only:</label>
-                        <input type="number" id="crystalDelay" value="10" min="5" max="1000" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                        <small class="text-xs text-gray-400">Delay between crystal packets in efficient mode. Recommended: 10ms (fastest), 50ms (safe), 100ms (stable)</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Item Filter Whitelist -->
-            <div class="setting-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center justify-between collapse-toggle" id="filterToggle">
-                    <span class="flex items-center">
-                        <i class="fas fa-filter mr-2 text-purple-400"></i>Item Filter & Recycling
-                    </span>
-                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="filterChevron"></i>
-                </h2>
-                <div class="collapsible-content" id="filterContent">
-                
-                <!-- Filter Status Indicator -->
-                <div id="filterStatus" class="mb-4 p-3 rounded-lg bg-gray-800 border border-gray-600">
-                    <div class="flex items-center text-sm">
-                        <i class="fas fa-info-circle mr-2 text-blue-400"></i>
-                        <span class="text-gray-300">
-                            <strong>Filtering Status:</strong> <span id="filterStatusText">Disabled (no item IDs specified)</span>
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="clothingWhitelist" class="block text-sm font-medium text-text-secondary mb-2">
-                            <strong>Clothing IDs to Keep</strong>
-                            <span class="block text-xs text-gray-400">Comma-separated IDs. Others will be recycled.</span>
-                        </label>
-                        <textarea id="clothingWhitelist" rows="3" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm font-mono" placeholder="e.g., 277, 695"></textarea>
-                    </div>
-                    <div>
-                        <label for="denWhitelist" class="block text-sm font-medium text-text-secondary mb-2">
-                            <strong>Den Item IDs to Keep</strong>
-                            <span class="block text-xs text-gray-400">Comma-separated IDs. Others will be recycled.</span>
-                        </label>
-                        <textarea id="denWhitelist" rows="3" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm font-mono" placeholder="e.g., 720, 646"></textarea>
-                    </div>
-                </div>
-                <div class="mt-3 flex flex-wrap justify-center gap-2">
-                    <button id="saveWhitelistsButton" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-save mr-2"></i>Save Whitelists
-                    </button>
-                    <button id="clearWhitelistsButton" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-trash mr-2"></i>Clear Whitelists
-                    </button>
-                </div>
-                    
-                    <div class="mt-4 flex space-x-2">
-                        <button id="openClothingJson" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
-                            <i class="fas fa-tshirt mr-2"></i>Find Clothing IDs
-                        </button>
-                        <button id="openDenItemsJson" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
-                            <i class="fas fa-couch mr-2"></i>Find Den Item IDs
-                        </button>
-                    </div>
-                    
-                </div>
-                </div>
-            </div>
-
-            <!-- Control Panel -->
-            <div class="bg-secondary-bg rounded-lg p-4 mb-6">
-                <div class="control-buttons-container">
-                    <button id="startButton" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-play mr-2"></i>Start TFD Run
-                    </button>
-                    <button id="stopButton" class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-medium shadow-md" disabled>
-                        <i class="fas fa-stop mr-2"></i>Stop Automation
-                    </button>
-                    <button id="resetStatsButton" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-undo mr-2"></i>Reset Stats
-                    </button>
-                </div>
-            </div>
-
-            <!-- Status and Progress -->
-            <div class="stats-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-3 flex items-center">
-                    <i class="fas fa-chart-line mr-2 text-green-400"></i>Status & Progress
-                </h2>
-                <div class="space-y-3">
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-medium">Current Status:</span>
-                            <span id="statusIcon" class="text-sm">
-                                <i class="fas fa-circle text-gray-400"></i> Idle
+                    <div style="border-top: 1px solid rgba(156,163,175,0.1); margin-top: 6px; padding-top: 8px;">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-semibold flex items-center">
+                                <i class="fas fa-filter mr-1.5 text-purple-400"></i>Item Filter & Recycling
                             </span>
+                            <span id="filterStatusText" class="text-xs text-gray-400">Disabled</span>
                         </div>
-                        <p id="statusMessage" class="text-sm text-text-secondary bg-gray-800 rounded p-2 font-mono">Ready to start TFD automation</p>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-medium">Progress:</span>
-                            <span id="progressText" class="text-sm">0%</span>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                                <label class="block text-xs text-text-secondary mb-0.5">Clothing to Keep</label>
+                                <div class="relative mb-1">
+                                    <input type="text" id="clothingSearch" placeholder="Search by name..." class="w-full rounded px-2 py-1 text-xs">
+                                    <div id="clothingSearchDropdown" class="search-dropdown hidden"></div>
+                                </div>
+                                <div id="clothingTags" class="wl-tags"></div>
+                                <textarea id="clothingWhitelist" class="hidden"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-text-secondary mb-0.5">Den Items to Keep</label>
+                                <div class="relative mb-1">
+                                    <input type="text" id="denSearch" placeholder="Search by name..." class="w-full rounded px-2 py-1 text-xs">
+                                    <div id="denSearchDropdown" class="search-dropdown hidden"></div>
+                                </div>
+                                <div id="denTags" class="wl-tags"></div>
+                                <textarea id="denWhitelist" class="hidden"></textarea>
+                            </div>
                         </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2">
-                            <div id="progressBar" class="progress-bar bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style="width: 0%"></div>
+                        <div class="flex flex-wrap justify-center gap-1.5">
+                            <button id="saveWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
+                                <i class="fas fa-save mr-1"></i>Save
+                            </button>
+                            <button id="clearWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
+                                <i class="fas fa-trash mr-1"></i>Clear
+                            </button>
+                            <button id="exportWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
+                                <i class="fas fa-download mr-1"></i>Export
+                            </button>
+                            <button id="importWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
+                                <i class="fas fa-upload mr-1"></i>Import
+                            </button>
+                            <input type="file" id="importFileInput" accept=".txt" class="hidden">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Statistics -->
-            <div class="stats-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-3 flex items-center">
-                    <i class="fas fa-chart-bar mr-2 text-purple-400"></i>Statistics
+            <div class="setting-card rounded-lg p-3 mb-3">
+                <h2 class="text-sm font-semibold mb-2 flex items-center">
+                    <i class="fas fa-gamepad mr-1.5 text-green-400"></i>Controls
                 </h2>
-                <div class="stats-container">
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-green-400" id="successCount">0</div>
-                        <div class="text-sm text-text-secondary">Successful</div>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <button id="startButton" class="px-3 py-1 rounded text-xs font-medium">
+                            <i class="fas fa-play mr-1"></i>Start
+                        </button>
+                        <button id="stopButton" class="px-3 py-1 rounded text-xs font-medium" disabled>
+                            <i class="fas fa-stop mr-1"></i>Stop
+                        </button>
                     </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-red-400" id="failureCount">0</div>
-                        <div class="text-sm text-text-secondary">Failed</div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-text-secondary font-medium">Run Stats:</span>
+                        <span class="text-xs"><span class="font-bold text-green-400" id="successCount">0</span> ok</span>
+                        <span class="text-xs"><span class="font-bold text-red-400" id="failureCount">0</span> fail</span>
+                        <span class="text-xs"><span class="font-bold text-blue-400" id="totalRuns">0</span> total</span>
+                        <button id="resetStatsButton" class="px-2 py-0.5 rounded text-xs font-medium btn-subtle">
+                            <i class="fas fa-undo mr-1"></i>Reset
+                        </button>
                     </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-blue-400" id="totalRuns">0</div>
-                        <div class="text-sm text-text-secondary">Total</div>
+                </div>
+                <div style="border-top: 1px solid rgba(156,163,175,0.1); padding-top: 8px;">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="font-medium">Status:</span>
+                            <span id="statusIcon"><i class="fas fa-circle text-gray-400"></i> Idle</span>
+                        </div>
+                        <span id="progressText" class="text-xs">0%</span>
+                    </div>
+                    <p id="statusMessage" class="text-xs text-text-secondary bg-gray-800 rounded px-2 py-1 font-mono mb-1.5">Ready to start TFD automation</p>
+                    <div class="w-full bg-gray-700 rounded-full h-1.5">
+                        <div id="progressBar" class="progress-bar h-1.5 rounded-full" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Received Items Log -->
-            <div id="receivedItemsContainer" class="setting-card rounded-lg p-4 mt-6">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-lg font-semibold flex items-center">
+            <div id="receivedItemsContainer" class="setting-card rounded-lg p-3">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-sm font-semibold flex items-center">
                         <i class="fas fa-gift mr-2 text-yellow-400"></i>Received Items
                     </h2>
-                    <div class="flex gap-2">
-                        <button id="toggleLogButton" class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-xs font-medium" style="display: none;">
+                    <div class="flex gap-1.5">
+                        <button id="toggleLogButton" class="px-2 py-0.5 rounded text-xs font-medium btn-subtle" style="display: none;">
                             Show All
                         </button>
-                        <button id="clearLogButton" class="px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 text-xs font-medium">
-                            <i class="fas fa-trash-alt mr-1"></i>Clear Log
+                        <button id="clearLogButton" class="px-2 py-0.5 rounded text-xs font-medium btn-subtle">
+                            <i class="fas fa-trash-alt mr-1"></i>Clear
                         </button>
                     </div>
                 </div>
-                <div class="mb-3">
+                <div class="mb-2">
                     <div class="relative">
-                        <input type="text" id="itemSearchBox" placeholder="Search items..." class="w-full pl-8 pr-4 py-2 rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                        <i class="fas fa-search absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" id="itemSearchBox" placeholder="Search received items..." class="w-full pl-8 pr-3 py-1 rounded text-xs">
+                        <i class="fas fa-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs"></i>
                     </div>
                 </div>
-                <div id="itemLog" class="bg-gray-800/50 rounded-lg p-2 border border-gray-700 space-y-2 pr-2 collapsed">
-                    <!-- Items will be dynamically added here -->
-                    <p class="text-sm text-text-secondary text-center">No items received yet.</p>
+                <div id="itemLog" class="bg-gray-800/50 rounded p-2 border border-gray-700 space-y-1.5 pr-2 collapsed">
+                    <p class="text-xs text-text-secondary text-center">No items received yet.</p>
                 </div>
             </div>
         </div>
     </div>
-    <!-- End of jam-plugin-content -->
 
     <script src="index.js"></script>
-    <!-- Import Plugin Utilities -->
     <script src="app://assets/scripts/plugin-utils.js"></script>
-    <!-- Initialize Standardized UI -->
     <script>
-        // Initialize the standardized UI components when the document is ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize standard plugin UI behavior (minimize/close)
-            initializePluginUI();
+            if (typeof initializePluginUI === 'function') {
+                initializePluginUI();
+            }
         });
     </script>
 </body>
