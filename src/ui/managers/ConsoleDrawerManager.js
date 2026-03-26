@@ -51,6 +51,7 @@ class ConsoleDrawerManager {
   }
 
   _updateBadge() {
+    if (!this._$badge) return
     if (this._unreadCount > 0) {
       this._$badge.text(this._unreadCount > 99 ? '99+' : this._unreadCount)
       this._$badge.css('display', 'flex')

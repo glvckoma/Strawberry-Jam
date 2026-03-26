@@ -20,6 +20,11 @@
         this.loginScreen.logInButtonElem.classList.add("loading");
       }
 
+      this._clearLoginTimeout();
+      this._loginTimeout = setTimeout(() => {
+        this.loginScreen.showLoginHelpPrompt();
+      }, 30000);
+
       try {
         if (globals.df === null || (this.loginScreen.uuidSpooferToggle && this.loginScreen.uuidSpooferToggle.checked)) {
           console.log('[DEFPACKS] Refreshing DF before login...');
@@ -133,9 +138,13 @@
         const theme = this.loginScreen._fruitThemes[this.loginScreen._fruitImages[this.loginScreen._currentFruitIndex]];
         theme.boxBackground = getComputedStyle(this.loginScreen.shadowRoot.host).getPropertyValue('--theme-box-background');
         
+        this._clearLoginTimeout();
+        this.loginScreen.hideLoginHelpPrompt();
         this.loginScreen.dispatchEvent(new CustomEvent("loggedIn", { detail: { flashVars, theme } }));
 
       } catch (err) {
+        this._clearLoginTimeout();
+        this.loginScreen.hideLoginHelpPrompt();
         let userMessage = "Servers are down or Your IP is blocked. Please try again later.";
 
         if (err.message) {
@@ -183,6 +192,13 @@
           this.loginScreen.logInButtonElem.disabled = false;
           this.loginScreen.logInButtonElem.classList.remove("loading");
         }
+      }
+    }
+
+    _clearLoginTimeout() {
+      if (this._loginTimeout) {
+        clearTimeout(this._loginTimeout);
+        this._loginTimeout = null;
       }
     }
 

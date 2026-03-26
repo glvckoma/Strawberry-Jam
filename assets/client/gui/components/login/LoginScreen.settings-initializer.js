@@ -42,6 +42,10 @@
           }
         });
 
+      if (this.loginScreen.modMenuBtnToggle) {
+        this.loginScreen.modMenuBtnToggle.checked = localStorage.getItem('showModMenuButton') === 'true';
+      }
+
       window.ipc.invoke('get-setting', 'darkMode')
         .then(darkMode => {
           if (this.loginScreen.darkModeToggle) {

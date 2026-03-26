@@ -180,12 +180,12 @@ class LogManager {
     window.webContents.on('did-navigate', didNavigateListener);
 
     const webContentsDestroyedListener = () => {
-        if (window && window.webContents && !window.webContents.isDestroyed()) {
-            window.webContents.removeListener('did-navigate', didNavigateListener);
-        }
-        if (window && window.webContents && !window.webContents.isDestroyed()) {
-             window.webContents.removeListener('destroyed', webContentsDestroyedListener);
-        }
+        try {
+            if (window && !window.isDestroyed() && window.webContents && !window.webContents.isDestroyed()) {
+                window.webContents.removeListener('did-navigate', didNavigateListener);
+                window.webContents.removeListener('destroyed', webContentsDestroyedListener);
+            }
+        } catch {}
     };
     window.webContents.on('destroyed', webContentsDestroyedListener);
       

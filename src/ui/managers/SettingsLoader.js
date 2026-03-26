@@ -38,7 +38,6 @@ class SettingsLoader {
       const enableAutoUpdates = await ipcRenderer.invoke('get-setting', 'updates.enableAutoUpdates');
 
       const selectedSwfFile = await ipcRenderer.invoke('get-setting', 'game.selectedSwfFile');
-      const autoReapplySwf = await ipcRenderer.invoke('get-setting', 'game.autoReapplySwf');
 
       const allowMultipleInstances = await ipcRenderer.invoke('get-setting', 'ui.allowMultipleInstances');
 
@@ -47,14 +46,12 @@ class SettingsLoader {
       const customThemeName = await ipcRenderer.invoke('get-setting', 'ui.customThemeName');
       const customThemeFruit = await ipcRenderer.invoke('get-setting', 'ui.customThemeFruit');
 
-      $modal.data('initialSwfFile', selectedSwfFile || 'v5.0.2.swf');
+      $modal.data('initialSwfFile', selectedSwfFile || 'v5.1.0.swf');
 
       $modal.find('#advancedSmartfoxServer').val(smartfoxServer || '');
       $modal.find('#advancedSecureConnection').prop('checked', secureConnection === true);
 
-      await uiManager.loadSwfFileSettings($modal, selectedSwfFile || 'v5.0.2.swf');
-
-      $modal.find('#autoReapplySwfToggle').prop('checked', autoReapplySwf === true);
+      await uiManager.loadSwfFileSettings($modal, selectedSwfFile || 'v5.1.0.swf');
 
       $modal.find('#hideGamePlugins').prop('checked', hideGamePlugins === true);
       $modal.find('#pluginRefreshBehavior').val(pluginRefreshBehavior || 'ask');

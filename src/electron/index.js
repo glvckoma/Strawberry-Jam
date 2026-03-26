@@ -51,6 +51,7 @@ const processManager = require('../utils/ProcessManager');
 const setupIpcHandlers = require('./ipcHandlers');
 const PlatformPaths = require('../PlatformPaths');
 
+
 // Suppress Electron security warnings
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
@@ -60,7 +61,7 @@ const KEYTAR_ACCOUNT_LEAK_CHECK_API_KEY = 'leak_checker_api_key';
 const MIGRATION_FLAG_LEAK_CHECK_API_KEY_V1 = 'leakCheckApiKeyMigratedToKeytar_v1';
 
 const Patcher = require('./renderer/application/patcher');
-const { getDataPath, getAssetsPath } = require('../Constants');
+const { getDataPath, getAssetsPath, TCP_SERVER_PORTS, API_SERVER_PORTS } = require('../Constants');
 const logManager = require('../utils/LogManager');
 const AutoUpdateService = require('../services/update/AutoUpdateService');
 const AppStateService = require('../services/state/AppStateService');
@@ -719,15 +720,12 @@ class Electron {
   }
 
   async _onReady () {
-    // --- REGISTER IPC HANDLER HERE using ipcMain.on and event.sender.send ---
-    ipcMain.on('request-main-log-path', (event) => { // Listening for the request
+    ipcMain.on('request-main-log-path', (event) => {
       const pathToSend = (logManager && logManager.logPath) ? logManager.logPath : "dummy/path/from/_onReady/sender_send_handler";
       if (event.sender && !event.sender.isDestroyed()) {
-        event.sender.send('response-main-log-path', pathToSend); // Sending reply on new channel
-      } else {
+        event.sender.send('response-main-log-path', pathToSend);
       }
     });
-    // --- END IPC HANDLER REGISTRATION ---
 
     this._patcher = new Patcher(null, getAssetsPath(app));
     const windowOptions = {
@@ -737,23 +735,29 @@ class Electron {
     
     this._window = new BrowserWindow(windowOptions);
     this.autoUpdateService.window = this._window;
-    
+
     const { screen } = require('electron');
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const { width, height } = primaryDisplay.workAreaSize;
-    
-    const newWidth = Math.floor(width * 0.57);  
-    const newHeight = Math.floor(height * 0.8);
-    
-    const x = Math.floor((width - newWidth) / 2);
-    const y = Math.floor((height - newHeight) / 2);
-    
-    this._window.setBounds({
-      x,
-      y,
-      width: newWidth,
-      height: newHeight
-    });
+    const savedBounds = this._store.get('windowBounds');
+    let bounds = null;
+
+    if (savedBounds && savedBounds.width > 200 && savedBounds.height > 200) {
+      const displays = screen.getAllDisplays();
+      const visible = displays.some(d => {
+        const b = d.bounds;
+        return savedBounds.x >= b.x - 50 && savedBounds.y >= b.y - 50 &&
+               savedBounds.x < b.x + b.width && savedBounds.y < b.y + b.height;
+      });
+      if (visible) bounds = savedBounds;
+    }
+
+    if (!bounds) {
+      const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+      const w = Math.floor(width * 0.57);
+      const h = Math.floor(height * 0.8);
+      bounds = { x: Math.floor((width - w) / 2), y: Math.floor((height - h) / 2), width: w, height: h };
+    }
+
+    this._window.setBounds(bounds);
     
     this._window.webContents.on('console-message', (event, level, message) => {
       if (message.includes('%cElectron Security Warning') || 
@@ -785,6 +789,14 @@ class Electron {
     this._window.webContents.send('set-user-data-path', USER_DATA_PATH)
     
     this._window.webContents.setWindowOpenHandler((details) => this._createWindow(details))
+
+    this._window.on('close', () => {
+      try {
+        if (this._window && !this._window.isDestroyed()) {
+          this._store.set('windowBounds', this._window.getBounds());
+        }
+      } catch (_) {}
+    });
 
     this._window.on('closed', () => {
       const mainWindowId = this._window ? this._window.id : -1;
@@ -855,7 +867,7 @@ class Electron {
         if (code !== 0 && this._window && !this._window.isDestroyed()) {
           this._window.webContents.send('port-error', {
             server: 'api',
-            message: 'The API server failed to start because all ports (7680, 7681, 7682, 7683, 7684) are busy. Close other applications using these ports or use the /terminate command, then restart.'
+            message: 'The API server failed to start because port 7681 is busy. Close other applications using this port or use the /terminate command, then restart.'
           })
         }
       });
@@ -886,9 +898,8 @@ class Electron {
   }
 
   async _autoReapplySwfIfNeeded() {
-    const autoReapplyEnabled = this._store.get('game.autoReapplySwf')
     const selectedFile = this._store.get('game.selectedSwfFile')
-    if (!autoReapplyEnabled || !selectedFile) return
+    if (!selectedFile) return
 
     const FilesController = require('../api/controllers/FilesController')
     const sourceFilePath = path.join(FilesController.optionsDir, selectedFile)
@@ -926,11 +937,6 @@ class Electron {
         this._swfFileWatcher.close();
       }
 
-      const autoReapplyEnabled = this._store.get('game.autoReapplySwf');
-      if (!autoReapplyEnabled) {
-        return;
-      }
-
       this._swfFileWatcher = chokidar.watch(path.join(optionsDir, '*.swf'), {
         ignored: /(^|[\/\\])\../,
         persistent: true,
@@ -944,11 +950,6 @@ class Electron {
 
       this._swfFileWatcher.on('change', async (filePath) => {
         try {
-          const autoReapplyEnabled = this._store.get('game.autoReapplySwf');
-          if (!autoReapplyEnabled) {
-            return;
-          }
-
           const filename = path.basename(filePath);
           const stats = await fsPromises.stat(filePath);
           const currentModifiedTime = stats.mtime.getTime();

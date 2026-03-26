@@ -24,6 +24,11 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes fadeOutRight {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(10px); }
+}
+
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
@@ -42,6 +47,11 @@
 @keyframes dotPulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+@keyframes portConflictPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--theme-primary-rgb, 232, 61, 82), 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(var(--theme-primary-rgb, 232, 61, 82), 0.5); }
 }
 
 .animate-fade-in-up { animation: fadeInUp 0.25s ease-out forwards; }
@@ -385,6 +395,34 @@ select.modal-input {
   background: var(--sidebar-hover, #2b2b40);
 }
 
+.swf-action-btn {
+  @apply px-4 py-2 rounded text-sm text-text-primary font-medium;
+  background: var(--tertiary-bg, #2a2b3d);
+  border: 1px solid rgba(156, 163, 175, 0.1);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.swf-action-btn:hover {
+  background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.12);
+  border-color: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: rgba(var(--theme-primary-rgb, 232, 61, 82), 1);
+}
+
+.swf-action-btn:active {
+  transform: scale(0.96);
+  background: rgba(var(--theme-primary-rgb, 232, 61, 82), 0.2);
+}
+
+.swf-action-btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.swf-action-btn-icon {
+  @apply px-2.5 py-2;
+}
+
 .modal-btn-success {
   @apply px-4 py-2 rounded text-sm font-medium transition-all;
   background: rgba(16, 185, 129, 0.15);
@@ -463,20 +501,19 @@ select.modal-input {
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
   border: 1px solid rgba(156, 163, 175, 0.1);
   background: rgba(255, 255, 255, 0.02);
 }
 
 .plugin-grid-tile:hover {
-  transform: scale(1.02);
   border-color: rgba(156, 163, 175, 0.2);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  isolation: isolate;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .plugin-grid-tile:active {
-  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.01);
 }
 
 .plugin-grid-tile .plugin-icon-container {

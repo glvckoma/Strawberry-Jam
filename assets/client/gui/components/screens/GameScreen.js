@@ -151,6 +151,35 @@
         transition: all 0.3s ease;
       }
 
+      #mod-menu-btn {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        width: 32px;
+        height: 32px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        background-color: rgba(18, 18, 18, 0.85);
+        backdrop-filter: blur(6px);
+        cursor: pointer;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        padding: 0;
+      }
+      #mod-menu-btn:hover {
+        opacity: 1;
+        border-color: var(--theme-primary, #e83d52);
+        transform: scale(1.05);
+      }
+      #mod-menu-btn svg {
+        display: block;
+        color: #888;
+      }
+
       webview {
         transition: opacity 0.75s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: 4px;
@@ -184,6 +213,7 @@
       <div id="border-right-container"></div>
       <div id="flash-game-container">
         <webview id="flash-game-webview" plugins preload="gamePreload.js" webpreferences="contextIsolation=false" style="height: 100%; width: 100%;"></webview>
+        <button id="mod-menu-btn" title="Toggle Mod Menu (F10)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
       </div>
     </div>
       `;
@@ -191,6 +221,19 @@
       this.webViewElem = this.shadowRoot.querySelector("webview");
       const preloadUrl = new URL('gamePreload.js', window.location.href).href;
       this.webViewElem.setAttribute('preload', preloadUrl);
+
+      this.modMenuBtn = this.shadowRoot.getElementById("mod-menu-btn");
+      if (this.modMenuBtn) {
+        this.modMenuBtn.addEventListener("click", () => {
+          if (this.webViewElem && this._webviewReady) {
+            this.webViewElem.sendInputEvent({ type: 'keyDown', keyCode: 'F10' });
+            this.webViewElem.sendInputEvent({ type: 'keyUp', keyCode: 'F10' });
+          }
+        });
+        document.addEventListener('mod-menu-btn-changed', (e) => {
+          this.modMenuBtn.style.display = e.detail.enabled ? 'flex' : 'none';
+        });
+      }
 
       this._webviewReady = false;
       this._pendingDevToolsToggle = false;
@@ -373,6 +416,8 @@
     }
 
     async loadGame(flashVars, theme) {
+      this._initModMenuButton();
+
       if (!this.userTray) {
         this.userTray = window.UserTrayManager.create(theme);
       }
@@ -431,6 +476,11 @@
           }, 2000);
         }
       }, {once: true});
+    }
+
+    _initModMenuButton() {
+      if (!this.modMenuBtn) return;
+      this.modMenuBtn.style.display = localStorage.getItem('showModMenuButton') === 'true' ? 'flex' : 'none';
     }
 
     reloadGame() {

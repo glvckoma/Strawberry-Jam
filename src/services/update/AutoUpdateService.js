@@ -97,6 +97,16 @@ class AutoUpdateService {
       }
     });
 
+    autoUpdater.on('download-progress', (progressObj) => {
+      if (this.manualCheckInProgress && this.window && this.window.webContents && !this.window.isDestroyed()) {
+        this.window.webContents.send('manual-update-check-status', {
+          status: 'downloading',
+          message: `Downloading update... ${progressObj.percent.toFixed(1)}%`,
+          version: progressObj.percent
+        });
+      }
+    });
+
     autoUpdater.on('update-downloaded', (info) => {
       const version = info && info.version ? info.version : null;
       try {

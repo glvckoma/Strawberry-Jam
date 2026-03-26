@@ -160,11 +160,7 @@
 
       if (this.loginScreen.devtoolsBtn) {
         this.loginScreen.devtoolsBtn.addEventListener('click', () => {
-          if (window.ipc && window.ipc.send) {
-            window.ipc.send('open-devtools-both');
-          }
-          this.loginScreen.errorCount = 0;
-          this.loginScreen.updateErrorBadge();
+          this.loginScreen.openDebugLogModal();
         });
       }
       
@@ -208,6 +204,14 @@
           } catch (err) {
             console.error('Failed to save background processing setting:', err);
           }
+        });
+      }
+
+      if (this.loginScreen.modMenuBtnToggle) {
+        this.loginScreen.modMenuBtnToggle.addEventListener('change', () => {
+          const enabled = this.loginScreen.modMenuBtnToggle.checked;
+          localStorage.setItem('showModMenuButton', enabled ? 'true' : 'false');
+          document.dispatchEvent(new CustomEvent('mod-menu-btn-changed', { detail: { enabled } }));
         });
       }
 

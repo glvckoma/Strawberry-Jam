@@ -44,7 +44,7 @@ const PluginTypes = Object.freeze({
   game: 'game'
 })
 
-const TCP_SERVER_PORTS = Object.freeze([443, 444, 445, 8443, 9443])
-const API_SERVER_PORTS = Object.freeze([7680, 7681, 7682, 7683, 7684])
+const TCP_SERVER_PORTS = Object.freeze([443])
+const API_SERVER_PORTS = Object.freeze([7681])
 
 module.exports = { ConnectionMessageTypes, PluginTypes, getDataPath, getAssetsPath, getUsernameLoggerPath, TCP_SERVER_PORTS, API_SERVER_PORTS }

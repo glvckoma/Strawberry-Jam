@@ -22,7 +22,9 @@
   <div id="mainContent" class="flex-1 flex flex-col bg-primary-bg overflow-hidden">
 
     <header id="header" class="flex items-center justify-center bg-secondary-bg border-b border-sidebar-border shadow" style="min-height: 0; gap: 0; padding: 8px 12px;">
-      <div style="flex: 1 1 0; min-width: 0;"></div>
+      <div style="flex: 1 1 0; min-width: 0; display: flex; justify-content: flex-end; align-items: center; -webkit-app-region: no-drag;">
+        <div id="headerNotification" style="display: none; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; margin-right: 8px; white-space: nowrap; animation: fadeInLeft 0.2s ease-out forwards; cursor: default;"></div>
+      </div>
       <div class="flex rounded-lg overflow-hidden" style="border: 1px solid rgba(156,163,175,0.15); -webkit-app-region: no-drag; flex-shrink: 1; min-width: 0;">
           <button id="playGameBtn"
             class="text-sidebar-text py-1.5 px-3 text-xs font-medium transition-all relative hover:text-white flex items-center"
@@ -192,6 +194,11 @@
               class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all"
               title="Copy Packets">
               <i class="fas fa-copy text-sm"></i></button>
+            <button id="pauseNetworkLogButton"
+              class="text-sidebar-text hover:text-highlight-yellow p-1.5 rounded transition-all"
+              title="Pause network logs">
+              <i class="fas fa-pause text-sm"></i>
+            </button>
             <button id="clearPacketLogButton"
               class="text-sidebar-text p-1.5 rounded transition-all"
               title="Clear packet logs"
@@ -1555,9 +1562,15 @@
 
         const $selected = getSelectedPackets()
         const isMulti = $selected.length > 1
-        const msgs = []
         const $targets = isMulti ? $selected : $packet
-        $targets.each(function() { msgs.push($(this).attr('data-message') || '') })
+        const entries = []
+        $targets.each(function() {
+          const $el = $(this)
+          const msg = $el.attr('data-message') || ''
+          const dir = $el.find('.fa-arrow-down').length > 0 ? 'in' : $el.find('.fa-arrow-up').length > 0 ? 'out' : null
+          entries.push({ msg, dir })
+        })
+        const msgs = entries.map(e => e.msg)
         const label = isMulti ? $selected.length + ' packets' : ''
 
         const $menu = $('<div>').addClass('plugin-context-menu')
@@ -1565,7 +1578,10 @@
         const menuItems = [
           {
             label: '<i class="fas fa-copy" style="width:14px;"></i> Copy' + (isMulti ? ' ' + label : ''),
-            action: () => { navigator.clipboard.writeText(msgs.join('\n')).catch(() => {}) }
+            action: () => {
+              const text = entries.map(e => e.dir ? `${e.dir}: ${e.msg}` : e.msg).join('\n')
+              try { const p = navigator.clipboard.writeText(text); if (p && p.catch) p.catch(() => {}) } catch(_) {}
+            }
           },
           {
             label: '<i class="fas fa-ban" style="width:14px;"></i> Filter Out' + (isMulti ? ' ' + label : ''),
@@ -1587,7 +1603,7 @@
           menuItems.push({
             label: '<i class="fas fa-paper-plane" style="width:14px;"></i> Open in Packet Spammer',
             action: () => {
-              navigator.clipboard.writeText(msgs[0]).catch(() => {})
+              try { const p = navigator.clipboard.writeText(msgs[0]); if (p && p.catch) p.catch(() => {}) } catch(_) {}
               window._pendingSpammerPacket = msgs[0]
               try {
                 if (typeof openTab === 'function') openTab('plugins')

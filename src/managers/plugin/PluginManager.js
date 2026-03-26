@@ -286,29 +286,29 @@ class PluginManager {
 
     return new Promise((resolve) => {
       const pluginNames = openWindows.join(', ')
-      const message = `The following plugins are currently open: ${pluginNames}\n\nPlugin windows will be closed before refreshing to prevent instability.\n\nDo you want to continue?`
 
       const modal = $(`
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="backdrop-filter: blur(5px);">
-          <div class="bg-gray-800 rounded-lg p-6 max-w-md mx-4 shadow-2xl border border-gray-600">
-            <div class="flex items-center mb-4">
-              <i class="fas fa-exclamation-triangle text-yellow-400 text-xl mr-3"></i>
-              <h3 class="text-lg font-semibold text-white">Open Plugin Windows Detected</h3>
+        <div class="fixed inset-0 flex items-center justify-center" style="z-index: 9000; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
+          <div class="modal-container max-w-sm w-full mx-4">
+            <div class="modal-header">
+              <i class="fas fa-window-restore mr-3" style="color: var(--theme-primary, #e83d52);"></i>
+              <h3 class="modal-header-title">Open Plugin Windows Detected</h3>
             </div>
-            <p class="text-gray-300 mb-6">${message.replace(/\n\n/g, '</p><p class="text-gray-300 mb-4">')}</p>
-            <div class="flex flex-col gap-2">
-              <button id="refresh-proceed" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors">
-                <i class="fas fa-sync-alt mr-2"></i>Proceed (Close Windows & Refresh)
-              </button>
-              <button id="refresh-cancel" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors">
-                <i class="fas fa-times mr-2"></i>Cancel
-              </button>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-600">
-              <label class="flex items-center text-sm text-gray-400">
-                <input type="checkbox" id="rememberChoice" class="mr-2">
+            <div class="modal-body space-y-3">
+              <p class="text-sm text-text-primary">The following plugins are currently open: <strong style="color: var(--theme-primary, #e83d52);">${pluginNames}</strong></p>
+              <p class="text-sm text-gray-400">Plugin windows will be closed before refreshing to prevent instability. Do you want to continue?</p>
+              <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer select-none pt-1">
+                <input type="checkbox" id="rememberChoice" style="accent-color: var(--theme-primary, #e83d52); flex-shrink: 0;">
                 Always close plugin windows without asking
               </label>
+            </div>
+            <div class="flex gap-2 p-4 pt-0">
+              <button id="refresh-proceed" class="modal-btn-primary flex-1">
+                <i class="fas fa-sync-alt mr-2"></i>Proceed
+              </button>
+              <button id="refresh-cancel" class="modal-btn-secondary flex-1">
+                <i class="fas fa-times mr-2"></i>Cancel
+              </button>
             </div>
           </div>
         </div>

@@ -16,6 +16,7 @@ const GameProcessManager = require('../managers/game/GameProcessManager');
 const AccountManager = require('../services/account/AccountManager');
 const SystemInfoService = require('../services/system/SystemInfoService');
 const { getDataPath, getUsernameLoggerPath, TCP_SERVER_PORTS, API_SERVER_PORTS } = require('../Constants');
+const PortConflictChecker = require('../utils/PortConflictChecker');
 
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -198,6 +199,33 @@ function setupIpcHandlers(electronInstance) {
     }
   });
 
+  ipcMain.handle('import-swf-file', async (event) => {
+    if (!electronInstance._window) {
+      return { success: false, error: 'Main window not available' }
+    }
+    try {
+      const result = await dialog.showOpenDialog(electronInstance._window, {
+        properties: ['openFile'],
+        title: 'Select .swf File',
+        filters: [{ name: 'SWF Files', extensions: ['swf'] }]
+      })
+
+      if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+        return { success: false, canceled: true }
+      }
+
+      const sourcePath = result.filePaths[0]
+      const filename = path.basename(sourcePath)
+      const FilesController = require('../api/controllers/FilesController')
+      const destPath = path.join(FilesController.optionsDir, filename)
+
+      await fsPromises.copyFile(sourcePath, destPath)
+      return { success: true, filename }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  });
+
   ipcMain.handle('select-output-directory', async (event) => {
     if (!electronInstance._window) {
       if (isDevelopment) console.error('[Dialog] Cannot show dialog, main window not available.');
@@ -226,8 +254,12 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.on('app-restart', () => {
-    app.relaunch();
-    app.exit(0);
+    try {
+      autoUpdater.quitAndInstall(false, true);
+    } catch (e) {
+      app.relaunch();
+      app.exit(0);
+    }
   });
 
   ipcMain.handle('get-app-state', (async () => {
@@ -728,65 +760,31 @@ function setupIpcHandlers(electronInstance) {
   });
 
   ipcMain.handle('terminate-port', async (event, port) => {
-    const { exec } = require('child_process')
-    const { promisify } = require('util')
-    const execAsync = promisify(exec)
-    const platform = process.platform
-    const ownPid = process.pid
+    return PortConflictChecker.killProcessOnPort(port)
+  });
 
+  ipcMain.handle('check-port-conflicts', async () => {
     try {
-      if (platform === 'win32') {
-        const { stdout } = await execAsync(`netstat -ano | findstr :${port}`)
-        const lines = stdout.trim().split('\n').filter(line => line.trim())
-        const pidsToKill = new Set()
+      const PortChecker = require('../utils/PortChecker')
+      const criticalPorts = [TCP_SERVER_PORTS[0], API_SERVER_PORTS[0]]
+      const conflicts = []
 
-        for (const line of lines) {
-          const parts = line.trim().split(/\s+/)
-          const pid = parseInt(parts[parts.length - 1], 10)
-          if (pid && !isNaN(pid) && pid !== ownPid) {
-            pidsToKill.add(pid)
-          }
-        }
-
-        if (pidsToKill.size === 0) {
-          return { success: false, message: `Port ${port} is in use by this application. Restart the app to free it.` }
-        }
-
-        for (const pid of pidsToKill) {
-          try {
-            await execAsync(`taskkill /PID ${pid} /F`)
-          } catch (killError) {
-            return { success: false, message: `Failed to terminate process ${pid}: ${killError.message}` }
-          }
-        }
-
-        return { success: true, message: `Terminated ${pidsToKill.size} process(es) using port ${port}` }
-      } else if (platform === 'darwin' || platform === 'linux') {
-        const { stdout } = await execAsync(`lsof -ti:${port}`)
-        const pids = stdout.trim().split('\n').filter(pid => pid.trim())
-        const filteredPids = pids.filter(p => parseInt(p, 10) !== ownPid)
-
-        if (filteredPids.length === 0) {
-          if (pids.length > 0) {
-            return { success: false, message: `Port ${port} is in use by this application. Restart the app to free it.` }
-          }
-          return { success: false, message: `No process found using port ${port}` }
-        }
-
-        for (const pid of filteredPids) {
-          try {
-            await execAsync(`kill -9 ${pid}`)
-          } catch (killError) {
-            return { success: false, message: `Failed to terminate process ${pid}: ${killError.message}` }
-          }
-        }
-
-        return { success: true, message: `Terminated ${filteredPids.length} process(es) using port ${port}` }
+      for (const port of criticalPorts) {
+        try {
+          const processInfo = await PortChecker.findProcessUsingPort(port)
+          if (!processInfo) continue
+          if (PortChecker.isOwnProcess(processInfo.processName)) continue
+          conflicts.push({
+            port,
+            pid: processInfo.pid,
+            processName: processInfo.processName || 'Unknown'
+          })
+        } catch {}
       }
 
-      return { success: false, message: 'Unsupported platform' }
-    } catch (error) {
-      return { success: false, message: `Error checking port ${port}: ${error.message}` }
+      return conflicts
+    } catch {
+      return []
     }
   });
 
@@ -1042,6 +1040,9 @@ function setupIpcHandlers(electronInstance) {
     electronInstance.manualCheckInProgress = true;
     autoUpdater.checkForUpdates().catch(err => {
       const message = err && err.message ? err.message : String(err);
+      if (electronInstance.autoUpdateService) {
+        electronInstance.autoUpdateService.recordCheckStatus('error', { message, phase: 'manual' });
+      }
       if (electronInstance._window && electronInstance._window.webContents && !electronInstance._window.isDestroyed()) {
         electronInstance._window.webContents.send('manual-update-check-status', { status: 'error', message: `Manual update check failed: ${message}` });
       }

@@ -623,9 +623,11 @@ module.exports = class Client {
    * @param {string} messageData.packet - The raw message packet
    * @private
    */
-  async _onMessageReceived ({ type, message, packet }) { // From jam-master
+  async _onMessageReceived ({ type, message, packet }) {
+    if (!this.connected) return
+
     if (this._server && this._server.application && this._server.application.dispatch) {
-        this._server.application.dispatch.all({ client: this, type, message })
+        await this._server.application.dispatch.all({ client: this, type, message })
     }
 
 

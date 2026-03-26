@@ -801,9 +801,10 @@
 
           if (this._isPaused || !this._isRunning) return;
 
-          const currentUsername = document.querySelector('input[type="text"]')?.value;
+          const loginScreen = document.querySelector('ajd-login-screen');
+          const currentUsername = loginScreen?.shadowRoot?.getElementById('username-input')?.value;
 
-          if (currentUsername !== account.username) {
+          if (currentUsername && currentUsername !== account.username) {
             console.warn(`[AutoWheel] WARNING: Expected username "${account.username}" but field shows "${currentUsername}"`);
           }
 

@@ -72,30 +72,20 @@ class SettingsEventHandler {
 
     $modal.find('#refreshSwfListBtn').on('click', async function() {
       const $button = $(this);
-      const originalText = $button.html();
-      
-      $button.html('Refreshing...').prop('disabled', true);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      const $icon = $button.find('i');
+
+      $button.prop('disabled', true);
+      $icon.addClass('fa-spin');
+
       try {
         const currentSelection = $modal.find('#selectedSwfFile').val();
-        
         await uiManager.loadSwfFileSettings($modal, currentSelection);
-        
         self.toastService.showInModal($modal, 'SWF file list refreshed successfully!', 'success');
-        
-        $button.removeClass('bg-sidebar-hover').addClass('bg-green-500 text-white transition-all duration-300');
-        
-        setTimeout(() => {
-          $button.removeClass('bg-green-500 text-white').addClass('bg-sidebar-hover');
-        }, 1000);
-        
       } catch (error) {
-        console.error('Error refreshing SWF files:', error);
         self.toastService.showInModal($modal, 'Error refreshing SWF files', 'error');
       } finally {
-        $button.html(originalText).prop('disabled', false);
+        $icon.removeClass('fa-spin');
+        $button.prop('disabled', false);
       }
     });
 
@@ -146,22 +136,24 @@ class SettingsEventHandler {
       }
     });
 
-    $modal.find('#autoReapplySwfToggle').on('change', async function() {
-      const isEnabled = $(this).is(':checked');
-      
+    $modal.find('#addSwfFileBtn').on('click', async function() {
+      const $button = $(this);
+      $button.prop('disabled', true);
+
       try {
-        await ipcRenderer.invoke('set-setting', 'game.autoReapplySwf', isEnabled);
-        
-        if (app && app.settings && typeof app.settings.update === 'function') {
-          await app.settings.update('game.autoReapplySwf', isEnabled);
+        const result = await ipcRenderer.invoke('import-swf-file');
+
+        if (result.success) {
+          const currentSelection = $modal.find('#selectedSwfFile').val();
+          await uiManager.loadSwfFileSettings($modal, currentSelection);
+          self.toastService.showInModal($modal, `Added ${result.filename} successfully!`, 'success');
+        } else if (!result.canceled) {
+          self.toastService.showInModal($modal, `Failed to add file: ${result.error}`, 'error');
         }
-        
-        const statusText = isEnabled ? 'enabled' : 'disabled';
-        self.toastService.showInModal($modal, `Auto-reapply SWF ${statusText}`, 'success');
       } catch (error) {
-        console.error('Error saving auto-reapply setting:', error);
-        self.toastService.showInModal($modal, 'Error saving auto-reapply setting', 'error');
-        $(this).prop('checked', !isEnabled);
+        self.toastService.showInModal($modal, 'Error adding SWF file', 'error');
+      } finally {
+        $button.prop('disabled', false);
       }
     });
 

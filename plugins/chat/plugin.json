@@ -1,8 +1,0 @@
-{
-  "name": "In-game Chat Commands",
-  "version": "1.0.0",
-  "description": "Handles in-game '!'chat commands.",
-  "author": "sxip",
-  "main": "index.js",
-  "type": "game"
-}

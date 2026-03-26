@@ -1,14 +1,8 @@
 {
   "name": "Achievements",
-  "version": "1.0.0",
-  "description": "Gives your character (most) in-game achievements.",
-  "author": "Auth Zero",
-  "main": "index.js",
-  "type": "game",
-  "commands": [
-    {
-      "name": "achievements",
-      "description": "Unlocks most in-game achievements for your character."
-    }
-  ]
+  "version": "2.0.0",
+  "description": "Browse and unlock in-game achievements by selecting specific ones or ranges.",
+  "author": "glvckoma",
+  "main": "index.html",
+  "type": "ui"
 }

@@ -266,28 +266,25 @@
                 <label for="selectedSwfFile" class="block mb-2 text-sm font-medium text-text-primary">
                   Active .swf Client
                 </label>
-                <select id="selectedSwfFile" class="modal-input">
-                  <option value="ajclient.swf">Production Client (ajclient.swf)</option>
-                  <option value="ajclientdev.swf">Development Client (ajclientdev.swf)</option>
-                </select>
+                <div class="flex items-center gap-2">
+                  <select id="selectedSwfFile" class="modal-input flex-1">
+                    <option value="ajclient.swf">Production Client (ajclient.swf)</option>
+                    <option value="ajclientdev.swf">Development Client (ajclientdev.swf)</option>
+                  </select>
+                  <button type="button" id="refreshSwfListBtn" class="swf-action-btn swf-action-btn-icon flex-shrink-0" title="Refresh list">
+                    <i class="fas fa-sync-alt"></i>
+                  </button>
+                </div>
                 <p class="mt-1 text-xs text-gray-400">Select which .swf file to serve for game sessions. Requires restarting the game to take effect.</p>
               </div>
 
               <div class="mt-3 grid grid-cols-2 gap-2">
-                <button type="button" id="refreshSwfListBtn" class="w-full modal-btn-secondary">
-                  <i class="fas fa-sync-alt mr-2"></i>Refresh List
+                <button type="button" id="addSwfFileBtn" class="w-full swf-action-btn">
+                  <i class="fas fa-file-import mr-2"></i>Add .swf
                 </button>
-                <button type="button" id="reapplySwfBtn" class="w-full modal-btn-secondary">
-                  <i class="fas fa-copy mr-2"></i>Reapply SWF
+                <button type="button" id="reapplySwfBtn" class="w-full swf-action-btn">
+                  <i class="fas fa-redo mr-2"></i>Reapply SWF
                 </button>
-              </div>
-
-              <div class="modal-setting-row mt-3">
-                <label for="autoReapplySwfToggle" class="text-sm text-text-primary">Auto-detect and reapply SWF changes</label>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="autoReapplySwfToggle" class="sr-only peer">
-                  <div class="toggle-switch"></div>
-                </label>
               </div>
             </div>
 
@@ -380,41 +377,62 @@
 
                 <div class="modal-setting-row flex-col items-start py-2 space-y-1.5">
                   <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Safe</div>
-                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Game assets, session data, and Flash cache">
-                    <input type="checkbox" id="cacheGameSession" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
-                    <span class="ml-2 text-sm text-text-primary">Game Session Cache</span>
-                  </label>
-                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Application and error logs">
-                    <input type="checkbox" id="cacheLogs" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
-                    <span class="ml-2 text-sm text-text-primary">Log Files</span>
-                  </label>
-                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Temporary downloads and cached files">
-                    <input type="checkbox" id="cacheTemp" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
-                    <span class="ml-2 text-sm text-text-primary">Temporary Files</span>
-                  </label>
+                  <div class="w-full">
+                    <label class="flex items-center w-full cursor-pointer py-0.5" title="Game assets, session data, and Flash cache">
+                      <input type="checkbox" id="cacheGameSession" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
+                      <span class="ml-2 text-sm text-text-primary">Game Session Cache</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-0.5" style="margin-left: 1.375rem;">Pepper Data, Flash cache, and session storage from strawberry-jam-classic/Cache</p>
+                  </div>
+                  <div class="w-full">
+                    <label class="flex items-center w-full cursor-pointer py-0.5" title="Application and error logs">
+                      <input type="checkbox" id="cacheLogs" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
+                      <span class="ml-2 text-sm text-text-primary">Log Files</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-0.5" style="margin-left: 1.375rem;">All .log files from strawberry-jam/logs</p>
+                  </div>
+                  <div class="w-full">
+                    <label class="flex items-center w-full cursor-pointer py-0.5" title="Temporary downloads and cached files">
+                      <input type="checkbox" id="cacheTemp" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer" checked>
+                      <span class="ml-2 text-sm text-text-primary">Temporary Files</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-0.5" style="margin-left: 1.375rem;">Folders named temp, tmp, cache, or downloads in both data directories</p>
+                  </div>
 
                   <div class="border-t border-sidebar-border pt-1.5 mt-1.5 w-full"></div>
                   <div class="text-xs font-medium text-red-400 uppercase tracking-wide">User Data</div>
-                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Saved accounts and authentication tokens">
-                    <input type="checkbox" id="cacheAuth" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
-                    <span class="ml-2 text-sm text-text-primary">Saved Accounts</span>
-                    <span class="ml-auto text-xs text-red-400">data loss</span>
-                  </label>
-                  <label class="flex items-center w-full cursor-pointer py-0.5" title="User-installed plugins and plugin settings">
-                    <input type="checkbox" id="cachePlugins" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
-                    <span class="ml-2 text-sm text-text-primary">Plugins</span>
-                    <span class="ml-auto text-xs text-red-400">data loss</span>
-                  </label>
-                  <label class="flex items-center w-full cursor-pointer py-0.5" title="Saved settings and application data">
-                    <input type="checkbox" id="cacheData" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
-                    <span class="ml-2 text-sm text-text-primary">App Settings</span>
-                    <span class="ml-auto text-xs text-red-400">data loss</span>
-                  </label>
-                  <label class="flex items-center w-full cursor-pointer py-0.5" title="All logged usernames and collected data">
-                    <input type="checkbox" id="cacheUsernameLogger" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
-                    <span class="ml-2 text-sm text-text-primary">Username Logger</span>
-                    <span class="ml-auto text-xs text-red-400">data loss</span>
-                  </label>
+                  <div class="w-full">
+                    <label class="flex items-center w-full cursor-pointer py-0.5" title="Saved accounts and authentication tokens">
+                      <input type="checkbox" id="cacheAuth" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                      <span class="ml-2 text-sm text-text-primary">Saved Accounts</span>
+                      <span class="ml-auto text-xs text-red-400">data loss</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-0.5" style="margin-left: 1.375rem;">strawberry-jam/accounts, auth, and tokens directories</p>
+                  </div>
+                  <div class="w-full">
+                    <label class="flex items-center w-full cursor-pointer py-0.5" title="User-installed plugins and plugin settings">
+                      <input type="checkbox" id="cachePlugins" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                      <span class="ml-2 text-sm text-text-primary">Plugins</span>
+                      <span class="ml-auto text-xs text-red-400">data loss</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-0.5" style="margin-left: 1.375rem;">All installed plugin folders in strawberry-jam/plugins</p>
+                  </div>
+                  <div class="w-full">
+                    <label class="flex items-center w-full cursor-pointer py-0.5" title="Saved settings and application data">
+                      <input type="checkbox" id="cacheData" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                      <span class="ml-2 text-sm text-text-primary">App Settings</span>
+                      <span class="ml-auto text-xs text-red-400">data loss</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-0.5" style="margin-left: 1.375rem;">Application preferences, themes, and configuration data</p>
+                  </div>
+                  <div class="w-full">
+                    <label class="flex items-center w-full cursor-pointer py-0.5" title="All logged usernames and collected data">
+                      <input type="checkbox" id="cacheUsernameLogger" name="cacheType" class="w-3.5 h-3.5 cache-checkbox bg-tertiary-bg border-gray-400 rounded cursor-pointer">
+                      <span class="ml-2 text-sm text-text-primary">Username Logger</span>
+                      <span class="ml-auto text-xs text-red-400">data loss</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-0.5" style="margin-left: 1.375rem;">All logged usernames, collected player data, and leak check results</p>
+                  </div>
                 </div>
               </div>
 

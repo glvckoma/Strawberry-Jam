@@ -27,6 +27,7 @@ const CommandRegistry = require('../../../managers/command/CommandRegistry')
 const ConsoleDrawerManager = require('../../../ui/managers/ConsoleDrawerManager')
 const InlinePluginManager = require('../../../ui/managers/InlinePluginManager')
 const PacketFilterManager = require('../../../ui/managers/PacketFilterManager')
+const PluginAutoUpdater = require('../../../services/plugin/PluginAutoUpdater')
 
 
 /**
@@ -619,6 +620,8 @@ module.exports = class Application extends EventEmitter {
     
     this.refreshAutoComplete()
 
+    this._autoUpdatePlugins()
+
     const secureConnection = this.settings.get('secureConnection')
     if (secureConnection) {
       await this._checkForHostChanges()
@@ -633,7 +636,7 @@ module.exports = class Application extends EventEmitter {
       })
       ipcRenderer.send('port-error', {
         server: 'networking',
-        message: 'The connection server failed to start because all ports (443, 444, 445, 8443, 9443) are busy. Close other applications using these ports or use the /terminate command, then restart.'
+        message: 'The connection server failed to start because port 443 is busy. Close other applications using this port or use the /terminate command, then restart.'
       })
     }
 
@@ -646,6 +649,9 @@ module.exports = class Application extends EventEmitter {
     }
     
     this.emit('ready')
+
+    this._portConflicts = []
+    this._checkPortConflicts()
 
     await this._checkVersionAndShowUpdatesModal()
     ipcRenderer.send('renderer-ready')
@@ -724,22 +730,6 @@ module.exports = class Application extends EventEmitter {
   }
 
   /**
-   * Adds a tooltip to the play button indicating the game is running.
-   * @private
-   */
-  _addGameRunningTooltip() {
-    if (this.tooltipManager && this.$playGameBtn) {
-      this.tooltipManager.addGameRunningTooltip(this.$playGameBtn)
-    }
-  }
-
-  _removeGameRunningTooltip() {
-    if (this.tooltipManager) {
-      this.tooltipManager.removeGameRunningTooltip()
-    }
-  }
-
-  /**
    * Reloads log limit settings after they've been changed.
    * @public
    */
@@ -775,6 +765,27 @@ module.exports = class Application extends EventEmitter {
     }
   }
 
+  _autoUpdatePlugins() {
+    const updater = new PluginAutoUpdater(this)
+    updater.checkAndUpdateAll()
+      .then(async (updated) => {
+        if (updated.length > 0) {
+          this.consoleMessage({
+            message: `Auto-updated ${updated.length} plugin(s): ${updated.join(', ')}`,
+            type: 'success'
+          })
+          await this.dispatch.load()
+          this.refreshAutoComplete()
+        }
+      })
+      .catch((error) => {
+        this.consoleMessage({
+          message: `Plugin auto-update check failed: ${error.message}`,
+          type: 'warn'
+        })
+      })
+  }
+
   /**
    * Opens the Updates modal manually.
    * @param {string} [version=null] - Version to show, or null to use latest
@@ -785,5 +796,38 @@ module.exports = class Application extends EventEmitter {
     if (this.versionChecker) {
       await this.versionChecker.openUpdatesModal(version)
     }
+  }
+
+  async _checkPortConflicts() {
+    try {
+      const conflicts = await ipcRenderer.invoke('check-port-conflicts') || []
+      if (conflicts.length === 0) return
+
+      this._portConflicts = conflicts
+
+      for (const conflict of conflicts) {
+        this.consoleMessage({
+          message: `Port ${conflict.port} is occupied by ${conflict.processName} (PID: ${conflict.pid}). Use /terminate or close the application manually, or Strawberry Jam may not work correctly.`,
+          type: 'warning'
+        })
+      }
+
+      const $toggleBtn = document.getElementById('consoleToggleButton')
+      if ($toggleBtn) {
+        $toggleBtn.style.animation = 'portConflictPulse 2s ease-in-out infinite'
+        $toggleBtn.style.borderColor = 'var(--theme-primary, #e83d52)'
+
+        const stopPulse = () => {
+          $toggleBtn.style.animation = ''
+          $toggleBtn.style.borderColor = ''
+          $toggleBtn.removeEventListener('click', stopPulse)
+        }
+        $toggleBtn.addEventListener('click', stopPulse)
+      }
+    } catch {}
+  }
+
+  hasPortConflicts() {
+    return this._portConflicts && this._portConflicts.length > 0
   }
 }

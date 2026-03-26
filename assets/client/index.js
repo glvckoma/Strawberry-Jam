@@ -856,31 +856,7 @@ ipcMain.handle('get-api-port', async () => {
 });
 
 ipcMain.handle('get-server-port', async () => {
-  const net = require('net');
-  const ports = TCP_SERVER_PORTS;
-
-  for (const port of ports) {
-    try {
-      await new Promise((resolve, reject) => {
-        const testServer = net.createServer();
-        testServer.once('error', (err) => {
-          if (err.code === 'EADDRINUSE') {
-            resolve(true);
-          } else {
-            reject(err);
-          }
-        });
-        testServer.once('listening', () => {
-          testServer.close(() => reject(new Error('port free')));
-        });
-        testServer.listen(port, '127.0.0.1');
-      });
-      return port;
-    } catch {
-      continue;
-    }
-  }
-  return null;
+  return TCP_SERVER_PORTS[0];
 });
 
 ipcMain.handle('get-app-state', async () => {

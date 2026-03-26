@@ -1,0 +1,49 @@
+<head>
+  <meta charset="UTF-8">
+  <title>Den Shop</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <style>
+    .ds-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .ds-select { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; color-scheme: dark; }
+    .ds-select:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .ds-input { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; box-sizing: border-box; }
+    .ds-input:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .ds-btn { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; }
+    .ds-btn-buy { background: rgba(16,185,129,0.2); color: #10b981; }
+    .ds-btn-buy:hover { background: rgba(16,185,129,0.3); }
+    .ds-row { margin-bottom: 12px; }
+    #statusMsg { font-size: 12px; margin-top: 10px; min-height: 18px; }
+    .status-ok { color: #10b981; }
+    .status-err { color: #ef4444; }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Den Shop</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div class="jam-plugin-content" style="padding: 14px 14px 10px;">
+    <div class="ds-row">
+      <div class="ds-label">Den</div>
+      <select id="denSelect" class="ds-select"></select>
+    </div>
+
+    <div class="ds-row">
+      <div class="ds-label">Den Slot</div>
+      <input type="number" id="slotInput" class="ds-input" min="1" max="20" value="1" placeholder="Open slot number">
+    </div>
+
+    <button id="buyBtn" class="ds-btn ds-btn-buy"><i class="fas fa-home mr-2"></i>Purchase Den</button>
+    <div id="statusMsg"></div>
+  </div>
+
+  <script src="./index.js"></script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
+</body>

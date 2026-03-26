@@ -1,0 +1,8 @@
+{
+  "name": "Den Shop",
+  "version": "1.0.0",
+  "description": "Purchase any den directly, including seasonal and unavailable ones.",
+  "author": "glvckoma",
+  "main": "index.html",
+  "type": "ui"
+}

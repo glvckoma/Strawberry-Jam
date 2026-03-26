@@ -63,6 +63,24 @@ class WindowControlsManager {
       })
     }
     
+    const pauseNetworkLogButton = document.getElementById('pauseNetworkLogButton')
+    if (pauseNetworkLogButton) {
+      window._networkLogPaused = false
+      pauseNetworkLogButton.addEventListener('click', () => {
+        window._networkLogPaused = !window._networkLogPaused
+        const icon = pauseNetworkLogButton.querySelector('i')
+        if (window._networkLogPaused) {
+          if (icon) icon.className = 'fas fa-play text-sm'
+          pauseNetworkLogButton.title = 'Resume network logs'
+          pauseNetworkLogButton.style.color = 'var(--theme-primary, #e83d52)'
+        } else {
+          if (icon) icon.className = 'fas fa-pause text-sm'
+          pauseNetworkLogButton.title = 'Pause network logs'
+          pauseNetworkLogButton.style.color = ''
+        }
+      })
+    }
+
     const clearPacketLogButton = document.getElementById('clearPacketLogButton')
     if (clearPacketLogButton) {
       clearPacketLogButton.addEventListener('click', () => {

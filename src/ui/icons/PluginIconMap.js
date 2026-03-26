@@ -14,6 +14,7 @@ const DEFAULT_ICON_MAP = {
   'Price Checker': 'tag',
   'Gem Farm': 'gem',
   'Den Log': 'warehouse',
+  'Den Shop': 'shopping-cart',
   'Private Chat Emojis': 'smile'
 }
 

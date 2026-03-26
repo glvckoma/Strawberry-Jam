@@ -31,6 +31,8 @@ class ConsoleManager {
       if (!this.application.packetFilterManager.shouldShow(message, isIncoming)) return
     }
 
+    if (isPacket && typeof window !== 'undefined' && window._networkLogPaused) return
+
     const logCategory = this._getLogCategory(message)
     if (logCategory) {
       this._removePreviousLogByCategory(logCategory)

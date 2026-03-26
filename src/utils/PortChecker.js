@@ -45,29 +45,32 @@ class PortChecker {
     
     try {
       if (platform === 'win32') {
-        const { stdout } = await execAsync(`netstat -ano | findstr :${port}`)
+        const { stdout } = await execAsync(`netstat -ano | findstr LISTENING | findstr :${port}`)
         const lines = stdout.trim().split('\n')
-        if (lines.length > 0) {
-          const parts = lines[0].trim().split(/\s+/)
+        for (const line of lines) {
+          const parts = line.trim().split(/\s+/)
+          if (parts.length < 4) continue
+          const localAddress = parts[1]
+          const portMatch = localAddress.match(/:(\d+)$/)
+          if (!portMatch || parseInt(portMatch[1]) !== port) continue
           const pid = parts[parts.length - 1]
-          if (pid && !isNaN(pid)) {
-            try {
-              const { stdout: taskOutput } = await execAsync(`tasklist /FI "PID eq ${pid}" /FO CSV /NH`)
-              if (taskOutput && taskOutput.trim()) {
-                const taskParts = taskOutput.split(',')
-                if (taskParts.length > 0) {
-                  const processName = taskParts[0].replace(/"/g, '')
-                  return { pid, processName }
-                }
+          if (!pid || isNaN(pid)) continue
+          try {
+            const { stdout: taskOutput } = await execAsync(`tasklist /FI "PID eq ${pid}" /FO CSV /NH`)
+            if (taskOutput && taskOutput.trim()) {
+              const taskParts = taskOutput.split(',')
+              if (taskParts.length > 0) {
+                const processName = taskParts[0].replace(/"/g, '')
+                return { pid, processName }
               }
-            } catch {
-              return { pid }
             }
+          } catch {
+            return { pid }
           }
         }
       } else if (platform === 'darwin' || platform === 'linux') {
-        const { stdout } = await execAsync(`lsof -ti:${port}`)
-        const pid = stdout.trim()
+        const { stdout } = await execAsync(`lsof -ti:${port} -sTCP:LISTEN`)
+        const pid = stdout.trim().split('\n')[0]
         if (pid) {
           try {
             const { stdout: psOutput } = await execAsync(`ps -p ${pid} -o comm=`)

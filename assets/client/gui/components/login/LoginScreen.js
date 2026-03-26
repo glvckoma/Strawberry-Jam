@@ -65,12 +65,15 @@
       this.devtoolsBtn = this.shadowRoot.getElementById("devtools-btn");
       this.devtoolsErrorBadge = this.shadowRoot.getElementById("devtools-error-badge");
       this.settingsPanel = this.shadowRoot.getElementById("settings-panel");
-      
+      this._loginHelpPrompt = this.shadowRoot.getElementById("login-help-prompt");
+
       this.errorCount = 0;
       this.setupErrorTracking();
+      this._setupLoginHelpPrompt();
       
       this.uuidSpooferToggle = this.shadowRoot.getElementById("uuid-spoofer-toggle");
       this.backgroundProcessingToggle = this.shadowRoot.getElementById("background-processing-toggle");
+      this.modMenuBtnToggle = this.shadowRoot.getElementById("mod-menu-btn-toggle");
       this.darkModeToggle = this.shadowRoot.getElementById("dark-mode-toggle");
       this.showImportAccountsToggle = this.shadowRoot.getElementById("show-import-accounts-toggle");
       this.showWheelAutomationToggle = this.shadowRoot.getElementById("show-wheel-automation-toggle");
@@ -231,17 +234,32 @@
     }
 
     setupErrorTracking() {
+      const originalLog = console.log;
+      const originalInfo = console.info;
       const originalError = console.error;
       const originalWarn = console.warn;
       const self = this;
-      
+      const capture = window.LoginScreenUtilities ? window.LoginScreenUtilities.captureLog : null;
+
+      console.log = function(...args) {
+        if (capture) capture('log', ...args);
+        originalLog.apply(console, args);
+      };
+
+      console.info = function(...args) {
+        if (capture) capture('info', ...args);
+        originalInfo.apply(console, args);
+      };
+
       console.error = function(...args) {
+        if (capture) capture('error', ...args);
         self.errorCount++;
         self.updateErrorBadge();
         originalError.apply(console, args);
       };
-      
+
       console.warn = function(...args) {
+        if (capture) capture('warn', ...args);
         self.errorCount++;
         self.updateErrorBadge();
         originalWarn.apply(console, args);
@@ -274,16 +292,64 @@
         this.devtoolsErrorBadge.textContent = this.errorCount;
         if (this.errorCount > 0 && !this._hideDevToolsBadge) {
           this.devtoolsErrorBadge.classList.add('show');
-          this.devtoolsBtn.setAttribute('title', `Open DevTools (${this.errorCount} error${this.errorCount !== 1 ? 's' : ''} detected)`);
+          this.devtoolsBtn.setAttribute('title', `View Debug Logs (${this.errorCount} error${this.errorCount !== 1 ? 's' : ''} detected)`);
         } else {
           this.devtoolsErrorBadge.classList.remove('show');
           if (this.errorCount > 0 && this._hideDevToolsBadge) {
-            this.devtoolsBtn.setAttribute('title', `Open DevTools (${this.errorCount} error${this.errorCount !== 1 ? 's' : ''} detected, badge hidden)`);
+            this.devtoolsBtn.setAttribute('title', `View Debug Logs (${this.errorCount} error${this.errorCount !== 1 ? 's' : ''} detected, badge hidden)`);
           } else {
-            this.devtoolsBtn.setAttribute('title', 'Open DevTools (App & Game)');
+            this.devtoolsBtn.setAttribute('title', 'View Debug Logs');
           }
         }
       }
+    }
+
+    _setupLoginHelpPrompt() {
+      const viewLogsBtn = this.shadowRoot.getElementById("help-prompt-view-logs");
+      const dismissBtn = this.shadowRoot.getElementById("help-prompt-dismiss");
+
+      if (viewLogsBtn) {
+        viewLogsBtn.addEventListener("click", () => {
+          this.hideLoginHelpPrompt();
+          this.openDebugLogModal(true);
+        });
+      }
+
+      if (dismissBtn) {
+        dismissBtn.addEventListener("click", () => {
+          this.hideLoginHelpPrompt();
+        });
+      }
+    }
+
+    showLoginHelpPrompt() {
+      if (this._loginHelpPrompt) {
+        this._loginHelpPrompt.classList.add("show");
+      }
+    }
+
+    hideLoginHelpPrompt() {
+      if (this._loginHelpPrompt) {
+        this._loginHelpPrompt.classList.remove("show");
+      }
+    }
+
+    openDebugLogModal(showHelpBanner = false) {
+      const modalLayer = document.getElementById('modal-layer');
+      if (!modalLayer) return;
+
+      const existing = modalLayer.querySelector('ajd-debug-log-modal');
+      if (existing) return;
+
+      const modal = document.createElement('ajd-debug-log-modal');
+      modal.errorCount = this.errorCount;
+      modal.showHelpBanner = showHelpBanner;
+      modal.addEventListener('close', () => {
+        modalLayer.removeChild(modal);
+        this.errorCount = 0;
+        this.updateErrorBadge();
+      });
+      modalLayer.appendChild(modal);
     }
 
     async localize() {

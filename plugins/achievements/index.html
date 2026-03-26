@@ -1,0 +1,75 @@
+<head>
+  <meta charset="UTF-8">
+  <title>Achievements</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <style>
+    .ach-toolbar { display: flex; gap: 6px; margin-bottom: 10px; align-items: center; }
+    .ach-search { flex: 1; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; }
+    .ach-search:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .ach-count { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; }
+    .ach-actions { display: flex; gap: 6px; margin-bottom: 10px; }
+    .ach-btn { padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s ease; white-space: nowrap; }
+    .ach-btn-sm { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); }
+    .ach-btn-sm:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .ach-btn-send { flex: 1; background: rgba(16,185,129,0.2); color: #10b981; font-size: 12px; padding: 8px 12px; border-radius: 6px; }
+    .ach-btn-send:hover { background: rgba(16,185,129,0.3); }
+    .ach-btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ach-btn-stop { flex: 1; background: rgba(239,68,68,0.2); color: #ef4444; font-size: 12px; padding: 8px 12px; border-radius: 6px; display: none; }
+    .ach-btn-stop:hover { background: rgba(239,68,68,0.3); }
+    .ach-list { flex: 1; overflow-y: auto; border: 1px solid rgba(156,163,175,0.1); border-radius: 6px; background: rgba(255,255,255,0.02); }
+    .ach-group { border-bottom: 1px solid rgba(156,163,175,0.06); }
+    .ach-group:last-child { border-bottom: none; }
+    .ach-group-header { display: flex; align-items: center; gap: 8px; padding: 7px 10px; cursor: pointer; transition: background 0.1s; user-select: none; }
+    .ach-group-header:hover { background: rgba(255,255,255,0.04); }
+    .ach-group-header.has-selection { background: rgba(16,185,129,0.06); }
+    .ach-group-chevron { font-size: 9px; color: rgba(255,255,255,0.25); width: 12px; text-align: center; transition: transform 0.15s; flex-shrink: 0; }
+    .ach-group-chevron.open { transform: rotate(90deg); }
+    .ach-group-name { font-size: 12px; color: #fff; flex: 1; }
+    .ach-badge { font-size: 9px; padding: 1px 6px; border-radius: 8px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.45); font-weight: 600; flex-shrink: 0; }
+    .ach-tiers { display: none; padding: 0 10px 6px 34px; }
+    .ach-tiers.open { display: block; }
+    .ach-tier { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: background 0.1s; user-select: none; }
+    .ach-tier:hover { background: rgba(255,255,255,0.04); }
+    .ach-tier.selected { background: rgba(16,185,129,0.1); }
+    .ach-tier.implied { background: rgba(16,185,129,0.04); }
+    .ach-tier input[type="radio"] { accent-color: var(--theme-primary, #e83d52); flex-shrink: 0; cursor: pointer; }
+    .ach-tier-name { font-size: 11px; color: rgba(255,255,255,0.8); flex: 1; }
+    .ach-tier-val { font-size: 10px; color: rgba(255,255,255,0.25); font-family: monospace; }
+    .ach-tier-implied { font-size: 9px; color: rgba(16,185,129,0.6); margin-left: auto; }
+    .ach-single-cb { accent-color: var(--theme-primary, #e83d52); flex-shrink: 0; cursor: pointer; }
+    #statusMsg { font-size: 12px; margin-top: 8px; min-height: 18px; }
+    .status-ok { color: #10b981; }
+    .status-err { color: #ef4444; }
+    .status-prog { color: var(--theme-primary, #e83d52); }
+    .ach-progress { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 6px; overflow: hidden; display: none; }
+    .ach-progress-bar { height: 100%; background: var(--theme-primary, #e83d52); border-radius: 2px; transition: width 0.1s linear; width: 0%; }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Achievements</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="jam-plugin-content" style="padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+    <div class="ach-toolbar">
+      <input id="searchInput" type="text" class="ach-search" placeholder="Search achievements...">
+      <span id="countLabel" class="ach-count">0 selected</span>
+    </div>
+    <div class="ach-actions">
+      <button id="selectAllBtn" class="ach-btn ach-btn-sm" title="Select max tier for all groups"><i class="fas fa-check-double mr-1"></i>All Max</button>
+      <button id="selectNoneBtn" class="ach-btn ach-btn-sm"><i class="fas fa-times mr-1"></i>None</button>
+      <button id="sendBtn" class="ach-btn ach-btn-send"><i class="fas fa-paper-plane mr-1"></i>Send Selected</button>
+      <button id="stopBtn" class="ach-btn ach-btn-stop"><i class="fas fa-stop mr-1"></i>Stop</button>
+    </div>
+    <div id="achList" class="ach-list themed-scrollbar"></div>
+    <div id="progressBar" class="ach-progress"><div id="progressFill" class="ach-progress-bar"></div></div>
+    <div id="statusMsg"></div>
+  </div>
+  <script src="./index.js"></script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
+</body>

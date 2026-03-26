@@ -4,6 +4,7 @@ exports.render = function (app) {
   const path = require('path')
   const fs = require('fs')
   const PluginCard = require('../../../../ui/components/PluginCard')
+  const { downloadPluginFiles: downloadFiles } = require('../../../../utils/PluginDownloader')
 
   const CACHE_KEY = 'jam-plugins-cache'
   const CACHE_TIME_KEY = 'jam-plugins-cache-time'
@@ -470,11 +471,10 @@ exports.render = function (app) {
 
       deleteDirectory(pluginDir)
       app.consoleMessage({ message: `Plugin "${pluginName}" has been successfully uninstalled.`, type: 'success' })
-      app.modals.close()
       await refreshPluginsWithAnimation()
 
-      if (activeTab === 'store') await fetchPlugins(true)
-      else if (activeTab === 'github') renderGitHubRepos()
+      if (activeTab === 'store') await fetchPlugins()
+      else if (activeTab === 'github') await renderGitHubRepos()
     } catch (error) {
       app.consoleMessage({ message: `Failed to uninstall plugin "${pluginName}": ${error.message}`, type: 'error' })
     } finally {
@@ -485,37 +485,6 @@ exports.render = function (app) {
 
   let installInProgress = false
 
-  const downloadPluginFiles = async (contentsUrl, pluginDir) => {
-    const response = await fetch(contentsUrl)
-    if (!response.ok) throw new Error(`Failed to fetch plugin contents: ${response.statusText}`)
-    const contents = await response.json()
-    const filesArray = Array.isArray(contents) ? contents : [contents]
-
-    for (const file of filesArray) {
-      if (file.type === 'file') {
-        const fileResponse = await fetch(file.download_url)
-        if (!fileResponse.ok) throw new Error(`Failed to download ${file.name}: ${fileResponse.statusText}`)
-        const fileContent = await fileResponse.text()
-        fs.writeFileSync(path.join(pluginDir, file.name), fileContent)
-      } else if (file.type === 'dir') {
-        const subDir = path.join(pluginDir, file.name)
-        if (!fs.existsSync(subDir)) fs.mkdirSync(subDir, { recursive: true })
-        const subResponse = await fetch(file.url)
-        if (subResponse.ok) {
-          const subContents = await subResponse.json()
-          for (const subFile of subContents) {
-            if (subFile.type === 'file') {
-              const subFileResponse = await fetch(subFile.download_url)
-              if (subFileResponse.ok) {
-                const subFileContent = await subFileResponse.text()
-                fs.writeFileSync(path.join(subDir, subFile.name), subFileContent)
-              }
-            }
-          }
-        }
-      }
-    }
-  }
 
   const installPlugin = async (plugin) => {
     if (installInProgress) return
@@ -529,46 +498,16 @@ exports.render = function (app) {
       const pluginDir = path.join(userPluginsPath, plugin.name)
       if (!fs.existsSync(pluginDir)) fs.mkdirSync(pluginDir, { recursive: true })
 
-      const response = await fetch(plugin.url)
-      if (!response.ok) {
-        if (response.status === 403 && response.headers.get('X-RateLimit-Remaining') === '0') {
-          const resetTime = response.headers.get('X-RateLimit-Reset')
-          const resetDate = new Date(resetTime * 1000)
-          throw new Error(`GitHub rate limit exceeded. Try again after ${resetDate.toLocaleTimeString()}.`)
-        }
-        throw new Error(`Failed to fetch plugin contents: ${response.statusText}`)
-      }
-
-      const contents = await response.json()
-      const filesArray = Array.isArray(contents) ? contents : [contents]
-
-      for (const file of filesArray) {
-        if (file.type === 'file') {
-          const fileResponse = await fetch(file.download_url)
-          if (!fileResponse.ok) throw new Error(`Failed to download ${file.name}: ${fileResponse.statusText}`)
-          fs.writeFileSync(path.join(pluginDir, file.name), await fileResponse.text())
-        } else if (file.type === 'dir') {
-          const subDir = path.join(pluginDir, file.name)
-          if (!fs.existsSync(subDir)) fs.mkdirSync(subDir, { recursive: true })
-          const subResponse = await fetch(file.url)
-          if (subResponse.ok) {
-            const subContents = await subResponse.json()
-            for (const subFile of subContents) {
-              if (subFile.type === 'file') {
-                const subFileResponse = await fetch(subFile.download_url)
-                if (subFileResponse.ok) fs.writeFileSync(path.join(subDir, subFile.name), await subFileResponse.text())
-              }
-            }
-          }
-        }
-      }
+      await downloadFiles(plugin.url, pluginDir)
 
       if (plugin.sourceRepo === 'strawberry-jam') fs.writeFileSync(path.join(pluginDir, '.sj-source'), '')
       else if (plugin.sourceRepo === 'original-jam') fs.writeFileSync(path.join(pluginDir, '.jam-source'), '')
 
-      if (activeTab === 'store') app.modals.close()
       app.consoleMessage({ message: `Plugin "${plugin.name}" has been successfully installed.`, type: 'success' })
       await refreshPluginsWithAnimation()
+
+      if (activeTab === 'store') await fetchPlugins()
+      else if (activeTab === 'github') await renderGitHubRepos()
     } catch (error) {
       app.consoleMessage({ message: `Failed to install plugin "${plugin.name}": ${error.message}`, type: 'error' })
     } finally {
@@ -590,12 +529,14 @@ exports.render = function (app) {
       if (!fs.existsSync(pluginDir)) fs.mkdirSync(pluginDir, { recursive: true })
 
       const contentsUrl = `https://api.github.com/repos/${plugin.repoOwner}/${plugin.repoName}/contents/${plugin.path}`
-      await downloadPluginFiles(contentsUrl, pluginDir)
+      await downloadFiles(contentsUrl, pluginDir)
       fs.writeFileSync(path.join(pluginDir, '.github-source'), '')
 
       app.consoleMessage({ message: `Plugin "${plugin.name}" has been successfully installed.`, type: 'success' })
       await refreshPluginsWithAnimation()
-      if (activeTab === 'github') renderGitHubRepos()
+
+      if (activeTab === 'store') await fetchPlugins()
+      else if (activeTab === 'github') await renderGitHubRepos()
     } catch (error) {
       app.consoleMessage({ message: `Failed to install plugin "${plugin.name}" from GitHub: ${error.message}`, type: 'error' })
     } finally {

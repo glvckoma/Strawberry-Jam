@@ -49,22 +49,6 @@ class TooltipManager {
     }
   }
 
-  addGameRunningTooltip($playGameBtn) {
-    this.$playGameBtn = $playGameBtn;
-    if (this.$playGameBtn) {
-      this.addTooltip(this.$playGameBtn, 'Strawberry Jam is already running', {
-        theme: 'error',
-        position: 'top'
-      });
-    }
-  }
-
-  removeGameRunningTooltip() {
-    if (this.$playGameBtn) {
-      Tooltip.remove(this.$playGameBtn);
-    }
-  }
-
   _setupTooltipObserver() {
     if (this.observer) {
       this.observer.disconnect();

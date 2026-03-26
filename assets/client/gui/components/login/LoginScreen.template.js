@@ -95,8 +95,9 @@
             transform-origin: center;
           }
 
-          #devtools-btn {
-            font-size: 16px;
+          #devtools-btn svg {
+            display: block;
+            color: #888;
           }
           
           #devtools-btn-wrapper {
@@ -867,7 +868,102 @@
           :host(.dark-mode) .shortcuts-note {
             color: #E0E0E0;
           }
-          
+
+          #login-help-prompt {
+            display: none;
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--theme-box-background, rgba(45, 45, 45, 0.95));
+            border: 2px solid var(--theme-secondary, rgba(232, 61, 82, 0.3));
+            border-radius: 16px;
+            padding: 14px 20px;
+            font-family: CCDigitalDelivery, sans-serif;
+            color: #E0E0E0;
+            font-size: 14px;
+            z-index: 100;
+            box-shadow: 0 8px 32px var(--theme-shadow, rgba(252, 93, 93, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            max-width: 420px;
+            text-align: center;
+            background-image:
+              radial-gradient(circle at 10% 20%, var(--theme-radial-1, rgba(255, 180, 180, 0.05)) 0%, transparent 50%),
+              radial-gradient(circle at 90% 80%, var(--theme-radial-2, rgba(255, 200, 200, 0.07)) 0%, transparent 50%);
+          }
+
+          :host(:not(.dark-mode)) #login-help-prompt {
+            background: var(--theme-box-background-light, rgba(255, 245, 230, 0.95));
+            color: #6E4B37;
+          }
+
+          :host(.dark-mode) #login-help-prompt {
+            background: var(--theme-box-background-dark, rgba(45, 45, 45, 0.95));
+          }
+
+          #login-help-prompt.show {
+            display: block;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+
+          #login-help-prompt p {
+            margin: 0 0 12px 0;
+            line-height: 1.4;
+            font-family: Tiki-Island, sans-serif;
+            font-size: 16px;
+            color: var(--theme-primary, #e83d52);
+            text-shadow: 1px 1px 0px var(--theme-shadow, rgba(252, 93, 93, 0.1));
+          }
+
+          .help-prompt-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+          }
+
+          .help-prompt-btn {
+            padding: 7px 18px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            font-family: CCDigitalDelivery, sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .help-prompt-btn:active {
+            transform: scale(0.96);
+          }
+
+          .help-prompt-btn-primary {
+            background: var(--theme-primary, #e83d52);
+            border-color: var(--theme-secondary, rgba(232, 61, 82, 0.3));
+            color: white;
+          }
+
+          .help-prompt-btn-primary:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+          }
+
+          .help-prompt-btn-dismiss {
+            background: transparent;
+            border-color: var(--theme-secondary, rgba(232, 61, 82, 0.3));
+            color: #B0B0B0;
+          }
+
+          :host(:not(.dark-mode)) .help-prompt-btn-dismiss {
+            color: #6E4B37;
+          }
+
+          .help-prompt-btn-dismiss:hover {
+            border-color: var(--theme-hover-border, rgba(232, 61, 82, 0.5));
+            color: var(--theme-primary, #e83d52);
+          }
+
         </style>
         <div id="box-background"></div>
         <account-management-panel id="account-panel-instance" style="grid-area: panel; align-self: center;"></account-management-panel>
@@ -901,8 +997,16 @@
         <div class="button-container-bottom-left">
           <button id="settings-btn" title="Settings" class="icon-button">⚙️</button>
           <div id="devtools-btn-wrapper">
-            <button id="devtools-btn" title="Open DevTools (App & Game)" class="icon-button">🔧</button>
+            <button id="devtools-btn" title="View Debug Logs" class="icon-button"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></button>
             <span id="devtools-error-badge">0</span>
+          </div>
+        </div>
+
+        <div id="login-help-prompt">
+          <p>Having trouble logging in?</p>
+          <div class="help-prompt-buttons">
+            <button id="help-prompt-view-logs" class="help-prompt-btn help-prompt-btn-primary">View Logs</button>
+            <button id="help-prompt-dismiss" class="help-prompt-btn help-prompt-btn-dismiss">Dismiss</button>
           </div>
         </div>
         <div id="settings-panel">
@@ -930,6 +1034,13 @@
                 <span>Background Processing</span>
                 <label style="display: inline-flex; align-items: center; cursor: pointer; position: relative;">
                   <input type="checkbox" id="background-processing-toggle" class="sr-only settings-peer">
+                  <div class="settings-toggle"></div>
+                </label>
+              </div>
+              <div class="settings-item">
+                <span>Mod Menu Button</span>
+                <label style="display: inline-flex; align-items: center; cursor: pointer; position: relative;">
+                  <input type="checkbox" id="mod-menu-btn-toggle" class="sr-only settings-peer">
                   <div class="settings-toggle"></div>
                 </label>
               </div>
