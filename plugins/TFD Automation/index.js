@@ -43,6 +43,7 @@ const clearWhitelistsButton = document.getElementById('clearWhitelistsButton');
 const exportWhitelistsButton = document.getElementById('exportWhitelistsButton');
 const importWhitelistsButton = document.getElementById('importWhitelistsButton');
 const importFileInput = document.getElementById('importFileInput');
+const acceptAllToggle = document.getElementById('acceptAllToggle');
 const filterStatusText = document.getElementById('filterStatusText');
 const clothingSearch = document.getElementById('clothingSearch');
 const denSearch = document.getElementById('denSearch');
@@ -1345,9 +1346,18 @@ function getWhitelists() {
     };
 }
 
+let _acceptAllItems = localStorage.getItem('tfd_accept_all') === 'true';
+
 function isFilteringEnabled() {
+    if (_acceptAllItems) return false;
     const whitelists = getWhitelists();
     return whitelists.clothing.size > 0 || whitelists.den.size > 0;
+}
+
+function toggleAcceptAll() {
+    _acceptAllItems = !_acceptAllItems;
+    localStorage.setItem('tfd_accept_all', String(_acceptAllItems));
+    updateFilteringStatus();
 }
 
 function saveWhitelists() {
@@ -1418,7 +1428,10 @@ function updateFilteringStatus() {
     const totalCount = whitelists.clothing.size + whitelists.den.size;
 
     if (filterStatusText) {
-        if (totalCount > 0) {
+        if (_acceptAllItems) {
+            filterStatusText.textContent = 'Accept All (whitelist disabled)';
+            filterStatusText.className = 'text-yellow-300';
+        } else if (totalCount > 0) {
             filterStatusText.textContent = `Enabled (${whitelists.clothing.size} clothing, ${whitelists.den.size} den)`;
             filterStatusText.className = 'text-green-300';
         } else {
@@ -1933,6 +1946,7 @@ if (resetStatsButton) resetStatsButton.addEventListener('click', resetStats);
 if (infoButton) infoButton.addEventListener('click', () => showModal(false));
 if (saveWhitelistsButton) saveWhitelistsButton.addEventListener('click', saveWhitelists);
 if (clearWhitelistsButton) clearWhitelistsButton.addEventListener('click', clearWhitelists);
+if (acceptAllToggle) acceptAllToggle.addEventListener('click', toggleAcceptAll);
 if (clearLogButton) clearLogButton.addEventListener('click', clearItemLog);
 if (toggleLogButton) {
     toggleLogButton.addEventListener('click', () => {
