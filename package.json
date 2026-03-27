@@ -2,7 +2,7 @@
   "name": "strawberry-jam",
   "description": "strawberry jam is my personal fork of the project jam created and developed by sxip.",
   "main": "src/index.js",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "author": {
     "name": "glvckoma",
     "email": "glvckoma@users.noreply.github.com"

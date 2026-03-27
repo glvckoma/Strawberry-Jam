@@ -61,12 +61,17 @@ class PluginAutoUpdater {
 
     if (!this._isNewerVersion(githubVersion, localVersion)) return false
 
-    const contentsUrl = `${SJ_PLUGINS_API}/${pluginName}`
+    const contentsUrl = `${SJ_PLUGINS_API}/${encodeURIComponent(pluginName)}`
     await downloadPluginFiles(contentsUrl, pluginDir)
 
     if (!fs.existsSync(path.join(pluginDir, '.sj-source'))) {
       fs.writeFileSync(path.join(pluginDir, '.sj-source'), '')
     }
+
+    try {
+      const updatedConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'))
+      if (updatedConfig.version === localVersion) return false
+    } catch (_) {}
 
     return true
   }

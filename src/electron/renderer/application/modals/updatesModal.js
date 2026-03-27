@@ -204,6 +204,11 @@ function resolveIcon(icon) {
   }
   const faClass = faMap[icon]
   if (faClass) return `<i class="fas ${faClass}" style="font-size: 12px;"></i>`
+  try {
+    const { createIconSvg } = require('../../../../ui/icons/PluginIconMap')
+    const svg = createIconSvg(icon, '')
+    if (svg) return svg
+  } catch (_) {}
   return icon
 }
 

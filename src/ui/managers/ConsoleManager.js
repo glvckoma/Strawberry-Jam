@@ -27,8 +27,9 @@ class ConsoleManager {
       return
     }
 
+    let _packetHidden = false
     if (isPacket && this.application.packetFilterManager) {
-      if (!this.application.packetFilterManager.shouldShow(message, isIncoming)) return
+      if (!this.application.packetFilterManager.shouldShow(message, isIncoming)) _packetHidden = true
     }
 
     if (isPacket && typeof window !== 'undefined' && window._networkLogPaused) return
@@ -252,10 +253,8 @@ class ConsoleManager {
       }
     }
 
-    if (isPacket && this.application.packetFilterManager) {
-      if (!this.application.packetFilterManager.shouldShow(message, isIncoming)) {
-        $container.hide()
-      }
+    if (_packetHidden) {
+      $container.hide()
     }
 
     $targetContainer.append($container)

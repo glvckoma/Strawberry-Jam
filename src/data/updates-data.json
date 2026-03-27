@@ -1755,7 +1755,7 @@
   "5.0.1": {
     "version": "5.0.1",
     "releaseDate": "2026-03-23",
-    "isLatest": true,
+    "isLatest": false,
     "categories": {
       "features": [
         {
@@ -1815,6 +1815,152 @@
           "title": "HUD Display Fixed",
           "description": "Animal clothing display in the HUD now renders correctly for all animals and items.",
           "priority": "fix"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "5.1.0": {
+    "version": "5.1.0",
+    "releaseDate": "2026-03-26",
+    "isLatest": false,
+    "categories": {
+      "features": [
+        {
+          "icon": "bot",
+          "title": "TFD Automation v3.0.0",
+          "description": "Full release of TFD Automation plugin with improved filtering and item detection.",
+          "priority": "major"
+        },
+        {
+          "icon": "trophy",
+          "title": "Achievements v2.0.0",
+          "description": "Achievements plugin rewritten and changed to UI type for better usability.",
+          "priority": "major"
+        },
+        {
+          "icon": "shopping-cart",
+          "title": "Den Shop Plugin",
+          "description": "New plugin to aid in purchasing most dens directly with packet manipulation.",
+          "priority": "major"
+        },
+        {
+          "icon": "package",
+          "title": "Bundle Bulk Buy",
+          "description": "Added bulk buy functionality to bundle shop.",
+          "priority": "minor"
+        },
+        {
+          "icon": "pause",
+          "title": "Network Tab Pause",
+          "description": "Added pause button to the network tab to freeze packet logging.",
+          "priority": "minor"
+        },
+        {
+          "icon": "settings",
+          "title": "Mod Menu Toggle in Login",
+          "description": "Added toggle for mod menu open/close inside of login screen settings.",
+          "priority": "minor"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "download",
+          "title": "Plugin Auto-Updates",
+          "description": "Plugins will now auto update on launch.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "terminal",
+          "title": "Debug Logging",
+          "description": "Refined debug logging retrieval to make it easier for users.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "zap",
+          "title": "Anti-AFK Tweaks",
+          "description": "Slight tweaks made to Anti-AFK for improved reliability.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "alert-triangle",
+          "title": "Port Warnings",
+          "description": "Added several warnings about occupied ports to educate users.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "bug",
+          "title": "Pet & Animal Crashing Fix",
+          "description": "Addressed MAJOR bug in 'Prevent Pet & Animal Crashing' enhancement that caused crashing.",
+          "priority": "critical"
+        }
+      ],
+      "shortcuts": [],
+      "commands": [],
+      "messages": []
+    }
+  },
+  "5.1.1": {
+    "version": "5.1.1",
+    "releaseDate": "2026-03-27",
+    "isLatest": true,
+    "categories": {
+      "features": [
+        {
+          "icon": "paw-print",
+          "title": "Animal Shop Plugin",
+          "description": "New plugin to help purchase most animals directly, bypassing client-side availability gates.",
+          "priority": "major"
+        },
+        {
+          "icon": "door-open",
+          "title": "Room Browser Plugin",
+          "description": "Converted Room Browser from in-game SWF popup to a dedicated plugin for better usability and UI.",
+          "priority": "major"
+        },
+        {
+          "icon": "filter",
+          "title": "Network Filter Modes",
+          "description": "Added dropdown for contains/exact matching in the filter out section of network tab settings.",
+          "priority": "minor"
+        },
+        {
+          "icon": "check-double",
+          "title": "TFD Accept All Toggle",
+          "description": "Added disable whitelist toggle to TFD Automation to accept all items.",
+          "priority": "minor"
+        }
+      ],
+      "improvements": [
+        {
+          "icon": "shopping-cart",
+          "title": "Den Shop & Spammer Tweaks",
+          "description": "Den shop data corrections and packet spammer error handling improvements.",
+          "priority": "enhancement"
+        },
+        {
+          "icon": "server",
+          "title": "Linux Port Fallback",
+          "description": "Added fallback ports for Linux users.",
+          "priority": "enhancement"
+        }
+      ],
+      "fixes": [
+        {
+          "icon": "crosshair",
+          "title": "Pattern Particle Centering",
+          "description": "Fixed custom animal ground pattern appearing off-center to the right.",
+          "priority": "major"
+        },
+        {
+          "icon": "monitor",
+          "title": "Clothing in HUD Error #2006",
+          "description": "Addressed errors caused by Clothing in HUD enhancement. Newer animals that don't support it will now appear without clothing instead of crashing.",
+          "priority": "major"
         }
       ],
       "shortcuts": [],

@@ -11,7 +11,18 @@ const downloadPluginFiles = async (contentsUrl, pluginDir) => {
     if (file.type === 'file') {
       const fileResponse = await fetch(file.download_url)
       if (!fileResponse.ok) throw new Error(`Failed to download ${file.name}: ${fileResponse.statusText}`)
-      fs.writeFileSync(path.join(pluginDir, file.name), await fileResponse.text())
+      const filePath = path.join(pluginDir, file.name)
+      const fileContent = Buffer.from(await fileResponse.arrayBuffer())
+      try {
+        fs.writeFileSync(filePath, fileContent)
+      } catch (writeErr) {
+        const tempPath = filePath + '.update'
+        fs.writeFileSync(tempPath, fileContent)
+        try {
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+          fs.renameSync(tempPath, filePath)
+        } catch (_) {}
+      }
     } else if (file.type === 'dir') {
       const subDir = path.join(pluginDir, file.name)
       if (!fs.existsSync(subDir)) fs.mkdirSync(subDir, { recursive: true })

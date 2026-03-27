@@ -15,6 +15,8 @@ const DEFAULT_ICON_MAP = {
   'Gem Farm': 'gem',
   'Den Log': 'warehouse',
   'Den Shop': 'shopping-cart',
+  'Animal Shop': 'paw-print',
+  'Room Browser': 'door-open',
   'Private Chat Emojis': 'smile'
 }
 

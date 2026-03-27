@@ -60,36 +60,41 @@ module.exports = class Server {
   async serve () {
     if (this.server) throw new Error('The server has already been instantiated.')
 
-    const attemptServer = net.createServer(this._onConnection.bind(this))
+    for (const port of TCP_SERVER_PORTS) {
+      const attemptServer = net.createServer(this._onConnection.bind(this))
 
-    await new Promise((resolve, reject) => {
-      attemptServer.once('listening', () => {
-        this.actualPort = this._port
-        this.server = attemptServer
-        if (this.application && this.application.consoleMessage) {
+      const result = await new Promise((resolve) => {
+        attemptServer.once('listening', () => {
+          this.actualPort = port
+          this._port = port
+          this.server = attemptServer
+          if (this.application && this.application.consoleMessage) {
+            this.application.consoleMessage({
+              message: `Server listening on port ${port}`,
+              type: 'notify'
+            })
+          }
+          resolve(true)
+        })
+        attemptServer.once('error', (error) => {
+          attemptServer.close()
+          resolve(false)
+        })
+        attemptServer.listen(port, '127.0.0.1')
+      })
+
+      if (result) {
+        this.server.on('error', (error) => {
           this.application.consoleMessage({
-            message: `Server listening on port ${this._port}`,
-            type: 'notify'
+            message: `Server encountered an error: ${error.message}`,
+            type: 'error'
           })
-        }
-        resolve()
-      })
-      attemptServer.once('error', (error) => {
-        if (error.code === 'EADDRINUSE') {
-          reject(new Error(`Port ${this._port} is required but is already in use. Use the startup conflict dialog or /terminate command, then restart.`))
-        } else {
-          reject(error)
-        }
-      })
-      attemptServer.listen(this._port, '127.0.0.1')
-    })
+        })
+        return
+      }
+    }
 
-    this.server.on('error', (error) => {
-      this.application.consoleMessage({
-        message: `Server encountered an error: ${error.message}`,
-        type: 'error'
-      })
-    })
+    throw new Error(`All ports (${TCP_SERVER_PORTS.join(', ')}) are unavailable. Use the /terminate command, then restart.`)
   }
 
   async close() {
