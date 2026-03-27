@@ -1,0 +1,8 @@
+{
+  "name": "Room Browser",
+  "version": "1.0.0",
+  "description": "Browse and join any room in Jamaa with search and filtering.",
+  "author": "glvckoma",
+  "main": "index.html",
+  "type": "ui"
+}

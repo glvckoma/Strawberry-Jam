@@ -2,7 +2,7 @@ const logManager = require('../../utils/LogManager');
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const STORE_KEY_SAVED_ACCOUNTS = 'savedAccounts';
+const STORE_KEY_SAVED_ACCOUNTS = 'saved_accounts';
 
 class AccountManager {
   constructor(store) {

@@ -1,0 +1,57 @@
+<head>
+  <meta charset="UTF-8">
+  <title>Animal Shop</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <style>
+    .as-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .as-select { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; color-scheme: dark; }
+    .as-select:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .as-btn { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; }
+    .as-btn-buy { background: rgba(16,185,129,0.2); color: #10b981; }
+    .as-btn-buy:hover { background: rgba(16,185,129,0.3); }
+    .as-btn-buy:disabled { opacity: 0.5; cursor: not-allowed; }
+    .as-row { margin-bottom: 12px; }
+    .as-name-row { display: flex; gap: 6px; }
+    .as-name-row .as-select { width: 33.33%; }
+    #statusMsg { font-size: 12px; margin-top: 10px; min-height: 18px; }
+    .status-ok { color: #10b981; }
+    .status-err { color: #ef4444; }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Animal Shop</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div class="jam-plugin-content" style="padding: 14px 14px 10px;">
+    <div class="as-row">
+      <div class="as-label">Animal</div>
+      <select id="animalSelect" class="as-select"></select>
+    </div>
+
+    <div class="as-row">
+      <div class="as-label">Name</div>
+      <div class="as-name-row">
+        <select id="name1" class="as-select"></select>
+        <select id="name2" class="as-select"></select>
+        <select id="name3" class="as-select"></select>
+      </div>
+    </div>
+
+    <button id="buyBtn" class="as-btn as-btn-buy"><i class="fas fa-paw mr-2"></i>Purchase Animal</button>
+    <div id="statusMsg"></div>
+    <div style="margin-top: auto; padding-top: 12px; text-align: center; font-size: 11px; color: rgba(239,68,68,0.6); line-height: 1.4;">
+      This has not been tested on all animals. If you encounter any issues make sure you have the funds and/or membership. Do NOT flood the discord with "this does not work".
+    </div>
+  </div>
+
+  <script src="./index.js"></script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
+</body>

@@ -99,13 +99,18 @@ class Spammer {
       options.targetUsername = selectedAccount
     }
 
-    const sendFn = type === 'aj'
-      ? dispatch.sendRemoteMessage(content, options)
-      : dispatch.sendConnectionMessage(content, options)
-
-    sendFn.catch(err => {
-      console.error(`[Spammer] ${type === 'aj' ? 'sendRemoteMessage' : 'sendConnectionMessage'} error:`, err.message || err)
-    })
+    try {
+      const result = type === 'aj'
+        ? dispatch.sendRemoteMessage(content, options)
+        : dispatch.sendConnectionMessage(content, options)
+      if (result && typeof result.catch === 'function') {
+        result.catch(err => {
+          console.error(`[Spammer] ${type === 'aj' ? 'sendRemoteMessage' : 'sendConnectionMessage'} error:`, err.message || err)
+        })
+      }
+    } catch (err) {
+      console.error('[Spammer] Send error:', err.message || err)
+    }
   }
 
   async sendPacket (content, type) {

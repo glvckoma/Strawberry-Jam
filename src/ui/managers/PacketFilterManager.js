@@ -9,15 +9,23 @@ class PacketFilterManager {
     this._onChangeCallbacks = []
   }
 
+  _normalizeFilter (entry) {
+    if (typeof entry === 'string') return { pattern: entry, mode: 'contains' }
+    if (entry && typeof entry.pattern === 'string') {
+      return { pattern: entry.pattern, mode: entry.mode === 'exact' ? 'exact' : 'contains' }
+    }
+    return null
+  }
+
   async load () {
     try {
       const { ipcRenderer } = require('electron')
       const filters = await ipcRenderer.invoke('get-setting', 'logs.packetFilters')
-      this._filters = Array.isArray(filters) ? filters.slice() : []
+      this._filters = Array.isArray(filters) ? filters.map(f => this._normalizeFilter(f)).filter(Boolean) : []
     } catch (_) {
       try {
         const raw = this.application.settings.get('logs.packetFilters', [])
-        this._filters = Array.isArray(raw) ? raw.slice() : []
+        this._filters = Array.isArray(raw) ? raw.map(f => this._normalizeFilter(f)).filter(Boolean) : []
       } catch (_) {
         this._filters = []
       }
@@ -27,7 +35,7 @@ class PacketFilterManager {
   _persist () {
     try {
       if (this.application && this.application.settings && this.application.settings.update) {
-        this.application.settings.update('logs.packetFilters', this._filters.slice())
+        this.application.settings.update('logs.packetFilters', this._filters.map(f => ({ pattern: f.pattern, mode: f.mode })))
       }
     } catch (_) {}
   }
@@ -44,11 +52,11 @@ class PacketFilterManager {
     return this._searchQuery
   }
 
-  addFilter (pattern) {
+  addFilter (pattern, mode = 'contains') {
     if (!pattern || typeof pattern !== 'string') return
     const trimmed = pattern.trim()
-    if (!trimmed || this._filters.includes(trimmed)) return
-    this._filters.push(trimmed)
+    if (!trimmed || this._filters.some(f => f.pattern === trimmed)) return
+    this._filters.push({ pattern: trimmed, mode })
     this._persist()
     this.applyToDOM()
     this._notifyChange()
@@ -57,6 +65,14 @@ class PacketFilterManager {
   removeFilter (index) {
     if (index < 0 || index >= this._filters.length) return
     this._filters.splice(index, 1)
+    this._persist()
+    this.applyToDOM()
+    this._notifyChange()
+  }
+
+  toggleFilterMode (index) {
+    if (index < 0 || index >= this._filters.length) return
+    this._filters[index].mode = this._filters[index].mode === 'exact' ? 'contains' : 'exact'
     this._persist()
     this.applyToDOM()
     this._notifyChange()
@@ -85,7 +101,10 @@ class PacketFilterManager {
     if (this._directionFilter !== 'all' && this._directionFilter !== dir) return false
     const lc = (message || '').toLowerCase()
     if (this._searchQuery && !lc.includes(this._searchQuery)) return false
-    if (this._filters.length > 0 && this._filters.some(f => lc.includes(f.toLowerCase()))) return false
+    if (this._filters.length > 0 && this._filters.some(f => {
+      const fp = f.pattern.toLowerCase()
+      return f.mode === 'exact' ? lc === fp : lc.includes(fp)
+    })) return false
     return true
   }
 

@@ -1,0 +1,72 @@
+<head>
+  <meta charset="UTF-8">
+  <title>Room Browser</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <style>
+    .rb-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .rb-input { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; box-sizing: border-box; }
+    .rb-input:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .rb-btn { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; }
+    .rb-btn-join { background: rgba(16,185,129,0.2); color: #10b981; }
+    .rb-btn-join:hover { background: rgba(16,185,129,0.3); }
+    .rb-btn-join:disabled { opacity: 0.5; cursor: not-allowed; }
+    .rb-row { margin-bottom: 10px; }
+    .rb-filter-row { display: flex; gap: 6px; }
+    .rb-filter-row > div { width: 50%; }
+    .rb-section-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px 4px; }
+    .rb-room-list { max-height: 150px; overflow-y: auto; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; background: #1e1f2e; }
+    .rb-room-item { padding: 5px 10px; font-size: 11px; color: #c3c3c3; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .rb-room-item:hover { background: rgba(255,255,255,0.05); }
+    .rb-room-item.selected { background: rgba(var(--theme-primary-rgb, 232,61,82), 0.15); color: #fff; }
+    .rb-room-path { color: rgba(255,255,255,0.3); font-size: 10px; }
+    .rb-room-tags { display: flex; gap: 4px; flex-shrink: 0; }
+    .rb-tag { font-size: 9px; padding: 1px 5px; border-radius: 3px; }
+    .rb-tag-ocean { background: rgba(59,130,246,0.2); color: #60a5fa; }
+    .rb-tag-plat { background: rgba(168,85,247,0.2); color: #c084fc; }
+    .rb-count { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 3px; }
+    #statusMsg { font-size: 12px; margin-top: 8px; min-height: 18px; }
+    .status-ok { color: #10b981; }
+    .status-err { color: #ef4444; }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Room Browser</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div class="jam-plugin-content" style="padding: 14px 14px 10px; display: flex; flex-direction: column;">
+    <div class="rb-row">
+      <div class="rb-label">Search</div>
+      <input type="text" id="searchInput" class="rb-input" placeholder="Filter by name or path...">
+    </div>
+
+    <div class="rb-row" style="flex: 1; min-height: 0; display: flex; gap: 6px;">
+      <div style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+        <div class="rb-section-label">Joinable Rooms</div>
+        <div id="joinableList" class="rb-room-list" style="flex: 1;"></div>
+        <div id="joinableCount" class="rb-count"></div>
+      </div>
+      <div style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+        <div class="rb-section-label">Unjoinable Rooms</div>
+        <div id="unjoinableList" class="rb-room-list" style="flex: 1; opacity: 0.6;"></div>
+        <div id="unjoinableCount" class="rb-count"></div>
+      </div>
+    </div>
+
+    <button id="joinBtn" class="rb-btn rb-btn-join" disabled><i class="fas fa-door-open mr-2"></i>Join Room</button>
+    <div id="statusMsg"></div>
+    <div style="margin-top: auto; padding-top: 8px; text-align: center; font-size: 11px; color: rgba(239,68,68,0.6); line-height: 1.4;">
+      Not all rooms are tested; if you encounter an issue with joining it is probably due to it being unjoinable or server blocked your request. Exploring old rooms used to work but is no longer possible.
+    </div>
+  </div>
+
+  <script src="./index.js"></script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
+</body>

@@ -1,0 +1,8 @@
+{
+  "name": "Animal Shop",
+  "version": "1.0.0",
+  "description": "Purchase most animals directly with packet manipulation.",
+  "author": "glvckoma",
+  "main": "index.html",
+  "type": "ui"
+}

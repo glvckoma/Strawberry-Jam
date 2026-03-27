@@ -95,7 +95,7 @@ const PLUGIN_GUIDES = {
     usage: `
       <div class="bg-tertiary-bg/50 p-3 rounded-lg">
         <p class="text-sm text-text-primary leading-relaxed">
-          Toggles your character's visibility on your own screen. Other players can still see you normally.
+          Toggles your character's visibility using mod commands.
         </p>
       </div>`
   },

@@ -941,9 +941,10 @@ class Electron {
         ignored: /(^|[\/\\])\../,
         persistent: true,
         ignoreInitial: true,
-        usePolling: false,
+        usePolling: true,
+        interval: 1000,
         awaitWriteFinish: {
-          stabilityThreshold: 500,
+          stabilityThreshold: 2000,
           pollInterval: 500
         }
       });

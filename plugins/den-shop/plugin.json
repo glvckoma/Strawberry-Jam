@@ -1,7 +1,7 @@
 {
   "name": "Den Shop",
-  "version": "1.0.0",
-  "description": "Purchase any den directly, including seasonal and unavailable ones.",
+  "version": "1.0.1",
+  "description": "Purchase most dens directly with packet manipulation.",
   "author": "glvckoma",
   "main": "index.html",
   "type": "ui"
