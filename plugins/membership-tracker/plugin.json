@@ -1,0 +1,8 @@
+{
+  "name": "Membership Tracker",
+  "version": "1.0.0",
+  "description": "Tracks membership status and expiration for logged-in accounts. Toggle with /trackmembership.",
+  "author": "glvckoma",
+  "main": "index.js",
+  "type": "game"
+}
