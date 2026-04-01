@@ -1,0 +1,8 @@
+{
+  "name": "Outfit Curator",
+  "version": "1.0.0",
+  "description": "Equip ANY clothing items to your Animal Jam Classic avatar.",
+  "author": "glvckoma",
+  "main": "index.html",
+  "type": "ui"
+}

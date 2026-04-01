@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outfit Curator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="app://assets/styles/style.css" rel="stylesheet">
+  <style>
+    .op-section { padding-bottom: 12px; }
+    .op-section:last-child { padding-bottom: 0; }
+    .op-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .op-btn { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; background: rgba(232,61,82,0.2); color: #e83d52; }
+    .op-btn:hover { background: rgba(232,61,82,0.3); }
+    .op-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .op-warning { display: none; margin-top: 10px; padding: 8px 10px; border-radius: 6px; background: rgba(234,179,8,0.15); border: 1px solid rgba(234,179,8,0.35); color: #eab308; font-size: 12px; line-height: 1.4; }
+
+    .op-combo { position: relative; }
+    .op-combo-wrap { position: relative; }
+    .op-combo-input { width: 100%; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; padding: 6px 28px 6px 10px; color: #fff; font-size: 12px; box-sizing: border-box; }
+    .op-combo-input::placeholder { color: rgba(255,255,255,0.3); }
+    .op-combo-input:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+    .op-combo-input.op-invalid { border-color: #e83d52; animation: op-shake 0.35s ease; }
+    .op-combo-arrow { position: absolute; right: 0; top: 0; bottom: 0; width: 28px; background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: color 0.15s ease; }
+    .op-combo-arrow:hover { color: rgba(255,255,255,0.65); }
+    .op-combo-arrow.open { color: var(--theme-primary, #e83d52); }
+    .op-combo-arrow.open i { transform: rotate(180deg); }
+    .op-combo-arrow i { transition: transform 0.2s ease; }
+    .op-combo-list { position: absolute; top: calc(100% + 3px); left: 0; right: 0; background: #1a1b2a; border: 1px solid rgba(156,163,175,0.2); border-radius: 4px; max-height: 160px; overflow-y: auto; z-index: 200; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+    .op-combo-list.open { display: block; }
+    .op-combo-option { padding: 6px 10px; font-size: 12px; color: rgba(255,255,255,0.85); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .op-combo-option:hover, .op-combo-option.op-hi { background: rgba(232,61,82,0.12); }
+    .op-combo-option.op-selected { color: var(--theme-primary, #e83d52); }
+    .op-combo-more { padding: 4px 10px; font-size: 11px; color: rgba(255,255,255,0.3); font-style: italic; }
+
+    @keyframes op-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    .op-reveal { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; overflow: hidden; }
+    .op-reveal img { width: 100%; height: 100%; object-fit: contain; }
+    .op-banner { position: absolute; top: 12px; left: 0; right: 0; text-align: center; z-index: 10; padding: 0 8px; line-height: 1; }
+    .op-letter { display: inline-block; font-size: 38px; font-weight: 900; font-family: system-ui, sans-serif; text-shadow: 2px 2px 0 rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.8); opacity: 0; animation: op-flyout 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    @keyframes op-flyout { 0% { transform: translateY(-70px) scale(0.3) rotate(-18deg); opacity: 0; } 55% { transform: translateY(8px) scale(1.18) rotate(3deg); opacity: 1; } 75% { transform: translateY(-4px) scale(0.96) rotate(-1deg); } 100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; } }
+  </style>
+</head>
+<body class="bg-primary-bg text-text-primary p-0 h-screen flex flex-col overflow-hidden">
+
+  <div class="jam-plugin-header">
+    <span class="jam-plugin-title">Outfit Curator</span>
+    <div class="jam-plugin-controls">
+      <button class="jam-plugin-minimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+      <button class="jam-plugin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div class="jam-plugin-content" style="padding: 14px 14px 10px; position: relative; overflow: visible; flex: 1;">
+    <div id="op-form">
+      <div class="op-section">
+        <div class="op-label">Hat / Head</div>
+        <div id="op-head"></div>
+      </div>
+      <div class="op-section">
+        <div class="op-label">Top</div>
+        <div id="op-top"></div>
+      </div>
+      <div class="op-section">
+        <div class="op-label">Shoes</div>
+        <div id="op-shoes"></div>
+      </div>
+      <div class="op-section">
+        <div class="op-label">Neck</div>
+        <div id="op-neck"></div>
+      </div>
+      <div class="op-section">
+        <div class="op-label">Tail</div>
+        <div id="op-tail"></div>
+      </div>
+      <button id="op-equip" class="op-btn">
+        <i class="fas fa-tshirt" style="margin-right: 6px;"></i>Equip
+      </button>
+      <div id="op-warning" class="op-warning">
+        Please enter your den in order to prevent any issues!
+      </div>
+    </div>
+    <div id="op-reveal" class="op-reveal">
+      <img id="op-gif" src="" alt="">
+      <div id="op-banner" class="op-banner"></div>
+    </div>
+  </div>
+
+  <script src="index.js"></script>
+  <script src="app://assets/scripts/plugin-utils.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function() { initializePluginUI(); });</script>
+</body>
+</html>
