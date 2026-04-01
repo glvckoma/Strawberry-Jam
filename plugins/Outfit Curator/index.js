@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const clothingData = require('../TFD Automation/1000-clothing.json')
+  const clothingData = require('./assets/1000-clothing.json')
   const path = require('path')
   const fs = require('fs')
   const assetsDir = path.join(__dirname, 'assets')
