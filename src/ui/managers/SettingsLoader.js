@@ -46,12 +46,12 @@ class SettingsLoader {
       const customThemeName = await ipcRenderer.invoke('get-setting', 'ui.customThemeName');
       const customThemeFruit = await ipcRenderer.invoke('get-setting', 'ui.customThemeFruit');
 
-      $modal.data('initialSwfFile', selectedSwfFile || 'v5.1.1.swf');
+      $modal.data('initialSwfFile', selectedSwfFile || 'v5.2.0.swf');
 
       $modal.find('#advancedSmartfoxServer').val(smartfoxServer || '');
       $modal.find('#advancedSecureConnection').prop('checked', secureConnection === true);
 
-      await uiManager.loadSwfFileSettings($modal, selectedSwfFile || 'v5.1.1.swf');
+      await uiManager.loadSwfFileSettings($modal, selectedSwfFile || 'v5.2.0.swf');
 
       $modal.find('#hideGamePlugins').prop('checked', hideGamePlugins === true);
       $modal.find('#pluginRefreshBehavior').val(pluginRefreshBehavior || 'ask');

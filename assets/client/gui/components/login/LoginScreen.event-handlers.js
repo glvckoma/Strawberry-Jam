@@ -25,7 +25,6 @@
       });
       this.loginScreen.passwordInputElem.addEventListener("keydown", event => event.key === "Enter" ? this.authManager.logIn() : "");
       this.loginScreen.passwordInputElem.addEventListener("input", event => {
-        if (this.loginScreen.isFakePassword) this.loginScreen.isFakePassword = false;
         if (this.loginScreen.authToken) this.loginScreen.clearAuthToken();
         if (this.loginScreen.refreshToken) this.loginScreen.clearRefreshToken();
       });
@@ -288,26 +287,8 @@
           if (e.detail && e.detail.username) {
             this.loginScreen.usernameInputElem.value = e.detail.username;
             this.loginScreen.passwordInputElem.value = e.detail.password || "";
-
-            try {
-              const storedTokens = await window.ipc.invoke('get-account-tokens', e.detail.username);
-              if (storedTokens && storedTokens.authToken) {
-                this.loginScreen.authToken = storedTokens.authToken;
-              } else {
-                this.loginScreen.clearAuthToken();
-              }
-              if (storedTokens && storedTokens.refreshToken) {
-                this.loginScreen.refreshToken = storedTokens.refreshToken;
-              } else {
-                this.loginScreen.clearRefreshToken();
-              }
-              this.loginScreen.isFakePassword = !!(storedTokens && (storedTokens.authToken || storedTokens.refreshToken));
-            } catch (err) {
-              this.loginScreen.clearAuthToken();
-              this.loginScreen.clearRefreshToken();
-              this.loginScreen.isFakePassword = false;
-            }
-
+            this.loginScreen.clearAuthToken();
+            this.loginScreen.clearRefreshToken();
             this.loginScreen.passwordInputElem.focus();
           }
         });
@@ -414,7 +395,6 @@
             console.log(`[LoginScreen] DEBUG: Setting credentials - Username: "${account.username}", Password: "${account.password}"`);
             this.loginScreen.username = account.username;
             this.loginScreen.password = account.password;
-            this.loginScreen.isFakePassword = false;
             
             console.log(`[LoginScreen] DEBUG: About to call logIn() for "${account.username}"`);
             await this.authManager.logIn();
@@ -432,6 +412,9 @@
         this.loginScreen.autoWheelButtonInstance.addEventListener('auto-wheel-logout', (event) => {
           const account = event.detail.account;
           console.log('[LoginScreen] Auto wheel logout:', account.username);
+          if (window.ipc) {
+            window.ipc.send("session-cleanup");
+          }
           document.dispatchEvent(new CustomEvent("logout-requested"));
         });
 

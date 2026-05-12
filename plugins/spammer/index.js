@@ -1192,6 +1192,12 @@ class Spammer {
 document.addEventListener('DOMContentLoaded', () => {
   window.spammer = new Spammer()
 
+  window.addEventListener('jam-ready', () => {
+    if (window.spammer) {
+      window.spammer.loadTemplates()
+    }
+  })
+
   window.addEventListener('beforeunload', () => {
     if (window.spammer && typeof window.spammer.cleanup === 'function') {
       window.spammer.cleanup()

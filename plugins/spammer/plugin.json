@@ -1,6 +1,6 @@
 {
   "name": "Packet Spammer",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Advanced packet replication with history and templates.",
   "author": "sxip x glvckoma",
   "main": "index.html",

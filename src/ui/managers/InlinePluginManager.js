@@ -85,11 +85,14 @@ class InlinePluginManager {
         iframeWin.jQuery = iframeWin.$ = require('jquery')
       }
 
+      const { ipcRenderer } = require('electron')
       const dispatch = this.application.dispatch
       const app = this.application
-      iframeWin.jam = {
+      const existingJam = iframeWin.jam || {}
+
+      iframeWin.jam = Object.assign({}, existingJam, {
         isEmbedded: true,
-        ipcRenderer: require('electron').ipcRenderer,
+        ipcRenderer,
         dispatch: {
           sendRemoteMessage: (msg, options) => dispatch.sendRemoteMessage(msg, options),
           sendConnectionMessage: (msg, options) => dispatch.sendConnectionMessage(msg, options),
@@ -106,12 +109,26 @@ class InlinePluginManager {
           getConnectedClients: () => dispatch.getConnectedClients(),
           runInBackground: false
         },
-        onPacket: iframeWin.jam && iframeWin.jam.onPacket ? iframeWin.jam.onPacket : null,
+        onPacket: existingJam.onPacket || null,
         showToast: (message, type) => app.consoleMessage({ type: type || 'notify', message }),
         application: {
           consoleMessage: (type, msg) => app.consoleMessage({ type, message: msg })
+        },
+        readJsonFile: existingJam.readJsonFile || async function(filePath, defaultValue = null) {
+          try {
+            return await ipcRenderer.invoke('read-json-file', filePath, defaultValue)
+          } catch (e) {
+            return defaultValue
+          }
+        },
+        writeJsonFile: existingJam.writeJsonFile || async function(filePath, data) {
+          try {
+            return await ipcRenderer.invoke('write-json-file', filePath, data)
+          } catch (e) {
+            return false
+          }
         }
-      }
+      })
 
       const embeddedLink = iframeWin.document.createElement('link')
       embeddedLink.rel = 'stylesheet'

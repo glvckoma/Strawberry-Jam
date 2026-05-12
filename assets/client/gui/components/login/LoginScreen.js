@@ -17,7 +17,6 @@
       this._authToken = null;
       this._refreshToken = null;
       this._otp = null;
-      this._isFakePassword = false;
       this._version = "";
 
       this.loginSpinnerElem = this.shadowRoot.getElementById("spinner");
@@ -197,11 +196,6 @@
     set username(val) { this.usernameInputElem.value = val; }
     get password() { return this.passwordInputElem.value; }
     set password(val) { this.passwordInputElem.value = val; }
-    get isFakePassword() { return this._isFakePassword; }
-    set isFakePassword(val) {
-      this._isFakePassword = val;
-      if (val) this.password = "FAKE_PASSWORD";
-    }
     get rememberMe() { return this.rememberMeElem.value; }
     set rememberMe(val) { this.rememberMeElem.value = val; }
     get version() { return this._version; }

@@ -82,11 +82,11 @@ class SettingsUIManager {
       });
 
       $dropdown.val(selectedFile);
-      if (!$dropdown.val()) $dropdown.val('v5.1.1.swf');
+      if (!$dropdown.val()) $dropdown.val('v5.2.0.swf');
     } catch (error) {
       console.error('Error loading SWF files:', error);
       $dropdown.html(`
-        <option value="v5.1.1.swf">v5.1.1 (latest)</option>
+        <option value="v5.2.0.swf">v5.2.0 (latest)</option>
       `);
       $dropdown.val(selectedFile);
     }

@@ -2,6 +2,7 @@ node_modules/
 build/
 dev
 data/*
+memory/
 
 .DS_Store
 *.bak

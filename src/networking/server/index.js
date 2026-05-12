@@ -57,6 +57,28 @@ module.exports = class Server {
     }
   }
 
+  async disconnectAllClients() {
+    const disconnectPromises = []
+
+    for (const client of this.clients) {
+      if (client && typeof client.disconnect === 'function') {
+        disconnectPromises.push(
+          Promise.resolve(client.disconnect(true)).catch(err => {
+            if (this.application && this.application.consoleMessage) {
+              this.application.consoleMessage({
+                message: `Error disconnecting client during session cleanup: ${err.message}`,
+                type: 'warn'
+              })
+            }
+          })
+        )
+      }
+    }
+
+    await Promise.all(disconnectPromises)
+    this.clients.clear()
+  }
+
   async serve () {
     if (this.server) throw new Error('The server has already been instantiated.')
 

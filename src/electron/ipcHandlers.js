@@ -311,6 +311,12 @@ function setupIpcHandlers(electronInstance) {
   ipcMain.once('renderer-ready', (async () => {
   }).bind(electronInstance));
 
+  ipcMain.on('session-cleanup', () => {
+    if (electronInstance._window && !electronInstance._window.isDestroyed()) {
+      electronInstance._window.webContents.send('session-cleanup')
+    }
+  })
+
   ipcMain.handle('danger-zone:clear-cache', async (event, options = {}) => {
     const continueClear = await electronInstance._confirmNoOtherInstances('clear the cache');
     if (!continueClear) {
@@ -663,14 +669,6 @@ function setupIpcHandlers(electronInstance) {
       }
       if (refreshToken) {
         electronInstance._store.set(`accounts.${username}.refreshToken`, refreshToken);
-      }
-
-      if (rememberMe) {
-        if (authToken) electronInstance._store.set('login.authToken', authToken);
-        if (refreshToken) electronInstance._store.set('login.refreshToken', refreshToken);
-      } else {
-        electronInstance._store.delete('login.authToken');
-        electronInstance._store.delete('login.refreshToken');
       }
 
       return { success: true };

@@ -632,19 +632,19 @@ module.exports = class Client {
 
 
     if (type === ConnectionMessageTypes.connection && typeof packet === 'string' && packet.trim().startsWith('<policy-file-request')) {
-      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : TCP_SERVER_PORTS[0]
-      const crossDomainMessage = `<?xml version="1.0"?>\n        <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">\n        <cross-domain-policy>\n        <allow-access-from domain="*" to-ports="80,${serverPort}"/>\n        </cross-domain-policy>`
+      const allPorts = TCP_SERVER_PORTS.join(',')
+      const crossDomainMessage = `<?xml version="1.0"?>\n        <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">\n        <cross-domain-policy>\n        <allow-access-from domain="*" to-ports="80,${allPorts}"/>\n        </cross-domain-policy>`
 
       await this.sendConnectionMessage(crossDomainMessage)
       return
     }
 
     if (type === ConnectionMessageTypes.aj && packet.includes('cross-domain-policy')) {
-      const serverPort = this._server && this._server.actualPort ? this._server.actualPort : TCP_SERVER_PORTS[0]
+      const allPorts = TCP_SERVER_PORTS.join(',')
       const crossDomainMessage = `<?xml version="1.0"?>
         <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">
         <cross-domain-policy>
-        <allow-access-from domain="*" to-ports="80,${serverPort}"/>
+        <allow-access-from domain="*" to-ports="80,${allPorts}"/>
         </cross-domain-policy>`
 
       await this.sendConnectionMessage(crossDomainMessage)

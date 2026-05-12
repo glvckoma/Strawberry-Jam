@@ -8,8 +8,6 @@ const ApiRouter = require('./routes')
 
 const app = express()
 
-const API_PORT = API_SERVER_PORTS[0]
-
 let actualApiPort = null
 
 app.use(urlencoded({ extended: true }))
@@ -21,28 +19,35 @@ FilesController.initializeSwf().catch(err => {
   console.error('[API Server] Critical error during SWF initialization:', err)
 })
 
-async function startServer() {
-  await new Promise((resolve, reject) => {
-    const server = app.listen(API_PORT, '127.0.0.1', () => {
-      actualApiPort = API_PORT
-      console.log(`[API Server] Successfully started on port ${API_PORT}`)
-
-      global.apiServer = server
-
-      if (process.send) {
-        process.send({ type: 'api-port', port: API_PORT })
-      }
-
-      resolve()
+async function tryListenOnPort(port) {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, '127.0.0.1', () => {
+      resolve(server)
     })
-
-    server.on('error', (error) => {
-      if (error.code === 'EADDRINUSE') {
-        console.error(`[API Server] Port ${API_PORT} is required but is already in use.`)
-      }
-      reject(error)
-    })
+    server.on('error', reject)
   })
+}
+
+async function startServer() {
+  for (const port of API_SERVER_PORTS) {
+    try {
+      const server = await tryListenOnPort(port)
+      actualApiPort = port
+      global.apiServer = server
+      console.log(`[API Server] Successfully started on port ${port}`)
+      if (process.send) {
+        process.send({ type: 'api-port', port })
+      }
+      return
+    } catch (error) {
+      if (error.code === 'EADDRINUSE') {
+        console.warn(`[API Server] Port ${port} is already in use, trying next...`)
+      } else {
+        console.error(`[API Server] Failed to bind port ${port}:`, error.message)
+      }
+    }
+  }
+  throw new Error(`All API ports (${API_SERVER_PORTS.join(', ')}) are unavailable`)
 }
 
 function getActualApiPort() {

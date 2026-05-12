@@ -260,7 +260,11 @@
       this._boundWillNavigateHandler = (event) => {
         console.log(`[GAME NAVIGATION] Game webview attempting navigation to: ${event.url}`);
         console.log(`[GAME NAVIGATION] Closing game due to navigation request`);
+        if (window.ipc) {
+          window.ipc.send("session-cleanup");
+        }
         this.closeGame();
+        this.dispatchEvent(new CustomEvent("switchToLogin"));
       };
       this.webViewElem.addEventListener("will-navigate", this._boundWillNavigateHandler);
 
@@ -270,7 +274,11 @@
           newURL: event.newURL
         });
         console.log(`[GAME NAVIGATION] Closing game due to redirect request`);
+        if (window.ipc) {
+          window.ipc.send("session-cleanup");
+        }
         this.closeGame();
+        this.dispatchEvent(new CustomEvent("switchToLogin"));
       };
       this.webViewElem.addEventListener("did-get-redirect-request", this._boundRedirectHandler);
 
@@ -427,12 +435,6 @@
         this.resetWebView();
       }
 
-      try {
-        const wc = this.webViewElem.getWebContents()
-        if (wc && wc.session) {
-          await wc.session.clearCache()
-        }
-      } catch (e) {}
 
       this.webViewElem.classList.remove("hidden");
       this.webViewElem.src = globals.config.gameWebClient;
@@ -489,6 +491,13 @@
     }
 
     closeGame() {
+      try {
+        const wc = this.webViewElem.getWebContents()
+        if (wc && wc.session) {
+          wc.session.clearCache()
+        }
+      } catch (e) {}
+
       this.webViewElem.classList.add("hidden");
       this.retrying = false;
       this.closeGameTimeout = setTimeout(this.resetWebView.bind(this), 1000);

@@ -116,7 +116,7 @@
           "get-saved-accounts", "save-account", "delete-account", "toggle-pin-account",
           "open-user-cache-file", "import-accounts", "delete-all-accounts",
           "request-main-log-path", "exit-confirmation-response", "open-devtools-both",
-          "game-webview-console-error"
+          "game-webview-console-error", "session-cleanup"
         ]);
 
         const receiveWhitelist = new Set([
@@ -466,7 +466,19 @@
         }
 
         isTokenExpired(token) {
-          return !token
+          if (!token) return true
+          const tokenParts = token.split('.')
+          if (tokenParts.length !== 3) return false
+          try {
+            const payloadBase64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/')
+            const decodedJson = atob(payloadBase64)
+            const decoded = JSON.parse(decodedJson)
+            if (typeof decoded.exp !== 'number') return true
+            const nowInSeconds = Date.now() / 1000
+            return decoded.exp < (nowInSeconds + 30)
+          } catch (e) {
+            return true
+          }
         }
 
         async authenticate(request, customDf, showOtpModalCallback) {
@@ -839,9 +851,13 @@
             "Authorization": `Bearer ${authToken}`,
           },
         }, [401]);
+        if (response.status === 401) {
+          console.error(`[ANIMAL JAM] Player session request returned 401: auth token expired`);
+          throw new Error("AUTH_TOKEN_EXPIRED");
+        }
         if (response.status !== 200) {
           console.error(`[ANIMAL JAM] Player session request failed with status: ${response.status}`);
-          throw new Error("AUTH_TOKEN_EXPIRED");
+          throw new Error("AJ_SERVER_ERROR");
         }
         
         let responseData;
@@ -1019,24 +1035,12 @@
 
         window.ipc.on("loginInfoLoaded", (event, data) => {
           loginScreen.username = data.username;
+          loginScreen.password = data.password || "";
           loginScreen.rememberMe = data.rememberMe;
-          loginScreen.authToken = data.authToken || null;
-          loginScreen.refreshToken = data.refreshToken || null;
           globals.config = data.config;
           globals.currentUser = data.username;
-          
-          // Log the df value received from main process
           globals.df = data.df;
-          
           globals.rcToken = data.rcToken;
-          if (data.rememberMe && data.username && (data.authToken || data.refreshToken)) {
-            loginScreen.isFakePassword = true;
-            loginScreen.logIn();
-          }
-          else {
-            loginScreen.isFakePassword = false;
-            loginScreen.password = "";
-          }
         });
 
         window.ipc.on("direct-game-load", (event, data) => {

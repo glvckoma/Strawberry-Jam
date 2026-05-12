@@ -6,10 +6,6 @@
       this.loginScreen = loginScreenInstance;
     }
 
-    _isTokenExpired(token) {
-      return !token
-    }
-
     async logIn() {
       if (this.loginScreen.loginBlocked) {
         return;
@@ -41,79 +37,26 @@
           }
         }
 
-        let authResult;
-
         console.log("[AUTH] Starting authentication");
 
-        let authTokenFailed = false;
-        let authTokenOtpNeeded = false;
-        let refreshTokenOtpNeeded = false;
-        
-        if (this.loginScreen.refreshToken) {
-          if (this._isTokenExpired(this.loginScreen.refreshToken)) {
-            console.warn("[AUTH] Refresh token has expired (client-side check). Clearing all tokens.");
-            this.loginScreen.clearAuthToken();
-            this.loginScreen.clearRefreshToken();
-            this.loginScreen.isFakePassword = false;
-          } else {
-            try {
-              authResult = await globals.authenticateWithRefreshToken(this.loginScreen.refreshToken, this.loginScreen.otp);
-            } catch (err) {
-              if (err.message === "REFRESH_TOKEN_EXPIRED") {
-                console.warn("[AUTH] Refresh token has expired (server-side check). Clearing all tokens.");
-                this.loginScreen.clearAuthToken();
-                this.loginScreen.clearRefreshToken();
-                this.loginScreen.isFakePassword = false;
-              } else if (err.message === "OTP_NEEDED") {
-                refreshTokenOtpNeeded = true;
-              } else {
-                console.warn("[AUTH] Refresh token authentication failed:", err.message);
-                this.loginScreen.clearRefreshToken();
-              }
-            }
-          }
-        }
+        if (!this.loginScreen.username.length) throw new Error("EMPTY_USERNAME");
+        if (!this.loginScreen.password.length) throw new Error("EMPTY_PASSWORD");
 
-        if (refreshTokenOtpNeeded && !this.loginScreen.otp) {
-          throw new Error("OTP_NEEDED");
-        }
-
-        if (!authResult && this.loginScreen.authToken && !this._isTokenExpired(this.loginScreen.authToken) && !refreshTokenOtpNeeded) {
-          try {
-            authResult = await globals.authenticateWithAuthToken(this.loginScreen.authToken);
-          } catch (err) {
-            if (err.message === "OTP_NEEDED") {
-              authTokenFailed = true;
-              authTokenOtpNeeded = true;
-            } else if (err.message === "LOGIN_ERROR" || err.message === "WRONG_CREDENTIALS") {
-              console.warn("[AUTH] Auth token failed server validation (likely expired). Clearing token.");
-              this.loginScreen.clearAuthToken();
-              authTokenFailed = true;
-            } else {
-              console.warn("[AUTH] Auth token authentication failed:", err.message);
-              this.loginScreen.clearAuthToken();
-              authTokenFailed = true;
-            }
-          }
-        }
-        if (!authResult && ((!this.loginScreen.refreshToken || refreshTokenOtpNeeded) && (!this.loginScreen.authToken || this._isTokenExpired(this.loginScreen.authToken) || authTokenFailed))) {
-          if ((authTokenOtpNeeded || refreshTokenOtpNeeded) && !this.loginScreen.otp) {
-            throw new Error("OTP_NEEDED");
-          }
-          
-          if (!this.loginScreen.username.length) throw new Error("EMPTY_USERNAME");
-          if (!this.loginScreen.password.length) throw new Error("EMPTY_PASSWORD");
-          authResult = await globals.authenticateWithPassword(this.loginScreen.username, this.loginScreen.password, this.loginScreen.otp, null);
-        }
+        const authResult = await globals.authenticateWithPassword(
+          this.loginScreen.username,
+          this.loginScreen.password,
+          this.loginScreen.otp,
+          null
+        );
 
         this.loginScreen.otp = null;
-        
+
         if (!authResult || !authResult.userData) {
           throw new Error("Invalid authentication result - missing user data");
         }
-        
+
         const { userData, flashVars } = authResult;
-        
+
         if (userData.authToken) {
           this.loginScreen.authToken = userData.authToken;
         }
@@ -125,7 +68,7 @@
         this.loginScreen.passwordInputElem.error = "";
 
         console.log("[AUTH] Authentication successful");
-        
+
         const loginData = {
           username: userData.username,
           language: userData.language || 'en',
@@ -137,7 +80,7 @@
 
         const theme = this.loginScreen._fruitThemes[this.loginScreen._fruitImages[this.loginScreen._currentFruitIndex]];
         theme.boxBackground = getComputedStyle(this.loginScreen.shadowRoot.host).getPropertyValue('--theme-box-background');
-        
+
         this._clearLoginTimeout();
         this.loginScreen.hideLoginHelpPrompt();
         this.loginScreen.dispatchEvent(new CustomEvent("loggedIn", { detail: { flashVars, theme } }));
@@ -170,6 +113,9 @@
               this.loginScreen.clearAuthToken();
               userMessage = "Your session has expired. Please log in again.";
               break;
+            case "AJ_SERVER_ERROR":
+              userMessage = "Animal Jam servers are temporarily unavailable. Please try again in a moment.";
+              break;
             default:
               if (err.message && err.message.includes('API server is not running')) {
                 userMessage = err.message;
@@ -184,7 +130,7 @@
         } else {
           globals.reportError("webClient", `Unknown login error: ${err}`);
         }
-        
+
         this.loginScreen.passwordInputElem.error = userMessage;
 
         this.loginScreen.loginBlocked = false;
@@ -203,9 +149,7 @@
     }
 
     canRetry() {
-      return (this.loginScreen.authToken !== null || this.loginScreen.refreshToken !== null ||
-        (this.loginScreen.username && this.loginScreen.password && !this.loginScreen.isFakePassword));
+      return !!(this.loginScreen.username && this.loginScreen.password);
     }
   };
 })();
-

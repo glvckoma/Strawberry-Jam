@@ -49,15 +49,25 @@
         .toggle-switch::after { content: ''; position: absolute; width: 12px; height: 12px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .peer:checked ~ .toggle-switch { background-color: var(--theme-primary, #e83d52); }
         .peer:checked ~ .toggle-switch::after { transform: translateX(12px); }
-        .wl-tags { display: flex; flex-wrap: wrap; gap: 3px; min-height: 24px; max-height: 80px; overflow-y: auto; padding: 4px; background: rgba(0,0,0,0.2); border: 1px solid rgba(156,163,175,0.15); border-radius: 4px; }
-        .wl-tag { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 3px; font-size: 10px; background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.25); white-space: nowrap; }
-        .wl-tag-unknown { background: rgba(156,163,175,0.1); color: #9ca3af; border-color: rgba(156,163,175,0.2); }
-        .wl-tag .remove-tag { cursor: pointer; opacity: 0.5; font-size: 9px; line-height: 1; }
-        .wl-tag .remove-tag:hover { opacity: 1; color: #ef4444; }
-        .search-dropdown { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #1e1f2e; border: 1px solid rgba(156,163,175,0.25); border-radius: 4px; max-height: 160px; overflow-y: auto; }
-        .search-dropdown-item { padding: 4px 8px; cursor: pointer; font-size: 11px; color: #d1d5db; }
-        .search-dropdown-item:hover { background: rgba(139,92,246,0.2); }
-        .search-dropdown-item .item-id { color: #9ca3af; font-size: 10px; }
+        .wl-item-row { display: flex; align-items: center; gap: 6px; padding: 3px 8px; font-size: 11px; color: #d1d5db; border-bottom: 1px solid rgba(156,163,175,0.06); cursor: pointer; user-select: none; }
+        .wl-item-row:hover { background: rgba(139,92,246,0.1); }
+        .wl-item-row.selected { background: rgba(139,92,246,0.15); }
+        .wl-item-row input[type="checkbox"] { accent-color: var(--theme-primary, #e83d52); width: 13px; height: 13px; flex-shrink: 0; cursor: pointer; }
+        .wl-item-row .item-name { flex: 1; }
+        .wl-item-row .item-id { color: #9ca3af; font-size: 10px; }
+        .crystal-chip { padding: 1px 8px; border-radius: 10px; font-size: 10px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border: 1px solid rgba(156,163,175,0.15); cursor: pointer; }
+        .crystal-chip.active { background: rgba(139,92,246,0.2); color: #c4b5fd; border-color: rgba(139,92,246,0.4); }
+        .wl-tab { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid transparent; background: transparent; color: rgba(255,255,255,0.5); }
+        .wl-tab.active { background: rgba(139,92,246,0.2); color: #c4b5fd; border-color: rgba(139,92,246,0.3); }
+        .wl-tab:hover:not(.active) { background: rgba(255,255,255,0.06); }
+        #whitelistItemPanel::-webkit-scrollbar { width: 6px; }
+        #whitelistItemPanel::-webkit-scrollbar-track { background: transparent; }
+        #whitelistItemPanel::-webkit-scrollbar-thumb { background: rgba(156,163,175,0.3); border-radius: 3px; }
+        #whitelistItemPanel::-webkit-scrollbar-thumb:hover { background: rgba(156,163,175,0.5); }
+        .wl-panel-disabled { position: relative; pointer-events: none; opacity: 0.4; }
+        .custom-id-tag { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 3px; font-size: 10px; background: rgba(156,163,175,0.1); color: #9ca3af; border: 1px solid rgba(156,163,175,0.2); }
+        .custom-id-tag .remove-tag { cursor: pointer; opacity: 0.5; font-size: 9px; pointer-events: auto; }
+        .custom-id-tag .remove-tag:hover { opacity: 1; color: #ef4444; }
     </style>
 </head>
 <body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
@@ -150,8 +160,8 @@
         </div>
     </div>
 
-    <div class="jam-plugin-content flex-1 overflow-y-auto">
-        <div class="container mx-auto max-w-4xl px-4 py-3">
+    <div class="jam-plugin-content flex-1 overflow-y-auto" style="width: 100%;">
+        <div class="px-4 py-3" style="max-width: 720px; margin: 0 auto;">
 
             <div class="text-center mb-4">
                 <h1 class="text-xl font-bold mb-1 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
@@ -271,43 +281,62 @@
                             </span>
                             <span id="filterStatusText" class="text-xs text-gray-400">Disabled</span>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mb-2">
-                            <div>
-                                <label class="block text-xs text-text-secondary mb-0.5">Clothing to Keep</label>
-                                <div class="relative mb-1">
-                                    <input type="text" id="clothingSearch" placeholder="Search by name..." class="w-full rounded px-2 py-1 text-xs">
-                                    <div id="clothingSearchDropdown" class="search-dropdown hidden"></div>
-                                </div>
-                                <div id="clothingTags" class="wl-tags"></div>
-                                <textarea id="clothingWhitelist" class="hidden"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs text-text-secondary mb-0.5">Den Items to Keep</label>
-                                <div class="relative mb-1">
-                                    <input type="text" id="denSearch" placeholder="Search by name..." class="w-full rounded px-2 py-1 text-xs">
-                                    <div id="denSearchDropdown" class="search-dropdown hidden"></div>
-                                </div>
-                                <div id="denTags" class="wl-tags"></div>
-                                <textarea id="denWhitelist" class="hidden"></textarea>
-                            </div>
+
+                        <div class="flex gap-1 mb-2">
+                            <button id="tabClothing" class="wl-tab active">Clothing (<span id="clothingSelectedCount">0</span>)</button>
+                            <button id="tabDen" class="wl-tab">Den Items (<span id="denSelectedCount">0</span>)</button>
                         </div>
-                        <div class="flex flex-wrap justify-center gap-1.5">
-                            <button id="acceptAllToggle" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
-                                <i class="fas fa-check-double mr-1"></i>Accept All
+
+                        <div class="flex gap-1.5 mb-2">
+                            <div class="relative flex-1">
+                                <input type="text" id="whitelistSearchInput" placeholder="Filter items..." class="w-full pr-2 py-1 rounded text-xs" style="padding-left: 26px;">
+                                <i class="fas fa-search absolute top-1/2 transform -translate-y-1/2 text-gray-500" style="left: 8px; font-size: 10px;"></i>
+                            </div>
+                            <button id="selectAllVisible" class="px-2 py-0.5 rounded text-xs btn-subtle" title="Select all visible">
+                                <i class="fas fa-check-double"></i>
                             </button>
-                            <button id="saveWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
-                                <i class="fas fa-save mr-1"></i>Save
+                            <button id="deselectAllVisible" class="px-2 py-0.5 rounded text-xs btn-subtle" title="Deselect all visible">
+                                <i class="fas fa-times"></i>
                             </button>
-                            <button id="clearWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
-                                <i class="fas fa-trash mr-1"></i>Clear
+                        </div>
+
+                        <div class="flex gap-1 mb-2" id="crystalFilter">
+                            <button class="crystal-chip active" data-filter="all">All</button>
+                            <button class="crystal-chip" data-filter="green"><span style="color: #4ade80;">&#9670;</span> Green</button>
+                            <button class="crystal-chip" data-filter="purple"><span style="color: #c084fc;">&#9670;</span> Purple</button>
+                        </div>
+
+                        <div id="whitelistItemPanel" class="bg-gray-800/50 rounded border border-gray-700" style="max-height: 240px; overflow-y: auto;"></div>
+
+                        <div class="flex gap-1.5 mt-1.5">
+                            <input type="text" id="customIdInput" placeholder="Add custom ID..." class="flex-1 rounded px-2 py-0.5 text-xs" style="max-width: 140px;">
+                            <button id="addCustomIdBtn" class="px-2 py-0.5 rounded text-xs btn-subtle">
+                                <i class="fas fa-plus mr-1"></i>Add
                             </button>
-                            <button id="exportWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
-                                <i class="fas fa-download mr-1"></i>Export
-                            </button>
-                            <button id="importWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
-                                <i class="fas fa-upload mr-1"></i>Import
-                            </button>
-                            <input type="file" id="importFileInput" accept=".txt" class="hidden">
+                        </div>
+                        <div id="customIdsContainer" class="flex flex-wrap gap-2 mt-1.5" style="display: none;"></div>
+
+                        <textarea id="clothingWhitelist" class="hidden"></textarea>
+                        <textarea id="denWhitelist" class="hidden"></textarea>
+
+                        <div class="flex justify-between mt-2">
+                            <div class="flex gap-1.5">
+                                <button id="acceptAllToggle" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
+                                    <i class="fas fa-check-double mr-1"></i>Accept All
+                                </button>
+                                <button id="clearWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
+                                    <i class="fas fa-trash mr-1"></i>Clear
+                                </button>
+                            </div>
+                            <div class="flex gap-1.5">
+                                <button id="exportWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
+                                    <i class="fas fa-download mr-1"></i>Export
+                                </button>
+                                <button id="importWhitelistsButton" class="px-2.5 py-0.5 rounded text-xs btn-subtle">
+                                    <i class="fas fa-upload mr-1"></i>Import
+                                </button>
+                                <input type="file" id="importFileInput" accept=".txt" class="hidden">
+                            </div>
                         </div>
                     </div>
                 </div>

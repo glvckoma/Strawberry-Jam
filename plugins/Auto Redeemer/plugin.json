@@ -1,0 +1,9 @@
+{
+  "name": "Auto Redeemer",
+  "description": "Automatically redeem codes from a text file",
+  "main": "index.html",
+  "author": "glvckoma",
+  "type": "ui",
+  "version": "1.0.0",
+  "dependencies": {}
+}

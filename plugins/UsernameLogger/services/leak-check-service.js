@@ -5,6 +5,7 @@
 
 const { DEFAULT_BATCH_SIZE, DEFAULT_RATE_LIMIT_DELAY } = require('../constants/constants');
 const { getFilePaths } = require('../utils/path-utils');
+const { wait } = require('../utils/username-utils');
 
 /**
  * Service for handling leak checking operations
@@ -140,10 +141,15 @@ class LeakCheckService {
         if (!validationResult.valid) {
           let userMessage = '[Username Logger] Leak check aborted due to an API key issue.';
           if (validationResult.reason === 'invalid_key') {
-            userMessage = '[Username Logger] API Key is invalid or requires a Pro subscription. Please verify your key in settings. Leak check aborted.';
+            userMessage = '[Username Logger] API key is invalid. Please check your key in settings and ensure it is correct. Leak check aborted.';
+          } else if (validationResult.reason === 'no_pro_plan') {
+            userMessage = '[Username Logger] Your LeakCheck.io API key requires an active Pro subscription. Free keys do not have API access. Please upgrade at leakcheck.io. Leak check aborted.';
+          } else if (validationResult.reason === 'quota_exhausted') {
+            userMessage = '[Username Logger] Your LeakCheck.io API quota has been exhausted. Please wait for it to reset or upgrade your plan. Leak check aborted.';
+          } else if (validationResult.reason === 'rate_limited') {
+            userMessage = '[Username Logger] LeakCheck.io API rate limit reached. Please wait a moment and try again. Leak check aborted.';
           } else if (validationResult.reason === 'api_error') {
             userMessage = '[Username Logger] Could not validate API key due to an API error. Please try again later. Leak check aborted.';
-            // Log the specific error in dev mode
             if (isDevMode && validationResult.error) {
               this.application.consoleMessage({ type: 'error', message: `[Username Logger] API validation error details: ${validationResult.error.message}` });
             }
@@ -152,6 +158,13 @@ class LeakCheckService {
           this.application.consoleMessage({ type: 'error', message: userMessage });
           this.stateModel.resetLeakCheckState();
           return { success: false, error: 'API key validation failed', validationReason: validationResult.reason };
+        }
+
+        if (validationResult.quota !== undefined) {
+          this.application.consoleMessage({
+            type: 'notify',
+            message: `[Username Logger] API quota remaining: ${validationResult.quota} queries.`
+          });
         }
 
         if (isDevMode) {
@@ -315,21 +328,63 @@ class LeakCheckService {
           }
           
           try {
-            // Check username
-            const result = await this.apiService.checkUsername(username, apiKey, DEFAULT_RATE_LIMIT_DELAY);
-            let addedToProcessedList = false;
+            let result;
+            let retries = 0;
+            const maxRetries = 3;
 
-            if (result.status === 200 && result.data?.success) {
-              // Handle successful response
+            while (retries <= maxRetries) {
+              result = await this.apiService.checkUsername(username, apiKey, DEFAULT_RATE_LIMIT_DELAY);
+              if (result.status === 429) {
+                retries++;
+                if (retries > maxRetries) {
+                  break;
+                }
+                this.application.consoleMessage({
+                  type: 'warn',
+                  message: `[Username Logger] Rate limited. Waiting 5 seconds before retry ${retries}/${maxRetries} for ${username}...`
+                });
+                await wait(5000);
+                continue;
+              }
+              break;
+            }
+
+            let addedToProcessedList = false;
+            let remainingQuota;
+
+            if (result.status === 429) {
+              errorCount++;
+              addedToProcessedList = false;
+              perUserOutcome = 'rate-limited';
+              this.application.consoleMessage({
+                type: 'error',
+                message: `[Username Logger] Rate limit exceeded after ${maxRetries} retries for ${username}. Skipping.`
+              });
+            } else if (result.status === 403) {
+              const apiError = result.data?.error || '';
+              if (apiError.toLowerCase().includes('limit reached')) {
+                this.application.consoleMessage({
+                  type: 'error',
+                  message: `[Username Logger] API quota exhausted during leak check. Stopping. Processed ${processedInThisRun} usernames so far.`
+                });
+              } else {
+                this.application.consoleMessage({
+                  type: 'error',
+                  message: `[Username Logger] API access denied (403: ${apiError}). Stopping leak check.`
+                });
+              }
+              this.stateModel.stopLeakCheck();
+              break;
+            } else if (result.status === 200 && result.data?.success) {
+              remainingQuota = result.data.quota;
+
               if (result.data.found > 0) {
                 foundCount++;
                 addedToProcessedList = true;
                 perUserOutcome = 'found';
-                // Suppress per-user found logs; progress line will reflect counts
 
-                // Extract passwords
                 const passwords = this.apiService.extractPasswordsFromResult(result);
-                
+
                 let passwordsFoundGeneral = 0;
                 let passwordsFoundAjc = 0;
                 let noPasswordHits = 0;
@@ -347,7 +402,6 @@ class LeakCheckService {
                       foundGeneralCount++;
                     }
                   } else {
-                    // Track result without a password for separate logging
                     foundNoPassBatch.push(username);
                     noPasswordHits++;
                   }
@@ -355,22 +409,18 @@ class LeakCheckService {
 
                 if (maxPasswords > 0 && passwordsFoundGeneral > maxPasswords) {
                   console.log(`[LeakCheck Debug] REJECTED - Username: ${username}, General Password Count: ${passwordsFoundGeneral}, Limit: ${maxPasswords}, NOT saved to found_accounts.txt`);
-                  
+
                   foundGeneralBatch.splice(foundGeneralBatch.length - passwordsFoundGeneral, passwordsFoundGeneral);
                   foundGeneralCount -= passwordsFoundGeneral;
-                  
+
                   this.application.consoleMessage({
                     type: 'warn',
                     message: `[Username Logger] Skipped general accounts for ${username}: ${passwordsFoundGeneral} passwords exceed limit of ${maxPasswords} (AJC accounts still saved)`
                   });
                 }
-
-                // Log summary of found passwords
-                // Suppress per-user password/no-password summaries
               } else {
                 notFoundCount++;
                 addedToProcessedList = true;
-                // Suppress per-user not found logs
                 perUserOutcome = 'not found';
               }
             } else if (this.apiService.isInvalidCharactersError(result)) {
@@ -389,7 +439,6 @@ class LeakCheckService {
             } else {
               errorCount++;
               addedToProcessedList = false;
-              // Suppress per-user unexpected API response logs; counters reflect errors
               perUserOutcome = 'error';
             }
 
@@ -423,7 +472,7 @@ class LeakCheckService {
             this._updateProgressMessage(
               progressMessageId,
               'wait',
-              `[Username Logger] Leak Check: ${processedInThisRun}/${totalToProcess} | Found: ${foundCount} | Not Found: ${notFoundCount} | Errors: ${errorCount} | Invalid: ${invalidCharCount} — Current: ${username}${perUserOutcome ? ` (${perUserOutcome})` : ''}`
+              `[Username Logger] Leak Check: ${processedInThisRun}/${totalToProcess} | Found: ${foundCount} | Not Found: ${notFoundCount} | Errors: ${errorCount} | Invalid: ${invalidCharCount}${remainingQuota !== undefined ? ` | Quota: ${remainingQuota}` : ''} | Current: ${username}${perUserOutcome ? ` (${perUserOutcome})` : ''}`
             );
 
             // Write batches periodically

@@ -79,9 +79,6 @@ const AUTO_UPDATE_PERIODIC_DELAY_MS = 1 * 60 * 60 * 1000;
 
 let isUserLoggedIn = false;
 
-const isTokenExpired = (token) => {
-  return !token;
-};
 
 let win = null;
 
@@ -328,20 +325,10 @@ ipcMain.on("loaded", async (event, message) => {
   webview = event.sender;
   const username = store.get("login.username") || "";
   const rememberMe = store.get("login.rememberMe") !== false;
-  let authToken = null;
-  let refreshToken = null;
+  let password = "";
 
-  if (username) {
-    authToken = store.get(`accounts.${username}.authToken`);
-    refreshToken = store.get(`accounts.${username}.refreshToken`);
-
-    if (!authToken) {
-      authToken = store.get("login.authToken");
-    }
-
-    if (!refreshToken) {
-      refreshToken = store.get("login.refreshToken");
-    }
+  if (username && rememberMe) {
+    password = store.get(`savedAccountPasswords.${username}`) || "";
   }
 
   const df = await getDf();
@@ -349,8 +336,7 @@ ipcMain.on("loaded", async (event, message) => {
   if (webview && webview.send) {
     webview.send("loginInfoLoaded", {
       username,
-      authToken,
-      refreshToken,
+      password,
       rememberMe,
       df,
       config,

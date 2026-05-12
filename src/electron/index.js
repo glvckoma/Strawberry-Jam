@@ -546,7 +546,25 @@ class Electron {
 
     gameWindow.on('closed', () => {
       this._gameWindow = null
+      this._clearAllTokens()
     })
+  }
+
+  _clearAllTokens() {
+    try {
+      this._store.delete('login.authToken')
+      this._store.delete('login.refreshToken')
+
+      const storeData = this._store.store || {}
+      const accounts = storeData.accounts || {}
+      for (const username of Object.keys(accounts)) {
+        this._store.delete(`accounts.${username}.authToken`)
+        this._store.delete(`accounts.${username}.refreshToken`)
+      }
+      console.log('[Token Cleanup] Cleared all stored auth/refresh tokens')
+    } catch (err) {
+      console.error('[Token Cleanup] Failed to clear tokens:', err)
+    }
   }
 
   async getAppState() {
@@ -799,6 +817,7 @@ class Electron {
     });
 
     this._window.on('closed', () => {
+      this._clearAllTokens()
       const mainWindowId = this._window ? this._window.id : -1;
 
       let closedCount = 0;

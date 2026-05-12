@@ -56,6 +56,12 @@ module.exports = class StateManager {
     return this
   }
 
+  reset() {
+    for (const key of Object.keys(this.state)) {
+      delete this.state[key]
+    }
+  }
+
   initializeDefaultStateHandlers() {
     this.onMessage({
       type: ConnectionMessageTypes.aj,

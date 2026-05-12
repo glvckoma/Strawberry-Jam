@@ -1,0 +1,2967 @@
+{
+  "clothing": {
+    "21": {
+      "name": "Top Hat",
+      "green": true,
+      "purple": false
+    },
+    "22": {
+      "name": "Wings",
+      "green": true,
+      "purple": false
+    },
+    "23": {
+      "name": "Rare Viking Hat",
+      "green": false,
+      "purple": true
+    },
+    "24": {
+      "name": "Skull Helmet",
+      "green": true,
+      "purple": false
+    },
+    "58": {
+      "name": "Necklace",
+      "green": true,
+      "purple": false
+    },
+    "59": {
+      "name": "Beard",
+      "green": true,
+      "purple": false
+    },
+    "60": {
+      "name": "Star Cape",
+      "green": true,
+      "purple": false
+    },
+    "62": {
+      "name": "Royal Cape",
+      "green": true,
+      "purple": false
+    },
+    "63": {
+      "name": "Blanket",
+      "green": true,
+      "purple": false
+    },
+    "65": {
+      "name": "Leg Armor",
+      "green": true,
+      "purple": false
+    },
+    "122": {
+      "name": "Sword",
+      "green": true,
+      "purple": false
+    },
+    "123": {
+      "name": "Chicken Hat",
+      "green": true,
+      "purple": false
+    },
+    "125": {
+      "name": "Spartan Helmet",
+      "green": true,
+      "purple": false
+    },
+    "126": {
+      "name": "Pirate Hat",
+      "green": true,
+      "purple": false
+    },
+    "127": {
+      "name": "Bunny Hat",
+      "green": true,
+      "purple": false
+    },
+    "128": {
+      "name": "Cat Hat",
+      "green": true,
+      "purple": false
+    },
+    "129": {
+      "name": "Lion Hat",
+      "green": true,
+      "purple": false
+    },
+    "130": {
+      "name": "Ninja Mask",
+      "green": true,
+      "purple": false
+    },
+    "131": {
+      "name": "Monkey Hat",
+      "green": true,
+      "purple": false
+    },
+    "132": {
+      "name": "Panda Hat",
+      "green": true,
+      "purple": false
+    },
+    "133": {
+      "name": "Rhino Helmet",
+      "green": true,
+      "purple": false
+    },
+    "134": {
+      "name": "Big Skull",
+      "green": true,
+      "purple": false
+    },
+    "135": {
+      "name": "Arctic Hood",
+      "green": true,
+      "purple": false
+    },
+    "136": {
+      "name": "Tiara",
+      "green": true,
+      "purple": false
+    },
+    "137": {
+      "name": "Jester Hat",
+      "green": true,
+      "purple": false
+    },
+    "138": {
+      "name": "Rare Fox Hat",
+      "green": false,
+      "purple": true
+    },
+    "139": {
+      "name": "Police Hat",
+      "green": true,
+      "purple": false
+    },
+    "141": {
+      "name": "Cool Hair",
+      "green": true,
+      "purple": false
+    },
+    "142": {
+      "name": "Antlers",
+      "green": true,
+      "purple": false
+    },
+    "143": {
+      "name": "Unicorn Horn",
+      "green": true,
+      "purple": false
+    },
+    "144": {
+      "name": "Horn Helmet",
+      "green": true,
+      "purple": false
+    },
+    "145": {
+      "name": "Gazelle Horns",
+      "green": true,
+      "purple": false
+    },
+    "146": {
+      "name": "Mech Angel Helmet",
+      "green": true,
+      "purple": false
+    },
+    "147": {
+      "name": "Spartan Armor",
+      "green": true,
+      "purple": false
+    },
+    "148": {
+      "name": "Worn Blanket",
+      "green": true,
+      "purple": false
+    },
+    "149": {
+      "name": "Angel Wings",
+      "green": true,
+      "purple": false
+    },
+    "150": {
+      "name": "Elf Armor",
+      "green": true,
+      "purple": false
+    },
+    "151": {
+      "name": "Homemade Wings",
+      "green": true,
+      "purple": false
+    },
+    "152": {
+      "name": "Arctic Coat",
+      "green": true,
+      "purple": false
+    },
+    "153": {
+      "name": "Butterfly Wings",
+      "green": true,
+      "purple": false
+    },
+    "154": {
+      "name": "Faerie Wings",
+      "green": true,
+      "purple": false
+    },
+    "155": {
+      "name": "Pirate Sword",
+      "green": true,
+      "purple": false
+    },
+    "157": {
+      "name": "Flag",
+      "green": true,
+      "purple": false
+    },
+    "158": {
+      "name": "Mech Angel Wings",
+      "green": true,
+      "purple": false
+    },
+    "159": {
+      "name": "Flower Bracelet",
+      "green": true,
+      "purple": false
+    },
+    "160": {
+      "name": "Elf Bracelets",
+      "green": true,
+      "purple": false
+    },
+    "161": {
+      "name": "Horned Leg Pads",
+      "green": true,
+      "purple": false
+    },
+    "162": {
+      "name": "Leaf Necklace",
+      "green": true,
+      "purple": false
+    },
+    "163": {
+      "name": "Pirate Beard",
+      "green": true,
+      "purple": false
+    },
+    "164": {
+      "name": "Princess Necklace",
+      "green": true,
+      "purple": false
+    },
+    "165": {
+      "name": "Tie",
+      "green": true,
+      "purple": false
+    },
+    "169": {
+      "name": "Elf Helmet",
+      "green": true,
+      "purple": false
+    },
+    "209": {
+      "name": "Freedom Hat",
+      "green": true,
+      "purple": false
+    },
+    "211": {
+      "name": "Freedom Wings",
+      "green": true,
+      "purple": false
+    },
+    "214": {
+      "name": "Freedom Helmet",
+      "green": true,
+      "purple": false
+    },
+    "216": {
+      "name": "Scary Horns",
+      "green": true,
+      "purple": false
+    },
+    "217": {
+      "name": "Rare Scary Cat Hat",
+      "green": false,
+      "purple": true
+    },
+    "218": {
+      "name": "Rare Scary Bat Wings",
+      "green": false,
+      "purple": true
+    },
+    "219": {
+      "name": "Scary Antlers",
+      "green": true,
+      "purple": false
+    },
+    "220": {
+      "name": "Scary Mask",
+      "green": true,
+      "purple": false
+    },
+    "221": {
+      "name": "Scary Bell Hat",
+      "green": true,
+      "purple": false
+    },
+    "222": {
+      "name": "Rare Werewolf Mask",
+      "green": false,
+      "purple": true
+    },
+    "223": {
+      "name": "Vampire Mask",
+      "green": true,
+      "purple": false
+    },
+    "224": {
+      "name": "Creature Mask",
+      "green": true,
+      "purple": false
+    },
+    "225": {
+      "name": "Rare Yeti Mask",
+      "green": false,
+      "purple": true
+    },
+    "226": {
+      "name": "Rare Frankenstein Mask",
+      "green": false,
+      "purple": true
+    },
+    "227": {
+      "name": "Rare Mummy Mask",
+      "green": false,
+      "purple": true
+    },
+    "228": {
+      "name": "Wizard Hat",
+      "green": true,
+      "purple": false
+    },
+    "229": {
+      "name": "Rare Witch Hat",
+      "green": false,
+      "purple": true
+    },
+    "230": {
+      "name": "Rare Spider Mask",
+      "green": false,
+      "purple": true
+    },
+    "231": {
+      "name": "Rare Eyeball Hat",
+      "green": false,
+      "purple": true
+    },
+    "232": {
+      "name": "Pumpkin Mask",
+      "green": true,
+      "purple": false
+    },
+    "233": {
+      "name": "Angry Pumpkin Mask",
+      "green": true,
+      "purple": false
+    },
+    "234": {
+      "name": "Pumpkin Head",
+      "green": true,
+      "purple": false
+    },
+    "235": {
+      "name": "Phantom Hat",
+      "green": true,
+      "purple": false
+    },
+    "236": {
+      "name": "Rare Witch Mask",
+      "green": false,
+      "purple": true
+    },
+    "237": {
+      "name": "Rare Hockey Mask",
+      "green": false,
+      "purple": true
+    },
+    "238": {
+      "name": "Bat Mask",
+      "green": true,
+      "purple": false
+    },
+    "239": {
+      "name": "Rare Demon Mask",
+      "green": false,
+      "purple": true
+    },
+    "240": {
+      "name": "Lei",
+      "green": true,
+      "purple": false
+    },
+    "241": {
+      "name": "Pilgrim Hat",
+      "green": true,
+      "purple": false
+    },
+    "244": {
+      "name": "Turkey Hat",
+      "green": true,
+      "purple": false
+    },
+    "245": {
+      "name": "Wreath Necklace",
+      "green": true,
+      "purple": false
+    },
+    "246": {
+      "name": "Jamaaliday Bow",
+      "green": true,
+      "purple": false
+    },
+    "247": {
+      "name": "Jolly Elf Hat",
+      "green": true,
+      "purple": false
+    },
+    "248": {
+      "name": "Reindeer Mask",
+      "green": true,
+      "purple": false
+    },
+    "249": {
+      "name": "Hat And Beard",
+      "green": true,
+      "purple": false
+    },
+    "250": {
+      "name": "Snowman Mask",
+      "green": true,
+      "purple": false
+    },
+    "251": {
+      "name": "Bat Glasses",
+      "green": true,
+      "purple": false
+    },
+    "252": {
+      "name": "Steampunk Goggles",
+      "green": true,
+      "purple": false
+    },
+    "253": {
+      "name": "Spiked Hair",
+      "green": true,
+      "purple": false
+    },
+    "254": {
+      "name": "Pigtails",
+      "green": true,
+      "purple": false
+    },
+    "255": {
+      "name": "Heart Glasses",
+      "green": true,
+      "purple": false
+    },
+    "256": {
+      "name": "Heart Cape",
+      "green": true,
+      "purple": false
+    },
+    "257": {
+      "name": "Heart Balloon",
+      "green": true,
+      "purple": false
+    },
+    "258": {
+      "name": "Heart Locket",
+      "green": true,
+      "purple": false
+    },
+    "259": {
+      "name": "Hat And Curly Wig",
+      "green": true,
+      "purple": false
+    },
+    "260": {
+      "name": "Curly Wig",
+      "green": true,
+      "purple": false
+    },
+    "261": {
+      "name": "Leprechaun Hat",
+      "green": true,
+      "purple": false
+    },
+    "262": {
+      "name": "Clover Balloon",
+      "green": true,
+      "purple": false
+    },
+    "263": {
+      "name": "Clover Earmuffs",
+      "green": true,
+      "purple": false
+    },
+    "264": {
+      "name": "Clover Blanket",
+      "green": true,
+      "purple": false
+    },
+    "265": {
+      "name": "Dragon Mask",
+      "green": true,
+      "purple": false
+    },
+    "266": {
+      "name": "Epic Dragon Mask",
+      "green": true,
+      "purple": false
+    },
+    "267": {
+      "name": "King's Crown",
+      "green": true,
+      "purple": false
+    },
+    "268": {
+      "name": "Mohawk",
+      "green": true,
+      "purple": false
+    },
+    "269": {
+      "name": "Knitted Hat",
+      "green": true,
+      "purple": false
+    },
+    "274": {
+      "name": "Snow Shoes",
+      "green": true,
+      "purple": false
+    },
+    "275": {
+      "name": "Shark Fin",
+      "green": true,
+      "purple": false
+    },
+    "277": {
+      "name": "Rare Spiked Wristband",
+      "green": false,
+      "purple": true
+    },
+    "278": {
+      "name": "Firefighter Hat",
+      "green": true,
+      "purple": false
+    },
+    "280": {
+      "name": "Rare Spiked Wristband",
+      "green": false,
+      "purple": true
+    },
+    "283": {
+      "name": "Rare Spiked Wristband",
+      "green": false,
+      "purple": true
+    },
+    "286": {
+      "name": "Rare Spiked Wristband",
+      "green": false,
+      "purple": true
+    },
+    "287": {
+      "name": "Astronaut Helmet",
+      "green": true,
+      "purple": false
+    },
+    "288": {
+      "name": "Old Scuba Helmet",
+      "green": true,
+      "purple": false
+    },
+    "289": {
+      "name": "Butterfly Glasses",
+      "green": true,
+      "purple": false
+    },
+    "290": {
+      "name": "Star Glasses",
+      "green": true,
+      "purple": false
+    },
+    "293": {
+      "name": "Eye Patch",
+      "green": true,
+      "purple": false
+    },
+    "313": {
+      "name": "Flower Glasses",
+      "green": true,
+      "purple": false
+    },
+    "325": {
+      "name": "Rare Clown Mask",
+      "green": false,
+      "purple": true
+    },
+    "327": {
+      "name": "Rare Medusa Mask",
+      "green": false,
+      "purple": true
+    },
+    "328": {
+      "name": "Halo",
+      "green": true,
+      "purple": false
+    },
+    "341": {
+      "name": "Rare Anemone Head Bow",
+      "green": false,
+      "purple": true
+    },
+    "342": {
+      "name": "Rare Bow And Arrows",
+      "green": false,
+      "purple": true
+    },
+    "343": {
+      "name": "Fancy Top Hat",
+      "green": true,
+      "purple": false
+    },
+    "348": {
+      "name": "Golden Glove",
+      "green": true,
+      "purple": true
+    },
+    "349": {
+      "name": "Golden Unicorn Horn",
+      "green": true,
+      "purple": true
+    },
+    "350": {
+      "name": "Diamond Ring",
+      "green": true,
+      "purple": true
+    },
+    "353": {
+      "name": "Dual Samurai Swords",
+      "green": true,
+      "purple": true
+    },
+    "354": {
+      "name": "DJ Headset",
+      "green": true,
+      "purple": true
+    },
+    "355": {
+      "name": "Designer Skirt",
+      "green": true,
+      "purple": true
+    },
+    "357": {
+      "name": "Heart Antennae Headband",
+      "green": true,
+      "purple": false
+    },
+    "373": {
+      "name": "Rare Leg Armor",
+      "green": false,
+      "purple": true
+    },
+    "374": {
+      "name": "Rare Elf Armor",
+      "green": false,
+      "purple": true
+    },
+    "375": {
+      "name": "Rare Elf Helmet",
+      "green": false,
+      "purple": true
+    },
+    "379": {
+      "name": "Rare Gazelle Horns",
+      "green": false,
+      "purple": true
+    },
+    "380": {
+      "name": "Rare Tie",
+      "green": false,
+      "purple": true
+    },
+    "383": {
+      "name": "Army Helmet",
+      "green": true,
+      "purple": false
+    },
+    "384": {
+      "name": "Bonnet",
+      "green": true,
+      "purple": false
+    },
+    "385": {
+      "name": "Cowboy Hat",
+      "green": true,
+      "purple": false
+    },
+    "386": {
+      "name": "Rare Tiara",
+      "green": false,
+      "purple": true
+    },
+    "387": {
+      "name": "Rare Wizard Hat",
+      "green": false,
+      "purple": true
+    },
+    "392": {
+      "name": "Rare Jolly Elf Hat",
+      "green": false,
+      "purple": true
+    },
+    "393": {
+      "name": "Rare Spiked Hair",
+      "green": false,
+      "purple": true
+    },
+    "394": {
+      "name": "Scary Unicorn Horn",
+      "green": true,
+      "purple": false
+    },
+    "395": {
+      "name": "Phantom Balloon",
+      "green": true,
+      "purple": false
+    },
+    "396": {
+      "name": "Royal Tiara",
+      "green": true,
+      "purple": true
+    },
+    "397": {
+      "name": "Golden Bow And Arrows",
+      "green": true,
+      "purple": true
+    },
+    "398": {
+      "name": "Phantom Necklace",
+      "green": true,
+      "purple": false
+    },
+    "399": {
+      "name": "Rare Pigtails",
+      "green": false,
+      "purple": true
+    },
+    "400": {
+      "name": "Rare Heart Locket",
+      "green": false,
+      "purple": true
+    },
+    "401": {
+      "name": "Sun Necklace",
+      "green": true,
+      "purple": false
+    },
+    "402": {
+      "name": "Moon Necklace",
+      "green": true,
+      "purple": false
+    },
+    "404": {
+      "name": "Police Hat",
+      "green": true,
+      "purple": false
+    },
+    "405": {
+      "name": "Rare Mech Angel Helmet",
+      "green": false,
+      "purple": true
+    },
+    "406": {
+      "name": "Rare Mech Angel Wings",
+      "green": false,
+      "purple": true
+    },
+    "412": {
+      "name": "Rare Flower Bracelet",
+      "green": false,
+      "purple": true
+    },
+    "413": {
+      "name": "Rare Star Cape",
+      "green": false,
+      "purple": true
+    },
+    "414": {
+      "name": "Diamond Earrings",
+      "green": true,
+      "purple": true
+    },
+    "415": {
+      "name": "Nunchucks",
+      "green": true,
+      "purple": true
+    },
+    "417": {
+      "name": "Sun Visor",
+      "green": true,
+      "purple": false
+    },
+    "418": {
+      "name": "Flip Flops",
+      "green": true,
+      "purple": false
+    },
+    "419": {
+      "name": "Star Necklace",
+      "green": true,
+      "purple": false
+    },
+    "420": {
+      "name": "Lollipop Necklace",
+      "green": true,
+      "purple": false
+    },
+    "421": {
+      "name": "Lightning Necklace",
+      "green": true,
+      "purple": false
+    },
+    "425": {
+      "name": "Beret",
+      "green": true,
+      "purple": false
+    },
+    "426": {
+      "name": "Aviator Hat",
+      "green": true,
+      "purple": false
+    },
+    "427": {
+      "name": "Silver Glove",
+      "green": true,
+      "purple": true
+    },
+    "428": {
+      "name": "Golden Pirate Sword",
+      "green": true,
+      "purple": true
+    },
+    "429": {
+      "name": "Sun Balloon",
+      "green": true,
+      "purple": false
+    },
+    "430": {
+      "name": "Moon Balloon",
+      "green": true,
+      "purple": false
+    },
+    "433": {
+      "name": "Samurai Helmet",
+      "green": true,
+      "purple": false
+    },
+    "434": {
+      "name": "Hat With Dreadlocks",
+      "green": true,
+      "purple": false
+    },
+    "435": {
+      "name": "Camouflage Boots",
+      "green": true,
+      "purple": false
+    },
+    "436": {
+      "name": "Rare Sandals",
+      "green": true,
+      "purple": false
+    },
+    "439": {
+      "name": "Freedom Bunny Hat",
+      "green": true,
+      "purple": false
+    },
+    "440": {
+      "name": "Freedom Chicken Hat",
+      "green": true,
+      "purple": false
+    },
+    "441": {
+      "name": "Freedom Cat Hat",
+      "green": true,
+      "purple": false
+    },
+    "442": {
+      "name": "Freedom Panda Hat",
+      "green": true,
+      "purple": false
+    },
+    "443": {
+      "name": "Freedom Monkey Hat",
+      "green": true,
+      "purple": false
+    },
+    "444": {
+      "name": "Freedom Lion Hat",
+      "green": true,
+      "purple": false
+    },
+    "445": {
+      "name": "Rare Butterfly Glasses",
+      "green": false,
+      "purple": true
+    },
+    "446": {
+      "name": "Rare Rhino Helmet",
+      "green": false,
+      "purple": true
+    },
+    "447": {
+      "name": "Rare Epic Dragon Mask",
+      "green": false,
+      "purple": true
+    },
+    "448": {
+      "name": "Rare Pirate Bandana",
+      "green": false,
+      "purple": true
+    },
+    "449": {
+      "name": "Golden Wings",
+      "green": true,
+      "purple": true
+    },
+    "450": {
+      "name": "Golden Tiara",
+      "green": true,
+      "purple": true
+    },
+    "451": {
+      "name": "Kite",
+      "green": true,
+      "purple": false
+    },
+    "452": {
+      "name": "Raccoon Tail",
+      "green": true,
+      "purple": false
+    },
+    "453": {
+      "name": "Knight Helmet",
+      "green": true,
+      "purple": false
+    },
+    "456": {
+      "name": "Knight Armor",
+      "green": true,
+      "purple": false
+    },
+    "458": {
+      "name": "Rare Stegosaurus Armor",
+      "green": true,
+      "purple": false
+    },
+    "459": {
+      "name": "Rare Stegosaurus Tail",
+      "green": true,
+      "purple": false
+    },
+    "460": {
+      "name": "Rare Homemade Wings",
+      "green": false,
+      "purple": true
+    },
+    "461": {
+      "name": "Rare Coral Necklace",
+      "green": false,
+      "purple": true
+    },
+    "462": {
+      "name": "Crossbow",
+      "green": true,
+      "purple": true
+    },
+    "463": {
+      "name": "Diamond Necklace",
+      "green": true,
+      "purple": true
+    },
+    "466": {
+      "name": "Rare Seaweed Hair",
+      "green": false,
+      "purple": true
+    },
+    "467": {
+      "name": "Rare Lei",
+      "green": false,
+      "purple": true
+    },
+    "468": {
+      "name": "Backpack",
+      "green": true,
+      "purple": false
+    },
+    "469": {
+      "name": "Round Glasses",
+      "green": true,
+      "purple": false
+    },
+    "470": {
+      "name": "Construction Hat",
+      "green": true,
+      "purple": false
+    },
+    "471": {
+      "name": "Rare King's Crown",
+      "green": false,
+      "purple": true
+    },
+    "472": {
+      "name": "Rare Sailor Hat",
+      "green": false,
+      "purple": true
+    },
+    "473": {
+      "name": "Gardening Hat",
+      "green": true,
+      "purple": false
+    },
+    "474": {
+      "name": "Zios Mask",
+      "green": true,
+      "purple": true
+    },
+    "475": {
+      "name": "Rare Arctic Coat",
+      "green": false,
+      "purple": true
+    },
+    "476": {
+      "name": "Rare Arctic Hood",
+      "green": false,
+      "purple": true
+    },
+    "477": {
+      "name": "Firefly Necklace",
+      "green": true,
+      "purple": true
+    },
+    "478": {
+      "name": "Rare Big Skull",
+      "green": false,
+      "purple": true
+    },
+    "479": {
+      "name": "Rare Princess Necklace",
+      "green": false,
+      "purple": true
+    },
+    "481": {
+      "name": "Medusa Mask",
+      "green": true,
+      "purple": false
+    },
+    "482": {
+      "name": "Frankenstein Mask",
+      "green": true,
+      "purple": false
+    },
+    "484": {
+      "name": "Werewolf Mask",
+      "green": true,
+      "purple": false
+    },
+    "485": {
+      "name": "Witch Hat",
+      "green": true,
+      "purple": false
+    },
+    "486": {
+      "name": "Eyeball Hat",
+      "green": true,
+      "purple": false
+    },
+    "487": {
+      "name": "Mummy Mask",
+      "green": true,
+      "purple": false
+    },
+    "488": {
+      "name": "Hockey Mask",
+      "green": true,
+      "purple": false
+    },
+    "491": {
+      "name": "Halo",
+      "green": true,
+      "purple": false
+    },
+    "492": {
+      "name": "Feathered Mask",
+      "green": true,
+      "purple": true
+    },
+    "493": {
+      "name": "Phantom Mask",
+      "green": true,
+      "purple": true
+    },
+    "495": {
+      "name": "Monster Teeth",
+      "green": true,
+      "purple": false
+    },
+    "497": {
+      "name": "Rare Clover Blanket",
+      "green": false,
+      "purple": true
+    },
+    "498": {
+      "name": "Rare Steampunk Goggles",
+      "green": false,
+      "purple": true
+    },
+    "499": {
+      "name": "Yeti Mask",
+      "green": true,
+      "purple": false
+    },
+    "500": {
+      "name": "Demon Mask",
+      "green": true,
+      "purple": false
+    },
+    "501": {
+      "name": "Spider Mask",
+      "green": true,
+      "purple": false
+    },
+    "502": {
+      "name": "Witch Mask",
+      "green": true,
+      "purple": false
+    },
+    "506": {
+      "name": "Golden Dragon Mask",
+      "green": true,
+      "purple": true
+    },
+    "507": {
+      "name": "Dragonfly Wings",
+      "green": true,
+      "purple": true
+    },
+    "508": {
+      "name": "Rare Mohawk",
+      "green": false,
+      "purple": true
+    },
+    "509": {
+      "name": "Rare Snowman Mask",
+      "green": false,
+      "purple": true
+    },
+    "519": {
+      "name": "Square Glasses",
+      "green": true,
+      "purple": false
+    },
+    "520": {
+      "name": "Sunglasses",
+      "green": true,
+      "purple": false
+    },
+    "521": {
+      "name": "Rare Bat Glasses",
+      "green": false,
+      "purple": true
+    },
+    "522": {
+      "name": "Rare Antlers",
+      "green": false,
+      "purple": true
+    },
+    "525": {
+      "name": "Bow And Arrows",
+      "green": true,
+      "purple": false
+    },
+    "527": {
+      "name": "Jamaaliday Scarf",
+      "green": true,
+      "purple": false
+    },
+    "528": {
+      "name": "Jamaaliday Earmuffs",
+      "green": true,
+      "purple": false
+    },
+    "529": {
+      "name": "Three Horned Armor",
+      "green": true,
+      "purple": false
+    },
+    "530": {
+      "name": "Golden Samurai Helmet",
+      "green": true,
+      "purple": true
+    },
+    "531": {
+      "name": "Rare Reindeer Mask",
+      "green": false,
+      "purple": true
+    },
+    "532": {
+      "name": "Rare Winter Hood",
+      "green": false,
+      "purple": true
+    },
+    "533": {
+      "name": "Rare Winter Jacket",
+      "green": false,
+      "purple": true
+    },
+    "534": {
+      "name": "Rare Snow Shoes",
+      "green": false,
+      "purple": true
+    },
+    "535": {
+      "name": "Rare Knitted Hat",
+      "green": false,
+      "purple": true
+    },
+    "536": {
+      "name": "Rare Cozy Shoes",
+      "green": false,
+      "purple": true
+    },
+    "537": {
+      "name": "Golden Royal Cape",
+      "green": true,
+      "purple": true
+    },
+    "539": {
+      "name": "Rare Fancy Top Hat",
+      "green": false,
+      "purple": true
+    },
+    "540": {
+      "name": "Rare Cowboy Hat",
+      "green": false,
+      "purple": true
+    },
+    "541": {
+      "name": "Rare Knight Helmet",
+      "green": false,
+      "purple": true
+    },
+    "542": {
+      "name": "Rare Knight Armor",
+      "green": false,
+      "purple": true
+    },
+    "543": {
+      "name": "Heart Earmuffs",
+      "green": true,
+      "purple": false
+    },
+    "544": {
+      "name": "Rare Firefighter Hat",
+      "green": false,
+      "purple": true
+    },
+    "545": {
+      "name": "Rare Astronaut Helmet",
+      "green": false,
+      "purple": true
+    },
+    "546": {
+      "name": "Cowboy Boots",
+      "green": true,
+      "purple": false
+    },
+    "547": {
+      "name": "Lasso",
+      "green": true,
+      "purple": false
+    },
+    "550": {
+      "name": "Rare Anchor Ballcap",
+      "green": false,
+      "purple": true
+    },
+    "551": {
+      "name": "Rare Star Glasses",
+      "green": false,
+      "purple": true
+    },
+    "552": {
+      "name": "Eagle Hat",
+      "green": true,
+      "purple": false
+    },
+    "555": {
+      "name": "Slingshot",
+      "green": true,
+      "purple": false
+    },
+    "556": {
+      "name": "Rare Ninja Mask",
+      "green": false,
+      "purple": true
+    },
+    "557": {
+      "name": "Rare Lion Hat",
+      "green": false,
+      "purple": true
+    },
+    "559": {
+      "name": "Baseball Cleats",
+      "green": true,
+      "purple": false
+    },
+    "560": {
+      "name": "Baseball Cap",
+      "green": true,
+      "purple": false
+    },
+    "561": {
+      "name": "Rare Cupcake Hat",
+      "green": false,
+      "purple": true
+    },
+    "570": {
+      "name": "Longbow",
+      "green": true,
+      "purple": false
+    },
+    "571": {
+      "name": "Rare Flower Glasses",
+      "green": false,
+      "purple": true
+    },
+    "572": {
+      "name": "Rare Winter Blanket",
+      "green": false,
+      "purple": true
+    },
+    "574": {
+      "name": "Tuxedo Jacket",
+      "green": true,
+      "purple": true
+    },
+    "575": {
+      "name": "Rare Camouflage Boots",
+      "green": false,
+      "purple": true
+    },
+    "576": {
+      "name": "Rare Sombrero",
+      "green": true,
+      "purple": true
+    },
+    "577": {
+      "name": "Musketeer Hat",
+      "green": true,
+      "purple": false
+    },
+    "578": {
+      "name": "Musketeer Boots",
+      "green": true,
+      "purple": false
+    },
+    "579": {
+      "name": "Drum",
+      "green": true,
+      "purple": false
+    },
+    "580": {
+      "name": "Guitar",
+      "green": true,
+      "purple": false
+    },
+    "581": {
+      "name": "Accordion",
+      "green": true,
+      "purple": false
+    },
+    "582": {
+      "name": "Clarinet",
+      "green": true,
+      "purple": false
+    },
+    "583": {
+      "name": "Top Hat",
+      "green": true,
+      "purple": false
+    },
+    "586": {
+      "name": "Head Flower",
+      "green": true,
+      "purple": false
+    },
+    "587": {
+      "name": "Steampunk Monocle",
+      "green": true,
+      "purple": false
+    },
+    "589": {
+      "name": "Keytar",
+      "green": true,
+      "purple": false
+    },
+    "590": {
+      "name": "Violin",
+      "green": true,
+      "purple": false
+    },
+    "591": {
+      "name": "Saxophone",
+      "green": true,
+      "purple": false
+    },
+    "592": {
+      "name": "Rare Angel Wings",
+      "green": false,
+      "purple": true
+    },
+    "593": {
+      "name": "Rare Elf Bracelets",
+      "green": false,
+      "purple": true
+    },
+    "594": {
+      "name": "Rare Sun Hat",
+      "green": true,
+      "purple": false
+    },
+    "595": {
+      "name": "Rare Star Hat",
+      "green": true,
+      "purple": false
+    },
+    "596": {
+      "name": "Rare Moon Hat",
+      "green": true,
+      "purple": false
+    },
+    "597": {
+      "name": "Sports Jersey",
+      "green": true,
+      "purple": false
+    },
+    "598": {
+      "name": "Football Helmet",
+      "green": true,
+      "purple": false
+    },
+    "599": {
+      "name": "Rare Sombrero",
+      "green": true,
+      "purple": true
+    },
+    "600": {
+      "name": "Beanie",
+      "green": true,
+      "purple": false
+    },
+    "601": {
+      "name": "Fedora",
+      "green": true,
+      "purple": false
+    },
+    "611": {
+      "name": "Rare Army Helmet",
+      "green": false,
+      "purple": true
+    },
+    "612": {
+      "name": "Freedom Astronaut Helmet",
+      "green": true,
+      "purple": false
+    },
+    "613": {
+      "name": "Freedom Dragon Mask",
+      "green": true,
+      "purple": false
+    },
+    "614": {
+      "name": "Freedom Jester Hat",
+      "green": true,
+      "purple": false
+    },
+    "616": {
+      "name": "Rare Freedom Glove",
+      "green": false,
+      "purple": true
+    },
+    "617": {
+      "name": "Epic Sun Hat",
+      "green": true,
+      "purple": false
+    },
+    "618": {
+      "name": "Epic Moon Hat",
+      "green": true,
+      "purple": false
+    },
+    "619": {
+      "name": "Epic Star Hat",
+      "green": true,
+      "purple": false
+    },
+    "620": {
+      "name": "Flower Crown",
+      "green": true,
+      "purple": false
+    },
+    "621": {
+      "name": "Friendship Bracelet",
+      "green": true,
+      "purple": false
+    },
+    "624": {
+      "name": "Rare Baseball Cap",
+      "green": false,
+      "purple": true
+    },
+    "625": {
+      "name": "Rare Baseball Cleats",
+      "green": false,
+      "purple": true
+    },
+    "626": {
+      "name": "Rare Backpack",
+      "green": false,
+      "purple": true
+    },
+    "627": {
+      "name": "Real Musketeer Boots",
+      "green": false,
+      "purple": true
+    },
+    "628": {
+      "name": "Phantom Shirt",
+      "green": true,
+      "purple": false
+    },
+    "629": {
+      "name": "Tie-Dye Shirt",
+      "green": true,
+      "purple": false
+    },
+    "630": {
+      "name": "Turquoise Necklace",
+      "green": true,
+      "purple": true
+    },
+    "631": {
+      "name": "Turquoise Bracelet",
+      "green": true,
+      "purple": true
+    },
+    "633": {
+      "name": "Rare Cool Hair",
+      "green": false,
+      "purple": true
+    },
+    "636": {
+      "name": "Rare Bonnet",
+      "green": false,
+      "purple": true
+    },
+    "637": {
+      "name": "Rare Nerd Glasses",
+      "green": false,
+      "purple": true
+    },
+    "644": {
+      "name": "Rare Aviator Hat",
+      "green": false,
+      "purple": true
+    },
+    "645": {
+      "name": "Rare Royal Cape",
+      "green": false,
+      "purple": true
+    },
+    "646": {
+      "name": "Potted Flower Hat",
+      "green": true,
+      "purple": false
+    },
+    "647": {
+      "name": "Gold Chain Necklace",
+      "green": true,
+      "purple": false
+    },
+    "648": {
+      "name": "Silver Chain Necklace",
+      "green": true,
+      "purple": false
+    },
+    "649": {
+      "name": "Turquoise Ring",
+      "green": true,
+      "purple": true
+    },
+    "650": {
+      "name": "Rare Police Hat",
+      "green": false,
+      "purple": true
+    },
+    "651": {
+      "name": "Rare Skull Helmet",
+      "green": false,
+      "purple": true
+    },
+    "652": {
+      "name": "Beaded Necklace",
+      "green": true,
+      "purple": false
+    },
+    "653": {
+      "name": "Eye Patch",
+      "green": true,
+      "purple": false
+    },
+    "654": {
+      "name": "Head Bandage",
+      "green": true,
+      "purple": false
+    },
+    "655": {
+      "name": "Bandage",
+      "green": true,
+      "purple": false
+    },
+    "656": {
+      "name": "Stethoscope",
+      "green": true,
+      "purple": false
+    },
+    "657": {
+      "name": "Cone Collar",
+      "green": true,
+      "purple": false
+    },
+    "658": {
+      "name": "Arm Brace",
+      "green": true,
+      "purple": false
+    },
+    "659": {
+      "name": "Cast",
+      "green": true,
+      "purple": false
+    },
+    "660": {
+      "name": "Doctor's Bag",
+      "green": true,
+      "purple": false
+    },
+    "661": {
+      "name": "Moustache",
+      "green": true,
+      "purple": false
+    },
+    "662": {
+      "name": "Wristwatch",
+      "green": true,
+      "purple": false
+    },
+    "663": {
+      "name": "Epic Dragon Skull",
+      "green": true,
+      "purple": false
+    },
+    "664": {
+      "name": "Epic Dragon Wings",
+      "green": true,
+      "purple": false
+    },
+    "665": {
+      "name": "Spiked Mohawk",
+      "green": true,
+      "purple": false
+    },
+    "670": {
+      "name": "Brain Helmet",
+      "green": true,
+      "purple": false
+    },
+    "671": {
+      "name": "Silly Arrow",
+      "green": true,
+      "purple": false
+    },
+    "673": {
+      "name": "Rare Pumpkin Head",
+      "green": false,
+      "purple": true
+    },
+    "675": {
+      "name": "Rare Scary Elf Bracelets",
+      "green": false,
+      "purple": true
+    },
+    "680": {
+      "name": "Rare Fossilized Tooth Necklace",
+      "green": false,
+      "purple": true
+    },
+    "681": {
+      "name": "Rare Unicorn Horn",
+      "green": false,
+      "purple": true
+    },
+    "682": {
+      "name": "Rare Old Hood",
+      "green": false,
+      "purple": true
+    },
+    "683": {
+      "name": "Sapphire Ring",
+      "green": true,
+      "purple": true
+    },
+    "684": {
+      "name": "Fancy Shoes",
+      "green": true,
+      "purple": false
+    },
+    "690": {
+      "name": "Elf Shoes",
+      "green": true,
+      "purple": false
+    },
+    "691": {
+      "name": "Holiday Sweater",
+      "green": true,
+      "purple": false
+    },
+    "692": {
+      "name": "Candy Cane Tie",
+      "green": true,
+      "purple": false
+    },
+    "693": {
+      "name": "Striped Scarf",
+      "green": true,
+      "purple": false
+    },
+    "694": {
+      "name": "Rare Snowflake Cape",
+      "green": false,
+      "purple": true
+    },
+    "695": {
+      "name": "Rare Faerie Wings",
+      "green": false,
+      "purple": true
+    },
+    "696": {
+      "name": "Rare Jamaaliday Top Hat",
+      "green": false,
+      "purple": true
+    },
+    "697": {
+      "name": "Rare Jamaaliday Wings",
+      "green": false,
+      "purple": true
+    },
+    "698": {
+      "name": "Rare Hood With Feather",
+      "green": false,
+      "purple": true
+    },
+    "699": {
+      "name": "Rare Butterfly Wings",
+      "green": false,
+      "purple": true
+    },
+    "700": {
+      "name": "Rare Spartan Helmet",
+      "green": false,
+      "purple": true
+    },
+    "701": {
+      "name": "Deer Fur",
+      "green": true,
+      "purple": false
+    },
+    "702": {
+      "name": "Deer Antlers",
+      "green": true,
+      "purple": false
+    },
+    "704": {
+      "name": "Rare Leg Armor",
+      "green": false,
+      "purple": true
+    },
+    "705": {
+      "name": "Rare Spartan Armor",
+      "green": false,
+      "purple": true
+    },
+    "706": {
+      "name": "AJ Wristband",
+      "green": true,
+      "purple": false
+    },
+    "707": {
+      "name": "Snowflake Boots",
+      "green": true,
+      "purple": false
+    },
+    "708": {
+      "name": "Topcoat",
+      "green": true,
+      "purple": false
+    },
+    "710": {
+      "name": "Snowboarding Helmet",
+      "green": true,
+      "purple": false
+    },
+    "711": {
+      "name": "Rare Gardening Hat",
+      "green": false,
+      "purple": true
+    },
+    "714": {
+      "name": "Furry Hat",
+      "green": true,
+      "purple": false
+    },
+    "715": {
+      "name": "Rare Friendship Bracelet",
+      "green": false,
+      "purple": true
+    },
+    "716": {
+      "name": "Rare Curly Wig",
+      "green": false,
+      "purple": true
+    },
+    "718": {
+      "name": "Heart Scarf",
+      "green": true,
+      "purple": false
+    },
+    "719": {
+      "name": "Cupid Wings",
+      "green": true,
+      "purple": false
+    },
+    "720": {
+      "name": "Left Friendship Necklace",
+      "green": true,
+      "purple": false
+    },
+    "721": {
+      "name": "Right Friendship Necklace",
+      "green": true,
+      "purple": false
+    },
+    "722": {
+      "name": "Rare Steampunk Monocle",
+      "green": false,
+      "purple": true
+    },
+    "723": {
+      "name": "Rare Blanket",
+      "green": false,
+      "purple": true
+    },
+    "724": {
+      "name": "Shamrock Glasses",
+      "green": true,
+      "purple": false
+    },
+    "725": {
+      "name": "Leprechaun Shoes",
+      "green": true,
+      "purple": false
+    },
+    "726": {
+      "name": "Emerald Ring",
+      "green": true,
+      "purple": true
+    },
+    "727": {
+      "name": "Rare Flag",
+      "green": false,
+      "purple": true
+    },
+    "728": {
+      "name": "Rare Lucky Tuxedo",
+      "green": false,
+      "purple": true
+    },
+    "729": {
+      "name": "Clover Tie",
+      "green": true,
+      "purple": false
+    },
+    "730": {
+      "name": "Burger Hat",
+      "green": true,
+      "purple": false
+    },
+    "731": {
+      "name": "Milkshake Hat",
+      "green": true,
+      "purple": false
+    },
+    "732": {
+      "name": "Fry Hat",
+      "green": true,
+      "purple": false
+    },
+    "738": {
+      "name": "Cheese Hat",
+      "green": true,
+      "purple": false
+    },
+    "739": {
+      "name": "Polka Dot Tuxedo",
+      "green": true,
+      "purple": false
+    },
+    "740": {
+      "name": "Hypno-Glasses",
+      "green": true,
+      "purple": false
+    },
+    "742": {
+      "name": "Rare Golden Headphones",
+      "green": false,
+      "purple": true
+    },
+    "744": {
+      "name": "Sparkly Shoes",
+      "green": true,
+      "purple": false
+    },
+    "745": {
+      "name": "Rare Big Bow",
+      "green": false,
+      "purple": true
+    },
+    "746": {
+      "name": "Rare Leaf Necklace",
+      "green": false,
+      "purple": true
+    },
+    "752": {
+      "name": "Rare Pirate Beard",
+      "green": false,
+      "purple": true
+    },
+    "755": {
+      "name": "Rare Sunglasses",
+      "green": false,
+      "purple": true
+    },
+    "756": {
+      "name": "Rare Elf Helmet",
+      "green": false,
+      "purple": true
+    },
+    "763": {
+      "name": "Rare Elf Armor",
+      "green": false,
+      "purple": true
+    },
+    "764": {
+      "name": "Rare Moustache",
+      "green": false,
+      "purple": true
+    },
+    "948": {
+      "name": "Freedom Dragon Mask",
+      "green": true,
+      "purple": false
+    },
+    "1211": {
+      "name": "Rare Sombrero",
+      "green": true,
+      "purple": true
+    },
+    "1214": {
+      "name": "Rare Sandals",
+      "green": true,
+      "purple": false
+    },
+    "1231": {
+      "name": "Princess Necklace",
+      "green": true,
+      "purple": false
+    },
+    "1275": {
+      "name": "Pirate Hat",
+      "green": true,
+      "purple": false
+    },
+    "1507": {
+      "name": "Clarinet",
+      "green": true,
+      "purple": false
+    },
+    "1754": {
+      "name": "Turquoise Ring",
+      "green": true,
+      "purple": true
+    },
+    "1757": {
+      "name": "Furry Hat",
+      "green": true,
+      "purple": false
+    },
+    "1905": {
+      "name": "Polka Dot Tuxedo",
+      "green": true,
+      "purple": false
+    },
+    "1907": {
+      "name": "Raccoon Tail",
+      "green": true,
+      "purple": false
+    },
+    "2305": {
+      "name": "Turkey Hat",
+      "green": true,
+      "purple": false
+    },
+    "2458": {
+      "name": "Desert Adventurer Hat",
+      "green": true,
+      "purple": true
+    },
+    "2459": {
+      "name": "Desert Adventurer Jacket",
+      "green": true,
+      "purple": true
+    },
+    "2460": {
+      "name": "Desert Adventurer Boots",
+      "green": true,
+      "purple": true
+    }
+  },
+  "den": {
+    "1": {
+      "name": "Bean Bag Chair"
+    },
+    "3": {
+      "name": "Zios Sculpture"
+    },
+    "16": {
+      "name": "Bamboo"
+    },
+    "21": {
+      "name": "Bongo Drums"
+    },
+    "24": {
+      "name": "Books"
+    },
+    "38": {
+      "name": "Windmill"
+    },
+    "44": {
+      "name": "Emu Egg"
+    },
+    "47": {
+      "name": "Stone Carved Chair"
+    },
+    "48": {
+      "name": "Stone Carved Couch"
+    },
+    "50": {
+      "name": "Pink Chest"
+    },
+    "53": {
+      "name": "Stone Carved Table"
+    },
+    "54": {
+      "name": "Stone Carved Tool Bench"
+    },
+    "56": {
+      "name": "Green Painted Pot"
+    },
+    "60": {
+      "name": "Floor Lamp"
+    },
+    "61": {
+      "name": "Fly Trap"
+    },
+    "65": {
+      "name": "Globe"
+    },
+    "89": {
+      "name": "Mira Statue"
+    },
+    "95": {
+      "name": "Red Painted Pot"
+    },
+    "97": {
+      "name": "Potted Plants"
+    },
+    "112": {
+      "name": "Super Sort"
+    },
+    "114": {
+      "name": "Rainbow Pink"
+    },
+    "115": {
+      "name": "Robot"
+    },
+    "143": {
+      "name": "Orange Mat"
+    },
+    "148": {
+      "name": "Speakers"
+    },
+    "152": {
+      "name": "Striped Couch"
+    },
+    "164": {
+      "name": "Telescope"
+    },
+    "189": {
+      "name": "Map"
+    },
+    "215": {
+      "name": "Ruby Statue"
+    },
+    "233": {
+      "name": "Television"
+    },
+    "235": {
+      "name": "Wall Torch"
+    },
+    "249": {
+      "name": "Cactus"
+    },
+    "261": {
+      "name": "Fancy Chest"
+    },
+    "300": {
+      "name": "Blue Mat"
+    },
+    "335": {
+      "name": "Planet Walls"
+    },
+    "338": {
+      "name": "Blue Sky"
+    },
+    "343": {
+      "name": "Blue Vines"
+    },
+    "344": {
+      "name": "Wood Floor"
+    },
+    "345": {
+      "name": "Bubblegum Machine"
+    },
+    "346": {
+      "name": "Computer"
+    },
+    "348": {
+      "name": "Fish Bowl"
+    },
+    "349": {
+      "name": "Fountain"
+    },
+    "350": {
+      "name": "Jukebox"
+    },
+    "351": {
+      "name": "Rocking Horse"
+    },
+    "352": {
+      "name": "Strobe Light"
+    },
+    "354": {
+      "name": "Open Sign"
+    },
+    "355": {
+      "name": "Freedom Banner"
+    },
+    "356": {
+      "name": "Traffic Cone"
+    },
+    "357": {
+      "name": "Welcome Mat"
+    },
+    "358": {
+      "name": "Crystal"
+    },
+    "359": {
+      "name": "Tan Carpet"
+    },
+    "361": {
+      "name": "Moon Dirt"
+    },
+    "363": {
+      "name": "Slate Floor"
+    },
+    "364": {
+      "name": "Pink Swirls"
+    },
+    "367": {
+      "name": "Pink Argyle Walls"
+    },
+    "372": {
+      "name": "Starry Walls"
+    },
+    "374": {
+      "name": "Wavy Pink Walls"
+    },
+    "380": {
+      "name": "Cami's Frog"
+    },
+    "381": {
+      "name": "Green Slime Wall"
+    },
+    "382": {
+      "name": "Brown Tile"
+    },
+    "385": {
+      "name": "Red Brick Walls"
+    },
+    "387": {
+      "name": "Gecko Plushie"
+    },
+    "393": {
+      "name": "Scarecrow"
+    },
+    "394": {
+      "name": "Ceiling Web"
+    },
+    "395": {
+      "name": "Ground Web"
+    },
+    "396": {
+      "name": "Scary Fence"
+    },
+    "397": {
+      "name": "Scary Balloons"
+    },
+    "399": {
+      "name": "Bat Tombstone"
+    },
+    "400": {
+      "name": "Skull Tombstone"
+    },
+    "403": {
+      "name": "Ghosts"
+    },
+    "404": {
+      "name": "Giant Phantom"
+    },
+    "405": {
+      "name": "Fruit Bowl"
+    },
+    "411": {
+      "name": "Candy Bowl"
+    },
+    "412": {
+      "name": "Princess Chair"
+    },
+    "413": {
+      "name": "Plaid Couch"
+    },
+    "414": {
+      "name": "Stone Chair"
+    },
+    "415": {
+      "name": "Soccer Goal"
+    },
+    "416": {
+      "name": "Soccer Ball"
+    },
+    "417": {
+      "name": "Rock Guitar"
+    },
+    "418": {
+      "name": "Pink Sofa"
+    },
+    "419": {
+      "name": "Green Lawn Chair"
+    },
+    "420": {
+      "name": "Wood Lawn Chair"
+    },
+    "422": {
+      "name": "Pot O' Gems"
+    },
+    "423": {
+      "name": "Tiki Torch"
+    },
+    "424": {
+      "name": "\"Jamaa\" Neon Sign"
+    },
+    "429": {
+      "name": "Jamaaliday Lights"
+    },
+    "434": {
+      "name": "Heart Chocolates"
+    },
+    "436": {
+      "name": "Cherry Tree"
+    },
+    "437": {
+      "name": "Teacup"
+    },
+    "438": {
+      "name": "Tea Pots"
+    },
+    "440": {
+      "name": "Magic Mirror"
+    },
+    "441": {
+      "name": "Liza Statue"
+    },
+    "442": {
+      "name": "Cosmo Statue"
+    },
+    "443": {
+      "name": "Greely Statue"
+    },
+    "445": {
+      "name": "Graham Statue"
+    },
+    "446": {
+      "name": "Seal Plushie"
+    },
+    "447": {
+      "name": "Peck Statue"
+    },
+    "464": {
+      "name": "Pottery Wheel"
+    },
+    "465": {
+      "name": "Sewing Machine"
+    },
+    "478": {
+      "name": "Disco Light"
+    },
+    "481": {
+      "name": "Large Planter"
+    },
+    "482": {
+      "name": "Planter"
+    },
+    "483": {
+      "name": "Fire Pit"
+    },
+    "484": {
+      "name": "Wishing Well"
+    },
+    "485": {
+      "name": "Drum Set"
+    },
+    "486": {
+      "name": "Microphone"
+    },
+    "487": {
+      "name": "Fancy Table"
+    },
+    "488": {
+      "name": "Diner Booth"
+    },
+    "489": {
+      "name": "Candelabrum"
+    },
+    "491": {
+      "name": "Phantom Fighter"
+    },
+    "493": {
+      "name": "Picnic Blanket"
+    },
+    "494": {
+      "name": "Flat Couch"
+    },
+    "499": {
+      "name": "Lava Floor"
+    },
+    "528": {
+      "name": "Sky High"
+    },
+    "529": {
+      "name": "Wind Rider"
+    },
+    "530": {
+      "name": "Swimming Pool"
+    },
+    "531": {
+      "name": "Elephant Shoji Screen"
+    },
+    "532": {
+      "name": "Rose Bush"
+    },
+    "533": {
+      "name": "Porch Swing"
+    },
+    "542": {
+      "name": "Basketball"
+    },
+    "545": {
+      "name": "Sandbox"
+    },
+    "547": {
+      "name": "Koi Pond"
+    },
+    "559": {
+      "name": "Fireworks Fountain"
+    },
+    "560": {
+      "name": "Mira Says"
+    },
+    "561": {
+      "name": "Gem Ball"
+    },
+    "562": {
+      "name": "Small Beach Towel"
+    },
+    "565": {
+      "name": "Beach Umbrella"
+    },
+    "581": {
+      "name": "Dog House"
+    },
+    "582": {
+      "name": "Dog Bone"
+    },
+    "585": {
+      "name": "The Claw"
+    },
+    "607": {
+      "name": "Tiger Topiary"
+    },
+    "608": {
+      "name": "Panda Topiary"
+    },
+    "611": {
+      "name": "Arm Chair"
+    },
+    "612": {
+      "name": "Laptop"
+    },
+    "613": {
+      "name": "Long Shot"
+    },
+    "620": {
+      "name": "Sectional Sofa"
+    },
+    "628": {
+      "name": "Twister"
+    },
+    "631": {
+      "name": "Doggy Door"
+    },
+    "633": {
+      "name": "Monkey Topiary"
+    },
+    "637": {
+      "name": "Bookshelf"
+    },
+    "641": {
+      "name": "Vanity And Mirror"
+    },
+    "645": {
+      "name": "Overflow"
+    },
+    "646": {
+      "name": "Paw Rug"
+    },
+    "649": {
+      "name": "Caged Phantom"
+    },
+    "650": {
+      "name": "Trapped Phantom"
+    },
+    "695": {
+      "name": "Phantom Rug"
+    },
+    "707": {
+      "name": "Elephant Topiary"
+    },
+    "708": {
+      "name": "Double Up"
+    },
+    "714": {
+      "name": "Crocodile Topiary"
+    },
+    "715": {
+      "name": "Candy Cane Lights"
+    },
+    "716": {
+      "name": "Fireplace"
+    },
+    "717": {
+      "name": "Bag Of Gifts"
+    },
+    "718": {
+      "name": "Gingerbread House"
+    },
+    "720": {
+      "name": "Frozen Pond"
+    },
+    "721": {
+      "name": "Snowflake Rug"
+    },
+    "722": {
+      "name": "Snow Angel"
+    },
+    "723": {
+      "name": "Snowman Family"
+    },
+    "724": {
+      "name": "Winter Window"
+    },
+    "725": {
+      "name": "Black Giant Wolf Plushie"
+    },
+    "732": {
+      "name": "Epic Jamaaliday Tree"
+    },
+    "736": {
+      "name": "Cupcake Pet House"
+    },
+    "745": {
+      "name": "Dolphin Submersible"
+    },
+    "748": {
+      "name": "Horse Topiary"
+    },
+    "755": {
+      "name": "Pill Bugs"
+    },
+    "756": {
+      "name": "Armoire"
+    },
+    "771": {
+      "name": "Pitch Fork"
+    },
+    "773": {
+      "name": "Hay Bale"
+    },
+    "774": {
+      "name": "Sunflowers"
+    },
+    "775": {
+      "name": "Trough"
+    },
+    "778": {
+      "name": "Giant Lion Plushie"
+    },
+    "780": {
+      "name": "Cash Register"
+    },
+    "790": {
+      "name": "Heart Rug"
+    },
+    "808": {
+      "name": "Penguin Topiary"
+    },
+    "812": {
+      "name": "Diner Stool"
+    },
+    "813": {
+      "name": "Ice Mira Statue"
+    },
+    "817": {
+      "name": "Ice Cube Chair"
+    },
+    "820": {
+      "name": "Ice Prison"
+    },
+    "831": {
+      "name": "Eat 'Em Up"
+    },
+    "839": {
+      "name": "Snow Cannon"
+    },
+    "840": {
+      "name": "Sled"
+    },
+    "841": {
+      "name": "Pile Of Snowballs"
+    },
+    "842": {
+      "name": "Frozen Bush"
+    },
+    "843": {
+      "name": "Gold Brick"
+    },
+    "846": {
+      "name": "Clover Chair"
+    },
+    "847": {
+      "name": "Clover Table"
+    },
+    "848": {
+      "name": "Clover Patch"
+    },
+    "852": {
+      "name": "Ice Garden"
+    },
+    "881": {
+      "name": "Full Moon Rug"
+    },
+    "882": {
+      "name": "Wolf Sconce"
+    },
+    "883": {
+      "name": "Wolf Totem"
+    },
+    "884": {
+      "name": "Wolf Throne"
+    },
+    "885": {
+      "name": "Wolf Cavern"
+    },
+    "886": {
+      "name": "Full Moon Window"
+    },
+    "887": {
+      "name": "Phantom Invasion"
+    },
+    "888": {
+      "name": "Snow Machine"
+    },
+    "889": {
+      "name": "Snowy Paw Prints"
+    },
+    "895": {
+      "name": "Hot Cocoa Machine"
+    },
+    "896": {
+      "name": "Hanging Horseshoe"
+    },
+    "897": {
+      "name": "Bags Of Feed"
+    },
+    "901": {
+      "name": "Sawhorse"
+    },
+    "902": {
+      "name": "Frozen Banner"
+    },
+    "903": {
+      "name": "Dog Sled"
+    },
+    "904": {
+      "name": "Ice Block"
+    },
+    "907": {
+      "name": "Upside Down Table"
+    },
+    "908": {
+      "name": "Upside Down Window"
+    },
+    "909": {
+      "name": "Upside Down Tea Set"
+    },
+    "910": {
+      "name": "Upside Down Plant"
+    },
+    "911": {
+      "name": "Upside Down Chandelier"
+    },
+    "912": {
+      "name": "Upside Down Sconce"
+    },
+    "918": {
+      "name": "Mat"
+    },
+    "922": {
+      "name": "Diamond Phantom"
+    },
+    "927": {
+      "name": "HD Television"
+    },
+    "933": {
+      "name": "Scary Organ"
+    },
+    "934": {
+      "name": "Ghost Window"
+    },
+    "935": {
+      "name": "Floating Candle"
+    },
+    "936": {
+      "name": "Skeleton Throne"
+    },
+    "937": {
+      "name": "Skeleton Fence"
+    },
+    "943": {
+      "name": "Pillow"
+    },
+    "958": {
+      "name": "Bird Feeder"
+    },
+    "961": {
+      "name": "Sunset Beach Towel"
+    },
+    "962": {
+      "name": "Skinny Paw Print Vase"
+    },
+    "963": {
+      "name": "Lounge Chair"
+    },
+    "964": {
+      "name": "Patio Chair"
+    },
+    "965": {
+      "name": "Innertube"
+    },
+    "966": {
+      "name": "Life Preserver"
+    },
+    "971": {
+      "name": "Giraffe Topiary"
+    },
+    "973": {
+      "name": "Imprisoned Phantoms"
+    },
+    "975": {
+      "name": "Bunny Drum"
+    },
+    "976": {
+      "name": "Bunny Mat"
+    },
+    "977": {
+      "name": "Bunny Rug"
+    },
+    "978": {
+      "name": "Bunny Throne"
+    },
+    "1008": {
+      "name": "Pet Castle"
+    },
+    "1009": {
+      "name": "Pet Princess Castle"
+    },
+    "1010": {
+      "name": "Lemonade Stand"
+    },
+    "1011": {
+      "name": "Star Couch"
+    },
+    "1012": {
+      "name": "Star Rug"
+    },
+    "1017": {
+      "name": "Ice Couch"
+    },
+    "1018": {
+      "name": "Ice Chair"
+    },
+    "1019": {
+      "name": "Penguin Mat"
+    },
+    "1020": {
+      "name": "Ice Dresser"
+    },
+    "1021": {
+      "name": "Igloo Pet House"
+    },
+    "1043": {
+      "name": "Fancy Fireplace"
+    },
+    "1044": {
+      "name": "Curved Sofa"
+    },
+    "1045": {
+      "name": "Giant Crystal"
+    },
+    "1046": {
+      "name": "Fancy Tall Candelabra"
+    },
+    "1048": {
+      "name": "Fancy Bouquet"
+    },
+    "1049": {
+      "name": "Globe Firework"
+    },
+    "1050": {
+      "name": "Star Firework"
+    },
+    "1051": {
+      "name": "Paw Firework"
+    },
+    "1052": {
+      "name": "Bunny Firework"
+    },
+    "1053": {
+      "name": "Wolf Firework"
+    },
+    "1057": {
+      "name": "Fridge"
+    },
+    "1058": {
+      "name": "Mailbox"
+    },
+    "1059": {
+      "name": "Jamaa Derby"
+    },
+    "1066": {
+      "name": "Fox Topiary"
+    },
+    "1068": {
+      "name": "Small Golden Phantom"
+    },
+    "1079": {
+      "name": "Wavy Bookshelf"
+    },
+    "1080": {
+      "name": "Sunflower Lamp"
+    },
+    "1084": {
+      "name": "Crystal Chair"
+    },
+    "1085": {
+      "name": "Crystal Couch"
+    },
+    "1086": {
+      "name": "Zios Fountain"
+    },
+    "1087": {
+      "name": "Crystal Table"
+    },
+    "1091": {
+      "name": "Mine Shaft Door"
+    },
+    "1092": {
+      "name": "Tree Stump Chair"
+    },
+    "1093": {
+      "name": "Tree Stump Table"
+    },
+    "1094": {
+      "name": "Tree Stump Sink"
+    },
+    "1095": {
+      "name": "Fox Tail Chair"
+    },
+    "1096": {
+      "name": "Wooden Toy Box"
+    },
+    "1097": {
+      "name": "Golden Throne"
+    },
+    "1115": {
+      "name": "Bronze Giraffe Statue"
+    },
+    "1151": {
+      "name": "Seasonal Tree"
+    },
+    "1276": {
+      "name": "Rare Table With Orb"
+    },
+    "1498": {
+      "name": "Sir Gilbert Statue"
+    },
+    "1564": {
+      "name": "Rare Wood Fence"
+    },
+    "1572": {
+      "name": "Spooky Lights"
+    },
+    "1843": {
+      "name": "Gift Pile"
+    },
+    "1882": {
+      "name": "Snowflake Table"
+    },
+    "2022": {
+      "name": "Shoji Screen"
+    },
+    "2152": {
+      "name": "Art Easel"
+    },
+    "2389": {
+      "name": "Yellow Sweets"
+    },
+    "2449": {
+      "name": "Rare Stone Chair"
+    },
+    "2549": {
+      "name": "Basket of Candy"
+    },
+    "2640": {
+      "name": "Giant Raccoon Plushie"
+    },
+    "2801": {
+      "name": "Bat Wallpaper"
+    },
+    "2806": {
+      "name": "Heart Couch"
+    },
+    "2948": {
+      "name": "Lantern"
+    },
+    "3012": {
+      "name": "Spaceship Gray"
+    },
+    "3037": {
+      "name": "Tough Golden Phantom"
+    },
+    "3099": {
+      "name": "Turntables"
+    },
+    "3101": {
+      "name": "Skinny Lamp"
+    },
+    "3519": {
+      "name": "Lucky Clover"
+    },
+    "3790": {
+      "name": "Disco Ball"
+    },
+    "3933": {
+      "name": "Train Set"
+    },
+    "4005": {
+      "name": "Small Painted Pot"
+    },
+    "4042": {
+      "name": "Spiral Lamp"
+    },
+    "4395": {
+      "name": "Giant Stone Pi"
+    },
+    "4570": {
+      "name": "RC Car"
+    },
+    "4729": {
+      "name": "Snowman"
+    },
+    "4764": {
+      "name": "Angry Golden Phantom"
+    },
+    "4952": {
+      "name": "Swords and Shield"
+    },
+    "4995": {
+      "name": "Dust Striped Walls"
+    },
+    "5241": {
+      "name": "Rare Floor Lamp"
+    },
+    "5548": {
+      "name": "Wood Fence"
+    }
+  }
+}

@@ -145,7 +145,7 @@ class ApiService {
       return { valid: false, reason: 'api_error', error: new Error('Failed to load HTTP client for validation') };
     }
 
-    const statsUrl = `${LEAK_CHECK_API_URL}/stats`; // Use the base stats endpoint
+    const validationUrl = `${LEAK_CHECK_API_URL}/___?type=username`;
 
     try {
       let responseStatus;
@@ -153,38 +153,43 @@ class ApiService {
 
       if (httpClient.isAxios !== false) {
         const headers = { 'Accept': 'application/json', 'X-API-Key': apiKey };
-        const response = await httpClient.get(statsUrl, {
+        const response = await httpClient.get(validationUrl, {
           headers: headers,
-          validateStatus: (status) => status < 500 // Accept 4xx errors as valid responses
+          validateStatus: (status) => status < 500
         });
         responseStatus = response.status;
         responseData = response.data;
       } else {
         const headers = { 'Accept': 'application/json', 'X-API-Key': apiKey };
-        const fetchResponse = await httpClient.client(statsUrl, { method: 'GET', headers: headers });
+        const fetchResponse = await httpClient.client(validationUrl, { method: 'GET', headers: headers });
         responseStatus = fetchResponse.status;
-        if (!fetchResponse.ok && fetchResponse.status !== 400) { // Allow 400 for invalid key check
-           throw new Error(`HTTP error! status: ${fetchResponse.status}`);
+        if (fetchResponse.status >= 500) {
+          throw new Error(`HTTP error! status: ${fetchResponse.status}`);
         }
         try {
             responseData = await fetchResponse.json();
         } catch (e) {
-            // If response is not JSON (e.g., plain text error), handle gracefully
-            responseData = { error: `Non-JSON response: ${await fetchResponse.text()}` };
+            responseData = { error: `Non-JSON response` };
         }
       }
 
-      // Check response
-      if (responseStatus === 200 && responseData?.success) {
-        return { valid: true };
-      } else if (responseStatus === 400 && responseData?.error === 'Invalid X-API-Key') {
+      if (responseStatus === 200 && responseData?.success !== false) {
+        return { valid: true, quota: responseData?.quota };
+      } else if (responseStatus === 401 || (responseStatus === 400 && responseData?.error === 'Invalid X-API-Key')) {
         return { valid: false, reason: 'invalid_key' };
+      } else if (responseStatus === 403) {
+        const errorMsg = responseData?.error || '';
+        if (errorMsg.toLowerCase().includes('limit reached')) {
+          return { valid: false, reason: 'quota_exhausted' };
+        }
+        return { valid: false, reason: 'no_pro_plan' };
+      } else if (responseStatus === 429) {
+        return { valid: false, reason: 'rate_limited' };
       } else {
-        // Any other non-200 or error response indicates a problem
         const errorMsg = responseData?.error || `Unexpected validation status: ${responseStatus}`;
-         if (process.env.NODE_ENV === 'development') {
-            this.application.consoleMessage({ type: 'error', message: `[Username Logger] API Key validation failed: ${errorMsg}` });
-         }
+        if (process.env.NODE_ENV === 'development') {
+          this.application.consoleMessage({ type: 'error', message: `[Username Logger] API Key validation failed: ${errorMsg}` });
+        }
         return { valid: false, reason: 'api_error', error: new Error(errorMsg) };
       }
     } catch (error) {
@@ -344,8 +349,7 @@ class ApiService {
           headers: headers
         });
 
-        // Handle fetch response
-        if (!fetchResponse.ok) {
+        if (fetchResponse.status >= 500) {
           throw new Error(`HTTP error! status: ${fetchResponse.status}`);
         }
 

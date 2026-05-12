@@ -89,7 +89,7 @@
       if (this.logoutButton) {
         this.logoutButton.addEventListener("click", () => {
           if (window.ipc) {
-            window.ipc.send("logout");
+            window.ipc.send("session-cleanup");
           }
           this.dispatchEvent(new CustomEvent("logout-requested", { bubbles: true, composed: true }));
         });

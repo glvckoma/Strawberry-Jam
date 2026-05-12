@@ -2,7 +2,7 @@
   "name": "strawberry-jam",
   "description": "strawberry jam is my personal fork of the project jam created and developed by sxip.",
   "main": "src/index.js",
-  "version": "5.1.1",
+  "version": "5.2.0",
   "author": {
     "name": "glvckoma",
     "email": "glvckoma@users.noreply.github.com"
@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify && npm run pack && npx cross-env NODE_ENV=development electron .",
     "test": "npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify && npm run pack && npx cross-env NODE_ENV=production electron .",
-    "pack": "npm install --prefix assets/client && npx asar pack assets/client assets/app-client.asar --unpack *.node",
+    "pack": "npx asar pack assets/client assets/app-client.asar --unpack *.node",
     "build": "npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify && npm run pack && node scripts/generate-installer-script.js && npx electron-builder build -w",
     "publish": "npx tailwindcss -i src/styles/app.css -o assets/styles/style.css --minify && npm run pack && node scripts/generate-installer-script.js && npx electron-builder build -w -p always",
     "postinstall": "electron-builder install-app-deps",

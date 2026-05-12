@@ -562,11 +562,15 @@ module.exports = class Dispatch {
     this.intervals.delete(interval)
   }
 
-  /**
-   * Hooks a command.
-   * @param command
-   * @public
-   */
+  resetSession() {
+    for (const interval of this.intervals) {
+      clearInterval(interval)
+    }
+    this.intervals.clear()
+
+    this.stateManager.reset()
+  }
+
   onCommand ({ name, description = '', callback } = {}) {
     if (typeof name !== 'string' || typeof callback !== 'function') return
 

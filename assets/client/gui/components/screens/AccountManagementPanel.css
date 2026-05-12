@@ -2,8 +2,6 @@
 
 :host {
   display: block;
-  max-height: min(530px, calc(80vh - 60px));
-  overflow: hidden;
   position: relative;
   z-index: 0;
 }
@@ -18,7 +16,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100%; /* Fill the height of its host */
+  max-height: min(530px, calc(80vh - 60px));
   box-sizing: border-box;
   box-shadow: 0 8px 32px var(--theme-shadow, rgba(252, 93, 93, 0.1)); /* Match #box-background shadow */
   transition: opacity 0.2s, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease, background-image 0.3s ease; /* Match #box-background transitions */

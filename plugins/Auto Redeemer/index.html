@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Auto Redeemer</title>
+    <link rel="stylesheet" href="app://assets/styles/style.css">
+    <link rel="stylesheet" href="app://assets/styles/tailwind.css">
+    <link rel="stylesheet" href="app://assets/styles/plugin-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .setting-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(156,163,175,0.12);
+        }
+        .progress-bar { transition: width 0.3s ease; }
+        select, input[type="number"], input[type="text"] {
+            background: #1e1f2e;
+            border: 1px solid rgba(156,163,175,0.15);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+        #progressBar { background: var(--theme-primary, #e83d52); }
+        #startBtn {
+            background: rgba(16,185,129,0.2);
+            color: #10b981;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        #startBtn:hover:not(:disabled) { background: rgba(16,185,129,0.3); }
+        #pauseBtn {
+            background: rgba(245,158,11,0.2);
+            color: #f59e0b;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        #pauseBtn:hover:not(:disabled) { background: rgba(245,158,11,0.3); }
+        #stopBtn {
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        #stopBtn:hover:not(:disabled) { background: rgba(239,68,68,0.3); }
+        .btn-subtle {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.7);
+            border: 1px solid rgba(156,163,175,0.15);
+        }
+        .btn-subtle:hover { background: rgba(255,255,255,0.1); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+        #codeList { overflow-y: auto; }
+        #codeList::-webkit-scrollbar { width: 6px; }
+        #codeList::-webkit-scrollbar-track { background: transparent; }
+        #codeList::-webkit-scrollbar-thumb { background: rgba(156,163,175,0.3); border-radius: 3px; }
+        #codeList::-webkit-scrollbar-thumb:hover { background: rgba(156,163,175,0.5); }
+        .code-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            font-size: 11px;
+            color: #d1d5db;
+            border-bottom: 1px solid rgba(156,163,175,0.06);
+            transition: background 0.15s ease;
+        }
+        .code-row.processing { background: rgba(59,130,246,0.08); }
+        .code-row .code-index {
+            color: #6b7280;
+            font-size: 10px;
+            min-width: 28px;
+            text-align: right;
+        }
+        .code-row .code-text {
+            flex: 1;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .code-row .code-status {
+            font-size: 10px;
+            font-weight: 600;
+            min-width: 70px;
+            text-align: right;
+        }
+        .status-pending { color: #6b7280; }
+        .status-processing { color: #3b82f6; }
+        .status-success { color: #10b981; }
+        .status-invalid { color: #ef4444; }
+        .status-already_redeemed { color: #f59e0b; }
+        .status-timeout { color: #9ca3af; }
+        #codeTextarea {
+            background: #1e1f2e;
+            border: 1px solid rgba(156,163,175,0.15);
+            border-radius: 6px;
+            color: #fff;
+            font-family: monospace;
+            font-size: 11px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        #codeTextarea:focus { outline: none; border-color: var(--theme-primary, #e83d52); }
+        #codeTextarea::placeholder { color: #6b7280; }
+    </style>
+</head>
+<body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
+
+    <div class="jam-plugin-header">
+        <span class="jam-plugin-title">Auto Redeemer</span>
+        <div class="jam-plugin-controls">
+            <button class="jam-plugin-minimize" aria-label="Minimize">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="jam-plugin-close" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="jam-plugin-content flex-1 overflow-y-auto" style="width: 100%;">
+        <div class="px-4 py-3" style="max-width: 720px; margin: 0 auto;">
+
+            <div class="text-center mb-4">
+                <h1 class="text-xl font-bold mb-1 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                    <i class="fas fa-ticket-alt mr-2"></i>Auto Redeemer
+                </h1>
+                <p class="text-xs text-text-secondary">Load codes from a text file and redeem them automatically</p>
+            </div>
+
+            <div class="setting-card rounded-lg p-3 mb-3">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-sm font-semibold flex items-center">
+                        <i class="fas fa-file-alt mr-1.5 text-blue-400"></i>Loaded Codes
+                        <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-bold" style="background: rgba(16,185,129,0.15); color: #10b981;">
+                            <span id="codeCount">0</span>
+                        </span>
+                    </h2>
+                    <button id="loadFileBtn" class="px-3 py-1 rounded text-xs font-medium btn-subtle">
+                        <i class="fas fa-folder-open mr-1"></i>Browse File
+                    </button>
+                    <input type="file" id="fileInput" accept=".txt" class="hidden">
+                </div>
+                <textarea id="codeTextarea" class="w-full px-3 py-2" rows="6" placeholder="Paste codes here (one per line) or use Browse File to load a .txt file"></textarea>
+            </div>
+
+            <div class="setting-card rounded-lg p-3 mb-3">
+                <h2 class="text-sm font-semibold mb-2 flex items-center">
+                    <i class="fas fa-gamepad mr-1.5 text-green-400"></i>Controls
+                </h2>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <button id="startBtn" class="px-3 py-1 rounded text-xs font-medium" disabled>
+                            <i class="fas fa-play mr-1"></i>Start
+                        </button>
+                        <button id="pauseBtn" class="px-3 py-1 rounded text-xs font-medium" disabled>
+                            <i class="fas fa-pause mr-1"></i>Pause
+                        </button>
+                        <button id="stopBtn" class="px-3 py-1 rounded text-xs font-medium" disabled>
+                            <i class="fas fa-stop mr-1"></i>Stop
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="delayInput" class="text-xs text-text-secondary">Delay (ms):</label>
+                        <input type="number" id="delayInput" value="1500" min="500" max="30000" step="100" class="w-20 rounded px-2 py-1 text-xs text-center">
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid rgba(156,163,175,0.1); padding-top: 8px;">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="font-medium">Status:</span>
+                            <span id="statusIcon"><i class="fas fa-circle text-gray-400"></i> Idle</span>
+                        </div>
+                        <span id="progressText" class="text-xs">0 / 0</span>
+                    </div>
+                    <p id="statusMessage" class="text-xs text-text-secondary bg-gray-800 rounded px-2 py-1 font-mono mb-1.5">
+                        Load a code file to begin
+                    </p>
+                    <div class="w-full bg-gray-700 rounded-full h-1.5">
+                        <div id="progressBar" class="progress-bar h-1.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-card rounded-lg p-3 mb-3">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-sm font-semibold flex items-center">
+                        <i class="fas fa-chart-bar mr-1.5 text-purple-400"></i>Stats
+                    </h2>
+                    <button id="clearResultsBtn" class="px-2 py-0.5 rounded text-xs font-medium btn-subtle">
+                        <i class="fas fa-trash-alt mr-1"></i>Clear
+                    </button>
+                </div>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 48px;">
+                    <div style="text-align: center; min-width: 60px;">
+                        <span class="block font-bold text-white text-lg mb-1" id="statTotal">0</span>
+                        <p class="text-gray-400 text-xs">Total</p>
+                    </div>
+                    <div style="text-align: center; min-width: 60px;">
+                        <span class="block font-bold text-green-400 text-lg mb-1" id="statSuccess">0</span>
+                        <p class="text-gray-400 text-xs">Success</p>
+                    </div>
+                    <div style="text-align: center; min-width: 60px;">
+                        <span class="block font-bold text-red-400 text-lg mb-1" id="statInvalid">0</span>
+                        <p class="text-gray-400 text-xs">Invalid</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-card rounded-lg p-3">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-sm font-semibold flex items-center">
+                        <i class="fas fa-list mr-1.5 text-yellow-400"></i>Code List
+                    </h2>
+                    <span id="listInfo" class="text-xs text-gray-400"></span>
+                </div>
+                <div id="codeList" class="bg-gray-800/50 rounded border border-gray-700 pr-1" style="max-height: 300px; overflow-y: auto;">
+                    <p id="emptyListMsg" class="text-xs text-text-secondary text-center py-4">No codes loaded</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+    <script src="app://assets/scripts/plugin-utils.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initializePluginUI === 'function') {
+                initializePluginUI();
+            }
+        });
+    </script>
+</body>
+</html>

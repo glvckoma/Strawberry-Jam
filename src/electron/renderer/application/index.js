@@ -691,6 +691,14 @@ module.exports = class Application extends EventEmitter {
       }
     })
 
+    ipcRenderer.on('session-cleanup', async () => {
+      try {
+        await this.cleanupSession()
+      } catch (error) {
+        console.error('[Application] Error during session cleanup:', error)
+      }
+    })
+
     this.modalActionManager.initializeModalCloseButtonStyles()
   }
 
@@ -711,7 +719,22 @@ module.exports = class Application extends EventEmitter {
       await this.server.close();
     }
   }
-  
+
+  async cleanupSession() {
+    if (this.server && typeof this.server.disconnectAllClients === 'function') {
+      await this.server.disconnectAllClients()
+    }
+
+    if (this.dispatch) {
+      this.dispatch.resetSession()
+    }
+
+    this.consoleMessage({
+      message: 'Session cleaned up.',
+      type: 'notify'
+    })
+  }
+
   /**
    * Create a tooltip for an element.
    * This is a convenience method for creating tooltips with common options.

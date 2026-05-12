@@ -38,19 +38,22 @@ const guideAcknowledgeCheckbox = document.getElementById('guideAcknowledgeCheckb
 
 const clothingWhitelist = document.getElementById('clothingWhitelist');
 const denWhitelist = document.getElementById('denWhitelist');
-const saveWhitelistsButton = document.getElementById('saveWhitelistsButton');
 const clearWhitelistsButton = document.getElementById('clearWhitelistsButton');
 const exportWhitelistsButton = document.getElementById('exportWhitelistsButton');
 const importWhitelistsButton = document.getElementById('importWhitelistsButton');
 const importFileInput = document.getElementById('importFileInput');
 const acceptAllToggle = document.getElementById('acceptAllToggle');
 const filterStatusText = document.getElementById('filterStatusText');
-const clothingSearch = document.getElementById('clothingSearch');
-const denSearch = document.getElementById('denSearch');
-const clothingSearchDropdown = document.getElementById('clothingSearchDropdown');
-const denSearchDropdown = document.getElementById('denSearchDropdown');
-const clothingTags = document.getElementById('clothingTags');
-const denTags = document.getElementById('denTags');
+const whitelistSearchInput = document.getElementById('whitelistSearchInput');
+const whitelistItemPanel = document.getElementById('whitelistItemPanel');
+const tabClothing = document.getElementById('tabClothing');
+const tabDen = document.getElementById('tabDen');
+const crystalFilterContainer = document.getElementById('crystalFilter');
+const selectAllVisibleBtn = document.getElementById('selectAllVisible');
+const deselectAllVisibleBtn = document.getElementById('deselectAllVisible');
+const customIdsContainer = document.getElementById('customIdsContainer');
+const customIdInput = document.getElementById('customIdInput');
+const addCustomIdBtn = document.getElementById('addCustomIdBtn');
 
 const itemLog = document.getElementById('itemLog');
 const clearLogButton = document.getElementById('clearLogButton');
@@ -60,6 +63,10 @@ const itemSearchBox = document.getElementById('itemSearchBox');
 let receivedItems = [];
 let clothingItems = {};
 let denItems = {};
+let tfdRewardItems = { clothing: {}, den: {} };
+let currentWhitelistTab = 'clothing';
+let currentCrystalFilter = 'all';
+let whitelistSearchTerm = '';
 let isAutomationRunning = false;
 let currentTimeout = null;
 let currentRoom = null; // Textual room name
@@ -78,8 +85,10 @@ let currentLoopCount = 0;
 let totalLoopsToRun = 1;
 let isLooping = false;
 let knownDenInvIds = new Set();
+let knownClothingInvIds = new Set();
 let isFirstDiPacket = true;
-let hasCapturedInitialDenState = false; // New state for den inventory
+let hasCapturedInitialDenState = false;
+let hasCapturedInitialClothingState = false;
 const QUEST_DURATION_MS = 17 * 60 * 1000; // 17 minutes in milliseconds
 
 // Function to get wait time based on user selection
@@ -312,10 +321,14 @@ const efficientHandleQqm = (data) => {
                         }
                     } else {
                         itemType = flagValue === '0' ? 'den' : 'clothing';
-                        isWhitelisted = flagValue === '0' ? 
+                        isWhitelisted = flagValue === '0' ?
                             whitelists.den.has(id) : whitelists.clothing.has(id);
                     }
-                    
+
+                    if (_acceptAllItems) {
+                        isWhitelisted = true;
+                    }
+
                     const itemName = getItemName(id, itemType);
                     
                     // Debug whitelist checking
@@ -791,7 +804,9 @@ async function runSingleAutomation() {
     
     // Reset state for the new run
     knownDenInvIds.clear();
+    knownClothingInvIds.clear();
     isFirstDiPacket = true;
+    hasCapturedInitialClothingState = false;
     hasCapturedInitialDenState = false; // Reset for each new adventure
     
     // CRITICAL: Always reset gift detection for each new adventure
@@ -1358,53 +1373,161 @@ function toggleAcceptAll() {
     _acceptAllItems = !_acceptAllItems;
     localStorage.setItem('tfd_accept_all', String(_acceptAllItems));
     updateFilteringStatus();
+    renderWhitelistPanel();
 }
 
-function saveWhitelists() {
+function autoSaveWhitelists() {
     const whitelists = getWhitelists();
     localStorage.setItem('tfd_clothing_whitelist', JSON.stringify(Array.from(whitelists.clothing)));
     localStorage.setItem('tfd_den_whitelist', JSON.stringify(Array.from(whitelists.den)));
-    updateStatus('Whitelists saved successfully.', 'success');
     updateFilteringStatus();
 }
 
 const DEFAULT_CLOTHING_WHITELIST = [277, 278, 279, 280, 148, 283, 286, 386, 770, 342, 620, 138, 64, 719, 525, 285, 635, 1213, 1360, 1516, 1518]
 const DEFAULT_DEN_WHITELIST = [351, 4544, 112, 422, 387, 368, 385, 348, 335, 344, 359, 360, 362, 361, 533, 2152, 115, 89, 3, 155, 130, 143, 284, 292, 294, 2549, 65, 393, 265, 365, 137, 247, 380]
 
-function renderWhitelistTags() {
-    renderTagsFor(clothingWhitelist, clothingTags, 'clothing');
-    renderTagsFor(denWhitelist, denTags, 'den');
+function renderWhitelistPanel() {
+    if (!whitelistItemPanel) return;
+
+    const items = currentWhitelistTab === 'clothing'
+        ? tfdRewardItems.clothing
+        : tfdRewardItems.den;
+
+    const whitelists = getWhitelists();
+    const currentSet = currentWhitelistTab === 'clothing'
+        ? whitelists.clothing : whitelists.den;
+
+    const entries = Object.entries(items).filter(([id, item]) => {
+        if (whitelistSearchTerm && !item.name.toLowerCase().includes(whitelistSearchTerm)) {
+            return false;
+        }
+        if (currentWhitelistTab === 'clothing' && currentCrystalFilter !== 'all') {
+            if (currentCrystalFilter === 'green' && !item.green) return false;
+            if (currentCrystalFilter === 'purple' && !item.purple) return false;
+        }
+        return true;
+    });
+
+    entries.sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+    const fragment = document.createDocumentFragment();
+    entries.forEach(([id, item]) => {
+        const row = document.createElement('label');
+        row.className = 'wl-item-row' + (currentSet.has(id) ? ' selected' : '');
+        row.innerHTML = `<input type="checkbox" ${currentSet.has(id) ? 'checked' : ''} data-id="${id}"><span class="item-name">${item.name}</span><span class="item-id">${id}</span>`;
+        row.querySelector('input').addEventListener('change', (e) => {
+            toggleWhitelistItem(currentWhitelistTab, id, e.target.checked);
+            row.classList.toggle('selected', e.target.checked);
+        });
+        fragment.appendChild(row);
+    });
+
+    whitelistItemPanel.innerHTML = '';
+    if (entries.length === 0) {
+        whitelistItemPanel.innerHTML = '<p class="text-xs text-gray-500 text-center py-3">No items match filter</p>';
+    } else {
+        whitelistItemPanel.appendChild(fragment);
+    }
+
+    if (_acceptAllItems) {
+        whitelistItemPanel.classList.add('wl-panel-disabled');
+    } else {
+        whitelistItemPanel.classList.remove('wl-panel-disabled');
+    }
+
+    if (whitelistSearchInput) whitelistSearchInput.disabled = _acceptAllItems;
+    if (selectAllVisibleBtn) selectAllVisibleBtn.disabled = _acceptAllItems;
+    if (deselectAllVisibleBtn) deselectAllVisibleBtn.disabled = _acceptAllItems;
+    if (tabClothing) tabClothing.disabled = _acceptAllItems;
+    if (tabDen) tabDen.disabled = _acceptAllItems;
+
+    if (crystalFilterContainer) {
+        crystalFilterContainer.style.display = currentWhitelistTab === 'clothing' ? 'flex' : 'none';
+        crystalFilterContainer.style.opacity = _acceptAllItems ? '0.4' : '1';
+        crystalFilterContainer.style.pointerEvents = _acceptAllItems ? 'none' : '';
+    }
+
+    updateSelectedCounts();
+    renderCustomIds();
 }
 
-function renderTagsFor(textarea, container, itemType) {
-    if (!textarea || !container) return;
-    const ids = textarea.value.split(',').map(s => s.trim()).filter(Boolean);
-    container.innerHTML = '';
-    ids.forEach(id => {
-        const name = getItemName(id, itemType);
-        const isUnknown = name.startsWith('Unknown');
+function toggleWhitelistItem(type, id, selected) {
+    const textarea = type === 'clothing' ? clothingWhitelist : denWhitelist;
+    if (!textarea) return;
+    const current = textarea.value.split(',').map(s => s.trim()).filter(Boolean);
+
+    if (selected && !current.includes(id)) {
+        current.push(id);
+    } else if (!selected) {
+        const idx = current.indexOf(id);
+        if (idx !== -1) current.splice(idx, 1);
+    }
+
+    textarea.value = current.join(', ');
+    autoSaveWhitelists();
+}
+
+function updateSelectedCounts() {
+    const whitelists = getWhitelists();
+    const clothingCount = document.getElementById('clothingSelectedCount');
+    const denCount = document.getElementById('denSelectedCount');
+    if (clothingCount) clothingCount.textContent = whitelists.clothing.size;
+    if (denCount) denCount.textContent = whitelists.den.size;
+}
+
+function renderCustomIds() {
+    if (!customIdsContainer) return;
+    const whitelists = getWhitelists();
+    const currentSet = currentWhitelistTab === 'clothing'
+        ? whitelists.clothing : whitelists.den;
+    const rewardIds = new Set(Object.keys(
+        currentWhitelistTab === 'clothing'
+            ? tfdRewardItems.clothing : tfdRewardItems.den
+    ));
+    const customIds = [...currentSet].filter(id => !rewardIds.has(id));
+
+    if (customIds.length === 0) {
+        customIdsContainer.style.display = 'none';
+        return;
+    }
+
+    customIdsContainer.style.display = 'flex';
+    customIdsContainer.innerHTML = '<span class="text-xs text-gray-500" style="width:100%">Custom IDs:</span>';
+    customIds.forEach(id => {
+        const itemName = getItemName(id, currentWhitelistTab);
+        const label = itemName.startsWith('Unknown') ? id : `${itemName} (${id})`;
         const tag = document.createElement('span');
-        tag.className = isUnknown ? 'wl-tag wl-tag-unknown' : 'wl-tag';
-        const label = isUnknown ? id : `${name} (${id})`;
+        tag.className = 'custom-id-tag';
         tag.innerHTML = `${label} <span class="remove-tag">&times;</span>`;
         tag.querySelector('.remove-tag').addEventListener('click', () => {
-            const current = textarea.value.split(',').map(s => s.trim()).filter(Boolean);
-            textarea.value = current.filter(v => v !== id).join(', ');
-            renderTagsFor(textarea, container, itemType);
-            updateFilteringStatus();
+            toggleWhitelistItem(currentWhitelistTab, id, false);
+            renderWhitelistPanel();
         });
-        container.appendChild(tag);
+        customIdsContainer.appendChild(tag);
     });
+
 }
 
-function addIdToWhitelist(textarea, container, itemType, id) {
-    const current = textarea.value.split(',').map(s => s.trim()).filter(Boolean);
-    if (!current.includes(id)) {
-        current.push(id);
-        textarea.value = current.join(', ');
-        renderTagsFor(textarea, container, itemType);
-        updateFilteringStatus();
-    }
+function bulkToggleVisible(select) {
+    if (!whitelistItemPanel) return;
+    const textarea = currentWhitelistTab === 'clothing' ? clothingWhitelist : denWhitelist;
+    if (!textarea) return;
+
+    const currentIds = new Set(textarea.value.split(',').map(s => s.trim()).filter(Boolean));
+    const checkboxes = whitelistItemPanel.querySelectorAll('input[type="checkbox"]');
+
+    checkboxes.forEach(cb => {
+        const id = cb.dataset.id;
+        if (select) {
+            currentIds.add(id);
+        } else {
+            currentIds.delete(id);
+        }
+    });
+
+    textarea.value = [...currentIds].join(', ');
+    autoSaveWhitelists();
+    renderWhitelistPanel();
 }
 
 function loadWhitelists() {
@@ -1445,60 +1568,12 @@ function clearWhitelists() {
     if (confirm('Are you sure you want to clear both whitelists?')) {
         if (clothingWhitelist) clothingWhitelist.value = '';
         if (denWhitelist) denWhitelist.value = '';
-        localStorage.removeItem('tfd_clothing_whitelist');
-        localStorage.removeItem('tfd_den_whitelist');
-        updateFilteringStatus();
-        renderWhitelistTags();
+        autoSaveWhitelists();
+        renderWhitelistPanel();
         updateStatus('Whitelists cleared.', 'info');
     }
 }
 
-function setupWhitelistSearch(input, dropdown, textarea, tagsContainer, itemType) {
-    if (!input || !dropdown) return;
-    let debounce = null;
-
-    input.addEventListener('input', () => {
-        clearTimeout(debounce);
-        debounce = setTimeout(() => {
-            const items = itemType === 'clothing' ? clothingItems : denItems;
-            const query = input.value.trim().toLowerCase();
-            dropdown.innerHTML = '';
-            if (!query || query.length < 2 || !items) {
-                dropdown.classList.add('hidden');
-                return;
-            }
-            const results = [];
-            for (const id in items) {
-                const item = items[id];
-                const name = itemType === 'clothing' ? (item.name || '') : (item.abbrName || '');
-                if (name.toLowerCase().includes(query)) {
-                    results.push({ id, name });
-                }
-                if (results.length >= 6) break;
-            }
-            if (results.length === 0) {
-                dropdown.classList.add('hidden');
-                return;
-            }
-            results.forEach(r => {
-                const div = document.createElement('div');
-                div.className = 'search-dropdown-item';
-                div.innerHTML = `${r.name} <span class="item-id">(${r.id})</span>`;
-                div.addEventListener('click', () => {
-                    addIdToWhitelist(textarea, tagsContainer, itemType, r.id);
-                    input.value = '';
-                    dropdown.classList.add('hidden');
-                });
-                dropdown.appendChild(div);
-            });
-            dropdown.classList.remove('hidden');
-        }, 200);
-    });
-
-    input.addEventListener('blur', () => {
-        setTimeout(() => dropdown.classList.add('hidden'), 150);
-    });
-}
 
 function exportWhitelists() {
     const whitelists = getWhitelists();
@@ -1549,6 +1624,7 @@ async function handleIncomingPackets(data) {
 
     if (rawMessage.startsWith('%xt%il%') && parts.length > 10) {
         try {
+            const isAdventureRunning = questStartTime !== null;
             const ilType = parts[4];
 
             if (ilType === '2' || ilType === '3') {
@@ -1559,16 +1635,33 @@ async function handleIncomingPackets(data) {
                         if (parts.length > currentIndex + 1) {
                             const invId = parts[currentIndex];
                             const defId = parts[currentIndex + 1];
-                            await processItemForFiltering(defId, invId, 'clothing');
+
+                            if (!isAdventureRunning || !hasCapturedInitialClothingState) {
+                                knownClothingInvIds.add(invId);
+                            } else if (!knownClothingInvIds.has(invId)) {
+                                await processItemForFiltering(defId, invId, 'clothing');
+                                knownClothingInvIds.add(invId);
+                            }
+
                             currentIndex += 2;
                         }
                     }
+                }
+
+                if (isAdventureRunning && !hasCapturedInitialClothingState) {
+                    hasCapturedInitialClothingState = true;
+                    console.log(`[TFD Automation] Captured initial clothing state: ${knownClothingInvIds.size} items`);
                 }
             } else if (parts.length > 12) {
                 const invId = parts[11];
                 const defId = parts[12];
                 if (invId && defId) {
-                    await processItemForFiltering(defId, invId, 'clothing');
+                    if (!isAdventureRunning || !hasCapturedInitialClothingState) {
+                        knownClothingInvIds.add(invId);
+                    } else if (!knownClothingInvIds.has(invId)) {
+                        await processItemForFiltering(defId, invId, 'clothing');
+                        knownClothingInvIds.add(invId);
+                    }
                 }
             }
         } catch (error) {
@@ -1944,9 +2037,74 @@ if (startButton) startButton.addEventListener('click', startAutomation);
 if (stopButton) stopButton.addEventListener('click', stopAutomation);
 if (resetStatsButton) resetStatsButton.addEventListener('click', resetStats);
 if (infoButton) infoButton.addEventListener('click', () => showModal(false));
-if (saveWhitelistsButton) saveWhitelistsButton.addEventListener('click', saveWhitelists);
 if (clearWhitelistsButton) clearWhitelistsButton.addEventListener('click', clearWhitelists);
 if (acceptAllToggle) acceptAllToggle.addEventListener('click', toggleAcceptAll);
+
+if (tabClothing) {
+    tabClothing.addEventListener('click', () => {
+        currentWhitelistTab = 'clothing';
+        tabClothing.classList.add('active');
+        if (tabDen) tabDen.classList.remove('active');
+        renderWhitelistPanel();
+    });
+}
+if (tabDen) {
+    tabDen.addEventListener('click', () => {
+        currentWhitelistTab = 'den';
+        tabDen.classList.add('active');
+        if (tabClothing) tabClothing.classList.remove('active');
+        renderWhitelistPanel();
+    });
+}
+
+if (whitelistSearchInput) {
+    let searchDebounce = null;
+    whitelistSearchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => {
+            whitelistSearchTerm = whitelistSearchInput.value.trim().toLowerCase();
+            renderWhitelistPanel();
+        }, 150);
+    });
+}
+
+if (crystalFilterContainer) {
+    crystalFilterContainer.addEventListener('click', (e) => {
+        const chip = e.target.closest('.crystal-chip');
+        if (!chip) return;
+        crystalFilterContainer.querySelectorAll('.crystal-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentCrystalFilter = chip.dataset.filter;
+        renderWhitelistPanel();
+    });
+}
+
+if (selectAllVisibleBtn) {
+    selectAllVisibleBtn.addEventListener('click', () => bulkToggleVisible(true));
+}
+if (deselectAllVisibleBtn) {
+    deselectAllVisibleBtn.addEventListener('click', () => bulkToggleVisible(false));
+}
+
+function addCustomId() {
+    if (!customIdInput) return;
+    const id = customIdInput.value.trim();
+    if (!id || !/^\d+$/.test(id)) return;
+    toggleWhitelistItem(currentWhitelistTab, id, true);
+    autoSaveWhitelists();
+    customIdInput.value = '';
+    renderWhitelistPanel();
+}
+
+if (addCustomIdBtn) {
+    addCustomIdBtn.addEventListener('click', addCustomId);
+}
+if (customIdInput) {
+    customIdInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') addCustomId();
+    });
+}
+
 if (clearLogButton) clearLogButton.addEventListener('click', clearItemLog);
 if (toggleLogButton) {
     toggleLogButton.addEventListener('click', () => {
@@ -1985,8 +2143,8 @@ if (importFileInput) {
             if (denIds.length > 0 && denWhitelist) {
                 denWhitelist.value = [...new Set(denIds)].join(', ');
             }
-            renderWhitelistTags();
-            updateFilteringStatus();
+            autoSaveWhitelists();
+            renderWhitelistPanel();
             updateStatus(`Imported ${clothingIds.length} clothing + ${denIds.length} den IDs.`, 'success');
         };
         reader.readAsText(file);
@@ -2025,18 +2183,28 @@ if (educationalModal) {
 
 async function loadItemData() {
     try {
-        const clothingResponse = await fetch('./1000-clothing.json');
+        const [clothingResponse, denItemsResponse, rewardResponse] = await Promise.all([
+            fetch('./1000-clothing.json'),
+            fetch('./1030-denitems.json'),
+            fetch('./tfd-reward-items.json')
+        ]);
+
         if (clothingResponse.ok) {
             clothingItems = await clothingResponse.json();
         } else {
             console.error('[TFD Automation] Failed to load clothing.json');
         }
 
-        const denItemsResponse = await fetch('./1030-denitems.json');
         if (denItemsResponse.ok) {
             denItems = await denItemsResponse.json();
         } else {
             console.error('[TFD Automation] Failed to load den_items.json');
+        }
+
+        if (rewardResponse.ok) {
+            tfdRewardItems = await rewardResponse.json();
+        } else {
+            console.error('[TFD Automation] Failed to load tfd-reward-items.json');
         }
     } catch (error) {
         console.error('[TFD Automation] Error loading item data:', error);
@@ -2103,9 +2271,7 @@ async function initialize() {
         }
     }
 
-    setupWhitelistSearch(clothingSearch, clothingSearchDropdown, clothingWhitelist, clothingTags, 'clothing');
-    setupWhitelistSearch(denSearch, denSearchDropdown, denWhitelist, denTags, 'den');
-    renderWhitelistTags();
+    renderWhitelistPanel();
 
     updateStatus('Ready to start TFD automation', 'info');
 
